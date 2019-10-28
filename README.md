@@ -1,11 +1,13 @@
-# SpatialOS GDK for Unreal Starter Project
+# SpatialOS GDK for Unreal Test Gyms Project 
 
 * **LICENSE:** Use of the contents of this repository is subject to the [license](LICENSE.md)
-* **REPOSITORY:** github.com/spatialos/UnrealGDKStarterProject
+* **REPOSITORY:** github.com/spatialos/UnrealGDKTestGyms
 
-This Starter Project is both a reference project and a starting point for building games on SpatialOS and Unreal Engine 4.  The project uses the `ThirdPersonExampleMap` and a controllable character `AStarterGameCharacter` on a SpatialOS deployment.
+This project is for testing the Unreal GDK. It contains a set of gyms as well as being a minimal project in which to run unit tests.
 
 For setup instructions, follow the [Get started](https://docs.improbable.io/unreal/latest/get-started/introduction) guide in the GDK for Unreal documentation.
+
+For instrtuctions on how to use this project please read the [user manual](http://github.com/spatialos/UnrealGDKTestGyms/USER_MANUAL.MD).
 
 For more information, see the [SpatialOS GDK for Unreal documentation](https://docs.improbable.io/unreal/latest/).
 
