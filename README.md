@@ -1,4 +1,4 @@
-# SpatialOS GDK for Unreal Test Gyms Project 
+# SpatialOS GDK for Unreal Test Gyms Project
 
 * **LICENSE:** Use of the contents of this repository is subject to the [license](LICENSE.md)
 * **REPOSITORY:** github.com/spatialos/UnrealGDKTestGyms
@@ -6,8 +6,6 @@
 This project is for testing functionality of the SpatialOS GDK for Unreal, it:
 * is a minimal project which you can run unit tests in, and
 * contains a set of maps and actors to aid in demonstrating functionality.
-
-For setup instructions, follow the [Get started](https://docs.improbable.io/unreal/latest/get-started/introduction) guide in the GDK for Unreal documentation.
 
 #### Prerequisites
 To use this project, you must have followed the [Get started](https://docs.improbable.io/unreal/latest/get-started/introduction) guide in the GDK for Unreal documentation and set up either of the Example Project or the Starter Template project.
