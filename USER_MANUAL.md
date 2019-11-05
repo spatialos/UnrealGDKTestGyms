@@ -1,8 +1,8 @@
 # SpatialOS GDK for Unreal Test Gyms Project 
 
 #### What is a gym
-*A gym is a level containing a minimal number of actors, with simple behaviours, necessary to demonstrate some peice of functionality in the Spatial GDK for Unreal.
-*We use gyms to helps quickly, visualy identifiy if some feature is working.
+* A gym is a level containing a minimal number of actors, with simple behaviours, necessary to demonstrate some peice of functionality in the Spatial GDK for Unreal.
+* We use gyms to helps quickly, visualy identifiy if some feature is working.
 
 #### Project layout
 ```
