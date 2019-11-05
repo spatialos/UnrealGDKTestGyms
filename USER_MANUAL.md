@@ -2,7 +2,7 @@
 
 #### What is a gym
 * A gym is a level containing a minimal number of actors, with simple behaviours, necessary to demonstrate some peice of functionality in the Spatial GDK for Unreal.
-* We use gyms to helps quickly, visualy identifiy if some feature is working.
+* We use gyms to help quickly visualize if some feature is working.
 
 #### Project layout
 ```
@@ -14,8 +14,6 @@ Content
 |
 |__GameModes
 |
-|__Geometry
-|
 |__Maps
 |
 |__Meshes
@@ -23,7 +21,7 @@ Content
 |__Spatial
 ```
 
-New gym levels should be store in `Content\Maps`.
+New gym levels should be stored in `Content\Maps`.
 New actors to be used in gyms should be stored in `Contetnt\Actors`.
 
 #### How to add a gym 
