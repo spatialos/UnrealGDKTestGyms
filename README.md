@@ -41,3 +41,6 @@ We are not currently accepting public contributions. However, we are accepting [
 
 #### Give us feedback
 We have released the GDK for Unreal this early in development because we want your feedback. Please come and talk to us about the software and the documentation via: [Discord](https://discordapp.com/channels/311273633307951114/339471548647866368) - [Forums](https://forums.improbable.io/) - [GitHub issues in this repository](https://github.com/spatialos/UnrealGDK/issues).
+
+-------
+2019-11-06: Page added with limited editorial review
