@@ -43,3 +43,6 @@ New actors to be used in gyms should be stored in `Contetnt\Actors`.
 ##### Handover gym
 * Used to test that an entity can cross from one load balancing region to another.
 * Contains a cube that moves back and forth across a floor.
+
+-----
+2019-11-06: Page added with limited editorial review
