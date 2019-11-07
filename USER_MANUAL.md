@@ -1,8 +1,8 @@
 # SpatialOS GDK for Unreal Test Gyms Project 
 
 #### What is a gym
-* A gym is a level containing a minimal number of actors, with simple behaviours, necessary to demonstrate some peice of functionality in the Spatial GDK for Unreal.
-* We use gyms to help quickly visualize if some feature is working.
+* A gym is a level containing a minimal number of Actors and simple behaviors; it provides the minimum game content necessary to demonstrate a piece of the SpatialOS GDK for Unreal's functionality.
+* We use gyms to help quickly visualize if a feature is working.
 
 #### Project layout
 ```
@@ -21,28 +21,28 @@ Content
 |__Spatial
 ```
 
-New gym levels should be stored in `Content\Maps`.
-New actors to be used in gyms should be stored in `Contetnt\Actors`.
+Gym levels are in `Content\Maps`: add any new gyms in this directory.
+Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directory.
 
 #### How to add a gym 
-1. Create a new level, with a descriptive name, and store it in the `Content\Maps` directory;
+1. In the Test Gyms Project, create a new level, with a descriptive name, and store it in the `Content\Maps` directory;
   * consider copying the `EmptyGym` level in `Content\Maps` as a starting point.
-2. Consider adding a text object containing the gym name to the level;
-  * this aids indentification from screen shots etc.
-3. Populate the new level with actors needed to demonstrate the desired functionality;
-  * prefer to use existing actors if possible,
-  * if new actors are needed then store them in `Content\Actors`.
-4. Add a description of the gym to this document;
-  * breifly describe what it tests and how to use it. 
+2. Consider adding a text object containing the new gym name to the new level you create;
+  * this aids identification. (For example, you can see which gym a screenshot is from.)
+3. Populate the new level with the Actors required to demonstrate the functionality of this gym.
+  * Use existing Actors in the Test Gyms Project if possible, in order to keep it minimal.
+  * If you create new Actors, store them in the `Content\Actors` directory.
+4. Add a description of the new gym level to this `USER_MANUAL.md` document, in the section below;
+  * breifly describe what it demonstrates and how to use it. 
 
 #### Current gyms
 
 ##### Empty gym
-* This is used as a template for creating new gyms.
+* The template for creating new gyms. Copy this to use as a starting point for your own gym.
 
 ##### Handover gym
-* Used to test that an entity can cross from one load balancing region to another.
+* Demonstrates that an entity can cross from one area of authority to another.
 * Contains a cube that moves back and forth across a floor.
 
 -----
-2019-11-06: Page added with limited editorial review
+2019-11-06: Page added with editorial review
