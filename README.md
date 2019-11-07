@@ -1,11 +1,21 @@
-# SpatialOS GDK for Unreal Starter Project
+# SpatialOS GDK for Unreal Test Gyms Project
 
 * **LICENSE:** Use of the contents of this repository is subject to the [license](LICENSE.md)
-* **REPOSITORY:** github.com/spatialos/UnrealGDKStarterProject
+* **REPOSITORY:** github.com/spatialos/UnrealGDKTestGyms
 
-This Starter Project is both a reference project and a starting point for building games on SpatialOS and Unreal Engine 4.  The project uses the `ThirdPersonExampleMap` and a controllable character `AStarterGameCharacter` on a SpatialOS deployment.
+This project is for testing functionality of the SpatialOS GDK for Unreal, it:
+* is a minimal project which you can run unit tests in, and
+* contains a set of maps and Actors to aid in demonstrating functionality.
 
-For setup instructions, follow the [Get started](https://docs.improbable.io/unreal/latest/get-started/introduction) guide in the GDK for Unreal documentation.
+#### Prerequisites
+To use this project, you must have followed the [Get started](https://docs.improbable.io/unreal/latest/get-started/introduction) guide in the GDK for Unreal documentation and set up either the Example Project or the Starter Template project.
+
+#### Set up
+* Follow the [manual-install - clone the project](https://docs.improbable.io/unreal/latest/content/get-started/example-project/exampleproject-manual-setup#step-2-clone-the-example-project-repository) instructions for the Example Project.
+* Replace the Example Project repository link in the instructions with the Test Gyms Project repository link.
+
+#### How to use
+For instrtuctions on how to use this project please read the [user manual](http://github.com/spatialos/UnrealGDKTestGyms/USER_MANUAL.MD).
 
 For more information, see the [SpatialOS GDK for Unreal documentation](https://docs.improbable.io/unreal/latest/).
 
@@ -31,3 +41,6 @@ We are not currently accepting public contributions. However, we are accepting [
 
 #### Give us feedback
 We have released the GDK for Unreal this early in development because we want your feedback. Please come and talk to us about the software and the documentation via: [Discord](https://discordapp.com/channels/311273633307951114/339471548647866368) - [Forums](https://forums.improbable.io/) - [GitHub issues in this repository](https://github.com/spatialos/UnrealGDK/issues).
+
+-------
+2019-11-06: Page added with editorial review
