@@ -12,6 +12,8 @@ Content
 |
 |__Characters
 |
+|__GASComponents
+|
 |__GameModes
 |
 |__Maps
@@ -44,5 +46,14 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Demonstrates that an entity can cross from one area of authority to another.
 * Contains a cube that moves back and forth across a floor.
 
+##### FASHandover gym
+* Fast Array Serialization handover gym.
+* Demonstrates that an actor with an ability system component can transition between workers correctly.
+* Internally GAS uses Fast Array Serialization.
+* Validation:
+  1. A new GameplayEffect is added by the authoritative server on authority gained.
+  2. Additionally a handover value is incremented to monitor how many times this is called.
+  3. The stack count, and the handover counter are then checked they are the same.
+
 -----
-2019-11-06: Page added with editorial review
+2019-11-15: Page added with editorial review
