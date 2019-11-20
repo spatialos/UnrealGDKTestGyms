@@ -18,7 +18,10 @@ public class GDKTestGyms : ModuleRules
 				"Sockets",
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
-				"SpatialGDK"
+                "GameplayAbilities",
+                "GameplayTags",
+                "GameplayTasks",
+                "SpatialGDK"
 			});
 	}
 }
