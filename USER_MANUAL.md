@@ -55,5 +55,25 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   2. Additionally a handover value is incremented to monitor how many times this is called.
   3. The stack count, and the handover counter are then checked they are the same.
 
+#### QA Workflows Testing
+
+##### ReplicatedStartupActors gym
+* For QA workflows Test Replicated startup actors are correctly spawned on all clients 
+* Validation
+  1. New Play Session is started 
+  2. After two seconds checks that actor is visible to client and reports pass or fail
+
+##### DestroyingActorsAtRuntime gym
+* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor
+* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them"
+* Validation:
+  1. New Play session is started, at 10 seconds Actor is deleted and success message is shown notifying the PIE clients
+  2. Connect a client to Play session via command line
+  ```
+  sh
+  "C:\UnrealEngine\Engine\Binaries\Win64\UE4Editor.exe" "C:\UnrealGDKTestGyms\Game\GDKTestGyms.uproject" 127.0.0.1 -game -log -workerType UnrealClient -stdout -nowrite -unattended -nologtimes -nopause -noin -messaging -NoVerifyGC -windowed -ResX=800 -ResY=600
+  ```
+  3. In connected client Actor cannot be seen, when user presses `F` keyboard button, then searches for Actor and returns success or failure message 
+
 -----
 2019-11-15: Page added with editorial review
