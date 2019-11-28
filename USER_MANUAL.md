@@ -55,10 +55,9 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   2. Additionally a handover value is incremented to monitor how many times this is called.
   3. The stack count, and the handover counter are then checked they are the same.
 
-#### QA Workflows Testing
-
 ##### ReplicatedStartupActor gym
-* For QA workflows Test Replicated startup actor are correctly spawned on all clients 
+* For QA workflows Test Replicated startup actor are correctly spawned on all clients
+* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients" 
 * Validation
   1. After two seconds checks that actor is visible to client and reports pass or fail
 
