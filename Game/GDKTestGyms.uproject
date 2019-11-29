@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{6F6FF3AE-4967-00CC-2FD9-5098ED8FCD0C}",
+	"EngineAssociation": "{DDD8F75C-43A7-E1E0-9BFB-2DA91C7E71E7}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -11,6 +11,12 @@
 			"AdditionalDependencies": [
 				"Engine"
 			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "SpatialGDK",
+			"Enabled": true
 		}
 	]
 }

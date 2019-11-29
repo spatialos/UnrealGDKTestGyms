@@ -44,5 +44,13 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Demonstrates that an entity can cross from one area of authority to another.
 * Contains a cube that moves back and forth across a floor.
 
+##### ServerTravel gym
+* Demonstrates ServerTravel.
+* The server will change the map for clients periodically. This can be verified by observing the change in map name.
+* To test this you will need to change the following settings:
+	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
+	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Editor Multiplayer Mode" = "Play As Client"
+* Also ensure that you are not using zoning or any offloading.
+
 -----
 2019-11-06: Page added with editorial review
