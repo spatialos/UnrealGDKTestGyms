@@ -12,6 +12,8 @@ Content
 |
 |__Characters
 |
+|__GASComponents
+|
 |__GameModes
 |
 |__Maps
@@ -44,6 +46,23 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Demonstrates that an entity can cross from one area of authority to another.
 * Contains a cube that moves back and forth across a floor.
 
+##### FASHandover gym
+* Fast Array Serialization handover gym.
+* Demonstrates that an actor with an ability system component can transition between workers correctly.
+* Internally GAS uses Fast Array Serialization.
+* Validation:
+  1. A new GameplayEffect is added by the authoritative server on authority gained.
+  2. Additionally a handover value is incremented to monitor how many times this is called.
+  3. The stack count, and the handover counter are then checked they are the same.
+
+##### Unresolved reference gym
+* Test what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
+* It is interesting when working with arrays, because unlike regular fields, we do not hold RepNotify until the reference is resolved (because we might never receive all of them)
+* Validation :
+  1. On play, a replicated array of references to actors is filled with the map's content. 
+  2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
+  3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
+
 ##### ServerTravel gym
 * Demonstrates ServerTravel.
 * The server will change the map for clients periodically. This can be verified by observing the change in map name.
@@ -51,6 +70,5 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Editor Multiplayer Mode" = "Play As Client"
 * Also ensure that you are not using zoning or any offloading.
-
 -----
-2019-11-06: Page added with editorial review
+2019-11-15: Page added with editorial review
