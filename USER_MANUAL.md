@@ -61,5 +61,13 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Latency tests are run automatically per connected client
 * To see results of the tests, go to https://console.cloud.google.com/traces/traces?project=holocentroid-aimful-6523579
 
+##### Unresolved reference gym
+* Test what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
+* It is interesting when working with arrays, because unlike regular fields, we do not hold RepNotify until the reference is resolved (because we might never receive all of them)
+* Validation :
+  1. On play, a replicated array of references to actors is filled with the map's content. 
+  2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
+  3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
+
 -----
 2019-11-15: Page added with editorial review
