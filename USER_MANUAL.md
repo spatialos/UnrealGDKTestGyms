@@ -55,6 +55,12 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   2. Additionally a handover value is incremented to monitor how many times this is called.
   3. The stack count, and the handover counter are then checked they are the same.
 
+##### Latency gym
+* Gym for testing latency timing generations
+* Requires access to Google's Stackdriver - see instructions in `SpatialLatencyTracer.h`
+* Latency tests are run automatically per connected client
+* To see results of the tests, go to https://console.cloud.google.com/traces/traces?project=holocentroid-aimful-6523579
+
 ##### Unresolved reference gym
 * Test what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
 * It is interesting when working with arrays, because unlike regular fields, we do not hold RepNotify until the reference is resolved (because we might never receive all of them)
