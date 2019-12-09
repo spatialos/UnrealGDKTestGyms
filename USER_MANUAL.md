@@ -69,5 +69,18 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
+##### ReplicatedStartupActor gym
+* For QA workflows Test Replicated startup actor are correctly spawned on all clients
+* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients" 
+* Validation
+  1. After two seconds checks that actor is visible to client and reports pass or fail
+
+##### DestroyStartupActorGym gym
+* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor
+* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them"
+* Validation:
+  1. At 10 seconds Actor is deleted and success message is shown notifying the PIE clients
+  2. Clients connecting after delete also cannot see Actor and on `F` keyboard button press searches for Actor and returns success or failure message 
+
 -----
 2019-11-15: Page added with editorial review
