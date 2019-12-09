@@ -80,7 +80,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them"
 * Validation:
   1. At 10 seconds Actor is deleted and success message is shown notifying the PIE clients
-  2. In late connecting client Actor cannot be seen, when user presses `F` keyboard button, then searches for Actor and returns success or failure message 
+  2. Clients connecting after delete also cannot see Actor and on `F` keyboard button press searches for Actor and returns success or failure message 
 
 -----
 2019-11-15: Page added with editorial review
