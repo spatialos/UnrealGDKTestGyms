@@ -44,7 +44,14 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 
 ##### Handover gym
 * Demonstrates that an entity can cross from one area of authority to another.
-* Contains a cube that moves back and forth across a floor.
+* Contains a set of cube that moves back and forth across a floor.
+* To setup the gym adjust the following settings in "SpatialOS Settings -> Runtime Settings -> Load Balancing":
+  1. Check `Enable Unreal Load Balancer`.
+  2. Set `Load Balancing Worker Type` to `UnrealWorker`.
+  3. Set the `Load Balancing Strategy` to `BP_QuadrantLBStrategy`.
+* Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch" to include 4 servers in a 2x2 grid.
+* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
+* If it is working correctly the authority and authority intent of each cube can be seen to change as it moves across the floor.
 
 ##### FASHandover gym
 * Fast Array Serialization handover gym.
