@@ -37,11 +37,6 @@ int64 USpatialLockingComponent::AcquireLock()
 	return LockToken;
 }
 
-bool USpatialLockingComponent::CanAcquireLock() const
-{
-	return Cast<USpatialNetDriver>(GetWorld()->GetNetDriver())->LockingPolicy->CanAcquireLock(GetOwner());
-}
-
 bool USpatialLockingComponent::IsLocked() const
 {
 	// Servers query the locking policy. Clients check if the server has replicated that it's locked.

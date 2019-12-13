@@ -54,6 +54,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly the authority and authority intent of each cube can be seen to change as it moves across the floor.
 * Press "L" to toggle locking actor migration.
+* Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
 
 ##### FASHandover gym
 * Fast Array Serialization handover gym.

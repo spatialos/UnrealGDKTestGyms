@@ -23,9 +23,6 @@ public:
 	void ReleaseLock(int64 LockToken);
 
 	UFUNCTION(BlueprintCallable, Category = "SpatialGDK|Locking")
-	bool CanAcquireLock() const;
-
-	UFUNCTION(BlueprintCallable, Category = "SpatialGDK|Locking")
 	bool IsLocked() const;
 
 private:
