@@ -20,11 +20,11 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	PlayerControllerClass = APlayerController::StaticClass();
 
 	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkSimulatedPlayer_BP"));
-	if (NPCBPClass.Class != NULL) {
+	if (NPCBPClass.Class != NULL) 
+	{
 		NPCPawnClass = SimulatedPawnClass = NPCBPClass.Class;
 	}
 
-	//set default pawn class to our Blueprinted character
 	bHasUpdatedMaxActorsToReplicate = false;
 	bInitializedCustomSpawnParameters = false;
 
@@ -55,7 +55,8 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 		SpawnPoints.Reset();
 		GenerateSpawnPointClusters(NumPlayerClusters);
 
-		if (SpawnPoints.Num() != TotalPlayers) {
+		if (SpawnPoints.Num() != TotalPlayers) 
+		{
 			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
 		}
 
@@ -256,7 +257,8 @@ void ABenchmarkGymGameMode::StartPlay()
 	SpawnPoints.Reset();
 	GenerateSpawnPointClusters(NumPlayerClusters);
 
-	if (SpawnPoints.Num() != TotalPlayers) {
+	if (SpawnPoints.Num() != TotalPlayers) 
+	{
 		UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
 	}
 
