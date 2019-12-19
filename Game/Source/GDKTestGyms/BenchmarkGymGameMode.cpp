@@ -29,7 +29,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bInitializedCustomSpawnParameters = false;
 
 	TotalPlayers = 1;
-	TotalNPCs = 0;
+	TotalNPCs = 8;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
 
@@ -114,7 +114,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		}
 	}
 
-	NumPlayerClusters = FMath::CeilToInt(TotalPlayers / (float)PlayerDensity);
+	NumPlayerClusters = FMath::CeilToInt(TotalPlayers / static_cast<float>(PlayerDensity));
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
@@ -126,24 +126,24 @@ void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 	}
 }
 
-void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY)
+void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)
 {
 	if (NumPoints <= 0)
 	{
 		UE_LOG(LogBenchmarkGym, Warning, TEXT("Generating grid settings with non-postive number of points (%d)"), NumPoints);
-		NumRows = 0;
-		NumCols = 0;
-		MinRelativeX = 0;
-		MinRelativeY = 0;
+		OutNumRows = 0;
+		OutNumCols = 0;
+		OutMinRelativeX = 0;
+		OutMinRelativeY = 0;
 		return;
 	}
 
-	NumRows = FMath::RoundToInt(FMath::Sqrt(NumPoints));
-	NumCols = FMath::CeilToInt(NumPoints / (float)NumRows);
-	const int GridWidth = (NumCols - 1) * DistBetweenPoints;
-	const int GridHeight = (NumRows - 1) * DistBetweenPoints;
-	MinRelativeX = FMath::RoundToInt(-GridWidth / 2.0);
-	MinRelativeY = FMath::RoundToInt(-GridHeight / 2.0);
+	OutNumRows = FMath::RoundToInt(FMath::Sqrt(NumPoints));
+	OutNumCols = FMath::CeilToInt(NumPoints / static_cast<float>(OutNumRows));
+	const int GridWidth = (OutNumCols - 1) * DistBetweenPoints;
+	const int GridHeight = (OutNumRows - 1) * DistBetweenPoints;
+	OutMinRelativeX = FMath::RoundToInt(-GridWidth / 2.0);
+	OutMinRelativeY = FMath::RoundToInt(-GridHeight / 2.0);
 }
 
 void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
@@ -181,15 +181,6 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		return;
 	}
 
-	const int WalkRadius = 200; // In Unreal units. More than actual radius, just to be sure.
-	const int MaxXDistance = (NumCols - 1) * DistBetweenSpawnPoints + 2 * WalkRadius;
-	const int MaxYDistance = (NumRows - 1) * DistBetweenSpawnPoints + 2 * WalkRadius;
-	const int MaxDistanceBetweenPlayers = FMath::Sqrt(FMath::Square(MaxXDistance) + FMath::Square(MaxYDistance));
-	if (MaxDistanceBetweenPlayers >= PlayerCheckoutRadius)
-	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Maximum distance between players is larger than checkout radius. Cannot ensure players will always see each other."));
-	}
-
 	for (int i = 0; i < SpawnPointsNum; i++)
 	{
 		const int Row = i % NumRows;
@@ -216,7 +207,7 @@ void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 	{
 		int32 Cluster = i % NumPlayerClusters;
 		int32 SpawnPointIndex = Cluster * PlayerDensity;
-		AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
+		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
 		SpawnNPC(SpawnPoint->GetActorLocation());
 	}
 }
@@ -236,9 +227,12 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 		return;
 	}
 
-	FVector RandomOffset = RNG.GetUnitVector()*600.0f;
-	if (RandomOffset.Z < 0.0f) 
+	const float RandomSpawnOffset = 600.0f;
+	FVector RandomOffset = RNG.GetUnitVector()*RandomSpawnOffset;
+	if (RandomOffset.Z < 0.0f)
+	{
 		RandomOffset.Z = -RandomOffset.Z;
+	}
 	FVector RandomSpawn = SpawnLocation + RandomOffset;
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
@@ -269,16 +263,17 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	CheckInitCustomSpawning();
 
-	if (!ShouldUseCustomSpawning() || SpawnPoints.Num() == 0)
+	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
 
 	// Use custom spawning with density controls
 	const int32 PlayerUniqueID = Player->GetUniqueID();
-	if (PlayerIdToSpawnPointMap.Contains(PlayerUniqueID))
+	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
+	if (SpawnPoint)
 	{
-		return PlayerIdToSpawnPointMap[PlayerUniqueID];
+		return *SpawnPoint;
 	}
 
 	AActor* ChosenSpawnPoint = SpawnPoints[PlayersSpawned % SpawnPoints.Num()];

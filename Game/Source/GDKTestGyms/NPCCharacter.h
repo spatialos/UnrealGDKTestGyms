@@ -37,5 +37,5 @@ public:
 	const FVector Directions[4] = { FVector(1, 0, 0), FVector(0, 1, 0), FVector(-1, 0, 0), FVector(0, -1, 0) };
 
 	// Magnitude multiplier used on movement impulses
-	float Speed = 0.5f;
+	const float Speed = 0.5f;
 };
