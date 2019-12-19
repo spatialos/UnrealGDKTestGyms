@@ -89,5 +89,10 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   1. At 10 seconds Actor is deleted and success message is shown notifying the PIE clients
   2. Clients connecting after delete also cannot see Actor and on `F` keyboard button press searches for Actor and returns success or failure message 
 
+##### WorkerFlagsGym gym
+* Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
+* Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
+* Validation:
+  1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
 -----
 2019-11-15: Page added with editorial review
