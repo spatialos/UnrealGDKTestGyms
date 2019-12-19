@@ -2,7 +2,8 @@
 
 
 #include "BenchmarkGymGameMode.h"
-#include "SpatialWorkerFlags.h"
+#include "EngineClasses/SpatialNetDriver.h"
+#include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/Character.h"
@@ -73,12 +74,17 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
 	FString WorkerValue;
-	USpatialWorkerFlags::GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
+	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+	{
+		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
+	}
 	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
 }
 
 void ABenchmarkGymGameMode::ParsePassedValues()
 {
+	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+
 	if (FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")))
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Found OverrideSpawning in command line args, worker flags for custom spawning will be ignored."));
@@ -95,7 +101,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString TotalPlayersString, PlayerDensityString, TotalNPCsString;
-		if (USpatialWorkerFlags::GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
+		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{
 			TotalPlayers = FCString::Atoi(*TotalPlayersString);
 		}
@@ -103,12 +109,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
 		PlayerDensity = TotalPlayers;
 
-		if (USpatialWorkerFlags::GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
 		{
 			PlayerDensity = FCString::Atoi(*PlayerDensityString);
 		}
 
-		if (USpatialWorkerFlags::GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
+		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
 		{
 			TotalNPCs = FCString::Atoi(*TotalNPCsString);
 		}
