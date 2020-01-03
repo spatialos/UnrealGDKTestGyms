@@ -95,11 +95,11 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   1. After two seconds checks that actor is visible to client and reports pass or fail
 
 ##### DestroyStartupActorGym gym
-* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor
-* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them"
+* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor.
+* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them".
 * Validation:
-  1. At 10 seconds Actor is deleted and success message is shown notifying the PIE clients
-  2. Clients connecting after delete also cannot see Actor and on `F` keyboard button press searches for Actor and returns success or failure message
+  1. At 10 seconds all cubes are deleted and success message is shown on all clients.
+  2. Clients connecting after this point cannot see any cubes and, when pressing the `F` keyboard button, see a success or failure messages on screen.
 
 ##### WorkerFlagsGym gym
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
