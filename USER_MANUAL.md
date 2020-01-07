@@ -49,7 +49,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   1. Check `Enable Unreal Load Balancer`.
   2. Set `Load Balancing Worker Type` to `UnrealWorker`.
   3. Set the `Load Balancing Strategy` to `BP_QuadrantLBStrategy`.
-  3. Set the `Locking Policy` to `ReferenceCountedLockingPolicy`.
+  4. Set the `Locking Policy` to `ReferenceCountedLockingPolicy`.
 * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch" to include 4 servers in a 2x2 grid.
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly the authority and authority intent of each cube can be seen to change as it moves across the floor.
