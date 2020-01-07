@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #pragma once
 
@@ -26,7 +26,6 @@ public:
 	bool IsLocked() const;
 
 private:
-	// Set on the server to be read on the client.
 	UPROPERTY(Replicated)
 	bool bIsLocked = false;
 
