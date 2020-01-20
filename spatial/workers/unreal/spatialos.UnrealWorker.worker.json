@@ -66,6 +66,8 @@
       "arguments": [
         "${IMPROBABLE_WORKER_ID}",
         "${IMPROBABLE_LOG_FILE}",
+        "+deploymentName",
+        "${IMPROBABLE_DEPLOYMENT_NAME}",
         "+appName",
         "${IMPROBABLE_PROJECT_NAME}",
         "+receptionistHost",
