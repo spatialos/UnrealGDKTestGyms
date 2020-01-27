@@ -106,5 +106,14 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
 * Validation:
   1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
+
+##### Soft references Test Gym
+* Test what happens when we serialize soft references to asset, and references to assets not yet loaded on the client.
+* This test should be ran from different processes for client and server (not enabling the option "Use single process" in the editor)
+* It also enables the CVar net.AllowAsyncLoading to make sure references to packages loaded in the background get eventually resolved
+* Validation :
+  1. On play, soft references to green materials will be set on replicated properties (permutation of soft/hard references on single/array properties)
+  2. Replicated properties will be picked up by RepNotifies on the client, and will set the received material on a cube in the scene
+  3. Eventually, all cubes should turn green.
 -----
 2019-11-15: Page added with editorial review
