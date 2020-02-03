@@ -45,16 +45,24 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 ##### Handover gym
 * Demonstrates that an entity can cross from one area of authority to another.
 * Contains a set of cubes that moves back and forth across a floor.
-* To setup the gym adjust the following settings in "SpatialOS Settings -> Runtime Settings -> Load Balancing":
-  1. Check `Enable Unreal Load Balancer`.
-  2. Set `Load Balancing Worker Type` to `UnrealWorker`.
-  3. Set the `Load Balancing Strategy` to `BP_QuadrantLBStrategy`.
-  4. Set the `Locking Policy` to `ReferenceCountedLockingPolicy`.
-* Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch" to include 4 servers in a 2x2 grid.
+* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+  * Set "Instances to launch in editor" to 4
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly the authority and authority intent of each cube can be seen to change as it moves across the floor.
 * Press "L" to toggle locking actor migration.
 * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
+
+##### Ability locking gym
+* Demonstrates that an actor is locked from crossing servers while a gameplay ability is running on it.
+* Contains a cube moving across a server boundary, with a gameplay ability granted to it which takes 4 seconds to complete.
+* The ability counts from 1 to 5 over 4 seeconds, and sets a replicated variable on the cube. Whenever the value is changed, a text hovering above the actor is updated, to visualise the current value as replicated on the client.
+* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+  * Set "Instances to launch in editor" to 4
+* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
+* If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
+* Press "T" to start the ability. The text above the cube should count from 1 to 5, and while the ability is running, the cube should not migrate to another server, even when it is physically in the authority region of another server.
 
 ##### FASHandover gym
 * Fast Array Serialization handover gym.
@@ -106,14 +114,5 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
 * Validation:
   1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
-
-##### Soft references Test Gym
-* Test what happens when we serialize soft references to asset, and references to assets not yet loaded on the client.
-* This test should be ran from different processes for client and server (not enabling the option "Use single process" in the editor)
-* It also enables the CVar net.AllowAsyncLoading to make sure references to packages loaded in the background get eventually resolved
-* Validation :
-  1. On play, soft references to green materials will be set on replicated properties (permutation of soft/hard references on single/array properties)
-  2. Replicated properties will be picked up by RepNotifies on the client, and will set the received material on a cube in the scene
-  3. Eventually, all cubes should turn green.
 -----
 2019-11-15: Page added with editorial review
