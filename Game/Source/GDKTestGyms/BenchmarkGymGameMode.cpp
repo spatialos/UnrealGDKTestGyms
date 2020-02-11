@@ -30,7 +30,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bInitializedCustomSpawnParameters = false;
 
 	TotalPlayers = 1;
-	TotalNPCs = 0;
+	TotalNPCs = 200;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
 
