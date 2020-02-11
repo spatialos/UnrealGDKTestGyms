@@ -30,7 +30,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bInitializedCustomSpawnParameters = false;
 
 	TotalPlayers = 1;
-	TotalNPCs = 0;
+	TotalNPCs = 200;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
 
@@ -73,12 +73,7 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
-	FString WorkerValue;
-	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
-	{
-		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
-	}
-	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
+	return FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning"));
 }
 
 void ABenchmarkGymGameMode::ParsePassedValues()
@@ -250,19 +245,6 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 
 void ABenchmarkGymGameMode::StartPlay()
 {
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Enabling custom density spawning."));
-	ParsePassedValues();
-	ClearExistingSpawnPoints();
-
-	SpawnPoints.Reset();
-	GenerateSpawnPointClusters(NumPlayerClusters);
-
-	if (SpawnPoints.Num() != TotalPlayers) 
-	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
-	}
-
-	SpawnNPCs(TotalNPCs);
 	return Super::StartPlay();
 }
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
