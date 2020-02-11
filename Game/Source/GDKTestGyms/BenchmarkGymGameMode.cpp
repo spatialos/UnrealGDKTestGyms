@@ -30,7 +30,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bInitializedCustomSpawnParameters = false;
 
 	TotalPlayers = 1;
-	TotalNPCs = 200;
+	TotalNPCs = 0;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
 
@@ -73,7 +73,12 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
-	return FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning"));
+	FString WorkerValue;		return FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning"));
+	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+	{
+		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
+	}
+	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
 }
 
 void ABenchmarkGymGameMode::ParsePassedValues()
