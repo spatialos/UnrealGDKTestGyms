@@ -123,6 +123,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
   * Set "Instances to launch in editor" to 4
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level.
+* If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters
+ above the cubes will turn the corresponding worker colours and increment for each RPC received.
 -----
 2019-11-15: Page added with editorial review
