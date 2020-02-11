@@ -114,5 +114,15 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
 * Validation:
   1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
+
+##### Server to server RPC gym
+* Tests server to server RPCs are working. Sends RPCs to actors owned by different servers and visualises when they are received.
+* Contains a set of cubes placed in four quadrants of the level. The cubes change colour to indicate which worker the owning worker
+ just received an RPC from. The colours match the inspector colours used by the spatial debugger, in order to match colour to worker.
+* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+  * Set "Instances to launch in editor" to 4
+* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
+* If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level.
 -----
 2019-11-15: Page added with editorial review
