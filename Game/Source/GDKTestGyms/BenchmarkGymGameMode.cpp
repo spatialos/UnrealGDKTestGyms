@@ -73,7 +73,7 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
-	FString WorkerValue;		return FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning"));
+	FString WorkerValue;
 	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
 	{
 		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
