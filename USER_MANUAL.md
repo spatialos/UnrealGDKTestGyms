@@ -124,6 +124,6 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Set "Instances to launch in editor" to 4
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters
- above the cubes will turn the corresponding worker colours and increment for each RPC received.
+ above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 -----
 2019-11-15: Page added with editorial review
