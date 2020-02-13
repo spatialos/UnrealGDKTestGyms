@@ -243,10 +243,6 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 	World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), RandomSpawn, FRotator::ZeroRotator, SpawnInfo);
 }
 
-void ABenchmarkGymGameMode::StartPlay()
-{
-	return Super::StartPlay();
-}
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
 	CheckInitCustomSpawning();
