@@ -19,7 +19,6 @@ public:
 	ABenchmarkGymGameMode();
 
 	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
-	virtual void StartPlay() override;
 private:
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.

@@ -243,23 +243,6 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 	World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), RandomSpawn, FRotator::ZeroRotator, SpawnInfo);
 }
 
-void ABenchmarkGymGameMode::StartPlay()
-{
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Enabling custom density spawning."));
-	ParsePassedValues();
-	ClearExistingSpawnPoints();
-
-	SpawnPoints.Reset();
-	GenerateSpawnPointClusters(NumPlayerClusters);
-
-	if (SpawnPoints.Num() != TotalPlayers) 
-	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
-	}
-
-	SpawnNPCs(TotalNPCs);
-	return Super::StartPlay();
-}
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
 	CheckInitCustomSpawning();
