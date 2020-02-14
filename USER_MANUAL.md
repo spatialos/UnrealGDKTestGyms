@@ -126,10 +126,10 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 
 ##### World composition gym
 * Tests level loading and unloading.
-* The gym contains a world with a sub-level, containing a replicated startup actor, which is streamed at a distance of 10m.
-* On starting the gym, move towards the "Move here" text to load the level on the client. When it has been loaded it a cube will appear.
-* Moving away from the cube will cause the level to be unloaded on the client. When it unloads the cube should disappear.
+* The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level. 
+* On starting the gym, move towards the any marked area text to load the assocaited level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
+* Moving away from the marked area will cause the level to be unloaded on the client. When it unloads the actor should disappear.
 * Validation:
-  1. The level can be repeatedly loaded and unloaded on the client with no issue.
+  1. Each level can be repeatedly loaded and unloaded on the client with no issue.
 -----
 2019-11-15: Page added with editorial review
