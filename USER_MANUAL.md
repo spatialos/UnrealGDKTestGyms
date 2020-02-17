@@ -82,7 +82,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 ##### Unresolved reference gym
 * Test what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
 * It is interesting when working with arrays, because unlike regular fields, we do not hold RepNotify until the reference is resolved (because we might never receive all of them)
-* Validation :
+* Validation:
   1. On play, a replicated array of references to actors is filled with the map's content.
   2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
@@ -90,11 +90,11 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 ##### Net reference test gym
 * Test that references to replicated actors are stable when actors go in and out of relevance
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
-* Validation :
+* Validation:
   1. Cubes in a grid pattern hold references to their neighbours on replicated properties.
   2. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
   3. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
-  4. If a cube does not have the expected amount of references to its neighbours, a red arror message will appear above.
+  4. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
 
 ##### ReplicatedStartupActor gym
 * For QA workflows Test Replicated startup actor are correctly spawned on all clients
@@ -123,5 +123,13 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Set "Instances to launch in editor" to 4
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
+
+##### World composition gym
+* Tests level loading and unloading.
+* The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level. 
+* On starting the gym, move towards the any marked area text to load the assocaited level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
+* Moving away from the marked area will cause the level to be unloaded on the client. When it unloads the actor should disappear.
+* Validation:
+  1. Each level can be repeatedly loaded and unloaded on the client with no issue.
 -----
 2019-11-15: Page added with editorial review
