@@ -131,5 +131,13 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Moving away from the marked area will cause the level to be unloaded on the client. When it unloads the actor should disappear.
 * Validation:
   1. Each level can be repeatedly loaded and unloaded on the client with no issue.
+
+##### ServerTravel gym
+* Demonstrates ServerTravel.
+* The server will change the map for clients periodically. This can be verified by observing the change in map name.
+* To test this you will need to change the following settings:
+	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
+	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Editor Multiplayer Mode" = "Play As Client"
+* Also ensure that you are not using zoning or any offloading.
 -----
 2019-11-15: Page added with editorial review
