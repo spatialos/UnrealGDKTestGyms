@@ -2,8 +2,8 @@
   "template": "w2_r0500_e5",
   "world": {
     "dimensions": {
-      "x_meters": 2000,
-      "z_meters": 2000
+      "x_meters": 10000,
+      "z_meters": 10000
     },
     "chunk_edge_length_meters": 50,
     "legacy_flags": [
