@@ -1,0 +1,24 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "SpatialGameInstance.h"
+#include "GDKTestGymsGameInstance.generated.h"
+
+UCLASS()
+class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
+{
+	GENERATED_BODY()
+
+public:
+	virtual void Init() override;
+	bool Tick(float DeltaSeconds);
+
+private:
+	FTickerDelegate TickDelegate;
+	FDelegateHandle TickDelegateHandle;
+
+	float AverageFPS = 1.0f;
+	float SecondsSinceFPSLog = 0.0f;
+};
