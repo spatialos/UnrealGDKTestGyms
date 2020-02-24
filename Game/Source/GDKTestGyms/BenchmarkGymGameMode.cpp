@@ -23,7 +23,13 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkSimulatedPlayer_BP"));
 	if (NPCBPClass.Class != NULL) 
 	{
-		NPCPawnClass = SimulatedPawnClass = NPCBPClass.Class;
+		NPCPawnClass = NPCBPClass.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<APawn> SimulatedBPPawnClass(TEXT("/Game/Characters/SimulatedPlayers/SimulatedPlayerCharacter_BP"));
+	if (SimulatedBPPawnClass.Class != NULL)
+	{
+		SimulatedPawnClass = SimulatedBPPawnClass.Class;
 	}
 
 	bHasUpdatedMaxActorsToReplicate = false;
