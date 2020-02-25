@@ -64,4 +64,6 @@ void UTask_DelaySimulated::OnFinish()
 	}
 
 	EndTask();
+
+	OnFinishDelegate.Broadcast();
 }
