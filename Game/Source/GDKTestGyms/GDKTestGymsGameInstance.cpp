@@ -8,6 +8,11 @@ void UGDKTestGymsGameInstance::Init()
 {
 	Super::Init();
 
+	if (GEngine)
+	{
+		GEngine->SetMaxFPS(90.f);
+	}
+
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UGDKTestGymsGameInstance::Tick);
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
 }
@@ -15,7 +20,7 @@ void UGDKTestGymsGameInstance::Init()
 bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
 {
 	float Alpha = 0.8f;
-	float CurrFPS = 1.0f / DeltaSeconds;
+	float CurrFPS = 1.0f / DeltaSeconds; // TODO - we should remove FApp::GetIdleTime() from DeltaSeconds once the NFR regex is fixed
 	AverageFPS = (Alpha * AverageFPS) + ((1.0f - Alpha) * CurrFPS);
 
 	SecondsSinceFPSLog += DeltaSeconds;
