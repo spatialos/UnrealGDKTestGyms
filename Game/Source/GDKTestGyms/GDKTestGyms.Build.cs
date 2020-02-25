@@ -14,6 +14,8 @@ public class GDKTestGyms : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"GameplayAbilities",
+				"GameplayTasks",
 				"InputCore",
 				"Sockets",
 				"OnlineSubsystemUtils",
