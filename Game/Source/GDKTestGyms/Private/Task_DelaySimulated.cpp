@@ -22,26 +22,20 @@ void UTask_DelaySimulated::Activate()
 	FTimerHandle TimerHandle;
 	World->GetTimerManager().SetTimer(TimerHandle, this, &UTask_DelaySimulated::OnFinish, 1.0f, false);
 
-	if (USpatialGameInstance* GameInstance = Cast<USpatialGameInstance>(World->GetGameInstance()))
-	{
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("UTask_DelaySimulated::Activate %s"), *GetPathName()));
-	}
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("UTask_DelaySimulated::Activate %s"), *GetPathName()));
 }
 
 void UTask_DelaySimulated::InitSimulatedTask(UGameplayTasksComponent& InGameplayTasksComponent)
 {
 	Super::InitSimulatedTask(InGameplayTasksComponent);
 
-	if (USpatialGameInstance* GameInstance = Cast<USpatialGameInstance>(GetWorld()->GetGameInstance()))
-	{
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("UTask_DelaySimulated::InitSimulatedTask %s"), *GetPathName()));
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("UTask_DelaySimulated::InitSimulatedTask %s"), *GetPathName()));
 
-		if (APawn* Pawn = Cast<APawn>(InGameplayTasksComponent.GetOwner()))
+	if (APawn* Pawn = Cast<APawn>(InGameplayTasksComponent.GetOwner()))
+	{
+		if (Pawn->IsLocallyControlled())
 		{
-			if (Pawn->IsLocallyControlled())
-			{
-				UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Error: Simulated task is simulating on the owning client %s"), *GetPathName()));
-			}
+			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Error: Simulated task is simulating on the owning client %s"), *GetPathName()));
 		}
 	}
 }
@@ -58,10 +52,7 @@ UTask_DelaySimulated* UTask_DelaySimulated::TaskDelaySimulated(TScriptInterface<
 
 void UTask_DelaySimulated::OnFinish()
 {
-	if (USpatialGameInstance* GameInstance = Cast<USpatialGameInstance>(GetWorld()->GetGameInstance()))
-	{
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("UTask_DelaySimulated::OnFinish %s"), *GetPathName()));
-	}
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("UTask_DelaySimulated::OnFinish %s"), *GetPathName()));
 
 	EndTask();
 
