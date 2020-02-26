@@ -139,5 +139,12 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Editor Multiplayer Mode" = "Play As Client"
 * Also ensure that you are not using zoning or any offloading.
+
+##### Simulated GameplayTask gym
+* Tests replicating simulated GameplayTasks to clients.
+* Validation
+  * Play with 2 clients connected.
+  * Each connected client should display a log with "UTask_DelaySimulated::InitSimulatedTask".
+  * There should not be logs saying "Error: Simulated task is simulating on the owning client".
 -----
 2019-11-15: Page added with editorial review
