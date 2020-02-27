@@ -8,11 +8,6 @@ void UGDKTestGymsGameInstance::Init()
 {
 	Super::Init();
 
-	if (GEngine)
-	{
-		GEngine->SetMaxFPS(90.f);
-	}
-
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UGDKTestGymsGameInstance::Tick);
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
 }
