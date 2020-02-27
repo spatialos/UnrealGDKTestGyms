@@ -20,7 +20,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	DefaultPawnClass = PawnClass.Class;
 	PlayerControllerClass = APlayerController::StaticClass();
 
-	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkSimulatedPlayer_BP"));
+	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
 	if (NPCBPClass.Class != NULL) 
 	{
 		NPCPawnClass = NPCBPClass.Class;
