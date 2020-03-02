@@ -82,7 +82,7 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (NPCSToSpawn > 0)
+	if (NPCSToSpawn > 0 && HasAuthority())
 	{
 		int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
 		int32 SpawnPointIndex = Cluster * PlayerDensity;
