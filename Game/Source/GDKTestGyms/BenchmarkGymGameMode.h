@@ -36,6 +36,8 @@ private:
 	TSubclassOf<APawn> NPCPawnClass;
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	FRandomStream RNG;
+	int32 NPCSToSpawn;
+	void Tick(float DeltaSeconds) override;
 	bool ShouldUseCustomSpawning();
 	void CheckInitCustomSpawning();
 	void ParsePassedValues();
