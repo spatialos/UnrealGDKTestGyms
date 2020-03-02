@@ -43,6 +43,8 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
 	bUseSeamlessTravel = false;
 
+	NPCSToSpawn = 0;
+
 	RNG.Initialize(123456); // Ensure we can do deterministic runs
 }
 
@@ -75,6 +77,18 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 	}
 
 	bInitializedCustomSpawnParameters = true;
+}
+
+void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (NPCSToSpawn > 0)
+	{
+		int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
+		int32 SpawnPointIndex = Cluster * PlayerDensity;
+		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
+		SpawnNPC(SpawnPoint->GetActorLocation());
+	}
 }
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
@@ -210,13 +224,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 {
-	for (int32 i = 0; i < NumNPCs; i++)
-	{
-		int32 Cluster = i % NumPlayerClusters;
-		int32 SpawnPointIndex = Cluster * PlayerDensity;
-		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-		SpawnNPC(SpawnPoint->GetActorLocation());
-	}
+	NPCSToSpawn = NumNPCs;
 }
 
 void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
