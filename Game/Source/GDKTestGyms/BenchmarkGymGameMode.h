@@ -32,16 +32,16 @@ private:
 	int32 TotalNPCs;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
+	bool bExitOnDisconnect; // Can speed up NFR testing
 	TArray<AActor*> SpawnPoints;
 	TSubclassOf<APawn> NPCPawnClass;
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	FRandomStream RNG;
 	int32 NPCSToSpawn;
-	float SecondsToStopLoggingDisconnections;
-	float TotalSecondsElapsed;
+	float SecondsTillPlayerCheck;
 	void Tick(float DeltaSeconds) override;
 	bool ShouldUseCustomSpawning();
-	void CheckInitCustomSpawning();
+	void CheckCmdLineParameters();
 	void ParsePassedValues();
 	void ClearExistingSpawnPoints();
 	void SpawnNPCs(int NumNPCs);
@@ -50,5 +50,4 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-	void Logout(AController* Exiting) override;
 };

@@ -34,28 +34,30 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	bHasUpdatedMaxActorsToReplicate = false;
 	bInitializedCustomSpawnParameters = false;
+	bExitOnDisconnect = false;
 
 	TotalPlayers = 1;
 	TotalNPCs = 0;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
-	TotalSecondsElapsed = 0.0f;
 
 	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
 	bUseSeamlessTravel = false;
 
 	NPCSToSpawn = 0;
-	SecondsToStopLoggingDisconnections = 15.0f * 60.0f;
+	SecondsTillPlayerCheck = 15.0f * 60.0f;
 
 	RNG.Initialize(123456); // Ensure we can do deterministic runs
 }
 
-void ABenchmarkGymGameMode::CheckInitCustomSpawning()
+void ABenchmarkGymGameMode::CheckCmdLineParameters()
 {
 	if (bInitializedCustomSpawnParameters)
 	{
 		return;
 	}
+
+	bExitOnDisconnect = FParse::Param(FCommandLine::Get(), TEXT("QuitOnDisconnect"));
 
 	if (ShouldUseCustomSpawning())
 	{
@@ -91,7 +93,19 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
 		SpawnNPC(SpawnPoint->GetActorLocation());
 	}
-	TotalSecondsElapsed += DeltaSeconds;
+	
+	if (HasAuthority() && SecondsTillPlayerCheck > 0.0f)
+	{
+		SecondsTillPlayerCheck -= DeltaSeconds;
+		if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != TotalPlayers)
+		{
+			UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), TotalPlayers, GetNumPlayers());
+			if (bExitOnDisconnect)
+			{
+				FGenericPlatformMisc::RequestExit(true);
+			}
+		}
+	}
 }
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
@@ -262,7 +276,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	CheckInitCustomSpawning();
+	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
 	{
@@ -285,12 +299,4 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
-}
-
-void ABenchmarkGymGameMode::Logout(AController* Exiting)
-{
-	if (TotalSecondsElapsed < SecondsToStopLoggingDisconnections && Exiting->HasAuthority()) // This will trigger at the end of a run during shutdown
-	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped lost %s at %d"), *Exiting->GetName(), (int)TotalSecondsElapsed);
-	}
 }
