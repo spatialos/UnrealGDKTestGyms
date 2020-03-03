@@ -39,11 +39,13 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	TotalNPCs = 0;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
+	TotalSecondsElapsed = 0.0f;
 
 	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
 	bUseSeamlessTravel = false;
 
 	NPCSToSpawn = 0;
+	SecondsToStopLoggingDisconnections = 15.0f * 60.0f;
 
 	RNG.Initialize(123456); // Ensure we can do deterministic runs
 }
@@ -89,6 +91,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
 		SpawnNPC(SpawnPoint->GetActorLocation());
 	}
+	TotalSecondsElapsed += DeltaSeconds;
 }
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
@@ -282,4 +285,12 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+void ABenchmarkGymGameMode::Logout(AController* Exiting)
+{
+	if (TotalSecondsElapsed < SecondsToStopLoggingDisconnections && Exiting->HasAuthority()) // This will trigger at the end of a run during shutdown
+	{
+		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped lost %s at %d"), *Exiting->GetName(), (int)TotalSecondsElapsed);
+	}
 }

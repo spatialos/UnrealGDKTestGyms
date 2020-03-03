@@ -37,6 +37,8 @@ private:
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	FRandomStream RNG;
 	int32 NPCSToSpawn;
+	float SecondsToStopLoggingDisconnections;
+	float TotalSecondsElapsed;
 	void Tick(float DeltaSeconds) override;
 	bool ShouldUseCustomSpawning();
 	void CheckInitCustomSpawning();
@@ -48,4 +50,5 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
+	void Logout(AController* Exiting) override;
 };
