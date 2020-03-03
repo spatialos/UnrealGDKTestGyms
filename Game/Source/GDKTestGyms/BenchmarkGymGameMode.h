@@ -32,7 +32,6 @@ private:
 	int32 TotalNPCs;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
-	bool bExitOnDisconnect; // Can speed up NFR testing
 	TArray<AActor*> SpawnPoints;
 	TSubclassOf<APawn> NPCPawnClass;
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;

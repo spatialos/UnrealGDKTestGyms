@@ -34,7 +34,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	bHasUpdatedMaxActorsToReplicate = false;
 	bInitializedCustomSpawnParameters = false;
-	bExitOnDisconnect = false;
 
 	TotalPlayers = 1;
 	TotalNPCs = 0;
@@ -56,8 +55,6 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 	{
 		return;
 	}
-
-	bExitOnDisconnect = FParse::Param(FCommandLine::Get(), TEXT("QuitOnDisconnect"));
 
 	if (ShouldUseCustomSpawning())
 	{
@@ -100,10 +97,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != TotalPlayers)
 		{
 			UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), TotalPlayers, GetNumPlayers());
-			if (bExitOnDisconnect)
-			{
-				FGenericPlatformMisc::RequestExit(true);
-			}
 		}
 	}
 }
