@@ -35,7 +35,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bHasUpdatedMaxActorsToReplicate = false;
 	bInitializedCustomSpawnParameters = false;
 
-	TotalPlayers = 1;
+	ExpectedPlayers = 1;
 	TotalNPCs = 0;
 	NumPlayerClusters = 4;
 	PlayersSpawned = 0;
@@ -48,7 +48,24 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	RNG.Initialize(123456); // Ensure we can do deterministic runs
 }
 
-void ABenchmarkGymGameMode::CheckInitCustomSpawning()
+void ABenchmarkGymGameMode::BeginPlay()
+{	
+	FTimerHandle Timer;
+	GetWorldTimerManager().SetTimer(Timer, this, &ABenchmarkGymGameMode::CheckConnections, 15.0f*60.0f, false, 0.0f);
+}
+
+void ABenchmarkGymGameMode::CheckConnections()
+{
+	if (HasAuthority())
+	{
+		if (GetNumPlayers() != ExpectedPlayers)
+		{
+			UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+		}
+	}
+}
+
+void ABenchmarkGymGameMode::CheckCmdLineParameters()
 {
 	if (bInitializedCustomSpawnParameters)
 	{
@@ -64,9 +81,9 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 		SpawnPoints.Reset();
 		GenerateSpawnPointClusters(NumPlayerClusters);
 
-		if (SpawnPoints.Num() != TotalPlayers) 
+		if (SpawnPoints.Num() != ExpectedPlayers) 
 		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
+			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 		}
 
 		SpawnNPCs(TotalNPCs);
@@ -82,12 +99,15 @@ void ABenchmarkGymGameMode::CheckInitCustomSpawning()
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (NPCSToSpawn > 0 && HasAuthority())
+	if (HasAuthority())
 	{
-		int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
-		int32 SpawnPointIndex = Cluster * PlayerDensity;
-		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-		SpawnNPC(SpawnPoint->GetActorLocation());
+		if (NPCSToSpawn > 0)
+		{
+			int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
+			int32 SpawnPointIndex = Cluster * PlayerDensity;
+			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
+			SpawnNPC(SpawnPoint->GetActorLocation());
+		}
 	}
 }
 
@@ -107,9 +127,9 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	if (FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")))
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Found OverrideSpawning in command line args, worker flags for custom spawning will be ignored."));
-		FParse::Value(FCommandLine::Get(), TEXT("TotalPlayers="), TotalPlayers);
+		FParse::Value(FCommandLine::Get(), TEXT("TotalPlayers="), ExpectedPlayers);
 		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
-		PlayerDensity = TotalPlayers;
+		PlayerDensity = ExpectedPlayers;
 		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
 		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
 	}
@@ -119,10 +139,10 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		FString TotalPlayersString, PlayerDensityString, TotalNPCsString;
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{
-			TotalPlayers = FCString::Atoi(*TotalPlayersString);
+			ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
 		}
 		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
-		PlayerDensity = TotalPlayers;
+		PlayerDensity = ExpectedPlayers;
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr)
 		{
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
@@ -135,7 +155,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 			}
 		}
 	}
-	NumPlayerClusters = FMath::CeilToInt(TotalPlayers / static_cast<float>(PlayerDensity));
+	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
@@ -259,7 +279,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	CheckInitCustomSpawning();
+	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
 	{
