@@ -37,7 +37,8 @@ private:
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	FRandomStream RNG;
 	int32 NPCSToSpawn;
-	float SecondsTillPlayerCheck;
+	void CheckConnections();
+	void BeginPlay() override;
 	void Tick(float DeltaSeconds) override;
 	bool ShouldUseCustomSpawning();
 	void CheckCmdLineParameters();
