@@ -83,20 +83,23 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (NPCSToSpawn > 0 && HasAuthority())
+	if (HasAuthority())
 	{
-		int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
-		int32 SpawnPointIndex = Cluster * PlayerDensity;
-		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-		SpawnNPC(SpawnPoint->GetActorLocation());
-	}
-	
-	if (HasAuthority() && SecondsTillPlayerCheck > 0.0f)
-	{
-		SecondsTillPlayerCheck -= DeltaSeconds;
-		if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != ExpectedPlayers)
+		if (NPCSToSpawn > 0)
 		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
+			int32 SpawnPointIndex = Cluster * PlayerDensity;
+			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
+			SpawnNPC(SpawnPoint->GetActorLocation());
+		}
+
+		if (SecondsTillPlayerCheck > 0.0f)
+		{
+			SecondsTillPlayerCheck -= DeltaSeconds;
+			if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != ExpectedPlayers)
+			{
+				UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			}
 		}
 	}
 }
