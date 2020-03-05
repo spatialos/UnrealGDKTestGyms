@@ -24,7 +24,7 @@ private:
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
 	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
-	int32 TotalPlayers;
+	int32 ExpectedPlayers;
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
