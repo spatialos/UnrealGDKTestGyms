@@ -44,25 +44,9 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bUseSeamlessTravel = false;
 
 	NPCSToSpawn = 0;
+	SecondsTillPlayerCheck = 15.0f * 60.0f;
 
 	RNG.Initialize(123456); // Ensure we can do deterministic runs
-}
-
-void ABenchmarkGymGameMode::BeginPlay()
-{	
-	FTimerHandle Timer;
-	GetWorldTimerManager().SetTimer(Timer, this, &ABenchmarkGymGameMode::CheckConnections, 15.0f*60.0f, false, 0.0f);
-}
-
-void ABenchmarkGymGameMode::CheckConnections()
-{
-	if (HasAuthority())
-	{
-		if (GetNumPlayers() != ExpectedPlayers)
-		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-		}
-	}
 }
 
 void ABenchmarkGymGameMode::CheckCmdLineParameters()
@@ -107,6 +91,15 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			int32 SpawnPointIndex = Cluster * PlayerDensity;
 			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
 			SpawnNPC(SpawnPoint->GetActorLocation());
+		}
+
+		if (SecondsTillPlayerCheck > 0.0f)
+		{
+			SecondsTillPlayerCheck -= DeltaSeconds;
+			if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != ExpectedPlayers)
+			{
+				UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			}
 		}
 	}
 }
