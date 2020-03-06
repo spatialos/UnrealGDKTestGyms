@@ -235,6 +235,14 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 	}
 }
 
+void ABenchmarkGymGameMode::Logout(AController* Controller)
+{
+	if(SecondsTillPlayerCheck > 0.0f)
+	{
+		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d, controller="), ExpectedPlayers, GetNumPlayers(), *Controller->GetName());
+	}
+}
+
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 {
 	NPCSToSpawn = NumNPCs;
