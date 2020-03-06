@@ -28,6 +28,11 @@ static FAutoConsoleVariableRef CVarTestGymsRepDisableSpatialRebuilds(TEXT("TestG
 
 UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 {
+	static ConstructorHelpers::FClassFinder<AActor> ReplicatedBP(TEXT("/Game/Actors/ReplicatedActor"));
+	if (ReplicatedBP.Class != nullptr)
+	{
+		ReplicatedBPClass = ReplicatedBP.Class;
+	}
 }
 
 void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize, float ServerMaxTickRate)
@@ -94,6 +99,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo( APlayerState::StaticClass(),							EClassRepNodeMapping::NotRouted);				// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
 	AddInfo( AReplicationGraphDebugActor::StaticClass(),			EClassRepNodeMapping::NotRouted);				// Not supported
 	AddInfo( AInfo::StaticClass(),									EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
+	AddInfo( ReplicatedBPClass,										EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
 
  	if (bUsingSpatial)
  	{
@@ -337,6 +343,7 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 	{
 		case EClassRepNodeMapping::NotRouted:
 		{
+			UE_LOG(LogTemp, Warning, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
 			break;
 		}
 		
@@ -364,6 +371,7 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		
 		case EClassRepNodeMapping::Spatialize_Dynamic:
 		{
+			UE_LOG(LogTemp, Warning, TEXT("RouteAddNetworkActorToNodes: Dynamic - %s"), *GetNameSafe(ActorInfo.GetActor()));
 			GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
 			break;
 		}
@@ -463,7 +471,7 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorList
 			const bool bReplicatePS = (Params.ConnectionManager.ConnectionId % 2) == (Params.ReplicationFrameNum % 2);
 			if (bReplicatePS)
 			{
-				// Always return the player state to the owning player. Simulated proxy player states are handled by UShooterReplicationGraphNode_PlayerStateFrequencyLimiter
+				// Always return the player state to the owning player. Simulated proxy player states are handled by UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
 				if (APlayerState* PS = PC->PlayerState)
 				{
 					if (!bInitializedPlayerState)
@@ -717,7 +725,7 @@ void UTestGymsReplicationGraph::PrintRepNodePolicies()
 	}
 }
 
-FAutoConsoleCommandWithWorldAndArgs ShooterPrintRepNodePoliciesCmd(TEXT("TestGymsRepGraph.PrintRouting"),TEXT("Prints how actor classes are routed to RepGraph nodes"),
+FAutoConsoleCommandWithWorldAndArgs TestGymsPrintRepNodePoliciesCmd(TEXT("TestGymsRepGraph.PrintRouting"),TEXT("Prints how actor classes are routed to RepGraph nodes"),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 	{
 		for (TObjectIterator<UTestGymsReplicationGraph> It; It; ++It)

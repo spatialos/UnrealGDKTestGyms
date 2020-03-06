@@ -59,6 +59,9 @@ public:
 	UReplicationGraphNode_GridSpatialization2D* GridNode;
 
 	UPROPERTY()
+	TSubclassOf<AActor> ReplicatedBPClass;
+
+	UPROPERTY()
 	UReplicationGraphNode_ActorList* AlwaysRelevantNode;
 
 	TMap<FName, FActorRepListRefView> AlwaysRelevantStreamingLevelActors;
