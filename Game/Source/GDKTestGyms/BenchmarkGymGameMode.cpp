@@ -96,10 +96,18 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		if (SecondsTillPlayerCheck > 0.0f)
 		{
 			SecondsTillPlayerCheck -= DeltaSeconds;
-			if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != ExpectedPlayers)
+			if (SecondsTillPlayerCheck <= 0.0f)
 			{
-				// This log is used by the NFR pipeline to indicate if a client failed to connect
-				UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				if (GetNumPlayers() != ExpectedPlayers)
+				{
+					// This log is used by the NFR pipeline to indicate if a client failed to connect
+					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				}
+				else
+				{
+					// This log is used by the NFR pipeline to indicate if a client failed to connect
+					UE_LOG(LogBenchmarkGym, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				}
 			}
 		}
 	}
