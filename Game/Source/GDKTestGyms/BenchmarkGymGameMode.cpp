@@ -105,7 +105,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 				}
 				else
 				{
-					// This log is used by the NFR pipeline to indicate if a client failed to connect
+					// Useful for NFR log inspection
 					UE_LOG(LogBenchmarkGym, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
 				}
 			}
