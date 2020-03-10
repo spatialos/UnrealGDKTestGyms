@@ -54,15 +54,23 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
 
 ##### Ability locking gym
-* Demonstrates that an actor is locked from crossing servers while a gameplay ability is running on it.
-* Contains a cube moving across a server boundary, with a gameplay ability granted to it which takes 4 seconds to complete.
-* The ability counts from 1 to 5 over 4 seeconds, and sets a replicated variable on the cube. Whenever the value is changed, a text hovering above the actor is updated, to visualise the current value as replicated on the client.
-* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
-  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
-  * Set "Instances to launch in editor" to 4
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
-* Press "T" to start the ability. The text above the cube should count from 1 to 5, and while the ability is running, the cube should not migrate to another server, even when it is physically in the authority region of another server.
+* Demonstrates that:
+  * An Actor will be locked from crossing servers while a gameplay ability is running on it.
+  * A player ownership hierarchy of Actors (controller, character & state) will not migrate while one Actor in the hierarchy is locked.
+* Contains:
+  * a cube moving across a server boundary, with a gameplay ability granted to it which takes 4 seconds to complete.
+  * a player with a gameplay ability granted to it which takes 4 seconds to complete.
+* To setup the gym:
+  * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+    * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+    * Set "Instances to launch in editor" to 4
+  * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
+  * If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
+* To test the gym:
+  * Press "Q" to start the ability on the player.
+  * Press "T" to start the ability on the cube. 
+  * The printing in the top-right should count from 1 to 5 over 4 seconds (and for the cube this is also visualized in the client). 
+  * While the ability is running, the player Actor group or cube should not migrate to another server, even when the relevant Actor is physically in the authority region of another server.
 
 ##### FASHandover gym
 * Fast Array Serialization handover gym.
@@ -139,5 +147,12 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 	"Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Editor Multiplayer Mode" = "Play As Client"
 * Also ensure that you are not using zoning or any offloading.
+
+##### Simulated GameplayTask gym
+* Tests replicating simulated GameplayTasks to clients.
+* Validation
+  * Play with 2 clients connected.
+  * Each connected client should display a log with "UTask_DelaySimulated::InitSimulatedTask".
+  * There should not be logs saying "Error: Simulated task is simulating on the owning client".
 -----
 2019-11-15: Page added with editorial review

@@ -11,16 +11,18 @@ public class GDKTestGyms : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[] 
 			{
-                "Core",
-                "CoreUObject",
-                "Engine",
-                "EngineSettings",
-                "InputCore",
-                "Sockets",
-                "OnlineSubsystemUtils",
-                "PhysXVehicles",
-                "SpatialGDK",
-                "ReplicationGraph"
-            });
-    }
+				"Core",
+				"CoreUObject",
+				"Engine",
+        "EngineSettings",
+				"GameplayAbilities",
+				"GameplayTasks",
+				"InputCore",
+				"Sockets",
+				"OnlineSubsystemUtils",
+				"PhysXVehicles",
+				"SpatialGDK",
+        "ReplicationGraph"
+			});
+	}
 }
