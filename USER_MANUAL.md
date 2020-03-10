@@ -87,8 +87,8 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
 * To test the gym:
   * Press "Q" to start the ability on the player.
-  * Press "T" to start the ability on the cube. 
-  * The printing in the top-right should count from 1 to 5 over 4 seconds (and for the cube this is also visualized in the client). 
+  * Press "T" to start the ability on the cube.
+  * The printing in the top-right should count from 1 to 5 over 4 seconds (and for the cube this is also visualized in the client).
   * While the ability is running, the player Actor group or cube should not migrate to another server, even when the relevant Actor is physically in the authority region of another server.
 
 ##### FASHandover gym
@@ -113,7 +113,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   1. On play, a replicated array of references to actors is filled with the map's content.
   2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
-  
+
 ##### Net reference test gym
 * Test that references to replicated actors are stable when actors go in and out of relevance
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
@@ -148,7 +148,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
-    * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger). 
+    * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger).
     * Show a count of how many RPCs have been received which is shown above the cube.
 * To setup the gym:
   * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
@@ -158,7 +158,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 
 ##### World composition gym
 * Tests level loading and unloading.
-* The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level. 
+* The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the assocaited level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
 * Moving away from the marked area will cause the level to be unloaded on the client. When it unloads the actor should disappear.
 * Validation:
