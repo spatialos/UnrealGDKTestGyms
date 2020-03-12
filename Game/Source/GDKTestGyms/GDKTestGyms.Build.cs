@@ -14,7 +14,7 @@ public class GDKTestGyms : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
-        "EngineSettings",
+				"EngineSettings",
 				"GameplayAbilities",
 				"GameplayTasks",
 				"InputCore",
@@ -22,7 +22,7 @@ public class GDKTestGyms : ModuleRules
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
 				"SpatialGDK",
-        "ReplicationGraph"
+				"ReplicationGraph"
 			});
 	}
 }
