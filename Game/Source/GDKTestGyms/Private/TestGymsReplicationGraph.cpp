@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 /**
 *	
@@ -343,7 +343,7 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 	{
 		case EClassRepNodeMapping::NotRouted:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
+			UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
 			break;
 		}
 		
@@ -371,7 +371,6 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		
 		case EClassRepNodeMapping::Spatialize_Dynamic:
 		{
-			UE_LOG(LogTemp, Warning, TEXT("RouteAddNetworkActorToNodes: Dynamic - %s"), *GetNameSafe(ActorInfo.GetActor()));
 			GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
 			break;
 		}
@@ -675,8 +674,15 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
-		ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
-		ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
+		if (CurViewer.InViewer)
+		{
+			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
+		}
+
+		if (CurViewer.ViewTarget)
+		{
+			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
+		}
 
 		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
 		{
