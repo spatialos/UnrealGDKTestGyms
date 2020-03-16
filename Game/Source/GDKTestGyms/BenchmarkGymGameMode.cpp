@@ -96,9 +96,18 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		if (SecondsTillPlayerCheck > 0.0f)
 		{
 			SecondsTillPlayerCheck -= DeltaSeconds;
-			if (SecondsTillPlayerCheck <= 0.0f && GetNumPlayers() != ExpectedPlayers)
+			if (SecondsTillPlayerCheck <= 0.0f)
 			{
-				UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				if (GetNumPlayers() != ExpectedPlayers)
+				{
+					// This log is used by the NFR pipeline to indicate if a client failed to connect
+					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				}
+				else
+				{
+					// Useful for NFR log inspection
+					UE_LOG(LogBenchmarkGym, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				}
 			}
 		}
 	}
@@ -232,6 +241,15 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		const FVector SpawnLocation = FVector(X, Y, Z);
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
+	}
+}
+
+void ABenchmarkGymGameMode::Logout(AController* Controller)
+{
+	if(SecondsTillPlayerCheck > 0.0f)
+	{
+		// This log is used by the NFR pipeline to indicate if a client disconnected
+		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d, Controller=%s"), ExpectedPlayers, GetNumPlayers(), *Controller->GetName());
 	}
 }
 
