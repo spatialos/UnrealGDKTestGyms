@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{7D2A99D4-4B0B-90F7-522D-C4AC9D0F454F}",
+	"EngineAssociation": "",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -16,10 +16,6 @@
 	"Plugins": [
 		{
 			"Name": "ReplicationGraph",
-			"Enabled": true
-		},
-		{
-			"Name": "SpatialGDK",
 			"Enabled": true
 		}
 	]

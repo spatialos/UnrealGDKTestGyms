@@ -37,7 +37,7 @@
         }
       },
       {
-        "layer": "AIWorker",
+        "layer": "NPCWorker",
         "rectangle_grid": {
             "cols": 1,
             "rows": 1
