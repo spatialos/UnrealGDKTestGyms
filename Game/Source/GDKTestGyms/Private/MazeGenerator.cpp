@@ -12,13 +12,13 @@ AMazeGenerator::AMazeGenerator()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	Seed = 0;
 	WidthInMetres = 150;
 	LengthInMetres = 100;
 	Rows = 2;
 	Cols = 3;
 	DefaultWallScale = FVector(1, 1, 2.5);
 	CreateWallWeight = 1;
-	Seed = 0;
 
 	Walls = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Walls"));
 	SetRootComponent(Walls);

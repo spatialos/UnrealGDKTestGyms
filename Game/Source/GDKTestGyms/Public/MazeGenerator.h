@@ -36,32 +36,29 @@ public:
 	// Sets default values for this actor's properties
 	AMazeGenerator();
 
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
+	int Seed;
+
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	float WidthInMetres;
 
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	float LengthInMetres;
-
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+		
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	int Rows;
 
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	int Cols;
 
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	FVector DefaultWallScale;
 
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	float CreateWallWeight;
 
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
+	UPROPERTY(BlueprintReadOnly, EditInstanceOnly, Category = "Maze")
 	TArray<FActorDistribution> ActorDistributions;
-
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
-	bool bSpawnActorDistributions;
-
-	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
-	int Seed;
 
 	UPROPERTY(BlueprintReadWrite)
 	FRandomStream RandomStream;
