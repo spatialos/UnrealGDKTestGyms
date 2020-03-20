@@ -5,9 +5,9 @@
 
 #include "Engine/EngineTypes.h"
 
-void ACrossServerTakeDamageActor::SendDamageRPC(AController* Controller)
+void ACrossServerTakeDamageActor::TestTakeDamage(AController* Controller)
 {
 	FPointDamageEvent DamageEvent;
 	DamageEvent.HitInfo.ImpactPoint = DamagePoint;
-	TakePointDamageCrossServer(10.0f, DamageEvent, Controller, this);
+	TakeDamage(10.0f, DamageEvent, Controller, this);
 }

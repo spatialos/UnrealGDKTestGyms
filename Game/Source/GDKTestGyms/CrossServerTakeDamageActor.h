@@ -19,5 +19,5 @@ public:
 	FVector_NetQuantize DamagePoint;
 
 	UFUNCTION(BlueprintCallable)
-	void SendDamageRPC(AController* Controller);
+	void TestTakeDamage(AController* Controller);
 };
