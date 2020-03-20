@@ -14,13 +14,15 @@ public class GDKTestGyms : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"EngineSettings",
 				"GameplayAbilities",
 				"GameplayTasks",
 				"InputCore",
 				"Sockets",
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
-				"SpatialGDK"
+				"SpatialGDK",
+				"ReplicationGraph"
 			});
 	}
 }
