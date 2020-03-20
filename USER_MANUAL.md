@@ -54,9 +54,9 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * To test the gym:
     * Move the character until the inspector shows that the EntityACL and other server simulated components are on different workers
     * Press "R" to add the TestDynamicComponent to the character.
-    * Observe the TestDynamicComponent added to the character components list in the inspector (and on the EntityACL)
+    * Observe the TestDynamicComponent added to the character's components list in the inspector, the ComponentPresence list increments in size, and the relevant component ID is also added to the EntityACL (you may need to search through generated schema to find the relevant component ID).
     * Press "T" to remove the TestDynamicComponent from the character.
-
+    * Observe the TestDynamicComponent removed from the character's components list in the inspector, and the ComponentPresence list decrements in size.
 
 ##### Handover gym
 * Demonstrates that:
