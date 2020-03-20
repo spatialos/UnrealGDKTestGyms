@@ -16,6 +16,9 @@ class ACrossServerTakeDamageActor : public AActor
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector_NetQuantize RadialDamageOrigin;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector_NetQuantize DamagePoint;
 
 	UFUNCTION(BlueprintCallable)
