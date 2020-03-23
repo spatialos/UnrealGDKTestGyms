@@ -178,5 +178,30 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Play with 2 clients connected.
   * Each connected client should display a log with "UTask_DelaySimulated::InitSimulatedTask".
   * There should not be logs saying "Error: Simulated task is simulating on the owning client".
+
+##### Client Net Ownership gym
+* Demonstrates that:
+  * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
+* Contains:
+  * A character with a `PlayerController` with key bindings for:
+    * (Q) Making the client net-owner for the cube,
+    * (R) Sending a server RPC from the client on the cube,
+    * (T) Removing the client as the net-owner for the cube.
+* To setup the gym:
+  * Adjust the settings in `SpatialOS Settings` -> `Editor Settings` -> `Launch` -> `Launch configuration file options` -> `Server Workers` to include `4` servers in a `2x2` grid.
+    * Set both `Rectangle grid column count` and `Rectangle grid row count` to 2
+    * Set `Instances to launch in editor` to `4`
+* To test the gym:
+    * Press `Q` to make the client net-owner for the cube.
+    * Observe that:
+      * the `SpatialDebugger` authority icon update to the virtual worker ID relating the character.
+      * in the inspector, the `owner` property on the cube entity is updated to the `PlayerController` and, in the list of component authorities for the cube entity, the `UnrealClientEndpoint` component (ID `9978`) is set to the client worker ID,
+    * Press `R` to send a server RPC from the client on the cube.
+    * Observe that:
+      * the overhead value above the cube is incremented (this is set by the server and replicated to the client).
+    * Press `T` to remove the client as net-owner for the cube.
+    * Observe that:
+      * Pressing `R` no longer increments the overhead value,
+      * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignment as both unset.
 -----
 2019-11-15: Page added with editorial review
