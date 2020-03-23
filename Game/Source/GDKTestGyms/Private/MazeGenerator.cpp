@@ -5,6 +5,9 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "SpatialGDK/Public/Utils/SpatialLatencyPayload.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetArrayLibrary.h"
+
+DEFINE_LOG_CATEGORY(LogMapGenerator);
 
 // Sets default values
 AMazeGenerator::AMazeGenerator()
@@ -77,5 +80,92 @@ void AMazeGenerator::AddInnerWalls()
 				}
 			}
 		}
+	}
+}
+
+void AMazeGenerator::AddOuterWalls()
+{
+	AddWall(0, WidthInMetres / 2, LengthInMetres, false);
+	AddWall(0, WidthInMetres / -2, LengthInMetres, false);
+	AddWall(LengthInMetres / 2, 0, WidthInMetres, true);
+	AddWall(LengthInMetres / -2, 0, WidthInMetres, true);
+}
+
+void AMazeGenerator::ClearMazeWalls()
+{
+	Walls->ClearInstances();
+}
+
+void AMazeGenerator::GenerateMazeWalls()
+{
+	RandomStream.Initialize(Seed);
+	ClearMazeWalls();
+	AddOuterWalls();
+	AddInnerWalls();
+}
+
+void AMazeGenerator::ClearDistributedActors()
+{
+	const TArray<USceneComponent*> AttachedComponents = Walls->GetAttachChildren();
+	
+	for (const auto& Comp : AttachedComponents)
+	{
+		if (AActor* AttachedOwner = Comp->GetOwner())
+		{
+			AttachedOwner->Destroy();
+		}
+	}
+}
+
+void AMazeGenerator::SpawnDistributedActors()
+{
+	ClearDistributedActors();
+
+	RandomStream.Initialize(Seed);
+
+	int MaxSpawnPoints = Rows * Cols;
+	TArray<int> SpawnPoints;
+	SpawnPoints.Init(0, MaxSpawnPoints);
+	for (int i = 0; i < MaxSpawnPoints; i++) {
+		SpawnPoints[i] = i;
+	}
+	for (int i = 0; i < MaxSpawnPoints; i++)
+	{
+		int index = RandomStream.RandRange(0, MaxSpawnPoints);
+		if (i != index)
+		{
+			SpawnPoints.SwapMemory(i, index);
+		}
+	}
+
+	int SpawnedCount = 0;
+
+	for (const FActorDistribution& Distribution : ActorDistributions)
+	{
+		for (int i = 0; i < Distribution.NumberToSpawn; i++)
+		{
+			if (i + SpawnedCount >= MaxSpawnPoints)
+			{
+				UE_LOG(LogMapGenerator, Warning, TEXT("Ran out of spawn points trying to spawn %s. Max Spawn Points: %d"), *GetNameSafe(Distribution.ActorClass), MaxSpawnPoints);
+				return;
+			}
+
+			int X = SpawnPoints[SpawnedCount + i] / Rows;
+			int Y = SpawnPoints[SpawnedCount + i] % Rows;
+			
+			float CellLength = LengthInMetres * 100 / Rows;
+			float CellWidth = LengthInMetres * 100 / Cols;
+			
+			FVector CellOffset = FVector(CellLength * X, CellWidth * Y, 0);
+			FVector CellMiddle = FVector(CellLength / 2, CellWidth / 2, 0);
+			FVector Corner = GetActorLocation() - FVector(LengthInMetres * 100/2, WidthInMetres * 100/2, 0);
+
+			FVector SpawnLocation = Corner + CellOffset + CellMiddle + Distribution.LocalOffset;
+
+			AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(Distribution.ActorClass, SpawnLocation, FRotator::ZeroRotator);
+			SpawnedActor->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false));
+		}
+		
+		SpawnedCount += Distribution.NumberToSpawn;
 	}
 }
