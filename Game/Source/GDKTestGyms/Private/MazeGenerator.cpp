@@ -12,7 +12,7 @@ DEFINE_LOG_CATEGORY(LogMapGenerator);
 // Sets default values
 AMazeGenerator::AMazeGenerator()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Don't tick.
 	PrimaryActorTick.bCanEverTick = false;
 
 	Seed = 0;
@@ -40,7 +40,7 @@ void AMazeGenerator::AddWall(float X, float Y, float Length, bool bRotate)
 	FTransform Transform;
 	Transform.SetLocation(FVector(X * 100.0, Y * 100.0, DefaultWallScale.Z * 50.0));
 	Transform.SetRotation(bRotate ?  FRotator(0, 90, 0).Quaternion() : FQuat::Identity);
-	Transform.SetScale3D(FVector(Length + 1, DefaultWallScale.Y, DefaultWallScale.Z));
+	Transform.SetScale3D(FVector(Length + DefaultWallScale.Y, DefaultWallScale.Y, DefaultWallScale.Z));
 
 	Walls->AddInstance(Transform);
 }
@@ -126,12 +126,13 @@ void AMazeGenerator::SpawnDistributedActors()
 	int MaxSpawnPoints = Rows * Cols;
 	TArray<int> SpawnPoints;
 	SpawnPoints.Init(0, MaxSpawnPoints);
-	for (int i = 0; i < MaxSpawnPoints; i++) {
+	for (int i = 0; i < MaxSpawnPoints; i++)
+	{
 		SpawnPoints[i] = i;
 	}
 	for (int i = 0; i < MaxSpawnPoints; i++)
 	{
-		int index = RandomStream.RandRange(0, MaxSpawnPoints);
+		int index = RandomStream.RandRange(0, MaxSpawnPoints - 1);
 		if (i != index)
 		{
 			SpawnPoints.SwapMemory(i, index);
