@@ -11,7 +11,11 @@
 USpatialLockingComponent::USpatialLockingComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+#if ENGINE_MINOR_VERSION <= 23
+	bReplicates = true;
+#else
 	SetIsReplicatedByDefault(true);
+#endif
 }
 
 void USpatialLockingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
