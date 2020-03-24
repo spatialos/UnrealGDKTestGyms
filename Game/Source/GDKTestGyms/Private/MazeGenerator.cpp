@@ -163,7 +163,9 @@ void AMazeGenerator::SpawnDistributedActors()
 
 			FVector SpawnLocation = Corner + CellOffset + CellMiddle + Distribution.LocalOffset;
 
-			AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(Distribution.ActorClass, SpawnLocation, FRotator::ZeroRotator);
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+			AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(Distribution.ActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 			SpawnedActor->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false));
 		}
 		
