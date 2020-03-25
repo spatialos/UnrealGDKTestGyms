@@ -7,15 +7,15 @@
     },
     "chunk_edge_length_meters": 50,
     "legacy_flags": [
-        {
-          "name": "bridge_qos_max_timeout",
-          "value": "0"
-        },
-        {
-          "name": "bridge_soft_handover_enabled",
-          "value": "false"
-        }
-      ],
+      {
+        "name": "bridge_qos_max_timeout",
+        "value": "0"
+      },
+      {
+        "name": "bridge_soft_handover_enabled",
+        "value": "false"
+      }
+    ],
     "snapshots": {
       "snapshot_write_period_seconds": 0
     }
@@ -23,13 +23,13 @@
   "load_balancing": {
     "layer_configurations": [
       {
-          "layer": "UnrealWorker",
-          "rectangle_grid": {
-              "cols": 1,
-              "rows": 1
-          },
-          "options": {
-            "manual_worker_connection_only": true
+        "layer": "UnrealWorker",
+        "rectangle_grid": {
+          "cols": 1,
+          "rows": 1
+        },
+        "options": {
+          "manual_worker_connection_only": true
         }
       }
     ]
@@ -37,7 +37,7 @@
   "workers": [
     {
       "worker_type": "UnrealWorker",
-      "flags" : [],
+      "flags": [],
       "permissions": [
         {
           "all": {}
