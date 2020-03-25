@@ -42,16 +42,36 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 ##### Empty gym
 * The template for creating new gyms. Copy this to use as a starting point for your own gym.
 
+##### Dynamic Components gym
+* Demonstrates that:
+  * Dynamic component are correctly added to and removed from a replicated Actor (with load-balancing enabled).
+* Contains:
+  * A character with a PlayerController with key bindings for adding and removing a component.
+* To setup the gym:
+  * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+    * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+    * Set "Instances to launch in editor" to 4
+* To test the gym:
+    * Move the character until the inspector shows that the EntityACL and other server simulated components are on different workers
+    * Press "R" to add the TestDynamicComponent to the character.
+    * Observe the TestDynamicComponent added to the character's components list in the inspector, the ComponentPresence list increments in size, and the relevant component ID is also added to the EntityACL (you may need to search through generated schema to find the relevant component ID).
+    * Press "T" to remove the TestDynamicComponent from the character.
+    * Observe the TestDynamicComponent removed from the character's components list in the inspector, and the ComponentPresence list decrements in size.
+
 ##### Handover gym
-* Demonstrates that an entity can cross from one area of authority to another.
-* Contains a set of cubes that moves back and forth across a floor.
-* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
-  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
-  * Set "Instances to launch in editor" to 4
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly the authority and authority intent of each cube can be seen to change as it moves across the floor.
-* Press "L" to toggle locking actor migration.
-* Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
+* Demonstrates that:
+  * Entities correctly migrate between area of authority.
+* Contains:
+  * A set of cubes that moves back and forth across a floor.
+* To setup the gym:
+  * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+    * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+    * Set "Instances to launch in editor" to 4
+* To test the gym:
+  * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
+  * Press "L" to toggle locking actor migration.
+  * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
+
 
 ##### Ability locking gym
 * Demonstrates that:
@@ -64,7 +84,6 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
     * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
     * Set "Instances to launch in editor" to 4
-  * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
   * If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
 * To test the gym:
   * Press "Q" to start the ability on the player.
@@ -124,12 +143,17 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
 
 ##### Server to server RPC gym
-* Tests server to server RPCs are working. Sends RPCs to actors owned by different servers and visualises when they are received.
-* Contains a set of cubes placed in four quadrants of the level. RPCs are sent randomly from each worker to the other cubes in the level. The cubes then change colour to indicate which worker the owning worker just received an RPC from. The colours match the inspector colours used by the spatial debugger, in order to match colour to worker. Each cube also shows a count of how many RPCs have been received which is shown above the cube.
-* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
-  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
-  * Set "Instances to launch in editor" to 4
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
+* Demonstrates that:
+  * Actors owned by different servers correctly send server-to-server RPCs.
+* Contains:
+  * A set of cubes placed in four quadrants of the level which:
+    * Randomly send RPCs from each worker to the other cubes in the level.
+    * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger). 
+    * Show a count of how many RPCs have been received which is shown above the cube.
+* To setup the gym:
+  * Adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+    * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+    * Set "Instances to launch in editor" to 4
 * If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym

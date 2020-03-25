@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 
 #include "BenchmarkGymGameMode.h"
@@ -44,25 +44,9 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bUseSeamlessTravel = false;
 
 	NPCSToSpawn = 0;
+	SecondsTillPlayerCheck = 15.0f * 60.0f;
 
 	RNG.Initialize(123456); // Ensure we can do deterministic runs
-}
-
-void ABenchmarkGymGameMode::BeginPlay()
-{	
-	FTimerHandle Timer;
-	GetWorldTimerManager().SetTimer(Timer, this, &ABenchmarkGymGameMode::CheckConnections, 15.0f*60.0f, false, 0.0f);
-}
-
-void ABenchmarkGymGameMode::CheckConnections()
-{
-	if (HasAuthority())
-	{
-		if (GetNumPlayers() != ExpectedPlayers)
-		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-		}
-	}
 }
 
 void ABenchmarkGymGameMode::CheckCmdLineParameters()
@@ -107,6 +91,24 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			int32 SpawnPointIndex = Cluster * PlayerDensity;
 			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
 			SpawnNPC(SpawnPoint->GetActorLocation());
+		}
+
+		if (SecondsTillPlayerCheck > 0.0f)
+		{
+			SecondsTillPlayerCheck -= DeltaSeconds;
+			if (SecondsTillPlayerCheck <= 0.0f)
+			{
+				if (GetNumPlayers() != ExpectedPlayers)
+				{
+					// This log is used by the NFR pipeline to indicate if a client failed to connect
+					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				}
+				else
+				{
+					// Useful for NFR log inspection
+					UE_LOG(LogBenchmarkGym, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+				}
+			}
 		}
 	}
 }
@@ -239,6 +241,15 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		const FVector SpawnLocation = FVector(X, Y, Z);
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
+	}
+}
+
+void ABenchmarkGymGameMode::Logout(AController* Controller)
+{
+	if(SecondsTillPlayerCheck > 0.0f)
+	{
+		// This log is used by the NFR pipeline to indicate if a client disconnected
+		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d, Controller=%s"), ExpectedPlayers, GetNumPlayers(), *Controller->GetName());
 	}
 }
 
