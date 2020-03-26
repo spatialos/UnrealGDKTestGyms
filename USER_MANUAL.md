@@ -194,14 +194,14 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * To test the gym:
     * Press `Q` to make the client net-owner for the cube.
     * Observe that:
-      * the `SpatialDebugger` authority icon update to the virtual worker ID relating the character.
-      * in the inspector, the `owner` property on the cube entity is updated to the `PlayerController` and, in the list of component authorities for the cube entity, the `UnrealClientEndpoint` component (ID `9978`) is set to the client worker ID,
+      * the `SpatialDebugger` authority icon updates to the virtual worker ID relating to the character.
+      * in the inspector, the `owner` property on the cube entity is updated to the `PlayerController` and, in the list of component authorities for the cube entity, the `UnrealClientEndpoint` component (ID `9978`) is set to the client worker ID.
     * Press `R` to send a server RPC from the client on the cube.
     * Observe that:
       * the overhead value above the cube is incremented (this is set by the server and replicated to the client).
     * Press `T` to remove the client as net-owner for the cube.
     * Observe that:
-      * Pressing `R` no longer increments the overhead value,
-      * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignment as both unset.
+      * pressing `R` no longer increments the overhead value,
+      * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
 -----
 2019-11-15: Page added with editorial review
