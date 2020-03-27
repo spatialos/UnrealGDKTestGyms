@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "NFRGameMode.h"
 #include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
@@ -12,7 +13,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
  *
  */
 UCLASS()
-class GDKTESTGYMS_API ABenchmarkGymGameMode : public AGameModeBase
+class GDKTESTGYMS_API ABenchmarkGymGameMode : public ANFRGameMode
 {
 	GENERATED_BODY()
 public:
