@@ -178,7 +178,6 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Play with 2 clients connected.
   * Each connected client should display a log with "UTask_DelaySimulated::InitSimulatedTask".
   * There should not be logs saying "Error: Simulated task is simulating on the owning client".
-
 ##### Client Net Ownership gym
 * Demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
@@ -203,5 +202,15 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
     * Observe that:
       * pressing `R` no longer increments the overhead value,
       * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
+
+##### Server to server Take Damage RPC gym
+* Tests AActor::TakeDamage.
+* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon recieving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
+* To setup the gym, adjust the settings in "SpatialOS Settings -> Editor Settings -> Launch -> Launch configuration file options -> Server Workers" to include 4 servers in a 2x2 grid.
+  * Set both "Rectangle grid column count" and "Rectangle grid row count" to 2
+  * Set "Instances to launch in editor" to 4
+* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
+* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermitantly. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+
 -----
 2019-11-15: Page added with editorial review
