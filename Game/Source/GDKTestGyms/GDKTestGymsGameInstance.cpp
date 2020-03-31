@@ -12,6 +12,15 @@ void UGDKTestGymsGameInstance::Init()
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
 }
 
+void UGDKTestGymsGameInstance::OnStart()
+{
+	ENetMode NetMode = GetWorld()->GetNetMode();
+	if (NetMode == NM_Client || NetMode == NM_Standalone)
+	{
+		GetEngine()->SetMaxFPS(60.0f);
+	}
+}
+
 bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
 {
 	float Alpha = 0.8f;
