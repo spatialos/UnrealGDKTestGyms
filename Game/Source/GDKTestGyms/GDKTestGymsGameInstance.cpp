@@ -17,7 +17,7 @@ void UGDKTestGymsGameInstance::OnStart()
 	ENetMode NetMode = GetWorld()->GetNetMode();
 	if (NetMode == NM_Client || NetMode == NM_Standalone)
 	{
-		GEngine->SetMaxFPS(60.0f);
+		GetEngine()->SetMaxFPS(60.0f);
 	}
 }
 
