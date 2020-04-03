@@ -9,6 +9,9 @@
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "DeterministicBlackboardValues.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 
@@ -45,8 +48,33 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
+}
 
-	RNG.Initialize(123456); // Ensure we can do deterministic runs
+void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
+{
+	const float ROAM_RADIUS = 7500.0f;
+	{
+		FRandomStream PlayerStream;
+		PlayerStream.Initialize(123456); // Ensure we can do deterministic runs
+		for (int i = 0; i < ExpectedPlayers; i++)
+		{
+			FVector PointA = PlayerStream.VRand()*ROAM_RADIUS;
+			FVector PointB = PlayerStream.VRand()*ROAM_RADIUS;
+			PointA.Z = PointB.Z = 0.0f;
+			PlayerRunPoints.Push(RunPoints{ PointA, PointB });
+		}
+	}
+	{
+		FRandomStream NPCStream;
+		NPCStream.Initialize(654321);
+		for (int i = 0; i < TotalNPCs; i++)
+		{
+			FVector PointA = NPCStream.VRand()*ROAM_RADIUS;
+			FVector PointB = NPCStream.VRand()*ROAM_RADIUS;
+			PointA.Z = PointB.Z = 0.0f;
+			NPCRunPoints.Push(RunPoints{ PointA, PointB });
+		}
+	}
 }
 
 void ABenchmarkGymGameMode::CheckCmdLineParameters()
@@ -70,6 +98,8 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 		}
 
+		GenerateTestScenarioLocations();
+
 		SpawnNPCs(TotalNPCs);
 	}
 	else
@@ -87,10 +117,11 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 	{
 		if (NPCSToSpawn > 0)
 		{
-			int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
+			int32 NPCIndex = --NPCSToSpawn;
+			int32 Cluster = (NPCIndex) % NumPlayerClusters;
 			int32 SpawnPointIndex = Cluster * PlayerDensity;
 			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-			SpawnNPC(SpawnPoint->GetActorLocation());
+			SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
 		}
 
 		if (SecondsTillPlayerCheck > 0.0f)
@@ -108,6 +139,26 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 					// Useful for NFR log inspection
 					UE_LOG(LogBenchmarkGym, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
 				}
+			}
+		}
+
+		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+		{
+			if (AIControlledPlayers[i] == nullptr)
+			{
+				AIControlledPlayers.RemoveAt(i);
+				AIControllerPlayerRunIndexes.RemoveAt(i);
+				continue;
+			}
+
+			ACharacter* Player = AIControlledPlayers[i]->GetCharacter();
+			int Info = AIControllerPlayerRunIndexes[i];
+			if (UDeterministicBlackboardValues* Blackboard = (UDeterministicBlackboardValues*)Player->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()))
+			{
+				auto& Points = PlayerRunPoints[Info % PlayerRunPoints.Num()];
+				Blackboard->SetValues(Points.A, Points.B);
+				AIControlledPlayers.RemoveAt(i);
+				AIControllerPlayerRunIndexes.RemoveAt(i);
 			}
 		}
 	}
@@ -258,7 +309,7 @@ void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 	NPCSToSpawn = NumNPCs;
 }
 
-void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
+void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const RunPoints& RunLocations)
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)
@@ -273,19 +324,19 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 		return;
 	}
 
-	const float RandomSpawnOffset = 600.0f;
-	FVector RandomOffset = RNG.GetUnitVector()*RandomSpawnOffset;
-	if (RandomOffset.Z < 0.0f)
-	{
-		RandomOffset.Z = -RandomOffset.Z;
-	}
-	FVector RandomSpawn = SpawnLocation + RandomOffset;
+	FVector FixedSpawnLocation = SpawnLocation*0.9f + RunLocations.A*0.1f; // Move slightly away from the spawn location
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
 	//SpawnInfo.Owner = this;
 	//SpawnInfo.Instigator = NULL;
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), RandomSpawn, FRotator::ZeroRotator, SpawnInfo);
+	APawn* Pawn = World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), FixedSpawnLocation, FRotator::ZeroRotator, SpawnInfo);
+	checkf(Pawn, TEXT("Pawn failed to spawn at %s"), *FixedSpawnLocation.ToString());
+	//SetBlackboardValuesForAIController(Pawn->GetController(), RunLocations);
+	
+	UDeterministicBlackboardValues* Comp = (UDeterministicBlackboardValues*)Pawn->FindComponentByClass(UDeterministicBlackboardValues::StaticClass());
+	checkf(Comp, TEXT("Pawn must have a UDeterministicBlackboardValues component."));
+	Comp->SetValues(RunLocations.A, RunLocations.B);
 }
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
@@ -309,6 +360,9 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	
+	AIControlledPlayers.Push(Player);
+	AIControllerPlayerRunIndexes.Push(PlayersSpawned);
 
 	PlayersSpawned++;
 
