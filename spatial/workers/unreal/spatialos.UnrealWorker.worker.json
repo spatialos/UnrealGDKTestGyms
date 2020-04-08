@@ -76,7 +76,7 @@
         "${IMPROBABLE_WORKER_ID}",
         "+deploymentName",
         "${IMPROBABLE_DEPLOYMENT_NAME}",
-        "-tracePrefix",
+        "-traceMetadata",
         "${IMPROBABLE_DEPLOYMENT_NAME}",
         "+linkProtocol",
         "Tcp",
