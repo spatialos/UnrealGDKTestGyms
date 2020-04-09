@@ -217,6 +217,6 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Pressing "space" will switch the possession between the two cubes in the gym. This will also ensure that the unpossessed cube will still be owned by the player controller.
 * Pressing "enter" will print out information on the client regarding the owners of each cube. It will also send a server RPC that will print out if it was successfully processed on the server. 
 * Note initially one cube is possessed however the other cube does not have it's owner set to be the player controller. Hitting "enter" in this state will show that a server RPC called on a cube that does not have a player controller owner will not be processed.
-
+* Ensure load balancing is turned off.
 -----
 2019-11-15: Page added with editorial review
