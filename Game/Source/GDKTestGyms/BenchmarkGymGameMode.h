@@ -2,8 +2,11 @@
 
 #pragma once
 
+#include "BlackboardValues.h"
+#include "ControllerIntegerPair.h"
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+
 #include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
@@ -20,18 +23,12 @@ public:
 
 	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 private:
-	struct RunPoints // A list of points where AI run between.
-	{
-		FVector A;
-		FVector B;
-	};
-	TArray<RunPoints> PlayerRunPoints;
-	TArray<RunPoints> NPCRunPoints;
+	TArray<FBlackboardValues> PlayerRunPoints;
+	TArray<FBlackboardValues> NPCRunPoints;
 	void GenerateTestScenarioLocations();
 
 	UPROPERTY()
-	TArray<AController*> AIControlledPlayers;
-	TArray<int> AIControllerPlayerRunIndexes;
+	TArray<FControllerIntegerPair> AIControlledPlayers;
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.
@@ -56,7 +53,7 @@ private:
 	void ParsePassedValues();
 	void ClearExistingSpawnPoints();
 	void SpawnNPCs(int NumNPCs);
-	void SpawnNPC(const FVector& SpawnLocation, const RunPoints& RunLocations);
+	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 	// Generates a grid of points centered at (0, 0), as square-like as possible. A row has a fixed y-value, and a column a fixed x-value.
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
