@@ -145,27 +145,17 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 		{
-			if (AIControlledPlayers[i].Controller == nullptr)
-			{
-				AIControlledPlayers.RemoveAtSwap(i);
-				continue;
-			}
-
+			checkf(AIControlledPlayers[i].Controller, TEXT("Simplayer controller has been deleted."));
 			ACharacter* Character = AIControlledPlayers[i].Controller->GetCharacter();
-			if (Character == nullptr)
-			{
-				AIControlledPlayers.RemoveAtSwap(i);
-				continue;
-			}
-
+			checkf(Character, TEXT("Simplayer character does not exist."));
 			int InfoIndex = AIControlledPlayers[i].Index;
-			if (UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass())))
-			{
-				const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
-				Blackboard->ClientSetBlackboardAILocations(Points);
-				AIControlledPlayers.RemoveAtSwap(i);
-			}
+			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+			checkf(Blackboard, TEXT("Simplayer does not have a blackboard component."));
+			
+			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+			Blackboard->ClientSetBlackboardAILocations(Points);
 		}
+		AIControlledPlayers.Empty();
 	}
 }
 

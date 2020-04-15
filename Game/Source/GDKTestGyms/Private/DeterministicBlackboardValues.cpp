@@ -34,15 +34,15 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 		FNavLocation LocA;
 		{
 			FVector LocalRandomPoint = WorldLocation + BlackboardValues.TargetAValue;
-			bool Result = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocA);
-			checkf(Result, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
+			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocA);
+			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
 		}
 
 		FNavLocation LocB;
 		{
 			FVector LocalRandomPoint = WorldLocation + BlackboardValues.TargetBValue;
-			bool Result = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocB);
-			checkf(Result, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
+			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocB);
+			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
 		}
 		
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, LocA);
@@ -54,7 +54,7 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 	else
 	{
 #if !WITH_EDITOR
-		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Could not find an AI controller."));
+		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("AI controller not yet available, retrying in 1 second."));
 #endif
 	}
 }
