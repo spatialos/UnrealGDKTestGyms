@@ -64,8 +64,6 @@
       "arguments": [
         "${IMPROBABLE_WORKER_ID}",
         "${IMPROBABLE_LOG_FILE}",
-        "+deploymentName",
-        "${IMPROBABLE_DEPLOYMENT_NAME}",
         "+appName",
         "${IMPROBABLE_PROJECT_NAME}",
         "+receptionistHost",
@@ -76,6 +74,10 @@
         "${IMPROBABLE_WORKER_NAME}",
         "+workerId",
         "${IMPROBABLE_WORKER_ID}",
+        "+deploymentName",
+        "${IMPROBABLE_DEPLOYMENT_NAME}",
+        "-traceMetadata",
+        "${IMPROBABLE_DEPLOYMENT_NAME}",
         "+linkProtocol",
         "Tcp",
         "-NoVerifyGC"
