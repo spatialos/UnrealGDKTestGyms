@@ -23,8 +23,8 @@ public class GDKTestGyms : ModuleRules
 				"PhysXVehicles",
 				"SpatialGDK",
 				"ReplicationGraph",
-                "AIModule",
-                "NavigationSystem"
-            });
-    }
+				"AIModule",
+				"NavigationSystem"
+			});
+	}
 }
