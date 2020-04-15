@@ -53,7 +53,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
-	constexpr float RoamRadius = 7500.0f;
+	constexpr float RoamRadius = 7500.0f; // Set to half the NetCullDistance
 	{
 		FRandomStream PlayerStream;
 		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
