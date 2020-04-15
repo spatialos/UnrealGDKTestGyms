@@ -17,7 +17,7 @@ public:
 	void ApplyValues();
 
 	UFUNCTION(Client, Reliable)
-	void SetBlackboardAILocations(const FBlackboardValues& InBlackboardValues);
+	void ClientSetBlackboardAILocations(const FBlackboardValues& InBlackboardValues);
 protected:
 	FTimerHandle TimerHandle;
 	FBlackboardValues BlackboardValues;

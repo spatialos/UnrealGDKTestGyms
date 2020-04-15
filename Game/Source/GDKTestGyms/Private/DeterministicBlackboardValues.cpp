@@ -58,7 +58,7 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 #endif
 	}
 }
-void UDeterministicBlackboardValues::SetBlackboardAILocations_Implementation(const FBlackboardValues& InBlackboardValues)
+void UDeterministicBlackboardValues::ClientSetBlackboardAILocations_Implementation(const FBlackboardValues& InBlackboardValues)
 {
 	BlackboardValues = InBlackboardValues;
 

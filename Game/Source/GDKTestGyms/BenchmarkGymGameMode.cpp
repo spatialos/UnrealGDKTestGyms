@@ -162,7 +162,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			if (UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass())))
 			{
 				const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
-				Blackboard->SetBlackboardAILocations(Points);
+				Blackboard->ClientSetBlackboardAILocations(Points);
 				AIControlledPlayers.RemoveAtSwap(i);
 			}
 		}
@@ -338,7 +338,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	
 	UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Pawn->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
 	checkf(Comp, TEXT("Pawn must have a UDeterministicBlackboardValues component."));
-	Comp->SetBlackboardAILocations(BlackboardValues);
+	Comp->ClientSetBlackboardAILocations(BlackboardValues);
 }
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
