@@ -343,7 +343,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	CheckCmdLineParameters();
 
-	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
+	//if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
