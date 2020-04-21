@@ -319,7 +319,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		return;
 	}
 
-	FVector FixedSpawnLocation = SpawnLocation + BlackboardValues.TargetAValue; // Move slightly away from the spawn location
+	FVector FixedSpawnLocation = SpawnLocation;
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
