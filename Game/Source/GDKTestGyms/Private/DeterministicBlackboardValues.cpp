@@ -14,11 +14,36 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	AController* Controller = Pawn->GetController();
 
+	if (Controller == nullptr)
+	{
+#if !WITH_EDITOR
+		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Pawn contorller is not set, retrying in 1 second."));
+#endif
+		return;
+	}
+
 	AAIController* AIController = Cast<AAIController>(Controller);
 	if (AIController == nullptr)
 	{
-		AIController = Cast<AAIController>(Pawn);
+		TFunction<AAIController*(AActor*)> FuncSearchChildren = [&](AActor* Root) -> AAIController*
+		{
+			for (AActor* Child : Root->Children)
+			{
+				if (AAIController* ChildController = Cast<AAIController>(Child))
+				{
+					return ChildController;
+				}
+				if (AAIController* ChildController = FuncSearchChildren(Child))
+				{
+					return ChildController;
+				}
+			}
+			return nullptr;
+		};
+		AIController = FuncSearchChildren(Controller);
 	}
+
+	UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("UDeterministicBlackboardValues::ApplyValues Pawn:%s Controller:%s"), *Pawn->GetName(), Controller ? *Controller->GetName() : TEXT("Unset"));
 
 	if (AIController)
 	{
