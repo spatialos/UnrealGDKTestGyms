@@ -22,7 +22,9 @@ public class GDKTestGyms : ModuleRules
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
 				"SpatialGDK",
-				"ReplicationGraph"
+				"ReplicationGraph",
+				"AIModule",
+				"NavigationSystem"
 			});
 	}
 }
