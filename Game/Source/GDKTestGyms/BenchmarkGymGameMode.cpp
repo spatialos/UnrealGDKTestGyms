@@ -2,15 +2,20 @@
 
 
 #include "BenchmarkGymGameMode.h"
-#include "EngineClasses/SpatialNetDriver.h"
-#include "Interop/SpatialWorkerFlags.h"
-#include "Misc/CommandLine.h"
-#include "GameFramework/PlayerStart.h"
-#include "GameFramework/Character.h"
+
 #include "Engine/World.h"
+#include "EngineClasses/SpatialNetDriver.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PlayerStart.h"
+#include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/CommandLine.h"
+#include "Net/PerfCountersHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
+
+extern FString PerfCounter_NumServerMoveCorrections;
+extern FString PerfCounter_NumServerMoves;
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
