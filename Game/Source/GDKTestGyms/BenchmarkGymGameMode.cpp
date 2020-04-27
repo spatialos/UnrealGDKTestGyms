@@ -1,8 +1,10 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
-
 #include "BenchmarkGymGameMode.h"
 
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/Character.h"
@@ -10,7 +12,7 @@
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
-#include "Net/PerfCountersHelpers.h"
+#include "Misc/Crc.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 
@@ -50,8 +52,33 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
+}
 
-	RNG.Initialize(123456); // Ensure we can do deterministic runs
+void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
+{
+	constexpr float RoamRadius = 7500.0f; // Set to half the NetCullDistance
+	{
+		FRandomStream PlayerStream;
+		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
+		for (int i = 0; i < ExpectedPlayers; i++)
+		{
+			FVector PointA = PlayerStream.VRand()*RoamRadius;
+			FVector PointB = PlayerStream.VRand()*RoamRadius;
+			PointA.Z = PointB.Z = 0.0f;
+			PlayerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
+		}
+	}
+	{
+		FRandomStream NPCStream;
+		NPCStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
+		for (int i = 0; i < TotalNPCs; i++)
+		{
+			FVector PointA = NPCStream.VRand()*RoamRadius;
+			FVector PointB = NPCStream.VRand()*RoamRadius;
+			PointA.Z = PointB.Z = 0.0f;
+			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
+		}
+	}
 }
 
 void ABenchmarkGymGameMode::CheckCmdLineParameters()
@@ -75,6 +102,8 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 		}
 
+		GenerateTestScenarioLocations();
+
 		SpawnNPCs(TotalNPCs);
 	}
 	else
@@ -92,10 +121,11 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 	{
 		if (NPCSToSpawn > 0)
 		{
-			int32 Cluster = (--NPCSToSpawn) % NumPlayerClusters;
+			int32 NPCIndex = --NPCSToSpawn;
+			int32 Cluster = NPCIndex % NumPlayerClusters;
 			int32 SpawnPointIndex = Cluster * PlayerDensity;
 			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-			SpawnNPC(SpawnPoint->GetActorLocation());
+			SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
 		}
 
 		if (SecondsTillPlayerCheck > 0.0f)
@@ -115,6 +145,20 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 				}
 			}
 		}
+
+		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+		{
+			checkf(AIControlledPlayers[i].Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = AIControlledPlayers[i].Controller->GetCharacter();
+			checkf(Character, TEXT("Simplayer character does not exist."));
+			int InfoIndex = AIControlledPlayers[i].Index;
+			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+			checkf(Blackboard, TEXT("Simplayer does not have a blackboard component."));
+			
+			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+			Blackboard->ClientSetBlackboardAILocations(Points);
+		}
+		AIControlledPlayers.Empty();
 	}
 }
 
@@ -263,7 +307,7 @@ void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 	NPCSToSpawn = NumNPCs;
 }
 
-void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
+void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)
@@ -278,19 +322,16 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
 		return;
 	}
 
-	const float RandomSpawnOffset = 600.0f;
-	FVector RandomOffset = RNG.GetUnitVector()*RandomSpawnOffset;
-	if (RandomOffset.Z < 0.0f)
-	{
-		RandomOffset.Z = -RandomOffset.Z;
-	}
-	FVector RandomSpawn = SpawnLocation + RandomOffset;
+	FVector FixedSpawnLocation = SpawnLocation;
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
-	//SpawnInfo.Owner = this;
-	//SpawnInfo.Instigator = NULL;
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), RandomSpawn, FRotator::ZeroRotator, SpawnInfo);
+	APawn* Pawn = World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), FixedSpawnLocation, FRotator::ZeroRotator, SpawnInfo);
+	checkf(Pawn, TEXT("Pawn failed to spawn at %s"), *FixedSpawnLocation.ToString());
+	
+	UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Pawn->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+	checkf(Comp, TEXT("Pawn must have a UDeterministicBlackboardValues component."));
+	Comp->ClientSetBlackboardAILocations(BlackboardValues);
 }
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
@@ -302,10 +343,15 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
 
+	if (Player == nullptr) // Work around for load balancing passing nullptr Player
+	{
+		return SpawnPoints[PlayersSpawned % SpawnPoints.Num()];
+	}
+
 	// Use custom spawning with density controls
 	const int32 PlayerUniqueID = Player->GetUniqueID();
 	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
-	if (SpawnPoint)
+	if (SpawnPoint != nullptr)
 	{
 		return *SpawnPoint;
 	}
@@ -314,6 +360,11 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	
+	if (Player->GetIsSimulated())
+	{
+		AIControlledPlayers.Emplace(FControllerIntegerPair{ Player, PlayersSpawned });
+	}
 
 	PlayersSpawned++;
 
