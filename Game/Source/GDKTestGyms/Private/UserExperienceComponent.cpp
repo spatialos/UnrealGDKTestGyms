@@ -11,14 +11,6 @@ UUserExperienceComponent::UUserExperienceComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	FTimerHandle Handle;
-	GetWorld()->TimerManager->SetTimer(Handle, [this]() -> void
-		{
-			StartPing(); // Kick off client RPC
-		},
-		10.0f, // Every 10 seconds
-		true); // loop
 }
 
 // Called every frame
@@ -26,17 +18,38 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (GetWorld()->GetNetDriver()->IsServer())
+	if (GetWorld()->IsServer())
 	{
-		// Update tick
-		LastTimeInTicks = FDateTime::Now().GetTicks();
+		Time += DeltaTime;
+		ClientUpdatePrediction(sinf(Time*PredictionSineSpeed)*PredictionSineMagnitude, cosf(Time*PredictionSineSpeed)*PredictionSineMagnitude); // Value and tangent
 	}
-	else
+	else if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		// Average all viewable ticks 
-		for (TObjectIterator<UUserExperienceComponent> it; it; ++it)
-		{
+		TimeSinceLastUpdate += DeltaTime;
+	}
+}
 
-		}
+void UUserExperienceComponent::ServerFail_Implementation(const FString& ClientError)
+{
+	UE_LOG(LogUserExperienceComponent, Error, TEXT("%s"), *ClientError);
+}
+
+void UUserExperienceComponent::ClientUpdatePrediction_Implementation(float Point, float Velocity)
+{
+	if (CheckPredictionError(Point, CalculateLocalPrediction()))
+	{
+		NumCorrections++;
+		UE_LOG(LogUserExperienceComponent, Log, TEXT("Received a correction, (%d / %d)"), NumCorrections, MaxRPCFailures);
 	}
+
+	if (NumCorrections > MaxRPCFailures)
+	{
+		FString FailureMessage = FString::Printf(TEXT("Client %s needed too many corrections (%d / %d)"), *GetWorld()->GetNetDriver()->GetName(), NumCorrections, MaxRPCFailures);
+		UE_LOG(LogUserExperienceComponent, Error, TEXT("%s. Sending server RPC"), *FailureMessage);
+		ServerFail(FailureMessage);
+	}
+
+	TimeSinceLastUpdate = 0.0f;
+	LastPoint = Point;
+	LastVelocity = Velocity;
 }
