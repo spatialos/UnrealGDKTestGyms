@@ -16,44 +16,36 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 	UUserExperienceComponent();
 
 	// Prediction sinusoid 
-	static constexpr float PredictionSineMagnitude = 100.0f;
-	static constexpr float PredictionSineSpeed = 20.0f; 
-	static constexpr float MinRPCRate = 0.5f;
+	static constexpr float PredictionSineMagnitude = 1.0f;
+	static constexpr float PredictionSineSpeed = 0.001f * 3.14159f * 2.0f; // 100 seconds for full cycle
+	static constexpr float MinRPCRate = 0.5f; // RPC every half a second
 
 	static constexpr int MaxRPCFailures = 10;
 
-	float CheckPredictionError(float PointA, float PointB) const
-	{
-		// Error rate = (sin(T{n+1}) - (sin(T{n}) + (T{n+1}-T{n})*cos(T{n}))
-		float InvRPCRate = 1.0f / MinRPCRate; // Min RPC time in seconds
-		float T1 = InvRPCRate;
-		float T0 = 0.0f;
-		float MaxError = PredictionSineMagnitude*(sinf(T1) - (sinf(T0) + (T1 - T0)*cosf(T0)));
-		float ActualError = fabs(PointA - PointB);
-		return ActualError < MaxError;
-	}
+	float CheckFailedPrediction(FVector2D PointA, FVector2D PointB) const;
+
+	FVector2D RealMovement(float Time) const;
+	FVector2D RealVelocity(float Time) const;
+	FVector2D PredirectedMovement(FVector2D Last, FVector2D Velocity, float Time) const;
 public:	
 	virtual void InitializeComponent()
 	{
-		Time = 0.0f;
-		LastPoint = LastVelocity = 0.0f;
+		ServerTime = 0.0f;
+		LastPoint = LastVelocity = FVector2D::ZeroVector;
 		TimeSinceLastUpdate = 0.0f;
 	}
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	float Time;
+	float ServerTime;
 	float TimeSinceLastUpdate;
 
-	float LastPoint;
-	float LastVelocity;
+	FVector2D LastPoint;
+	FVector2D LastVelocity;
 
 	int NumCorrections = 0;
-
-	// Predict based on last + velocity * timeSinceUpdate
-	float CalculateLocalPrediction() const { return LastPoint + LastVelocity * TimeSinceLastUpdate; }
 	
 	UFUNCTION(Client, Reliable)
-	void ClientUpdatePrediction(float Point, float Velocity);
+	void ClientUpdatePrediction(FVector2D Point, FVector2D Velocity);
 
 	UFUNCTION(Server, Reliable)
 	void ServerFail(const FString& Message);
