@@ -15,38 +15,30 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 	// Sets default values for this component's properties
 	UUserExperienceComponent();
 
-	// Prediction sinusoid 
-	static constexpr float PredictionSineMagnitude = 1.0f;
-	static constexpr float PredictionSineSpeed = 0.001f * 3.14159f * 2.0f; // 100 seconds for full cycle
-	static constexpr float MinRPCRate = 0.5f; // RPC every half a second
-
-	static constexpr int MaxRPCFailures = 10;
-
-	float CheckFailedPrediction(FVector2D PointA, FVector2D PointB) const;
-
-	FVector2D RealMovement(float Time) const;
-	FVector2D RealVelocity(float Time) const;
-	FVector2D PredirectedMovement(FVector2D Last, FVector2D Velocity, float Time) const;
+	static constexpr int NumWindowSamples = 20;
 public:	
 	virtual void InitializeComponent()
 	{
 		ServerTime = 0.0f;
-		LastPoint = LastVelocity = FVector2D::ZeroVector;
-		TimeSinceLastUpdate = 0.0f;
+		ClientTimeSinceServerUpdate = LastServerUpdate = 0.0f;
 	}
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	float ServerTime;
-	float TimeSinceLastUpdate;
+	float Syncronisity;
 
-	FVector2D LastPoint;
-	FVector2D LastVelocity;
-
-	int NumCorrections = 0;
+	float LastServerUpdate;
+	float ClientTimeSinceServerUpdate;
 	
+	TArray<float> ClientUpdateFrequency;
+	TArray<float> RoundTripTime;
+
 	UFUNCTION(Client, Reliable)
-	void ClientUpdatePrediction(FVector2D Point, FVector2D Velocity);
+	void ClientUpdate(float ServerTime);
 
 	UFUNCTION(Server, Reliable)
-	void ServerFail(const FString& Message);
+	void ServerResponse(float ServerTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerLog(const FString& Message);
 };
