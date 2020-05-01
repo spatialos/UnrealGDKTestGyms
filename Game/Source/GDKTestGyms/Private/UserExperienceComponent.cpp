@@ -3,6 +3,11 @@
 
 #include "UserExperienceComponent.h"
 
+#include "SpatialNetDriver.h"
+#include "Utils/SpatialMetrics.h"
+
+#include "NFRTestConfiguration.h"
+
 DEFINE_LOG_CATEGORY(LogUserExperienceComponent);
 
 // Sets default values for this component's properties
@@ -18,11 +23,15 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	const UNFRTestConfiguration* Configuration = GetDefault<UNFRTestConfiguration>();
 	if (GetWorld()->IsServer())
 	{
 		ServerTime += DeltaTime;
-		ClientUpdate(ServerTime); 
-
+		ClientUpdateRPC(ServerTime); 
+		
+		bool bUXCondition = true;
+	
+		// Calculate roundtrip average
 		if (RoundTripTime.Num() == NumWindowSamples)
 		{
 			float Avg = 0.0f;
@@ -30,11 +39,24 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 			{
 				Avg += N;
 			}
-			Avg /= RoundTripTime.Num();
+			Avg *= 1000.0f / RoundTripTime.Num();
 
-			FString Msg = FString::Printf(TEXT("Average roundtrip %.8f"), Avg*1000.0f);
+			FString Msg = FString::Printf(TEXT("Average roundtrip %.8f"), Avg);
 			UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
+
+			bUXCondition = bUXCondition && Avg < Configuration->MaxRoundTrip;
 		}
+
+		// Client update frequency
+		bUXCondition = bUXCondition && ClientReportedUpdateRate > Configuration->MinClientUpdates;
+
+		if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver()))
+		{
+			NetDriver->SpatialMetrics->SetUserSuppliedLoad(bUXCondition ? 1.0f : 0.0f);
+		}
+
+		// Update replicated time to clients
+		ClientTime = ServerTime;
 	}
 	else if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
@@ -48,20 +70,44 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 				Avg += N;
 			}
 			Avg /= ClientUpdateFrequency.Num();
+			Avg = 1.0f / Avg;
 
-			FString Msg = FString::Printf(TEXT("Client updates per second %.8f"), 1.0f / Avg);
-			ServerLog(Msg);
+			ServerReportMetrics(Avg, 0.0f);
 		}
+
+		for (auto& Update : ObservedComponents)
+		{
+			Update.Value.TimeSinceChange += DeltaTime;
+		}
+
+		// Look at other players around me
+#if 0
+		for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
+		{
+			if (*It != this)
+			{
+				ObservedUpdate& Update = ObservedComponents.[*It];
+				
+				Update.Value = It->ClientTime;
+				Update.TimeBetweenChanges.Push(Update.TimeSinceChange);
+				if (Update.TimeBetweenChanges.Num() > NumWindowSamples)
+				{
+					Update.TimeBetweenChanges.RemoveAt(0);
+				}
+				Update.TimeSinceChange = 0.0f;
+			}
+		}
+#endif
 	}
 }
 
-void UUserExperienceComponent::ServerLog_Implementation(const FString& ClientError)
+void UUserExperienceComponent::ServerReportMetrics_Implementation(float UpdatesPerSecond, float WorldUpdatesPerSecond)
 {
-	UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *ClientError);
+	ClientReportedUpdateRate = UpdatesPerSecond;
 }
 
 UFUNCTION(Server, Reliable)
-void UUserExperienceComponent::ServerResponse_Implementation(float Time)
+void UUserExperienceComponent::ServerUpdateResponse_Implementation(float Time)
 {
 	float Diff = ServerTime - Time;
 	RoundTripTime.Push(Diff);
@@ -71,9 +117,9 @@ void UUserExperienceComponent::ServerResponse_Implementation(float Time)
 	}
 }
 
-void UUserExperienceComponent::ClientUpdate_Implementation(float Time)
+void UUserExperienceComponent::ClientUpdateRPC_Implementation(float Time)
 {
-	ServerResponse(Time); // For round-trip
+	ServerUpdateResponse(Time); // For round-trip
 
 	ClientUpdateFrequency.Push(ClientTimeSinceServerUpdate);
 	if (ClientUpdateFrequency.Num() > NumWindowSamples)

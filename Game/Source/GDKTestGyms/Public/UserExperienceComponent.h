@@ -8,6 +8,13 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceComponent, Log, All);
 
+struct ObservedUpdate
+{
+	float Value;
+	float TimeSinceChange;
+	TArray<float> TimeBetweenChanges;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 {
@@ -20,25 +27,30 @@ public:
 	virtual void InitializeComponent()
 	{
 		ServerTime = 0.0f;
-		ClientTimeSinceServerUpdate = LastServerUpdate = 0.0f;
+		ClientTimeSinceServerUpdate = 0.0f;
 	}
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	float ServerTime;
-	float Syncronisity;
+	float ClientReportedUpdateRate;
 
-	float LastServerUpdate;
 	float ClientTimeSinceServerUpdate;
 	
-	TArray<float> ClientUpdateFrequency;
-	TArray<float> RoundTripTime;
+	TArray<float> ClientUpdateFrequency;			// Server -> Client frequency
+	TArray<float> RoundTripTime;					// Client -> Server -> Client
+	
+	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // 
+	//TMap<UUserExperienceComponent*, ReportedClientMetrics> ClientMetrics;
+
+	UPROPERTY()
+	float ClientTime; // Replicated from server
 
 	UFUNCTION(Client, Reliable)
-	void ClientUpdate(float ServerTime);
+	void ClientUpdateRPC(float ServerTime);
 
 	UFUNCTION(Server, Reliable)
-	void ServerResponse(float ServerTime);
+	void ServerUpdateResponse(float ServerTime);
 
 	UFUNCTION(Server, Reliable)
-	void ServerLog(const FString& Message);
+	void ServerReportMetrics(float UpdatesPerSecond, float WorldUpdatesPerSecond);
 };
