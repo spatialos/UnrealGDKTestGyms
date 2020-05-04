@@ -24,18 +24,25 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 
 	static constexpr int NumWindowSamples = 20;
 public:	
-	virtual void InitializeComponent()
+	virtual void InitializeComponent() override
 	{
 		ServerTime = 0.0f;
 		ClientTimeSinceServerUpdate = 0.0f;
+		bServerCondition = true;
+		ClientReportedUpdateRate = 10000.0f; // Default value
+		UActorComponent::InitializeComponent();
 	}
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void UpdateServerCondition();
+	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	float ServerTime;
 	float ClientReportedUpdateRate;
 
 	float ClientTimeSinceServerUpdate;
 	
+	bool bServerCondition;
+
 	TArray<float> ClientUpdateFrequency;			// Server -> Client frequency
 	TArray<float> RoundTripTime;					// Client -> Server -> Client
 	

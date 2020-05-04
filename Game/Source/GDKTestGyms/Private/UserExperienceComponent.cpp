@@ -16,6 +16,38 @@ UUserExperienceComponent::UUserExperienceComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	bWantsInitializeComponent = true;
+	bAutoActivate = true;
+}
+
+void UUserExperienceComponent::UpdateServerCondition()
+{
+	const UNFRTestConfiguration* Configuration = GetDefault<UNFRTestConfiguration>();
+
+	// Calculate roundtrip average
+	if (RoundTripTime.Num() == NumWindowSamples)
+	{
+		float Avg = 0.0f;
+		for (auto& N : RoundTripTime)
+		{
+			Avg += N;
+		}
+		Avg *= 1000.0f / RoundTripTime.Num();
+
+		if (Avg > Configuration->MaxRoundTrip)
+		{
+			bServerCondition = false;
+
+			FString Msg = FString::Printf(TEXT("Average roundtrip too large. %.8f / %.8f"), Avg, static_cast<float>(Configuration->MaxRoundTrip));
+			UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
+		}
+	}
+
+	// Client update frequency
+	if (ClientReportedUpdateRate < Configuration->MinClientUpdates)
+	{
+		bServerCondition = false;
+	}
 }
 
 // Called every frame
@@ -23,7 +55,6 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	const UNFRTestConfiguration* Configuration = GetDefault<UNFRTestConfiguration>();
 	if (GetWorld()->IsServer())
 	{
 		ServerTime += DeltaTime;
@@ -31,29 +62,7 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 		
 		bool bUXCondition = true;
 	
-		// Calculate roundtrip average
-		if (RoundTripTime.Num() == NumWindowSamples)
-		{
-			float Avg = 0.0f;
-			for (auto& N : RoundTripTime)
-			{
-				Avg += N;
-			}
-			Avg *= 1000.0f / RoundTripTime.Num();
-
-			FString Msg = FString::Printf(TEXT("Average roundtrip %.8f"), Avg);
-			UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
-
-			bUXCondition = bUXCondition && Avg < Configuration->MaxRoundTrip;
-		}
-
-		// Client update frequency
-		bUXCondition = bUXCondition && ClientReportedUpdateRate > Configuration->MinClientUpdates;
-
-		if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver()))
-		{
-			NetDriver->SpatialMetrics->SetUserSuppliedLoad(bUXCondition ? 1.0f : 0.0f);
-		}
+		UpdateServerCondition();
 
 		// Update replicated time to clients
 		ClientTime = ServerTime;

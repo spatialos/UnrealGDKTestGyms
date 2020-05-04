@@ -27,6 +27,9 @@ private:
 	TArray<FBlackboardValues> NPCRunPoints;
 	void GenerateTestScenarioLocations();
 
+	void BeginPlay() override; 
+	double GetWorkerLoad() const;
+
 	UPROPERTY()
 	TArray<FControllerIntegerPair> AIControlledPlayers;
 
@@ -47,6 +50,7 @@ private:
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	int32 NPCSToSpawn;
 	float SecondsTillPlayerCheck;
+	bool bUserExperienceMetric;
 	void Tick(float DeltaSeconds) override;
 	bool ShouldUseCustomSpawning();
 	void CheckCmdLineParameters();

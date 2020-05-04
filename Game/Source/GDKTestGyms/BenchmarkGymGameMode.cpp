@@ -13,6 +13,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
+#include "UserExperienceComponent.h"
+#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 
@@ -52,6 +54,27 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
+
+	bUserExperienceMetric = true;
+}
+
+void ABenchmarkGymGameMode::BeginPlay() 
+{
+	if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+	{
+		if (SpatialDriver->IsServer() && SpatialDriver->SpatialMetrics)
+		{
+			WorkerLoadFunction Func;
+			Func.BindUObject(this, &ABenchmarkGymGameMode::GetWorkerLoad);
+			SpatialDriver->SpatialMetrics->SetWorkerLoadDelegate(Func);
+		}
+	}
+	bUserExperienceMetric = true;
+}
+
+double ABenchmarkGymGameMode::GetWorkerLoad() const
+{
+	return bUserExperienceMetric ? 1.0 : 0.0;
 }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
@@ -159,6 +182,16 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			Blackboard->ClientSetBlackboardAILocations(Points);
 		}
 		AIControlledPlayers.Empty();
+	}
+
+	// Report NFR test results
+	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
+	{
+		if (Itr->IsActive())
+		{
+			// Check if any conditions have failed.
+			bUserExperienceMetric = bUserExperienceMetric && Itr->bServerCondition;
+		}
 	}
 }
 
