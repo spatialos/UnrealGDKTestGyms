@@ -48,7 +48,11 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 	if (AIController)
 	{
 		UBlackboardComponent* Blackboard = Cast<UBlackboardComponent>(AIController->GetBlackboardComponent());
-		checkf(Blackboard, TEXT("AI Controller did not have a blackboard %s"), *Controller->GetPawn()->GetName());
+		if (!Blackboard)
+		{
+			UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("No blackboard, retrying in 1s. Pawn:%s Controller:%s"), *Pawn->GetName(), Controller ? *Controller->GetName() : TEXT("Unset"));
+			return;
+		}
 
 		FVector WorldLocation = ((AActor*)Controller)->GetActorLocation();
 
