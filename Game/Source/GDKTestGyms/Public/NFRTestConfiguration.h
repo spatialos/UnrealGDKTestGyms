@@ -15,15 +15,15 @@ class UNFRTestConfiguration : public UObject
 public:
 	UNFRTestConfiguration(const FObjectInitializer& ObjectInitializer)
 	{
-		MaxRoundTrip = 60;
-		MinClientUpdates = 20;
+		MaxRoundTrip = 90;
+		MinClientUpdates = 15;
 	}
 
 	UPROPERTY(EditAnywhere, Config, Category = "Configuration")
-	int MaxRoundTrip;
+	int MaxRoundTrip; // 80th pct average of window above threshold, ie above 200 ms round trip
 
 	UPROPERTY(EditAnywhere, Config, Category = "Configuration")
-	int MinClientUpdates;
+	int MinClientUpdates; // 80pct average of client update frequency below threshold ie 20 updates / sec about player
 
 	//UPROPERTY(EditAnywhere, Config, Category = "Configuration")
 	//float MinWorldUpdates;

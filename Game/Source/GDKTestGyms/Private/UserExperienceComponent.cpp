@@ -27,18 +27,12 @@ void UUserExperienceComponent::UpdateServerCondition()
 	// Calculate roundtrip average
 	if (RoundTripTime.Num() == NumWindowSamples)
 	{
-		float Avg = 0.0f;
-		for (auto& N : RoundTripTime)
-		{
-			Avg += N;
-		}
-		Avg *= 1000.0f / RoundTripTime.Num();
-
-		if (Avg > Configuration->MaxRoundTrip)
+		float RoundTrip = CalculateAverage(RoundTripTime) * 1000.0f; // In ms
+		if (RoundTrip > Configuration->MaxRoundTrip)
 		{
 			bServerCondition = false;
 
-			FString Msg = FString::Printf(TEXT("Average roundtrip too large. %.8f / %.8f"), Avg, static_cast<float>(Configuration->MaxRoundTrip));
+			FString Msg = FString::Printf(TEXT("Average roundtrip too large. %.8f / %.8f"), RoundTrip, static_cast<float>(Configuration->MaxRoundTrip));
 			UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
 		}
 	}
@@ -46,8 +40,25 @@ void UUserExperienceComponent::UpdateServerCondition()
 	// Client update frequency
 	if (ClientReportedUpdateRate < Configuration->MinClientUpdates)
 	{
+		FString Msg = FString::Printf(TEXT("Client update frequency too low. %.8f / %.8f"), ClientReportedUpdateRate, static_cast<float>(Configuration->MinClientUpdates));
+		UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
 		bServerCondition = false;
 	}
+}
+
+float UUserExperienceComponent::CalculateAverage(const TArray<float>& Array)
+{
+	TArray<float> Sorted = Array;
+	Sorted.Sort();
+	int ElementsToAverage = Sorted.Num()*0.8f; // Exclude 20% of samples
+
+	float Avg = 0.0f;
+	for(int i = 0; i < ElementsToAverage; i++)
+	{
+		Avg += Sorted[i];
+	}
+	Avg /= ElementsToAverage;
+	return Avg;
 }
 
 // Called every frame
@@ -73,15 +84,8 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 		if (ClientUpdateFrequency.Num() == NumWindowSamples)
 		{
-			float Avg = 0.0f;
-			for (auto& N : ClientUpdateFrequency)
-			{
-				Avg += N;
-			}
-			Avg /= ClientUpdateFrequency.Num();
-			Avg = 1.0f / Avg;
-
-			ServerReportMetrics(Avg, 0.0f);
+			float AverageUpdateFrequency = 1.0f / CalculateAverage(ClientUpdateFrequency);
+			ServerReportMetrics(AverageUpdateFrequency, 0.0f);
 		}
 
 		for (auto& Update : ObservedComponents)

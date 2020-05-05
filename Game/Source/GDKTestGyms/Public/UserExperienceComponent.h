@@ -22,7 +22,7 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 	// Sets default values for this component's properties
 	UUserExperienceComponent();
 
-	static constexpr int NumWindowSamples = 20;
+	static constexpr int NumWindowSamples = 100;
 public:	
 	virtual void InitializeComponent() override
 	{
@@ -46,6 +46,8 @@ public:
 	TArray<float> ClientUpdateFrequency;			// Server -> Client frequency
 	TArray<float> RoundTripTime;					// Client -> Server -> Client
 	
+	float CalculateAverage(const TArray<float>& Array);
+
 	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // 
 	//TMap<UUserExperienceComponent*, ReportedClientMetrics> ClientMetrics;
 

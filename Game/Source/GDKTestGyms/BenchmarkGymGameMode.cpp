@@ -184,6 +184,12 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		AIControlledPlayers.Empty();
 	}
 
+	UpdateNFRTestResults();
+}
+
+void ABenchmarkGymGameMode::UpdateNFRTestResults()
+{
+	bool bPreviousValue = bUserExperienceMetric;
 	// Report NFR test results
 	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
 	{
@@ -193,8 +199,11 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			bUserExperienceMetric = bUserExperienceMetric && Itr->bServerCondition;
 		}
 	}
+	//if (bUserExperienceMetric && !bUserExperienceMetric) // Only print once 
+	{
+		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed."));
+	}
 }
-
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
 	FString WorkerValue;

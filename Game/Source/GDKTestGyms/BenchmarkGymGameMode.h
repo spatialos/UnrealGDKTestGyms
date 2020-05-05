@@ -29,6 +29,7 @@ private:
 
 	void BeginPlay() override; 
 	double GetWorkerLoad() const;
+	void UpdateNFRTestResults();
 
 	UPROPERTY()
 	TArray<FControllerIntegerPair> AIControlledPlayers;
