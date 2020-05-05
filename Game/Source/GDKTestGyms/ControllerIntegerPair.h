@@ -17,6 +17,6 @@ struct FControllerIntegerPair
 	UPROPERTY()
 	AController* Controller;
 
-	int Index{ -1 };
-	int FrameTimeout{ 0 };
+	UPROPERTY()
+	int Index;
 };

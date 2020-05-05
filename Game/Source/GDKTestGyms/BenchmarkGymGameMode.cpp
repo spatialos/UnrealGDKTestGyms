@@ -145,34 +145,17 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 		{
-			FControllerIntegerPair& Info = AIControlledPlayers[i];
-			if (Info.FrameTimeout-- > 0)
-			{
-				continue; // Retry later 
-			}
-
-			AController* Controller = Info.Controller;
-			checkf(Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = Controller->GetCharacter();
-			if (Character == nullptr)
-			{
-				UE_LOG(LogBenchmarkGym, Log, TEXT("Simplayer does not have a character. Retrying in 100 frames. %s"), *Controller->GetName());
-				Info.FrameTimeout = 100;
-				continue;
-			}
+			checkf(AIControlledPlayers[i].Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = AIControlledPlayers[i].Controller->GetCharacter();
+			checkf(Character, TEXT("Simplayer character does not exist."));
 			int InfoIndex = AIControlledPlayers[i].Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			if (Blackboard == nullptr)
-			{
-				UE_LOG(LogBenchmarkGym, Log, TEXT("Simplayer does not have a blackboard values. Retrying in 100 frames. %s"), *Controller->GetName());
-				Info.FrameTimeout = 100;
-				continue;
-			}
+			checkf(Blackboard, TEXT("Simplayer does not have a blackboard component."));
 			
 			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
 			Blackboard->ClientSetBlackboardAILocations(Points);
-			AIControlledPlayers.RemoveAt(i);
 		}
+		AIControlledPlayers.Empty();
 	}
 }
 
