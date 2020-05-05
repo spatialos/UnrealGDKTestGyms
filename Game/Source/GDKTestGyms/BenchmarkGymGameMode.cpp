@@ -150,7 +150,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			checkf(Character, TEXT("Simplayer character does not exist."));
 			int InfoIndex = AIControlledPlayers[i].Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			checkf(Blackboard, TEXT("Simplayer does not have a blackboard component."));
+			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
 			
 			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
 			Blackboard->ClientSetBlackboardAILocations(Points);
