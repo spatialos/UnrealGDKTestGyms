@@ -19,17 +19,6 @@ void UGDKTestGymsGameInstance::Init()
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
 }
 
-// TSubclassOf<AGameModeBase> UGDKTestGymsGameInstance::OverrideGameModeClass(TSubclassOf<AGameModeBase> GameModeClass, const FString& MapName, const FString& Options, const FString& Portal) const
-// {
-// 	UE_LOG(LogTemp, Log, TEXT("OverrideGameModeClass called - GameMode:%s Map:%s Options:%s"), *GameModeClass->GetName(), *MapName, *Options);
-// 	if (Options.Contains(TEXT("enableLatencyTesting")))
-// 	{
-// 		UE_LOG(LogTemp, Log, TEXT("Overridding game mode class with %s"), *LatencyGameModeClass->GetName());
-// 		return LatencyGameModeClass;
-// 	}
-// 	return GameModeClass;
-// }
-
 void UGDKTestGymsGameInstance::OnStart()
 {
 	ENetMode NetMode = GetWorld()->GetNetMode();

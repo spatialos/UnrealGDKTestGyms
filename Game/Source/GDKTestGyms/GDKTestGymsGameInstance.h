@@ -15,7 +15,6 @@ public:
 	UGDKTestGymsGameInstance();
 
 	virtual void Init() override;
-	//virtual TSubclassOf<AGameModeBase> OverrideGameModeClass(TSubclassOf<AGameModeBase> GameModeClass, const FString& MapName, const FString& Options, const FString& Portal) const;
 
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
