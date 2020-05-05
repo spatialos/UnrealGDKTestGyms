@@ -4,7 +4,6 @@
 
 #include "EngineMinimal.h"
 
-
 void UGDKTestGymsGameInstance::Init()
 {
 	Super::Init();

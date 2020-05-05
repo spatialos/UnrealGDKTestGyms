@@ -20,8 +20,6 @@ private:
 	FTickerDelegate TickDelegate;
 	FDelegateHandle TickDelegateHandle;
 
-	TSubclassOf<AGameModeBase> LatencyGameModeClass;
-
 	float AverageFPS = 60.0f;
 	float SecondsSinceFPSLog = 0.0f;
 };
