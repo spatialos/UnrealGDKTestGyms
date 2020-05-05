@@ -145,17 +145,34 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 		{
-			checkf(AIControlledPlayers[i].Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = AIControlledPlayers[i].Controller->GetCharacter();
-			checkf(Character, TEXT("Simplayer character does not exist."));
+			FControllerIntegerPair& Info = AIControlledPlayers[i];
+			if (Info.FrameTimeout-- > 0)
+			{
+				continue; // Retry later 
+			}
+
+			AController* Controller = Info.Controller;
+			checkf(Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = Controller->GetCharacter();
+			if (Character == nullptr)
+			{
+				UE_LOG(LogBenchmarkGym, Log, TEXT("Simplayer does not have a character. Retrying in 100 frames. %s"), *Controller->GetName());
+				Info.FrameTimeout = 100;
+				continue;
+			}
 			int InfoIndex = AIControlledPlayers[i].Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			checkf(Blackboard, TEXT("Simplayer does not have a blackboard component."));
+			if (Blackboard == nullptr)
+			{
+				UE_LOG(LogBenchmarkGym, Log, TEXT("Simplayer does not have a blackboard values. Retrying in 100 frames. %s"), *Controller->GetName());
+				Info.FrameTimeout = 100;
+				continue;
+			}
 			
 			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
 			Blackboard->ClientSetBlackboardAILocations(Points);
+			AIControlledPlayers.RemoveAt(i);
 		}
-		AIControlledPlayers.Empty();
 	}
 }
 
@@ -319,7 +336,14 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		return;
 	}
 
-	FVector FixedSpawnLocation = SpawnLocation;
+	const float RandomSpawnOffset = 600.0f;
+	FVector RandomOffset = FMath::VRand()*RandomSpawnOffset;
+	if (RandomOffset.Z < 0.0f)
+	{
+		RandomOffset.Z = -RandomOffset.Z;
+	}
+
+	FVector FixedSpawnLocation = SpawnLocation + RandomOffset;
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
