@@ -4,12 +4,6 @@
 
 #include "EngineMinimal.h"
 
-UGDKTestGymsGameInstance::UGDKTestGymsGameInstance()
-{
-	static ConstructorHelpers::FClassFinder<AGameModeBase> GameModeClass(TEXT("/Game/Latency/LatencyGameMode"));
-	LatencyGameModeClass = GameModeClass.Class;
-	check(LatencyGameModeClass);
-}
 
 void UGDKTestGymsGameInstance::Init()
 {

@@ -12,8 +12,6 @@ class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
 	GENERATED_BODY()
 
 public:
-	UGDKTestGymsGameInstance();
-
 	virtual void Init() override;
 
 	bool Tick(float DeltaSeconds);
