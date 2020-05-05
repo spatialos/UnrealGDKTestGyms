@@ -176,7 +176,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			AddInfo(Class, EClassRepNodeMapping::Spatialize_Dynamic);
 		}
-		else if (ActorCDO->bAlwaysRelevant && (!ActorCDO->bOnlyRelevantToOwner || !bUsingSpatial))
+		else if (ActorCDO->bAlwaysRelevant && (!ActorCDO->bOnlyRelevantToOwner || bUsingSpatial))
 		{
 			AddInfo(Class, EClassRepNodeMapping::RelevantAllConnections);
 		}
