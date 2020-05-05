@@ -50,7 +50,7 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 		UBlackboardComponent* Blackboard = Cast<UBlackboardComponent>(AIController->GetBlackboardComponent());
 		if (Blackboard == nullptr)
 		{
-			UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("No blackboard, retrying in 1s. Pawn:%s Controller:%s"), *Pawn->GetNameSafe(), Controller ? *Controller->GetNameSafe() : TEXT("Unset"));
+			UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("No blackboard, retrying in 1s. Pawn:%s Controller:%s"), *GetNameSafe(Pawn), *GetNameSafe(Controller));
 			return;
 		}
 
