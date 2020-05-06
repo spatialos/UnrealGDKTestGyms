@@ -24,14 +24,7 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 
 	static constexpr int NumWindowSamples = 100;
 public:	
-	virtual void InitializeComponent() override
-	{
-		ServerTime = 0.0f;
-		ClientTimeSinceServerUpdate = 0.0f;
-		bServerCondition = true;
-		ClientReportedUpdateRate = 10000.0f; // Default value
-		UActorComponent::InitializeComponent();
-	}
+	virtual void InitializeComponent() override;
 
 	void UpdateServerCondition();
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -51,14 +44,18 @@ public:
 	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // 
 	//TMap<UUserExperienceComponent*, ReportedClientMetrics> ClientMetrics;
 
+	FTimerHandle ClientRPCTimer;
+
+	void SendClientRPC();
+
 	UPROPERTY()
 	float ClientTime; // Replicated from server
 
 	UFUNCTION(Client, Reliable)
-	void ClientUpdateRPC(float ServerTime);
+	void ClientUpdateRPC(float TimeOnServer);
 
 	UFUNCTION(Server, Reliable)
-	void ServerUpdateResponse(float ServerTime);
+	void ServerUpdateResponse(float TimeOnServer);
 
 	UFUNCTION(Server, Reliable)
 	void ServerReportMetrics(float UpdatesPerSecond, float WorldUpdatesPerSecond);

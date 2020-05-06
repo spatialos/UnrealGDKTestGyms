@@ -199,7 +199,7 @@ void ABenchmarkGymGameMode::UpdateNFRTestResults()
 			bUserExperienceMetric = bUserExperienceMetric && Itr->bServerCondition;
 		}
 	}
-	//if (bUserExperienceMetric && !bUserExperienceMetric) // Only print once 
+	if (/*bUserExperienceMetric && */!bUserExperienceMetric) // Only print once 
 	{
 		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed."));
 	}

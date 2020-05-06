@@ -20,6 +20,28 @@ UUserExperienceComponent::UUserExperienceComponent()
 	bAutoActivate = true;
 }
 
+void UUserExperienceComponent::InitializeComponent()
+{
+	ServerTime = 0.0f;
+	ClientTimeSinceServerUpdate = 0.0f;
+	bServerCondition = true;
+	ClientReportedUpdateRate = 10000.0f; // Default value
+	
+	if (GetWorld()->IsServer())
+	{
+		FTimerDelegate Func;
+		Func.BindUObject(this, &UUserExperienceComponent::SendClientRPC);
+		GetWorld()->GetTimerManager().SetTimer(ClientRPCTimer, Func, 1.0f, true, 1.0f);
+	}
+
+	UActorComponent::InitializeComponent();
+}
+
+void UUserExperienceComponent::SendClientRPC()
+{
+	ClientUpdateRPC(ServerTime);
+}
+
 void UUserExperienceComponent::UpdateServerCondition()
 {
 	const UNFRTestConfiguration* Configuration = GetDefault<UNFRTestConfiguration>();
@@ -68,9 +90,7 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 	if (GetWorld()->IsServer())
 	{
-		ServerTime += DeltaTime;
-		ClientUpdateRPC(ServerTime); 
-		
+		ServerTime += DeltaTime;		
 		bool bUXCondition = true;
 	
 		UpdateServerCondition();
@@ -119,7 +139,6 @@ void UUserExperienceComponent::ServerReportMetrics_Implementation(float UpdatesP
 	ClientReportedUpdateRate = UpdatesPerSecond;
 }
 
-UFUNCTION(Server, Reliable)
 void UUserExperienceComponent::ServerUpdateResponse_Implementation(float Time)
 {
 	float Diff = ServerTime - Time;

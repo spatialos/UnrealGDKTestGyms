@@ -16,7 +16,7 @@ public:
 	UNFRTestConfiguration(const FObjectInitializer& ObjectInitializer)
 	{
 		MaxRoundTrip = 90;
-		MinClientUpdates = 15;
+		MinClientUpdates = 5;
 	}
 
 	UPROPERTY(EditAnywhere, Config, Category = "Configuration")
