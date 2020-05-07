@@ -150,7 +150,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			checkf(Character, TEXT("Simplayer character does not exist."));
 			int InfoIndex = AIControlledPlayers[i].Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			checkf(Blackboard, TEXT("Simplayer does not have a blackboard component."));
+			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
 			
 			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
 			Blackboard->ClientSetBlackboardAILocations(Points);
@@ -185,6 +185,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString TotalPlayersString, PlayerDensityString, TotalNPCsString;
+		check(NetDriver);
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{
 			ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
@@ -204,6 +205,8 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		}
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
+
+	UE_LOG(LogBenchmarkGym, Log, TEXT("Players %d, Density %d, NPCs %d, Clusters %d"), ExpectedPlayers, PlayerDensity, TotalNPCs, NumPlayerClusters);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
@@ -319,7 +322,14 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		return;
 	}
 
-	FVector FixedSpawnLocation = SpawnLocation;
+	const float RandomSpawnOffset = 600.0f;
+	FVector RandomOffset = FMath::VRand()*RandomSpawnOffset;
+	if (RandomOffset.Z < 0.0f)
+	{
+		RandomOffset.Z = -RandomOffset.Z;
+	}
+
+	FVector FixedSpawnLocation = SpawnLocation + RandomOffset;
 	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
