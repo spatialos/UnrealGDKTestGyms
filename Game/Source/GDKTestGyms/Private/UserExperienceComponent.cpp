@@ -10,6 +10,24 @@
 
 DEFINE_LOG_CATEGORY(LogUserExperienceComponent);
 
+namespace
+{
+	float Calculate80thPctAverage(const TArray<float>& Array)
+	{
+		TArray<float> Sorted = Array;
+		Sorted.Sort();
+		int ElementsToAverage = Sorted.Num()*0.8f; // Exclude 20% of samples
+
+		float Avg = 0.0f;
+		for (int i = 0; i < ElementsToAverage; i++)
+		{
+			Avg += Sorted[i];
+		}
+		Avg /= ElementsToAverage;
+		return Avg;
+	}
+}
+
 // Sets default values for this component's properties
 UUserExperienceComponent::UUserExperienceComponent()
 {
@@ -22,96 +40,117 @@ UUserExperienceComponent::UUserExperienceComponent()
 
 void UUserExperienceComponent::InitializeComponent()
 {
-	ServerTime = 0.0f;
-	ClientTimeSinceServerUpdate = 0.0f;
-	bServerCondition = true;
-	ClientReportedUpdateRate = 10000.0f; // Default value
+	ElapsedTime = 0.0f;
+	ServerClientRTT = 0.0f;
+	ServerViewLateness = 1.0f;
 	
-	if (GetWorld()->IsServer())
+	if (!GetWorld()->IsServer())
 	{
 		FTimerDelegate Func;
-		Func.BindUObject(this, &UUserExperienceComponent::SendClientRPC);
-		GetWorld()->GetTimerManager().SetTimer(ClientRPCTimer, Func, 1.0f, true, 1.0f);
+		Func.BindUObject(this, &UUserExperienceComponent::SendServerRPC);
+		FTimerHandle Timer;
+		GetWorld()->GetTimerManager().SetTimer(Timer, Func, 1.0f, true, 1.0f);
 	}
 
 	UActorComponent::InitializeComponent();
 }
 
-void UUserExperienceComponent::SendClientRPC()
+void UUserExperienceComponent::SendServerRPC()
 {
-	ClientUpdateRPC(ServerTime);
+	ServerRTT(ElapsedTime);
 }
 
-void UUserExperienceComponent::UpdateServerCondition()
+void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
 {
-	const UNFRTestConfiguration* Configuration = GetDefault<UNFRTestConfiguration>();
-
-	// Calculate roundtrip average
-	if (RoundTripTime.Num() == NumWindowSamples)
+	// Prune out any components which went out of view to avoid skewing results
+	TMap<UUserExperienceComponent*, ObservedUpdate> NewObservations;
+	for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 	{
-		float RoundTrip = CalculateAverage(RoundTripTime) * 1000.0f; // In ms
-		if (RoundTrip > Configuration->MaxRoundTrip)
+		if (ObservedUpdate* PreviousUpdate = ObservedComponents.Find(*It))
 		{
-			bServerCondition = false;
-
-			FString Msg = FString::Printf(TEXT("Average roundtrip too large. %.8f / %.8f"), RoundTrip, static_cast<float>(Configuration->MaxRoundTrip));
-			UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
+			// Carry over into new observations
+			NewObservations.Add(*It, MoveTemp(*PreviousUpdate));
+		}
+		else
+		{
+			NewObservations.Add(*It, ObservedUpdate{});
 		}
 	}
+	ObservedComponents = NewObservations;
 
-	// Client update frequency
-	if (ClientReportedUpdateRate < Configuration->MinClientUpdates)
+	for (TPair<UUserExperienceComponent*, ObservedUpdate>& ObservationPair : ObservedComponents)
 	{
-		FString Msg = FString::Printf(TEXT("Client update frequency too low. %.8f / %.8f"), ClientReportedUpdateRate, static_cast<float>(Configuration->MinClientUpdates));
-		UE_LOG(LogUserExperienceComponent, Log, TEXT("%s"), *Msg);
-		bServerCondition = false;
+		ObservedUpdate& Observation = ObservationPair.Value;
+		UUserExperienceComponent* Component = ObservationPair.Key;
+
+		Observation.TimeSinceChange += DeltaTime;
+		if (Observation.Value != Component->ClientTime)
+		{
+			// New value observed.
+			Observation.Value = Component->ClientTime;
+			Observation.TrackedChanges.Push(Observation.TimeSinceChange);
+			Observation.TimeSinceChange = 0.0f;
+
+			if (Observation.TrackedChanges.Num() > NumWindowSamples)
+			{
+				Observation.TrackedChanges.RemoveAt(0);
+			}
+		}
 	}
 }
 
-float UUserExperienceComponent::CalculateAverage(const TArray<float>& Array)
+float UUserExperienceComponent::CalculateWorldFrequency()
 {
-	TArray<float> Sorted = Array;
-	Sorted.Sort();
-	int ElementsToAverage = Sorted.Num()*0.8f; // Exclude 20% of samples
-
-	float Avg = 0.0f;
-	for(int i = 0; i < ElementsToAverage; i++)
+	float Frequency = 0.0f;
+	float ServerFrameRate = 30.0f; // TODO: Find a good way of getting this properly
+	for (TPair<UUserExperienceComponent*, ObservedUpdate>& ObservationPair : ObservedComponents)
 	{
-		Avg += Sorted[i];
+		ObservedUpdate& Observation = ObservationPair.Value;
+		UUserExperienceComponent* Component = ObservationPair.Key;
+
+		if (!Component->IsActive())
+		{
+			continue;
+		}
+
+		if (Observation.TrackedChanges.Num() == NumWindowSamples)
+		{
+			float AverageUpdateRate = Calculate80thPctAverage(Observation.TrackedChanges);
+			float Rate = 1.0f / AverageUpdateRate;
+			Rate /= ServerFrameRate;
+
+			Frequency += Rate;
+		}
+		else
+		{
+			Frequency += 1.0f;
+		}
 	}
-	Avg /= ElementsToAverage;
-	return Avg;
+	
+	Frequency /= static_cast<float>(ObservedComponents.Num());
+	return Frequency;
 }
 
 // Called every frame
 void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (GetWorld()->IsServer())
-	{
-		ServerTime += DeltaTime;		
-		bool bUXCondition = true;
 	
-		UpdateServerCondition();
+	ElapsedTime += DeltaTime;
 
+	if (GetOwner()->GetLocalRole() == ROLE_Authority)
+	{
 		// Update replicated time to clients
-		ClientTime = ServerTime;
+		ClientTime = ElapsedTime;
 	}
 	else if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		ClientTimeSinceServerUpdate += DeltaTime;
+		UpdateClientObservations(DeltaTime);
 
-		if (ClientUpdateFrequency.Num() == NumWindowSamples)
-		{
-			float AverageUpdateFrequency = 1.0f / CalculateAverage(ClientUpdateFrequency);
-			ServerReportMetrics(AverageUpdateFrequency, 0.0f);
-		}
-
-		for (auto& Update : ObservedComponents)
-		{
-			Update.Value.TimeSinceChange += DeltaTime;
-		}
+		// Calculate world view average adjusted by number of observations
+		float RTT = Calculate80thPctAverage(RoundTripTime)*1000.0f;
+		float WorldUpdates = CalculateWorldFrequency();
+		ServerReportMetrics(RTT, WorldUpdates);
 
 		// Look at other players around me
 #if 0
@@ -134,14 +173,15 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	}
 }
 
-void UUserExperienceComponent::ServerReportMetrics_Implementation(float UpdatesPerSecond, float WorldUpdatesPerSecond)
+void UUserExperienceComponent::ServerReportMetrics_Implementation(float RTT, float ViewLateness)
 {
-	ClientReportedUpdateRate = UpdatesPerSecond;
+	ServerClientRTT = RTT;
+	ServerViewLateness = ViewLateness;
 }
 
-void UUserExperienceComponent::ServerUpdateResponse_Implementation(float Time)
+void UUserExperienceComponent::ClientRTT_Implementation(float Time)
 {
-	float Diff = ServerTime - Time;
+	float Diff = ElapsedTime - Time;
 	RoundTripTime.Push(Diff);
 	if (RoundTripTime.Num() > NumWindowSamples)
 	{
@@ -149,14 +189,7 @@ void UUserExperienceComponent::ServerUpdateResponse_Implementation(float Time)
 	}
 }
 
-void UUserExperienceComponent::ClientUpdateRPC_Implementation(float Time)
+void UUserExperienceComponent::ServerRTT_Implementation(float Time)
 {
-	ServerUpdateResponse(Time); // For round-trip
-
-	ClientUpdateFrequency.Push(ClientTimeSinceServerUpdate);
-	if (ClientUpdateFrequency.Num() > NumWindowSamples)
-	{
-		ClientUpdateFrequency.RemoveAt(0);
-	}
-	ClientTimeSinceServerUpdate = 0.0f;
+	ClientRTT(Time); // For round-trip
 }

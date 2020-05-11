@@ -28,8 +28,11 @@ private:
 	void GenerateTestScenarioLocations();
 
 	void BeginPlay() override; 
-	double GetWorkerLoad() const;
-	void UpdateNFRTestResults();
+	double AggregatedClientRTT; // Aggregated client RTT
+	double AggregatedClientViewLateness; // Aggregated client view latness
+	double GetClientRTT() const { return AggregatedClientRTT; }
+	double GetClientViewLateness() const { return AggregatedClientViewLateness; }
+	void ServerUpdateNFRTestMetrics();
 
 	UPROPERTY()
 	TArray<FControllerIntegerPair> AIControlledPlayers;
@@ -51,7 +54,6 @@ private:
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	int32 NPCSToSpawn;
 	float SecondsTillPlayerCheck;
-	bool bUserExperienceMetric;
 	void Tick(float DeltaSeconds) override;
 	bool ShouldUseCustomSpawning();
 	void CheckCmdLineParameters();

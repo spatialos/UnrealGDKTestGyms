@@ -21,6 +21,12 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 extern FString PerfCounter_NumServerMoveCorrections;
 extern FString PerfCounter_NumServerMoves;
 
+namespace
+{
+	const TCHAR* AverageClientRTT = TEXT("UnrealAverageClientRTT");
+	const TCHAR* AverageClientViewLateness = TEXT("UnrealAverageClientViewLateness");
+}
+
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -54,8 +60,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
-
-	bUserExperienceMetric = true;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -64,17 +68,15 @@ void ABenchmarkGymGameMode::BeginPlay()
 	{
 		if (SpatialDriver->IsServer() && SpatialDriver->SpatialMetrics)
 		{
-			WorkerLoadFunction Func;
-			Func.BindUObject(this, &ABenchmarkGymGameMode::GetWorkerLoad);
-			SpatialDriver->SpatialMetrics->SetWorkerLoadDelegate(Func);
+			UserSppliedMetric ClientRTT;
+			ClientRTT.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
+			SpatialDriver->SpatialMetrics->AddCustomMetric(AverageClientRTT, ClientRTT);
+
+			UserSppliedMetric ClientViewLateness;
+			ClientViewLateness.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
+			SpatialDriver->SpatialMetrics->AddCustomMetric(AverageClientViewLateness, ClientViewLateness);
 		}
 	}
-	bUserExperienceMetric = true;
-}
-
-double ABenchmarkGymGameMode::GetWorkerLoad() const
-{
-	return bUserExperienceMetric ? 1.0 : 0.0;
 }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
@@ -184,25 +186,37 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		AIControlledPlayers.Empty();
 	}
 
-	UpdateNFRTestResults();
+	ServerUpdateNFRTestMetrics();
 }
 
-void ABenchmarkGymGameMode::UpdateNFRTestResults()
+void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 {
-	bool bPreviousValue = bUserExperienceMetric;
-	// Report NFR test results
+	float ClientRTT = 0.0f;
+	int ClientRTTNum = 0;
+	float ClientViewLateness = 0.0f;
+	int ClientViewLatenessNum = 0;
 	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
 	{
 		if (Itr->IsActive())
 		{
-			// Check if any conditions have failed.
-			bUserExperienceMetric = bUserExperienceMetric && Itr->bServerCondition;
+			ClientRTT += Itr->ServerClientRTT;
+			ClientRTTNum++;
+
+			ClientViewLateness += Itr->ServerViewLateness;
+			ClientViewLatenessNum++;
 		}
 	}
+	ClientRTT /= static_cast<float>(ClientRTTNum) + 0.00001f; // Div 0
+	ClientViewLateness /= static_cast<float>(ClientViewLateness) + 0.00001f;// Div 0
+
+	AggregatedClientRTT = ClientRTT;
+	AggregatedClientViewLateness = ClientViewLateness;
+#if 0
 	if (/*bUserExperienceMetric && */!bUserExperienceMetric) // Only print once 
 	{
 		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed."));
 	}
+#endif
 }
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {

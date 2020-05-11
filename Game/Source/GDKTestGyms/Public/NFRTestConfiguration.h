@@ -16,15 +16,12 @@ public:
 	UNFRTestConfiguration(const FObjectInitializer& ObjectInitializer)
 	{
 		MaxRoundTrip = 90;
-		MinClientUpdates = 5;
+		MinWorldUpdates = 0.5f; // An average of 2 updates per second for everything seen 
 	}
 
 	UPROPERTY(EditAnywhere, Config, Category = "Configuration")
 	int MaxRoundTrip; // 80th pct average of window above threshold, ie above 200 ms round trip
 
 	UPROPERTY(EditAnywhere, Config, Category = "Configuration")
-	int MinClientUpdates; // 80pct average of client update frequency below threshold ie 20 updates / sec about player
-
-	//UPROPERTY(EditAnywhere, Config, Category = "Configuration")
-	//float MinWorldUpdates;
+	float MinWorldUpdates;
 };

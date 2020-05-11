@@ -10,9 +10,9 @@ DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceComponent, Log, All);
 
 struct ObservedUpdate
 {
-	float Value;
-	float TimeSinceChange;
-	TArray<float> TimeBetweenChanges;
+	float Value{ 0.0f };
+	float TimeSinceChange{ 0.0f };
+	TArray<float> TrackedChanges;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -26,37 +26,30 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 public:	
 	virtual void InitializeComponent() override;
 
-	void UpdateServerCondition();
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	float ServerTime;
-	float ClientReportedUpdateRate;
+	// Server properties
+	float ElapsedTime;
+	float ServerClientRTT;
+	float ServerViewLateness;
 
-	float ClientTimeSinceServerUpdate;
+	void UpdateClientObservations(float DeltaTime);
+	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // World observations
+	TArray<float> RoundTripTime;										// Client -> Server -> Client
 	
-	bool bServerCondition;
+	float CalculateWorldFrequency();
 
-	TArray<float> ClientUpdateFrequency;			// Server -> Client frequency
-	TArray<float> RoundTripTime;					// Client -> Server -> Client
-	
-	float CalculateAverage(const TArray<float>& Array);
-
-	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // 
-	//TMap<UUserExperienceComponent*, ReportedClientMetrics> ClientMetrics;
-
-	FTimerHandle ClientRPCTimer;
-
-	void SendClientRPC();
+	void SendServerRPC();
 
 	UPROPERTY()
 	float ClientTime; // Replicated from server
 
+	UFUNCTION(Server, Reliable)
+	void ServerRTT(float Time);
+
 	UFUNCTION(Client, Reliable)
-	void ClientUpdateRPC(float TimeOnServer);
+	void ClientRTT(float Time);
 
 	UFUNCTION(Server, Reliable)
-	void ServerUpdateResponse(float TimeOnServer);
-
-	UFUNCTION(Server, Reliable)
-	void ServerReportMetrics(float UpdatesPerSecond, float WorldUpdatesPerSecond);
+	void ServerReportMetrics(float RTT, float ViewLateness);
 };
