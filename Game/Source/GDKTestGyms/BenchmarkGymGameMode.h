@@ -3,13 +3,15 @@
 #pragma once
 
 #include "BlackboardValues.h"
-#include "ControllerIntegerPair.h"
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "UserExperienceComponent.h"
 
 #include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
+
+typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
 
 /**
  *
@@ -34,8 +36,9 @@ private:
 	double GetClientViewLateness() const { return AggregatedClientViewLateness; }
 	void ServerUpdateNFRTestMetrics();
 
-	UPROPERTY()
-	TArray<FControllerIntegerPair> AIControlledPlayers;
+	
+	TArray<ControllerIntegerPair> AIControlledPlayers;
+	TArray<TWeakObjectPtr<UUserExperienceComponent>> PlayerUXComponents;
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.

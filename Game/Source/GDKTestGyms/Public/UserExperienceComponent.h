@@ -32,6 +32,8 @@ public:
 	float ElapsedTime;
 	float ServerClientRTT;
 	float ServerViewLateness;
+	 
+	float ClientRTTTimer;
 
 	void UpdateClientObservations(float DeltaTime);
 	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // World observations
@@ -41,7 +43,7 @@ public:
 
 	void SendServerRPC();
 
-	UPROPERTY()
+	UPROPERTY(replicated)
 	float ClientTime; // Replicated from server
 
 	UFUNCTION(Server, Reliable)
@@ -52,4 +54,6 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerReportMetrics(float RTT, float ViewLateness);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

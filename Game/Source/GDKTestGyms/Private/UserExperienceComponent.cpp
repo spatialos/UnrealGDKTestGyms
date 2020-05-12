@@ -3,10 +3,10 @@
 
 #include "UserExperienceComponent.h"
 
+#include "NFRTestConfiguration.h"
+#include "Net/UnrealNetwork.h"
 #include "SpatialNetDriver.h"
 #include "Utils/SpatialMetrics.h"
-
-#include "NFRTestConfiguration.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceComponent);
 
@@ -43,15 +43,8 @@ void UUserExperienceComponent::InitializeComponent()
 	ElapsedTime = 0.0f;
 	ServerClientRTT = 0.0f;
 	ServerViewLateness = 1.0f;
-	
-	if (!GetWorld()->IsServer())
-	{
-		FTimerDelegate Func;
-		Func.BindUObject(this, &UUserExperienceComponent::SendServerRPC);
-		FTimerHandle Timer;
-		GetWorld()->GetTimerManager().SetTimer(Timer, Func, 1.0f, true, 1.0f);
-	}
-
+	ClientRTTTimer = 0.0f; 
+	SetIsReplicated(true);
 	UActorComponent::InitializeComponent();
 }
 
@@ -66,14 +59,17 @@ void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
 	TMap<UUserExperienceComponent*, ObservedUpdate> NewObservations;
 	for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 	{
-		if (ObservedUpdate* PreviousUpdate = ObservedComponents.Find(*It))
+		if (this != *It && It->GetOwner() && It->GetOwner()->GetWorld() == GetWorld())
 		{
-			// Carry over into new observations
-			NewObservations.Add(*It, MoveTemp(*PreviousUpdate));
-		}
-		else
-		{
-			NewObservations.Add(*It, ObservedUpdate{});
+			if (ObservedUpdate* PreviousUpdate = ObservedComponents.Find(*It))
+			{
+				// Carry over into new observations
+				NewObservations.Add(*It, MoveTemp(*PreviousUpdate));
+			}
+			else
+			{
+				NewObservations.Add(*It, ObservedUpdate{});
+			}
 		}
 	}
 	ObservedComponents = NewObservations;
@@ -136,6 +132,16 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
+	if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		ClientRTTTimer -= DeltaTime;
+		if (ClientRTTTimer < 0.0f)
+		{
+			SendServerRPC();
+			ClientRTTTimer = 1.0f;
+		} 
+	}
+
 	ElapsedTime += DeltaTime;
 
 	if (GetOwner()->GetLocalRole() == ROLE_Authority)
@@ -192,4 +198,11 @@ void UUserExperienceComponent::ClientRTT_Implementation(float Time)
 void UUserExperienceComponent::ServerRTT_Implementation(float Time)
 {
 	ClientRTT(Time); // For round-trip
+}
+
+void UUserExperienceComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UUserExperienceComponent, ClientTime);
 }

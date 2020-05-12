@@ -13,7 +13,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
-#include "UserExperienceComponent.h"
 #include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
@@ -68,13 +67,13 @@ void ABenchmarkGymGameMode::BeginPlay()
 	{
 		if (SpatialDriver->IsServer() && SpatialDriver->SpatialMetrics)
 		{
-			UserSppliedMetric ClientRTT;
+			UserSuppliedMetric ClientRTT;
 			ClientRTT.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
-			SpatialDriver->SpatialMetrics->AddCustomMetric(AverageClientRTT, ClientRTT);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTT, ClientRTT);
 
-			UserSppliedMetric ClientViewLateness;
+			UserSuppliedMetric ClientViewLateness;
 			ClientViewLateness.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
-			SpatialDriver->SpatialMetrics->AddCustomMetric(AverageClientViewLateness, ClientViewLateness);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLateness, ClientViewLateness);
 		}
 	}
 }
@@ -173,13 +172,16 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 		{
-			checkf(AIControlledPlayers[i].Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = AIControlledPlayers[i].Controller->GetCharacter();
+			AController* Controller = AIControlledPlayers[i].Key.Get();
+			int Index = AIControlledPlayers[i].Value;
+
+			checkf(Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = Controller->GetCharacter();
 			checkf(Character, TEXT("Simplayer character does not exist."));
-			int InfoIndex = AIControlledPlayers[i].Index;
+			int InfoIndex = Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
 			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
-			
+
 			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
 			Blackboard->ClientSetBlackboardAILocations(Points);
 		}
@@ -196,27 +198,29 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 	float ClientViewLateness = 0.0f;
 	int ClientViewLatenessNum = 0;
 	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
+	//for(auto& WeakUXComponent : PlayerUXComponents)
 	{
-		if (Itr->IsActive())
+		UUserExperienceComponent* Component = *Itr;
+		//if (UUserExperienceComponent* Component = WeakUXComponent.Get())
+		if(Component->GetOwner() && Component->GetWorld() == GetWorld())
 		{
-			ClientRTT += Itr->ServerClientRTT;
+			ClientRTT += Component->ServerClientRTT;
 			ClientRTTNum++;
 
-			ClientViewLateness += Itr->ServerViewLateness;
+			ClientViewLateness += Component->ServerViewLateness;
 			ClientViewLatenessNum++;
 		}
 	}
 	ClientRTT /= static_cast<float>(ClientRTTNum) + 0.00001f; // Div 0
-	ClientViewLateness /= static_cast<float>(ClientViewLateness) + 0.00001f;// Div 0
+	ClientViewLateness /= static_cast<float>(ClientViewLatenessNum) + 0.00001f;// Div 0
 
 	AggregatedClientRTT = ClientRTT;
 	AggregatedClientViewLateness = ClientViewLateness;
-#if 0
-	if (/*bUserExperienceMetric && */!bUserExperienceMetric) // Only print once 
+
+	if (AggregatedClientRTT > 150.0f && AggregatedClientViewLateness < 0.5f) // Only print once 
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed."));
+		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AggregatedClientRTT, AggregatedClientViewLateness);
 	}
-#endif
 }
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
@@ -426,8 +430,13 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	
 	if (Player->GetIsSimulated())
 	{
-		AIControlledPlayers.Emplace(FControllerIntegerPair{ Player, PlayersSpawned });
+		AIControlledPlayers.Emplace(ControllerIntegerPair{ Player, PlayersSpawned });
 	}
+
+// 	if (UUserExperienceComponent* UXComponent = (UUserExperienceComponent*)Player->GetPawn()->GetComponentByClass(TSubclassOf<UUserExperienceComponent>()))
+// 	{
+// 		PlayerUXComponents.Push(UXComponent);
+// 	}
 
 	PlayersSpawned++;
 
