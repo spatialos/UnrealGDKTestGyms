@@ -217,7 +217,9 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 	AggregatedClientRTT = ClientRTT;
 	AggregatedClientViewLateness = ClientViewLateness;
 
-	if (AggregatedClientRTT > 150.0f && AggregatedClientViewLateness < 0.5f) // Only print once 
+	static int U = 0;
+	//if (AggregatedClientRTT > 150.0f && AggregatedClientViewLateness < 0.5f) // Only print once 
+	if(U++ % 100 == 0)
 	{
 		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AggregatedClientRTT, AggregatedClientViewLateness);
 	}
