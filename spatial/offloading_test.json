@@ -52,10 +52,6 @@
     {
       "worker_type": "UnrealWorker",
       "flags": [
-        {
-            "name": "total_players",
-            "value": "50"
-        },
 		{
             "name": "num_npcs",
             "value": "50"
