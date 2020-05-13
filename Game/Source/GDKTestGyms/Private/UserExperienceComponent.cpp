@@ -42,7 +42,7 @@ void UUserExperienceComponent::InitializeComponent()
 {
 	ElapsedTime = 0.0f;
 	ServerClientRTT = 0.0f;
-	ServerViewLateness = 1.0f;
+	ServerViewLateness = 0.0f;
 	ClientRTTTimer = 0.0f; 
 	SetIsReplicated(true);
 	UActorComponent::InitializeComponent();
@@ -112,14 +112,11 @@ float UUserExperienceComponent::CalculateWorldFrequency()
 		if (Observation.TrackedChanges.Num() == NumWindowSamples)
 		{
 			float AverageUpdateRate = Calculate80thPctAverage(Observation.TrackedChanges);
-			float Rate = 1.0f / AverageUpdateRate;
-			Rate /= ServerFrameRate;
-
-			Frequency += Rate;
+			Frequency += AverageUpdateRate;
 		}
 		else
 		{
-			Frequency += 1.0f;
+			Frequency += 0.0f;
 		}
 	}
 	
