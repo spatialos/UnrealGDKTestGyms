@@ -36,6 +36,10 @@ private:
 	double GetClientViewLateness() const { return AggregatedClientViewLateness; }
 	void ServerUpdateNFRTestMetrics();
 
+	// Test scenarios
+	bool bTestEnabled;
+	int32 MaxRoundTrip; // 80th pct average of window above threshold, ie above 200 ms round trip
+	int32 MaxLateness;
 	
 	TArray<ControllerIntegerPair> AIControlledPlayers;
 	TArray<TWeakObjectPtr<UUserExperienceComponent>> PlayerUXComponents;

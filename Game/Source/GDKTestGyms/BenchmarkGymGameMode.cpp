@@ -17,9 +17,7 @@
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 
-extern FString PerfCounter_NumServerMoveCorrections;
-extern FString PerfCounter_NumServerMoves;
-
+// Metrics
 namespace
 {
 	const TCHAR* AverageClientRTT = TEXT("UnrealAverageClientRTT");
@@ -59,6 +57,12 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
+
+	bTestEnabled = false;
+	FParse::Bool(FCommandLine::Get(), TEXT("-NFRTestEnabled="), bTestEnabled);
+	MaxRoundTrip = MaxLateness = 150.0f;
+	FParse::Value(FCommandLine::Get(), TEXT("-MaxRoundTrip="), MaxRoundTrip);
+	FParse::Value(FCommandLine::Get(), TEXT("-MaxLateness="), MaxLateness);
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -173,12 +177,11 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 		{
 			AController* Controller = AIControlledPlayers[i].Key.Get();
-			int Index = AIControlledPlayers[i].Value;
+			int InfoIndex = AIControlledPlayers[i].Value;
 
 			checkf(Controller, TEXT("Simplayer controller has been deleted."));
 			ACharacter* Character = Controller->GetCharacter();
 			checkf(Character, TEXT("Simplayer character does not exist."));
-			int InfoIndex = Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
 			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
 
@@ -198,11 +201,9 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 	float ClientViewLateness = 0.0f;
 	int ClientViewLatenessNum = 0;
 	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
-	//for(auto& WeakUXComponent : PlayerUXComponents)
 	{
 		UUserExperienceComponent* Component = *Itr;
-		//if (UUserExperienceComponent* Component = WeakUXComponent.Get())
-		if(Component->GetOwner() && Component->GetWorld() == GetWorld())
+		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
 		{
 			ClientRTT += Component->ServerClientRTT;
 			ClientRTTNum++;
@@ -211,17 +212,19 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 			ClientViewLatenessNum++;
 		}
 	}
-	ClientRTT /= static_cast<float>(ClientRTTNum) + 0.00001f; // Div 0
-	ClientViewLateness /= static_cast<float>(ClientViewLatenessNum) + 0.00001f;// Div 0
+	ClientRTT /= static_cast<float>(ClientRTTNum) + 0.00001f; // Avoid div 0
+	ClientViewLateness /= static_cast<float>(ClientViewLatenessNum) + 0.00001f;// Avoid div 0
 
 	AggregatedClientRTT = ClientRTT;
 	AggregatedClientViewLateness = ClientViewLateness;
 
-	static int U = 0;
-	//if (AggregatedClientRTT > 150.0f && AggregatedClientViewLateness < 0.5f) // Only print once 
-	if(U++ % 100 == 0)
+	
+	if (bTestEnabled)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AggregatedClientRTT, AggregatedClientViewLateness);
+		if (AggregatedClientRTT > MaxRoundTrip && AggregatedClientViewLateness > MaxLateness) 
+		{
+			UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AggregatedClientRTT, AggregatedClientViewLateness);
+		}
 	}
 }
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()

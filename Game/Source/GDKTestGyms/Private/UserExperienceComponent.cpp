@@ -3,7 +3,6 @@
 
 #include "UserExperienceComponent.h"
 
-#include "NFRTestConfiguration.h"
 #include "Net/UnrealNetwork.h"
 #include "SpatialNetDriver.h"
 #include "Utils/SpatialMetrics.h"
@@ -98,7 +97,6 @@ void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
 float UUserExperienceComponent::CalculateWorldFrequency()
 {
 	float Frequency = 0.0f;
-	float ServerFrameRate = 30.0f; // TODO: Find a good way of getting this properly
 	for (TPair<UUserExperienceComponent*, ObservedUpdate>& ObservationPair : ObservedComponents)
 	{
 		ObservedUpdate& Observation = ObservationPair.Value;
@@ -112,7 +110,7 @@ float UUserExperienceComponent::CalculateWorldFrequency()
 		if (Observation.TrackedChanges.Num() == NumWindowSamples)
 		{
 			float AverageUpdateRate = Calculate80thPctAverage(Observation.TrackedChanges);
-			Frequency += AverageUpdateRate;
+			Frequency += AverageUpdateRate*1000.0f;
 		}
 		else
 		{
@@ -154,25 +152,6 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 		float RTT = Calculate80thPctAverage(RoundTripTime)*1000.0f;
 		float WorldUpdates = CalculateWorldFrequency();
 		ServerReportMetrics(RTT, WorldUpdates);
-
-		// Look at other players around me
-#if 0
-		for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
-		{
-			if (*It != this)
-			{
-				ObservedUpdate& Update = ObservedComponents.[*It];
-				
-				Update.Value = It->ClientTime;
-				Update.TimeBetweenChanges.Push(Update.TimeSinceChange);
-				if (Update.TimeBetweenChanges.Num() > NumWindowSamples)
-				{
-					Update.TimeBetweenChanges.RemoveAt(0);
-				}
-				Update.TimeSinceChange = 0.0f;
-			}
-		}
-#endif
 	}
 }
 

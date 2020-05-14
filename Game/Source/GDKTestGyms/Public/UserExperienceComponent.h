@@ -37,7 +37,7 @@ public:
 
 	void UpdateClientObservations(float DeltaTime);
 	TMap<UUserExperienceComponent*, ObservedUpdate> ObservedComponents; // World observations
-	TArray<float> RoundTripTime;										// Client -> Server -> Client
+	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
 	float CalculateWorldFrequency();
 
