@@ -438,11 +438,6 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		AIControlledPlayers.Emplace(ControllerIntegerPair{ Player, PlayersSpawned });
 	}
 
-// 	if (UUserExperienceComponent* UXComponent = (UUserExperienceComponent*)Player->GetPawn()->GetComponentByClass(TSubclassOf<UUserExperienceComponent>()))
-// 	{
-// 		PlayerUXComponents.Push(UXComponent);
-// 	}
-
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
