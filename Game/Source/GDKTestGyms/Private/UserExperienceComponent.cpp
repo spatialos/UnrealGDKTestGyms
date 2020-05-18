@@ -97,6 +97,11 @@ void UUserExperienceComponent::OnRep_ClientTime(float DeltaTime)
 		ObservedUpdate& Observation = ObservationPair.Value;
 		UUserExperienceComponent* Component = ObservationPair.Key.Get(); // Valid, it was just pulled found TObjectIterator
 
+		if (Component == nullptr)
+		{
+			continue;
+		}
+
 		Observation.TimeSinceChange += DeltaTime;
 		if (Observation.Value != Component->ClientTime)
 		{
