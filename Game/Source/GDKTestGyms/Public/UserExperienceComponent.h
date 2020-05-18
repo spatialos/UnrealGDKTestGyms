@@ -41,14 +41,12 @@ public:
 	TMap<TWeakObjectPtr<UUserExperienceComponent>, ObservedUpdate> ObservedComponents; // World observations
 	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
+	void UpdateClientObservations(float DeltaTime);
 	float CalculateWorldFrequency();
 
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	
-	UFUNCTION()
-	void OnRep_ClientTime(float DeltaTime);
-
 	UPROPERTY(replicated, ReplicatedUsing=OnRep_ClientTime)
 	float ClientTime; // Replicated from server
 

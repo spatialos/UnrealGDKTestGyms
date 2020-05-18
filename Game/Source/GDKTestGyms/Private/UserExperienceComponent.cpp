@@ -71,7 +71,7 @@ void UUserExperienceComponent::EndRoundtrip(int32 Key)
 	}
 }
 
-void UUserExperienceComponent::OnRep_ClientTime(float DeltaTime)
+void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
 {
 	// Prune out any components which went out of view to avoid skewing results
 	TMap<TWeakObjectPtr<UUserExperienceComponent>, ObservedUpdate> NewObservations;
@@ -168,7 +168,7 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	}
 	else if (OwnerActor->HasLocalNetOwner())
 	{
-		OnRep_ClientTime(DeltaTime);
+		UpdateClientObservations(DeltaTime);
 
 		// Calculate world view average adjusted by number of observations
 		float RTT = Calculate80thPctAverage(RoundTripTime)*1000.0f;
