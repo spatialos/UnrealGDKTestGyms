@@ -47,7 +47,7 @@ public:
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	
-	UPROPERTY(replicated, ReplicatedUsing=OnRep_ClientTime)
+	UPROPERTY(replicated)
 	float ClientTime; // Replicated from server
 
 	UFUNCTION(Server, Reliable)

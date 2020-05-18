@@ -133,7 +133,7 @@ float UUserExperienceComponent::CalculateWorldFrequency()
 
 		if (Observation.TrackedChanges.Num() == NumWindowSamples)
 		{
-			float AverageUpdateRate = Calculate80thPctAverage(Observation.TrackedChanges);
+			float AverageUpdateRate = Calculate80thPctAverage(Observation.TrackedChanges)*1000.0f;
 			Frequency += AverageUpdateRate;
 		}
 	}
