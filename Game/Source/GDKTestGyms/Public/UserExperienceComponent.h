@@ -32,39 +32,30 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 	// Sets default values for this component's properties
 	UUserExperienceComponent();
 
-	static constexpr int NumWindowSamples = 100;
 	TMap<int32, float> OpenRPCs;
 	int32 RequestKey;
 
-	struct ObservedUpdate
-	{
-		float Value{ 0.0f };
-		float TimeSinceChange{ 0.0f };
-		TArray<float> TrackedChanges;
-	};
-
 public:	
+	static constexpr int NumWindowSamples = 100;
+
 	virtual void InitializeComponent() override;
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Server properties
-	float ElapsedTime;
-	float ServerClientRTT;
-	float ServerViewLateness;
-	 
-	float ClientRTTTimer;
+	float ElapsedTime;	 
 
-	TMap<TWeakObjectPtr<UUserExperienceComponent>, ObservedUpdate> ObservedComponents; // World observations
+	TArray<float> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
-	void UpdateClientObservations(float DeltaTime);
-	float CalculateWorldFrequency();
+	UFUNCTION()
+	void OnRep_ClientTime(float DeltaTime);
 
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
-	
-	UPROPERTY(replicated)
+	void OnClientOwnershipGained();
+
+	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTime)
 	float ClientTime; // Replicated from server
 
 	UFUNCTION(Server, Reliable)
@@ -72,9 +63,6 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientRTT(int32 Key);
-
-	UFUNCTION(Server, Reliable)
-	void ServerReportMetrics(float RTT, float ViewLateness);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

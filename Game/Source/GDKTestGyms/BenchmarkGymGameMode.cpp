@@ -197,12 +197,12 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 	int ClientRTTCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
 	int ClientViewLatenessNum = 0;
-	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr) // These exist on player characters
+	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
-		UUserExperienceComponent* Component = *Itr;
+		UUserExperienceReporter* Component = *Itr;
 		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
 		{
-			ClientRTTSeconds += Component->ServerClientRTT;
+			ClientRTTSeconds += Component->ServerRTT;
 			ClientRTTCount++;
 
 			ClientViewLatenessSeconds += Component->ServerViewLateness;

@@ -5,7 +5,7 @@
 #include "BlackboardValues.h"
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "UserExperienceComponent.h"
+#include "UserExperienceReporter.h"
 
 #include "BenchmarkGymGameMode.generated.h"
 
