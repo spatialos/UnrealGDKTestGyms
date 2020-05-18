@@ -29,20 +29,19 @@ private:
 	TArray<FBlackboardValues> NPCRunPoints;
 	void GenerateTestScenarioLocations();
 
+	TArray<ControllerIntegerPair> AIControlledPlayers;
+
 	void BeginPlay() override; 
-	double AggregatedClientRTT; // Aggregated client RTT
-	double AggregatedClientViewLateness; // Aggregated client view latness
-	double GetClientRTT() const { return AggregatedClientRTT; }
-	double GetClientViewLateness() const { return AggregatedClientViewLateness; }
+	double GetClientRTT() const { return AveragedClientRTTSeconds; }
+	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
 	void ServerUpdateNFRTestMetrics();
 
 	// Test scenarios
-	bool bTestEnabled;
-	int32 MaxRoundTrip; // 80th pct average of window above threshold, ie above 200 ms round trip
-	int32 MaxLateness;
-	
-	TArray<ControllerIntegerPair> AIControlledPlayers;
-	TArray<TWeakObjectPtr<UUserExperienceComponent>> PlayerUXComponents;
+	double AveragedClientRTTSeconds; // The stored average of all the client RTTs 
+	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
+	bool bTestEnabled; // Native NFR test enabled flag (prints failures to log)
+	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
+	int32 MaxClientViewLatenessSeconds;
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.

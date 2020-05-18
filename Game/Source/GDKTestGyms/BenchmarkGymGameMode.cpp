@@ -20,8 +20,8 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 // Metrics
 namespace
 {
-	const TCHAR* AverageClientRTT = TEXT("UnrealAverageClientRTT");
-	const TCHAR* AverageClientViewLateness = TEXT("UnrealAverageClientViewLateness");
+	const FString AverageClientRTT = TEXT("UnrealAverageClientRTT");
+	const FString AverageClientViewLateness = TEXT("UnrealAverageClientViewLateness");
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -59,17 +59,14 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
 
 	bTestEnabled = false;
-	FParse::Bool(FCommandLine::Get(), TEXT("-NFRTestEnabled="), bTestEnabled);
-	MaxRoundTrip = MaxLateness = 150.0f;
-	FParse::Value(FCommandLine::Get(), TEXT("-MaxRoundTrip="), MaxRoundTrip);
-	FParse::Value(FCommandLine::Get(), TEXT("-MaxLateness="), MaxLateness);
+	MaxClientRoundTripSeconds = MaxClientViewLatenessSeconds = 150;	
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
 {
 	if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
 	{
-		if (SpatialDriver->IsServer() && SpatialDriver->SpatialMetrics)
+		if (SpatialDriver->SpatialMetrics != nullptr)
 		{
 			UserSuppliedMetric ClientRTT;
 			ClientRTT.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
@@ -196,34 +193,34 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 {
-	float ClientRTT = 0.0f;
-	int ClientRTTNum = 0;
-	float ClientViewLateness = 0.0f;
+	float ClientRTTSeconds = 0.0f;
+	int ClientRTTCount = 0;
+	float ClientViewLatenessSeconds = 0.0f;
 	int ClientViewLatenessNum = 0;
-	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
+	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceComponent* Component = *Itr;
 		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
 		{
-			ClientRTT += Component->ServerClientRTT;
-			ClientRTTNum++;
+			ClientRTTSeconds += Component->ServerClientRTT;
+			ClientRTTCount++;
 
-			ClientViewLateness += Component->ServerViewLateness;
+			ClientViewLatenessSeconds += Component->ServerViewLateness;
 			ClientViewLatenessNum++;
 		}
 	}
-	ClientRTT /= static_cast<float>(ClientRTTNum) + 0.00001f; // Avoid div 0
-	ClientViewLateness /= static_cast<float>(ClientViewLatenessNum) + 0.00001f;// Avoid div 0
+	ClientRTTSeconds /= static_cast<float>(ClientRTTCount) + 0.00001f; // Avoid div 0
+	ClientViewLatenessSeconds /= static_cast<float>(ClientViewLatenessNum) + 0.00001f;// Avoid div 0
 
-	AggregatedClientRTT = ClientRTT;
-	AggregatedClientViewLateness = ClientViewLateness;
+	AveragedClientRTTSeconds = ClientRTTSeconds;
+	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
 
 	
-	if (bTestEnabled)
+	//if (bTestEnabled)
 	{
-		if (AggregatedClientRTT > MaxRoundTrip && AggregatedClientViewLateness > MaxLateness) 
+		//if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds) 
 		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AggregatedClientRTT, AggregatedClientViewLateness);
+			UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
 		}
 	}
 }
@@ -248,6 +245,11 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		PlayerDensity = ExpectedPlayers;
 		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
 		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
+
+		// These flags are not requried for Spatial
+		FParse::Bool(FCommandLine::Get(), TEXT("NFRTestEnabled="), bTestEnabled);
+		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
+		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
 	}
 	else
 	{

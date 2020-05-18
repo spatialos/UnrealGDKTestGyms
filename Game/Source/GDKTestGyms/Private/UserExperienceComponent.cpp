@@ -11,18 +11,17 @@ DEFINE_LOG_CATEGORY(LogUserExperienceComponent);
 
 namespace
 {
-	float Calculate80thPctAverage(const TArray<float>& Array)
+	float Calculate80thPctAverage(TArray<float> Array) // In ascending order 
 	{
-		TArray<float> Sorted = Array;
-		Sorted.Sort();
-		int ElementsToAverage = Sorted.Num()*0.8f; // Exclude 20% of samples
+		Array.Sort();
+		int ElementsToAverage = Array.Num()*0.8f; // Exclude 20% of samples
 
 		float Avg = 0.0f;
 		for (int i = 0; i < ElementsToAverage; i++)
 		{
-			Avg += Sorted[i];
+			Avg += Array[i];
 		}
-		Avg /= ElementsToAverage;
+		Avg /= static_cast<float>(ElementsToAverage) + 0.00001f;
 		return Avg;
 	}
 }
@@ -39,23 +38,43 @@ UUserExperienceComponent::UUserExperienceComponent()
 
 void UUserExperienceComponent::InitializeComponent()
 {
+	UActorComponent::InitializeComponent();
 	ElapsedTime = 0.0f;
 	ServerClientRTT = 0.0f;
 	ServerViewLateness = 0.0f;
 	ClientRTTTimer = 0.0f; 
+	RequestKey = 0;
 	SetIsReplicated(true);
-	UActorComponent::InitializeComponent();
 }
 
-void UUserExperienceComponent::SendServerRPC()
+void UUserExperienceComponent::StartRoundtrip()
 {
-	ServerRTT(ElapsedTime);
+	if (OpenRPCs.Contains(RequestKey))
+	{
+		EndRoundtrip(RequestKey);
+	}
+	int32 NewRPC = RequestKey++;
+	OpenRPCs.Add(NewRPC, ElapsedTime);
+	ServerRTT(NewRPC);
 }
 
-void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
+void UUserExperienceComponent::EndRoundtrip(int32 Key)
+{
+	if (float* StartTime = OpenRPCs.Find(Key))
+	{
+		float Diff = ElapsedTime - *StartTime;
+		RoundTripTime.Push(Diff);
+		if (RoundTripTime.Num() > NumWindowSamples)
+		{
+			RoundTripTime.RemoveAt(0);
+		}
+	}
+}
+
+void UUserExperienceComponent::OnRep_ClientTime(float DeltaTime)
 {
 	// Prune out any components which went out of view to avoid skewing results
-	TMap<UUserExperienceComponent*, ObservedUpdate> NewObservations;
+	TMap<TWeakObjectPtr<UUserExperienceComponent>, ObservedUpdate> NewObservations;
 	for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 	{
 		if (this != *It && It->GetOwner() && It->GetOwner()->GetWorld() == GetWorld())
@@ -73,10 +92,10 @@ void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
 	}
 	ObservedComponents = NewObservations;
 
-	for (TPair<UUserExperienceComponent*, ObservedUpdate>& ObservationPair : ObservedComponents)
+	for (TPair<TWeakObjectPtr<UUserExperienceComponent>, ObservedUpdate>& ObservationPair : ObservedComponents)
 	{
 		ObservedUpdate& Observation = ObservationPair.Value;
-		UUserExperienceComponent* Component = ObservationPair.Key;
+		UUserExperienceComponent* Component = ObservationPair.Key.Get(); // Valid, it was just pulled found TObjectIterator
 
 		Observation.TimeSinceChange += DeltaTime;
 		if (Observation.Value != Component->ClientTime)
@@ -97,12 +116,12 @@ void UUserExperienceComponent::UpdateClientObservations(float DeltaTime)
 float UUserExperienceComponent::CalculateWorldFrequency()
 {
 	float Frequency = 0.0f;
-	for (TPair<UUserExperienceComponent*, ObservedUpdate>& ObservationPair : ObservedComponents)
+	for (TPair<TWeakObjectPtr<UUserExperienceComponent>, ObservedUpdate>& ObservationPair : ObservedComponents)
 	{
 		ObservedUpdate& Observation = ObservationPair.Value;
-		UUserExperienceComponent* Component = ObservationPair.Key;
+		UUserExperienceComponent* Component = ObservationPair.Key.Get();
 
-		if (!Component->IsActive())
+		if (Component == nullptr || !Component->IsActive())
 		{
 			continue;
 		}
@@ -110,15 +129,11 @@ float UUserExperienceComponent::CalculateWorldFrequency()
 		if (Observation.TrackedChanges.Num() == NumWindowSamples)
 		{
 			float AverageUpdateRate = Calculate80thPctAverage(Observation.TrackedChanges);
-			Frequency += AverageUpdateRate*1000.0f;
-		}
-		else
-		{
-			Frequency += 0.0f;
+			Frequency += AverageUpdateRate;
 		}
 	}
 	
-	Frequency /= static_cast<float>(ObservedComponents.Num());
+	Frequency /= static_cast<float>(ObservedComponents.Num()) + 0.00001f;
 	return Frequency;
 }
 
@@ -127,26 +142,28 @@ void UUserExperienceComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+	AActor* OwnerActor = GetOwner();
+	if (OwnerActor->HasLocalNetOwner())
 	{
 		ClientRTTTimer -= DeltaTime;
 		if (ClientRTTTimer < 0.0f)
 		{
-			SendServerRPC();
+			StartRoundtrip();
 			ClientRTTTimer = 1.0f;
 		} 
 	}
 
 	ElapsedTime += DeltaTime;
 
-	if (GetOwner()->GetLocalRole() == ROLE_Authority)
+	if (OwnerActor->HasAuthority())
 	{
 		// Update replicated time to clients
 		ClientTime = ElapsedTime;
+		OwnerActor->ForceNetUpdate();
 	}
-	else if (GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+	else if (OwnerActor->HasLocalNetOwner())
 	{
-		UpdateClientObservations(DeltaTime);
+		OnRep_ClientTime(DeltaTime);
 
 		// Calculate world view average adjusted by number of observations
 		float RTT = Calculate80thPctAverage(RoundTripTime)*1000.0f;
@@ -161,19 +178,14 @@ void UUserExperienceComponent::ServerReportMetrics_Implementation(float RTT, flo
 	ServerViewLateness = ViewLateness;
 }
 
-void UUserExperienceComponent::ClientRTT_Implementation(float Time)
+void UUserExperienceComponent::ServerRTT_Implementation(int32 Key)
 {
-	float Diff = ElapsedTime - Time;
-	RoundTripTime.Push(Diff);
-	if (RoundTripTime.Num() > NumWindowSamples)
-	{
-		RoundTripTime.RemoveAt(0);
-	}
+	ClientRTT(Key); // For round-trip
 }
 
-void UUserExperienceComponent::ServerRTT_Implementation(float Time)
+void UUserExperienceComponent::ClientRTT_Implementation(int32 Key)
 {
-	ClientRTT(Time); // For round-trip
+	EndRoundtrip(Key);
 }
 
 void UUserExperienceComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
