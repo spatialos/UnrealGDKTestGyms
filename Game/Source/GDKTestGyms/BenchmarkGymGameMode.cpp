@@ -265,7 +265,6 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
 		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
 
-		// These flags are not requried for Spatial
 		FParse::Bool(FCommandLine::Get(), TEXT("NFRTestEnabled="), bTestEnabled);
 		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
 		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
@@ -273,7 +272,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	else
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString TotalPlayersString, PlayerDensityString, TotalNPCsString;
+		FString TotalPlayersString, PlayerDensityString, TotalNPCsString, NFRTestEnabled, MaxRoundTrip, MaxViewLateness;
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{
 			ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
@@ -289,6 +288,19 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
 			{
 				TotalNPCs = FCString::Atoi(*TotalNPCsString);
+			}
+
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("nfr_test_enabled"), NFRTestEnabled))
+			{
+				bTestEnabled = !FCString::Stricmp(*NFRTestEnabled, TEXT("true"));
+			}
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_round_trip"), MaxRoundTrip))
+			{
+				MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
+			}
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_lateness"), MaxViewLateness))
+			{
+				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
 			}
 		}
 	}
