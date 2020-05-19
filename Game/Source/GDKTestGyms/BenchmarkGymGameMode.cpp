@@ -195,12 +195,10 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
-#if 0
 	if (GetNumPlayers() != ExpectedPlayers) // Wait for a complete test scenario
 	{
 		return;
 	}
-#endif
 
 	float ClientRTTSeconds = 0.0f;
 	int ClientRTTCount = 0;
