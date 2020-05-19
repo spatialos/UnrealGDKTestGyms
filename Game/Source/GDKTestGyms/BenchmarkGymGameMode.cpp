@@ -217,7 +217,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 		}
 	}
 	ClientRTTSeconds /= static_cast<float>(ClientRTTCount) + 0.00001f; // Avoid div 0
-	ClientViewLatenessSeconds /= static_cast<float>(ClientViewLatenessNum) + 0.00001f;// Avoid div 0
+	ClientViewLatenessSeconds /= static_cast<float>(ClientViewLatenessNum) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
