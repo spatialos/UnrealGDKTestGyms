@@ -34,9 +34,10 @@ private:
 	void BeginPlay() override; 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
-	void ServerUpdateNFRTestMetrics();
+	void ServerUpdateNFRTestMetrics(float DeltaTime);
 
 	// Test scenarios
+	float PrintUXMetric;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs 
 	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
 	bool bTestEnabled; // Native NFR test enabled flag (prints failures to log)

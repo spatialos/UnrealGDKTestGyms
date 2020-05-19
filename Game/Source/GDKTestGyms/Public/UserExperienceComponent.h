@@ -21,9 +21,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceComponent, Log, All);
 // often these are updated. This gives us a definition of the 
 // world update rate, this is used to average the time 
 // between updates. 
-//
-// Both of these values are averaged by the server and reported. 
-// See BenchmarkGymGameMode::ServerUpdateNFRTestMetrics
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
@@ -43,11 +40,13 @@ public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Server properties
-	float ElapsedTime;	 
+	float ElapsedSeconds;	 
 
 	TArray<float> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
+	bool bHadClientTimeRep;
+
 	UFUNCTION()
 	void OnRep_ClientTime(float DeltaTime);
 
@@ -56,7 +55,7 @@ public:
 	void OnClientOwnershipGained();
 
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTime)
-	float ClientTime; // Replicated from server
+	float ClientTimeSeconds; // Replicated from server
 
 	UFUNCTION(Server, Reliable)
 	void ServerRTT(int32 Key);

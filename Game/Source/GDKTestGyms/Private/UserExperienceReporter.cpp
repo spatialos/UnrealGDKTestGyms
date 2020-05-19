@@ -12,7 +12,7 @@ DEFINE_LOG_CATEGORY(LogUserExperienceReporter);
 
 namespace
 {
-	float CalculateAverage(const TArray<float>& Array) // In ascending order 
+	float CalculateAverage(const TArray<float>& Array)
 	{
 		float Avg = 0.0f;
 		for (int i = 0; i < Array.Num(); i++)
@@ -44,13 +44,13 @@ void UUserExperienceReporter::ReportMetrics()
 	UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->FindComponentByClass(UUserExperienceComponent::StaticClass()));
 	if (UXComp)
 	{
-		float RTT = 0.0f;
-		float ViewLateness = 0.0f;
+		float RoundTripTimeMS = 0.0f;
+		float ViewLatenessMS = 0.0f;
 
 		// Round trip
 		if (UXComp->RoundTripTime.Num() == UUserExperienceComponent::NumWindowSamples) // Only start reporting once window is filled.
 		{
-			RTT = CalculateAverage(UXComp->RoundTripTime);
+			RoundTripTimeMS = CalculateAverage(UXComp->RoundTripTime);
 		}
 		// Lateness
 		{
@@ -60,24 +60,24 @@ void UUserExperienceReporter::ReportMetrics()
 				UUserExperienceComponent* Component = *It;
 				if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() == UUserExperienceComponent::NumWindowSamples)
 				{
-					ViewLateness += CalculateAverage(Component->UpdateRate);
+					ViewLatenessMS += CalculateAverage(Component->UpdateRate);
 					ViewLatenessCount++;
 				}
 			}
-			ViewLateness /= ViewLatenessCount + 0.00001f; 
+			ViewLatenessMS /= ViewLatenessCount + 0.00001f; 
 		}
 
-		RTT *= 1000.0f; // ms->s
-		ViewLateness *= 1000.0f; // ms->s
+		float RoundTripTimeS = RoundTripTimeMS * 1000.0f; // ms->s
+		float ViewLatenessS = ViewLatenessMS * 1000.0f; // ms->s
 
-		ServerReportedMetrics(RTT, ViewLateness); 
+		ServerReportedMetrics(RoundTripTimeS, ViewLatenessS);
 	}
 }
 
-void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTT, float ViewLateness)
+void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float ViewLatenessSeconds)
 {
-	ServerRTT = RTT;
-	ServerViewLateness = ViewLateness;
+	ServerRTT = RTTSeconds;
+	ServerViewLateness = ViewLatenessSeconds;
 }
 
 void UUserExperienceReporter::OnClientOwnershipGained()

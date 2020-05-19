@@ -8,6 +8,14 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceReporter, Log, All);
 
+// User experience metric
+//
+// This component takes the recorded values from UserExperienceComponent,
+// averages them and makes them accessible for the BenchmarkGymGameMode to query.
+//
+// The BenchmarkGymGameMode will report these metrics to Grafana or use them 
+// to fail native test scenarios by printing a log message.
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GDKTESTGYMS_API UUserExperienceReporter : public UActorComponent
 {
@@ -23,5 +31,5 @@ public:
 	void OnClientOwnershipGained() override;
 	void ReportMetrics();
 	UFUNCTION(Server, reliable)
-	void ServerReportedMetrics(float RTT, float ViewLateness);
+	void ServerReportedMetrics(float RTTSeconds, float ViewLatenessSeconds);
 };

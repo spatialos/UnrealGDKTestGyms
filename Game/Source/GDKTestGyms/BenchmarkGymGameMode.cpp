@@ -60,6 +60,8 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	bTestEnabled = false;
 	MaxClientRoundTripSeconds = MaxClientViewLatenessSeconds = 150;	
+	
+	PrintUXMetric = 1.0f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -188,11 +190,18 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		AIControlledPlayers.Empty();
 	}
 
-	ServerUpdateNFRTestMetrics();
+	ServerUpdateNFRTestMetrics(DeltaSeconds);
 }
 
-void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
+void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
+#if 0
+	if (GetNumPlayers() != ExpectedPlayers) // Wait for a complete test scenario
+	{
+		return;
+	}
+#endif
+
 	float ClientRTTSeconds = 0.0f;
 	int ClientRTTCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
@@ -216,14 +225,26 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics()
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
 
 	
-	//if (bTestEnabled)
+	if (bTestEnabled)
 	{
-		//if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds) 
+		if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds) 
 		{
+#if !WITH_EDITOR
 			UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+#endif
 		}
 	}
+
+	PrintUXMetric -= DeltaSeconds;
+	if (PrintUXMetric < 0.0f)
+	{
+		PrintUXMetric = 1.0f;
+#if !WITH_EDITOR
+		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+#endif
+	}
 }
+
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 {
 	FString WorkerValue;
