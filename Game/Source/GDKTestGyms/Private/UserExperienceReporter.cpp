@@ -41,7 +41,7 @@ void UUserExperienceReporter::InitializeComponent()
 
 void UUserExperienceReporter::ReportMetrics()
 {
-	UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->GetComponentByClass(TSubclassOf<UUserExperienceComponent>()));
+	UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->FindComponentByClass(UUserExperienceComponent::StaticClass()));
 	if (UXComp)
 	{
 		float RTT = 0.0f;
@@ -58,7 +58,7 @@ void UUserExperienceReporter::ReportMetrics()
 			for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 			{
 				UUserExperienceComponent* Component = *It;
-				if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld())
+				if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() == UUserExperienceComponent::NumWindowSamples)
 				{
 					ViewLateness += CalculateAverage(Component->UpdateRate);
 					ViewLatenessCount++;
