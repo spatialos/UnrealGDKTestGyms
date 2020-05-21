@@ -22,7 +22,6 @@ UUserExperienceComponent::UUserExperienceComponent()
 void UUserExperienceComponent::InitializeComponent()
 {
 	UActorComponent::InitializeComponent();
-	ElapsedSeconds = 0.0f;
 	RequestKey = 0;
 	bHadClientTimeRep = false;
 	SetIsReplicated(true);
@@ -35,16 +34,16 @@ void UUserExperienceComponent::StartRoundtrip()
 		EndRoundtrip(RequestKey);
 	}
 	int32 NewRPC = ++RequestKey;
-	OpenRPCs.Add(NewRPC, ElapsedSeconds);
+	OpenRPCs.Add(NewRPC, FDateTime::Now().GetTicks() );
 	ServerRTT(NewRPC);
 }
 
 void UUserExperienceComponent::EndRoundtrip(int32 Key)
 {
-	if (float* StartTime = OpenRPCs.Find(Key))
+	if (int64* StartTime = OpenRPCs.Find(Key))
 	{
-		float Diff = ElapsedSeconds - *StartTime;
-		RoundTripTime.Push(Diff);
+		int64_t Diff = FDateTime::Now().GetTicks() - *StartTime;
+		RoundTripTime.Push(FTimespan(Diff).GetTotalMilliseconds());
 		if (RoundTripTime.Num() > NumWindowSamples)
 		{
 			RoundTripTime.RemoveAt(0);
@@ -53,7 +52,7 @@ void UUserExperienceComponent::EndRoundtrip(int32 Key)
 	}
 }
 
-void UUserExperienceComponent::OnRep_ClientTime(float OldValueSeconds)
+void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 {
 	if (!bHadClientTimeRep) // Ignore initial replication
 	{
@@ -61,8 +60,7 @@ void UUserExperienceComponent::OnRep_ClientTime(float OldValueSeconds)
 		return;
 	}
 
-	float Diff = ClientTimeSeconds - OldValueSeconds;
-	UpdateRate.Push(Diff);
+	UpdateRate.Push(FTimespan(ClientTimeTicks - OldTicks).GetTotalMilliseconds());
 	if (UpdateRate.Num() > NumWindowSamples)
 	{
 		UpdateRate.RemoveAt(0);
@@ -82,14 +80,12 @@ void UUserExperienceComponent::OnClientOwnershipGained()
 void UUserExperienceComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaSeconds, TickType, ThisTickFunction);
-	
-	ElapsedSeconds += DeltaSeconds;
 
 	AActor* OwnerActor = GetOwner();
 	if (OwnerActor->HasAuthority())
 	{
 		// Update replicated time to clients
-		ClientTimeSeconds = ElapsedSeconds;
+		ClientTimeTicks = FDateTime::Now().GetTicks();
 		OwnerActor->ForceNetUpdate();
 	}
 }
@@ -108,6 +104,6 @@ void UUserExperienceComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UUserExperienceComponent, ClientTimeSeconds);
+	DOREPLIFETIME(UUserExperienceComponent, ClientTimeTicks);
 }
 

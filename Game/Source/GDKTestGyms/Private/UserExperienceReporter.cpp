@@ -67,10 +67,7 @@ void UUserExperienceReporter::ReportMetrics()
 			ViewLatenessMS /= ViewLatenessCount + 0.00001f; 
 		}
 
-		float RoundTripTimeS = RoundTripTimeMS * 1000.0f; // ms->s
-		float ViewLatenessS = ViewLatenessMS * 1000.0f; // ms->s
-
-		ServerReportedMetrics(RoundTripTimeS, ViewLatenessS);
+		ServerReportedMetrics(RoundTripTimeMS, ViewLatenessMS);
 	}
 }
 

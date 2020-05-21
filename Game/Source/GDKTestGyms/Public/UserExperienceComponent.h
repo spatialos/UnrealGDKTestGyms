@@ -29,7 +29,7 @@ class GDKTESTGYMS_API UUserExperienceComponent : public UActorComponent
 	// Sets default values for this component's properties
 	UUserExperienceComponent();
 
-	TMap<int32, float> OpenRPCs;
+	TMap<int32, int64> OpenRPCs; // Key -> FDateTime ticks
 	int32 RequestKey;
 
 public:	
@@ -39,23 +39,20 @@ public:
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Server properties
-	float ElapsedSeconds;	 
-
 	TArray<float> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
 	bool bHadClientTimeRep;
 
 	UFUNCTION()
-	void OnRep_ClientTime(float DeltaTime);
+	void OnRep_ClientTimeTicks(int64 DeltaTime);
 
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	void OnClientOwnershipGained();
 
-	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTime)
-	float ClientTimeSeconds; // Replicated from server
+	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
+	int64 ClientTimeTicks; // Replicated from server
 
 	UFUNCTION(Server, Reliable)
 	void ServerRTT(int32 Key);
