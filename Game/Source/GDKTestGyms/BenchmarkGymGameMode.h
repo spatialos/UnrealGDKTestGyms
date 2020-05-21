@@ -40,7 +40,6 @@ private:
 	float PrintUXMetric;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs 
 	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
-	bool bTestEnabled; // Native NFR test enabled flag (prints failures to log)
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
 	int32 MaxClientViewLatenessSeconds;
 

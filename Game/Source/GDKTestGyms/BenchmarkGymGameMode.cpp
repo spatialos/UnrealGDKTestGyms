@@ -58,7 +58,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
 
-	bTestEnabled = false;
 	MaxClientRoundTripSeconds = MaxClientViewLatenessSeconds = 150;	
 	
 	PrintUXMetric = 1.0f;
@@ -195,11 +194,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
-	if (GetNumPlayers() != ExpectedPlayers) // Wait for a complete test scenario
-	{
-		return;
-	}
-
 	float ClientRTTSeconds = 0.0f;
 	int ClientRTTCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
@@ -222,16 +216,14 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
 
-	
-	if (bTestEnabled)
+
+	if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
 	{
-		if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds) 
-		{
-#if !WITH_EDITOR
-			UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+#if !WITH_EDITOR 
+		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
 #endif
-		}
 	}
+	
 
 	PrintUXMetric -= DeltaSeconds;
 	if (PrintUXMetric < 0.0f)
@@ -265,7 +257,6 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
 		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
 
-		FParse::Bool(FCommandLine::Get(), TEXT("NFRTestEnabled="), bTestEnabled);
 		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
 		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
 	}
@@ -290,10 +281,6 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 				TotalNPCs = FCString::Atoi(*TotalNPCsString);
 			}
 
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("nfr_test_enabled"), NFRTestEnabled))
-			{
-				bTestEnabled = !FCString::Stricmp(*NFRTestEnabled, TEXT("true"));
-			}
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_round_trip"), MaxRoundTrip))
 			{
 				MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
