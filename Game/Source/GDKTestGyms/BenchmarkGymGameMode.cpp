@@ -223,12 +223,11 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
 #endif
 	}
-	
 
 	PrintUXMetric -= DeltaSeconds;
 	if (PrintUXMetric < 0.0f)
 	{
-		PrintUXMetric = 1.0f;
+		PrintUXMetric = 10.0f;
 #if !WITH_EDITOR
 		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
 #endif
