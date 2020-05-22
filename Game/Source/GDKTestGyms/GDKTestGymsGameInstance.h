@@ -13,8 +13,9 @@ class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
 
 public:
 	virtual void Init() override;
+
 	bool Tick(float DeltaSeconds);
-	void OnStart() override;
+	virtual void OnStart() override;
 private:
 	FTickerDelegate TickDelegate;
 	FDelegateHandle TickDelegateHandle;

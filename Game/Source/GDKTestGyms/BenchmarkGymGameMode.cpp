@@ -263,6 +263,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString TotalPlayersString, PlayerDensityString, TotalNPCsString, NFRTestEnabled, MaxRoundTrip, MaxViewLateness;
+		check(NetDriver);
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{
 			ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
@@ -291,6 +292,8 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		}
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
+
+	UE_LOG(LogBenchmarkGym, Log, TEXT("Players %d, Density %d, NPCs %d, Clusters %d"), ExpectedPlayers, PlayerDensity, TotalNPCs, NumPlayerClusters);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
