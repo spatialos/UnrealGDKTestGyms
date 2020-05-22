@@ -60,7 +60,10 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	MaxClientRoundTripSeconds = MaxClientViewLatenessSeconds = 150;	
 	
-	PrintUXMetric = 1.0f;
+	PrintUXMetric = 10.0f;
+	
+	bHasUxFailed = false;
+	bPlayersHaveJoined = false;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -210,15 +213,26 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 			ClientViewLatenessNum++;
 		}
 	}
+
+	if (ClientRTTCount > 0)
+	{
+		bPlayersHaveJoined = true;
+	}
+
+	if (!bPlayersHaveJoined)
+	{
+		return; // We don't start reporting until there are some valid components in the scene.
+	}
+
 	ClientRTTSeconds /= static_cast<float>(ClientRTTCount) + 0.00001f; // Avoid div 0
 	ClientViewLatenessSeconds /= static_cast<float>(ClientViewLatenessNum) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
 
-
-	if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
+	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
 	{
+		bHasUxFailed = true;
 #if !WITH_EDITOR 
 		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
 #endif
@@ -262,7 +276,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	else
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString TotalPlayersString, PlayerDensityString, TotalNPCsString, NFRTestEnabled, MaxRoundTrip, MaxViewLateness;
+		FString TotalPlayersString, PlayerDensityString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
 		check(NetDriver);
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{

@@ -42,6 +42,8 @@ private:
 	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
 	int32 MaxClientViewLatenessSeconds;
+	bool bPlayersHaveJoined;
+	bool bHasUxFailed;
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.
