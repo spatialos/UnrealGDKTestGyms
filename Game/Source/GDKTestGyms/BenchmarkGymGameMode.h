@@ -3,13 +3,15 @@
 #pragma once
 
 #include "BlackboardValues.h"
-#include "ControllerIntegerPair.h"
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "UserExperienceReporter.h"
 
 #include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
+
+typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
 
 /**
  *
@@ -27,8 +29,21 @@ private:
 	TArray<FBlackboardValues> NPCRunPoints;
 	void GenerateTestScenarioLocations();
 
-	UPROPERTY()
-	TArray<FControllerIntegerPair> AIControlledPlayers;
+	TArray<ControllerIntegerPair> AIControlledPlayers;
+
+	void BeginPlay() override; 
+	double GetClientRTT() const { return AveragedClientRTTSeconds; }
+	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
+	void ServerUpdateNFRTestMetrics(float DeltaTime);
+
+	// Test scenarios
+	float PrintUXMetric;
+	double AveragedClientRTTSeconds; // The stored average of all the client RTTs 
+	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
+	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
+	int32 MaxClientViewLatenessSeconds;
+	bool bPlayersHaveJoined;
+	bool bHasUxFailed;
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.
