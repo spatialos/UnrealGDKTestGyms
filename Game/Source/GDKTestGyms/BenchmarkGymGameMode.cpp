@@ -252,7 +252,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	{
 		PrintUXMetric = 10.0f;
 #if !WITH_EDITOR
-		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, UX Components: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, UXComponentCount, );
+		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, UX Components: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, UXComponentCount);
 #endif
 	}
 }
