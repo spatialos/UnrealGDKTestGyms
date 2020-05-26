@@ -406,15 +406,6 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 	}
 }
 
-void ABenchmarkGymGameMode::Logout(AController* Controller)
-{
-	if(SecondsTillPlayerCheck > 0.0f)
-	{
-		// This log is used by the NFR pipeline to indicate if a client disconnected
-		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d, Controller=%s"), ExpectedPlayers, GetNumPlayers(), *Controller->GetName());
-	}
-}
-
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 {
 	NPCSToSpawn = NumNPCs;
