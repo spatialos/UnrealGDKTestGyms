@@ -174,7 +174,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			SecondsTillPlayerCheck -= DeltaSeconds;
 			if (SecondsTillPlayerCheck <= 0.0f)
 			{
-				if (PlayersSpawned != ExpectedPlayers)
+				if (ActivePlayers != ExpectedPlayers)
 				{
 					// This log is used by the NFR pipeline to indicate if a client failed to connect
 					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
