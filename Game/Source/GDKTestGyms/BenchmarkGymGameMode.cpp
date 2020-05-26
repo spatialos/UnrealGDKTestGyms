@@ -87,7 +87,7 @@ void ABenchmarkGymGameMode::BeginPlay()
 
 			{
 				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
 			}
 		}
