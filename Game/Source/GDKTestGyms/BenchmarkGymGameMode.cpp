@@ -209,23 +209,21 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
 	float ClientRTTSeconds = 0.0f;
-	int ClientRTTCount = 0;
+	int UXComponentCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
-	int ClientViewLatenessNum = 0;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
 		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
 		{
 			ClientRTTSeconds += Component->ServerRTT;
-			ClientRTTCount++;
+			UXComponentCount++;
 
 			ClientViewLatenessSeconds += Component->ServerViewLateness;
-			ClientViewLatenessNum++;
 		}
 	}
 
-	if (ClientRTTCount > 0)
+	if (UXComponentCount > 0)
 	{
 		bPlayersHaveJoined = true;
 	}
@@ -235,8 +233,8 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
 
-	ClientRTTSeconds /= static_cast<float>(ClientRTTCount) + 0.00001f; // Avoid div 0
-	ClientViewLatenessSeconds /= static_cast<float>(ClientViewLatenessNum) + 0.00001f; // Avoid div 0
+	ClientRTTSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
+	ClientViewLatenessSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
@@ -254,7 +252,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	{
 		PrintUXMetric = 10.0f;
 #if !WITH_EDITOR
-		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, UX Components: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, UXComponentCount, );
 #endif
 	}
 }
