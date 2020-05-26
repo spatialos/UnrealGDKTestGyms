@@ -34,7 +34,7 @@ private:
 	void BeginPlay() override; 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
-	double GetPlayersConnected() const { return PlayersSpawned; }
+	double GetPlayersConnected() const { return ActivePlayers; }
 	void ServerUpdateNFRTestMetrics(float DeltaTime);
 
 	// Test scenarios
@@ -45,6 +45,7 @@ private:
 	int32 MaxClientViewLatenessSeconds;
 	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
+	int32 ActivePlayers; // A count of visible UX components
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.

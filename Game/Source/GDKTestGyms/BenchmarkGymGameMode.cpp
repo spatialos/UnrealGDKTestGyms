@@ -22,7 +22,7 @@ namespace
 {
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
-	const FString PlayersSpawnedMetricName = TEXT("UnrealPlayersSpawned");
+	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -222,6 +222,8 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 			ClientViewLatenessSeconds += Component->ServerViewLateness;
 		}
 	}
+
+	ActivePlayers = UXComponentCount;
 
 	if (UXComponentCount > 0)
 	{
