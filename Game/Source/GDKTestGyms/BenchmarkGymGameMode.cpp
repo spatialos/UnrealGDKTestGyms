@@ -20,8 +20,9 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 // Metrics
 namespace
 {
-	const FString AverageClientRTT = TEXT("UnrealAverageClientRTT");
-	const FString AverageClientViewLateness = TEXT("UnrealAverageClientViewLateness");
+	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
+	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
+	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -64,6 +65,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	
 	bHasUxFailed = false;
 	bPlayersHaveJoined = false;
+	ActivePlayers = 0;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -72,13 +74,23 @@ void ABenchmarkGymGameMode::BeginPlay()
 	{
 		if (SpatialDriver->SpatialMetrics != nullptr)
 		{
-			UserSuppliedMetric ClientRTT;
-			ClientRTT.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTT, ClientRTT);
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+			}
 
-			UserSuppliedMetric ClientViewLateness;
-			ClientViewLateness.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLateness, ClientViewLateness);
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+			}
+
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			}
 		}
 	}
 }
@@ -162,7 +174,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			SecondsTillPlayerCheck -= DeltaSeconds;
 			if (SecondsTillPlayerCheck <= 0.0f)
 			{
-				if (GetNumPlayers() != ExpectedPlayers)
+				if (ActivePlayers != ExpectedPlayers)
 				{
 					// This log is used by the NFR pipeline to indicate if a client failed to connect
 					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
@@ -198,23 +210,23 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
 	float ClientRTTSeconds = 0.0f;
-	int ClientRTTCount = 0;
+	int UXComponentCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
-	int ClientViewLatenessNum = 0;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
 		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
 		{
 			ClientRTTSeconds += Component->ServerRTT;
-			ClientRTTCount++;
+			UXComponentCount++;
 
 			ClientViewLatenessSeconds += Component->ServerViewLateness;
-			ClientViewLatenessNum++;
 		}
 	}
 
-	if (ClientRTTCount > 0)
+	ActivePlayers = UXComponentCount;
+
+	if (UXComponentCount > 0)
 	{
 		bPlayersHaveJoined = true;
 	}
@@ -224,8 +236,8 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
 
-	ClientRTTSeconds /= static_cast<float>(ClientRTTCount) + 0.00001f; // Avoid div 0
-	ClientViewLatenessSeconds /= static_cast<float>(ClientViewLatenessNum) + 0.00001f; // Avoid div 0
+	ClientRTTSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
+	ClientViewLatenessSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
@@ -234,7 +246,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	{
 		bHasUxFailed = true;
 #if !WITH_EDITOR 
-		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
 	}
 
@@ -243,7 +255,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	{
 		PrintUXMetric = 10.0f;
 #if !WITH_EDITOR
-		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
 	}
 }
@@ -391,15 +403,6 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		const FVector SpawnLocation = FVector(X, Y, Z);
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
-	}
-}
-
-void ABenchmarkGymGameMode::Logout(AController* Controller)
-{
-	if(SecondsTillPlayerCheck > 0.0f)
-	{
-		// This log is used by the NFR pipeline to indicate if a client disconnected
-		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d, Controller=%s"), ExpectedPlayers, GetNumPlayers(), *Controller->GetName());
 	}
 }
 

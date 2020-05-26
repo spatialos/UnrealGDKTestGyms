@@ -34,6 +34,7 @@ private:
 	void BeginPlay() override; 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
+	double GetPlayersConnected() const { return ActivePlayers; }
 	void ServerUpdateNFRTestMetrics(float DeltaTime);
 
 	// Test scenarios
@@ -44,6 +45,7 @@ private:
 	int32 MaxClientViewLatenessSeconds;
 	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
+	int32 ActivePlayers; // A count of visible UX components
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.
@@ -73,5 +75,4 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-	void Logout(AController* Controller) override;
 };
