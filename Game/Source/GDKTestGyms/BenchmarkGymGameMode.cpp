@@ -65,6 +65,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	
 	bHasUxFailed = false;
 	bPlayersHaveJoined = false;
+	ActivePlayers = 0;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -245,7 +246,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	{
 		bHasUxFailed = true;
 #if !WITH_EDITOR 
-		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds);
+		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
 	}
 
@@ -254,7 +255,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	{
 		PrintUXMetric = 10.0f;
 #if !WITH_EDITOR
-		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, UX Components: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, UXComponentCount);
+		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
 	}
 }
