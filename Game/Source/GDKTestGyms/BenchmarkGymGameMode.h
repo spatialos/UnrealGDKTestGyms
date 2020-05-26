@@ -34,6 +34,7 @@ private:
 	void BeginPlay() override; 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
+	double GetPlayersConnected() const { return PlayersSpawned; }
 	void ServerUpdateNFRTestMetrics(float DeltaTime);
 
 	// Test scenarios

@@ -20,8 +20,9 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 // Metrics
 namespace
 {
-	const FString AverageClientRTT = TEXT("UnrealAverageClientRTT");
-	const FString AverageClientViewLateness = TEXT("UnrealAverageClientViewLateness");
+	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
+	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
+	const FString PlayersSpawnedMetricName = TEXT("UnrealPlayersSpawned");
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -72,13 +73,23 @@ void ABenchmarkGymGameMode::BeginPlay()
 	{
 		if (SpatialDriver->SpatialMetrics != nullptr)
 		{
-			UserSuppliedMetric ClientRTT;
-			ClientRTT.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTT, ClientRTT);
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+			}
 
-			UserSuppliedMetric ClientViewLateness;
-			ClientViewLateness.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLateness, ClientViewLateness);
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+			}
+
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			}
 		}
 	}
 }
@@ -162,7 +173,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			SecondsTillPlayerCheck -= DeltaSeconds;
 			if (SecondsTillPlayerCheck <= 0.0f)
 			{
-				if (GetNumPlayers() != ExpectedPlayers)
+				if (PlayersSpawned != ExpectedPlayers)
 				{
 					// This log is used by the NFR pipeline to indicate if a client failed to connect
 					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
