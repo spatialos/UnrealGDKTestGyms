@@ -21,19 +21,42 @@ void UGDKTestGymsGameInstance::OnStart()
 	}
 }
 
-bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
+float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 {
-	float Alpha = 0.8f;
-	float CurrFPS = 1.0f / DeltaSeconds; // TODO - we should remove FApp::GetIdleTime() from DeltaSeconds once the NFR regex is fixed
-	AverageFPS = (Alpha * AverageFPS) + ((1.0f - Alpha) * CurrFPS);
+	TicksForFPS.Push(TPair<int64, float>(NowReal, DeltaS)); 
+	float TotalDelta = 0.0f;
+	int NumSamples = 0;
+	int64 MinRange = NowReal - FTimespan::FromMinutes(2.0).GetTicks();
+	for (int i = TicksForFPS.Num()-1; i >= 0; i--)
+	{
+		const FPSTimePoint& TimePoint = TicksForFPS[i];
+		if (TimePoint.Key < MinRange)
+		{
+			TicksForFPS.RemoveAt(i);
+		}
+		else
+		{
+			TotalDelta += TimePoint.Value;
+			NumSamples++;
+		}
+	}
+	if (NumSamples > 0)
+	{
+		return static_cast<float>(NumSamples) / TotalDelta; // 1.0f / Total / Samples 
+	}
+	return 60.0f; // If there are no samples return the ideal
+}
 
+bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
+{	
+	float FPS = AddAndCalcFps(FDateTime::Now().GetTicks(), DeltaSeconds);
 	SecondsSinceFPSLog += DeltaSeconds;
 
 	if (SecondsSinceFPSLog > 1.0f) 
 	{
 		SecondsSinceFPSLog = 0.0f;
 #if !WITH_EDITOR // Don't pollute logs in editor
-		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f"), AverageFPS);
+		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f"), FPS);
 #endif
 	}
 

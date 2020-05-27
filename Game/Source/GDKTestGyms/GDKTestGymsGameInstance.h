@@ -17,9 +17,13 @@ public:
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
 private:
+	using FPSTimePoint = TPair<int64, float>;
+	TArray<FPSTimePoint> TicksForFPS;
+	float AddAndCalcFps(int64 NowReal, float DeltaS);
+
 	FTickerDelegate TickDelegate;
 	FDelegateHandle TickDelegateHandle;
 
 	float AverageFPS = 60.0f;
-	float SecondsSinceFPSLog = 0.0f;
+	float SecondsSinceFPSLog = 1.0f;
 };
