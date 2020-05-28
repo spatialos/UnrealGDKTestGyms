@@ -17,7 +17,8 @@ public:
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
 private:
-	using FPSTimePoint = TPair<int64, float>;
+	using FPSTimePoint = TPair<int64, int64>; // Real, FrameDelta
+	int64 TickWindowTotal;
 	TArray<FPSTimePoint> TicksForFPS;
 	float AddAndCalcFps(int64 NowReal, float DeltaS);
 

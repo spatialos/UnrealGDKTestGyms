@@ -10,6 +10,7 @@ void UGDKTestGymsGameInstance::Init()
 
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UGDKTestGymsGameInstance::Tick);
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
+	TickWindowTotal = 0;
 }
 
 void UGDKTestGymsGameInstance::OnStart()
@@ -23,26 +24,34 @@ void UGDKTestGymsGameInstance::OnStart()
 
 float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 {
-	TicksForFPS.Push(TPair<int64, float>(NowReal, DeltaS)); 
-	float TotalDelta = 0.0f;
-	int NumSamples = 0;
+	int64 DeltaTicks = FTimespan::FromSeconds(DeltaS).GetTicks();
+	TicksForFPS.Push(TPair<int64, int64>(NowReal, DeltaTicks)); 
+	TickWindowTotal += DeltaTicks;
+
 	int64 MinRange = NowReal - FTimespan::FromMinutes(2.0).GetTicks();
-	for (int i = TicksForFPS.Num()-1; i >= 0; i--)
+	
+	// Trim samples
+	for(int i = 0; i < TicksForFPS.Num(); i++)
 	{
 		const FPSTimePoint& TimePoint = TicksForFPS[i];
-		if (TimePoint.Key < MinRange)
+		if (TimePoint.Key > MinRange) // Find the first valid sample
 		{
-			TicksForFPS.RemoveAt(i);
-		}
-		else
-		{
-			TotalDelta += TimePoint.Value;
-			NumSamples++;
+			int NumToRemove = i;
+			if (NumToRemove > 0)
+			{
+				for (int j = 0; j < NumToRemove; j++)
+				{
+					TickWindowTotal -= TicksForFPS[j].Value;
+				}
+				memmove(&TicksForFPS[0], &TicksForFPS[NumToRemove], (TicksForFPS.Num()-NumToRemove) * sizeof(FPSTimePoint));
+				TicksForFPS.SetNum(TicksForFPS.Num() - NumToRemove);
+			}
+			break;
 		}
 	}
-	if (NumSamples > 0)
+	if (TicksForFPS.Num() > 0)
 	{
-		return static_cast<float>(NumSamples) / TotalDelta; // 1.0f / Total / Samples 
+		return static_cast<float>(TicksForFPS.Num()) / FTimespan(TickWindowTotal).GetTotalSeconds(); // 1.0f / Total / Samples 
 	}
 	return 60.0f; // If there are no samples return the ideal
 }
