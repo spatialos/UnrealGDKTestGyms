@@ -37,7 +37,7 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 		const FPSTimePoint& TimePoint = TicksForFPS[i];
 		if (TimePoint.Key > MinRange) // Find the first valid sample
 		{
-			int NumToRemove = i;
+			NumToRemove = i;
 			break;
 		}
 	}
