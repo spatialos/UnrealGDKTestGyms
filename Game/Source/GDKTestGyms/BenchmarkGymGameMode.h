@@ -45,6 +45,8 @@ private:
 	int32 MaxClientViewLatenessSeconds;
 	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
+	bool bHasFpsFailed;
+	float MinAcceptableFPS;
 	int32 ActivePlayers; // A count of visible UX components
 
 	bool bHasUpdatedMaxActorsToReplicate;

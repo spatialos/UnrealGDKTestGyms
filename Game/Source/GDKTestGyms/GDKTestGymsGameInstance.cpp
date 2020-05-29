@@ -59,14 +59,14 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 
 bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
 {	
-	float FPS = AddAndCalcFps(FDateTime::Now().GetTicks(), DeltaSeconds);
+	AverageFPS = AddAndCalcFps(FDateTime::Now().GetTicks(), DeltaSeconds);
 	SecondsSinceFPSLog += DeltaSeconds;
 
 	if (SecondsSinceFPSLog > 1.0f) 
 	{
 		SecondsSinceFPSLog = 0.0f;
 #if !WITH_EDITOR // Don't pollute logs in editor
-		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f"), FPS);
+		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f"), AverageFPS);
 #endif
 	}
 

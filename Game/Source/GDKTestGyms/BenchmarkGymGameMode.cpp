@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/Character.h"
+#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/PlayerStart.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
@@ -66,6 +67,8 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bHasUxFailed = false;
 	bPlayersHaveJoined = false;
 	ActivePlayers = 0;
+	bHasFpsFailed = false;
+	MinAcceptableFPS = 20.0f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -257,6 +260,19 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #if !WITH_EDITOR
 		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
+	}
+
+	if (!bHasFpsFailed && GetWorld())
+	{
+		const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance());
+		float FPS = GameInstance->GetAveragedFPS();
+		if (FPS < MinAcceptableFPS)
+		{
+			bHasFpsFailed = true;
+#if !WITH_EDITOR
+			UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+#endif		
+		}
 	}
 }
 
