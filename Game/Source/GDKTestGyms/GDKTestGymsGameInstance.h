@@ -16,7 +16,9 @@ public:
 
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
-	float GetAveragedFPS() const { return AverageFPS; }
+
+	void NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
 private:
 	using FPSTimePoint = TPair<int64, int64>; // Real, FrameDelta
 	int64 TickWindowTotal;

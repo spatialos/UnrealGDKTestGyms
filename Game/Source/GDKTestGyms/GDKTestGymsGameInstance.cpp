@@ -2,6 +2,8 @@
 
 #include "GDKTestGymsGameInstance.h"
 
+#include "Interop/Connection/SpatialConnectionManager.h"
+
 #include "EngineMinimal.h"
 
 void UGDKTestGymsGameInstance::Init()
@@ -11,6 +13,7 @@ void UGDKTestGymsGameInstance::Init()
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UGDKTestGymsGameInstance::Tick);
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
 	TickWindowTotal = 0;
+	GetEngine()->NetworkFailureEvent.AddUObject(this, &UGDKTestGymsGameInstance::NetworkFailureEventCallback);
 }
 
 void UGDKTestGymsGameInstance::OnStart()
@@ -43,9 +46,9 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 	}
 	if (NumToRemove > 0)
 	{
-		for (int j = 0; j < NumToRemove; j++)
+		for (int i = 0; i < NumToRemove; i++)
 		{
-			TickWindowTotal -= TicksForFPS[j].Value;
+			TickWindowTotal -= TicksForFPS[i].Value;
 		}
 		memmove(&TicksForFPS[0], &TicksForFPS[NumToRemove], (TicksForFPS.Num() - NumToRemove) * sizeof(FPSTimePoint));
 		TicksForFPS.SetNum(TicksForFPS.Num() - NumToRemove);
@@ -57,16 +60,35 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 	return 60.0f; // If there are no samples return the ideal
 }
 
+void UGDKTestGymsGameInstance::NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Network Failure (%s)"), *ErrorString);
+
+	if (FailureType == ENetworkFailure::ConnectionTimeout)
+	{
+		if (USpatialConnectionManager* ConnectionManager = GetSpatialConnectionManager())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Retrying connection..."));
+			bool bConnectAsClient = (GetWorld()->GetNetMode() == NM_Client);
+			ConnectionManager->Connect(bConnectAsClient, 0 /*PlayInEditorID*/);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("UGDKTestGymsGameInstance: Connection manager invalid, won't retry connection."));
+		}
+	}
+}
+
 bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
 {	
-	AverageFPS = AddAndCalcFps(FDateTime::Now().GetTicks(), DeltaSeconds);
+	float FPS = AddAndCalcFps(FDateTime::Now().GetTicks(), DeltaSeconds);
 	SecondsSinceFPSLog += DeltaSeconds;
 
 	if (SecondsSinceFPSLog > 1.0f) 
 	{
 		SecondsSinceFPSLog = 0.0f;
 #if !WITH_EDITOR // Don't pollute logs in editor
-		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f"), AverageFPS);
+		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f"), FPS);
 #endif
 	}
 
