@@ -2,6 +2,8 @@
 
 #include "GDKTestGymsGameInstance.h"
 
+#include "Interop/Connection/SpatialConnectionManager.h"
+
 #include "EngineMinimal.h"
 
 void UGDKTestGymsGameInstance::Init()
@@ -10,6 +12,8 @@ void UGDKTestGymsGameInstance::Init()
 
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UGDKTestGymsGameInstance::Tick);
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
+
+	GetEngine()->NetworkFailureEvent.AddUObject(this, &UGDKTestGymsGameInstance::NetworkFailureEventCallback);
 }
 
 void UGDKTestGymsGameInstance::OnStart()
@@ -18,6 +22,25 @@ void UGDKTestGymsGameInstance::OnStart()
 	if (NetMode == NM_Client || NetMode == NM_Standalone)
 	{
 		GetEngine()->SetMaxFPS(60.0f);
+	}
+}
+
+void UGDKTestGymsGameInstance::NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Network Failure (%s)"), *ErrorString);
+
+	if (FailureType == ENetworkFailure::ConnectionTimeout)
+	{
+		if (USpatialConnectionManager* ConnectionManager = GetSpatialConnectionManager())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Retrying connection..."));
+			bool bConnectAsClient = (GetWorld()->GetNetMode() == NM_Client);
+			ConnectionManager->Connect(bConnectAsClient, 0 /*PlayInEditorID*/);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("UGDKTestGymsGameInstance: Connection manager invalid, won't retry connection."));
+		}
 	}
 }
 
