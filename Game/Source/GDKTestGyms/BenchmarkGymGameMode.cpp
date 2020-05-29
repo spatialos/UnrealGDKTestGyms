@@ -277,7 +277,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 			if (FPS < MinAcceptableFPS)
 			{
 				bHasFpsFailed = true;
-#if !WITH_EDITOR || 1 
+#if !WITH_EDITOR 
 				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 #endif		
 			}
