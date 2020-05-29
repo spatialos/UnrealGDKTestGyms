@@ -1,0 +1,48 @@
+{
+	"template": "w2_r0500_e5",
+	"world":
+	{
+		"dimensions":
+		{
+			"x_meters": 10000,
+			"z_meters": 10000
+		},
+		"chunk_edge_length_meters": 50,
+		"legacy_flags": [
+			{
+				"name": "bridge_qos_max_timeout",
+				"value": "0"
+			},
+			{
+				"name": "bridge_soft_handover_enabled",
+				"value": "false"
+			},
+			{
+				"name": "bridge_single_port_max_heartbeat_timeout_ms",
+				"value": "3600000"
+			}
+		],
+		"legacy_javaparams": [],
+		"snapshots":
+		{
+			"snapshot_write_period_seconds": 0
+		}
+	},
+	"load_balancing":
+	{
+		"layer_configurations": []
+	},
+	"workers": [
+		{
+			"worker_type": "UnrealClient",
+			"flags": [],
+			"permissions": [
+				{
+					"all":
+					{
+					}
+				}
+			]
+		}
+	]
+}
