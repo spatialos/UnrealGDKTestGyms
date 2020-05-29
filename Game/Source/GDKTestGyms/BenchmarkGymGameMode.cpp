@@ -69,6 +69,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	ActivePlayers = 0;
 	bHasFpsFailed = false;
 	MinAcceptableFPS = 20.0f;
+	MinDelayFPS = 120;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -262,16 +263,24 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #endif
 	}
 
-	if (!bHasFpsFailed && GetWorld())
+	if (MinDelayFPS > 0.0f)
+	{
+		MinDelayFPS -= DeltaSeconds;
+	}
+
+	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
 	{
 		const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance());
-		float FPS = GameInstance->GetAveragedFPS();
-		if (FPS < MinAcceptableFPS)
+		if (GameInstance != nullptr)
 		{
-			bHasFpsFailed = true;
-#if !WITH_EDITOR
-			UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+			float FPS = GameInstance->GetAveragedFPS();
+			if (FPS < MinAcceptableFPS)
+			{
+				bHasFpsFailed = true;
+#if !WITH_EDITOR || 1 
+				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 #endif		
+			}
 		}
 	}
 }
