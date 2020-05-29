@@ -43,9 +43,9 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 	}
 	if (NumToRemove > 0)
 	{
-		for (int j = 0; j < NumToRemove; j++)
+		for (int i = 0; i < NumToRemove; i++)
 		{
-			TickWindowTotal -= TicksForFPS[j].Value;
+			TickWindowTotal -= TicksForFPS[i].Value;
 		}
 		memmove(&TicksForFPS[0], &TicksForFPS[NumToRemove], (TicksForFPS.Num() - NumToRemove) * sizeof(FPSTimePoint));
 		TicksForFPS.SetNum(TicksForFPS.Num() - NumToRemove);
