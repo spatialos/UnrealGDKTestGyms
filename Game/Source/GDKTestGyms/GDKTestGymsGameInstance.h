@@ -16,6 +16,10 @@ public:
 
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
+
+	UFUNCTION()
+	void NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
 private:
 	FTickerDelegate TickDelegate;
 	FDelegateHandle TickDelegateHandle;
