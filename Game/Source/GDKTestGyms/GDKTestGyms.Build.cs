@@ -26,5 +26,6 @@ public class GDKTestGyms : ModuleRules
 				"AIModule",
 				"NavigationSystem"
 			});
-	}
+        OptimizeCode = CodeOptimization.Never;
+    }
 }
