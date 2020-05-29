@@ -31,23 +31,24 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 	int64 MinRange = NowReal - FTimespan::FromMinutes(2.0).GetTicks();
 	
 	// Trim samples
+	int NumToRemove = 0;
 	for(int i = 0; i < TicksForFPS.Num(); i++)
 	{
 		const FPSTimePoint& TimePoint = TicksForFPS[i];
 		if (TimePoint.Key > MinRange) // Find the first valid sample
 		{
 			int NumToRemove = i;
-			if (NumToRemove > 0)
-			{
-				for (int j = 0; j < NumToRemove; j++)
-				{
-					TickWindowTotal -= TicksForFPS[j].Value;
-				}
-				memmove(&TicksForFPS[0], &TicksForFPS[NumToRemove], (TicksForFPS.Num()-NumToRemove) * sizeof(FPSTimePoint));
-				TicksForFPS.SetNum(TicksForFPS.Num() - NumToRemove);
-			}
 			break;
 		}
+	}
+	if (NumToRemove > 0)
+	{
+		for (int j = 0; j < NumToRemove; j++)
+		{
+			TickWindowTotal -= TicksForFPS[j].Value;
+		}
+		memmove(&TicksForFPS[0], &TicksForFPS[NumToRemove], (TicksForFPS.Num() - NumToRemove) * sizeof(FPSTimePoint));
+		TicksForFPS.SetNum(TicksForFPS.Num() - NumToRemove);
 	}
 	if (TicksForFPS.Num() > 0)
 	{
