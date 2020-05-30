@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/Character.h"
+#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/PlayerStart.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
@@ -66,6 +67,11 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bHasUxFailed = false;
 	bPlayersHaveJoined = false;
 	ActivePlayers = 0;
+	bHasFpsFailed = false;
+
+	// These values need to match the GDK scenario validation equivalents
+	MinAcceptableFPS = 20.0f;	// Same for both client and server currently
+	MinDelayFPS = 120.0f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -209,6 +215,11 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
+	if (MinDelayFPS > 0.0f)
+	{
+		MinDelayFPS -= DeltaSeconds;
+	}
+
 	float ClientRTTSeconds = 0.0f;
 	int UXComponentCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
@@ -257,6 +268,21 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #if !WITH_EDITOR
 		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
+	}
+
+	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
+	{
+		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
+		{
+			float FPS = GameInstance->GetAveragedFPS();
+			if (FPS < MinAcceptableFPS)
+			{
+				bHasFpsFailed = true;
+#if !WITH_EDITOR 
+				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+#endif		
+			}
+		}
 	}
 }
 
