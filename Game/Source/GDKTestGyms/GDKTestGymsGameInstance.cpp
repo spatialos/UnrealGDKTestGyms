@@ -5,6 +5,7 @@
 #include "Interop/Connection/SpatialConnectionManager.h"
 
 #include "EngineMinimal.h"
+#include "GeneralProjectSettings.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -64,7 +65,7 @@ void UGDKTestGymsGameInstance::NetworkFailureEventCallback(UWorld* World, UNetDr
 {
 	UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Network Failure (%s)"), *ErrorString);
 
-	if (FailureType == ENetworkFailure::ConnectionTimeout)
+	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking() && FailureType == ENetworkFailure::ConnectionTimeout)
 	{
 		if (USpatialConnectionManager* ConnectionManager = GetSpatialConnectionManager())
 		{
