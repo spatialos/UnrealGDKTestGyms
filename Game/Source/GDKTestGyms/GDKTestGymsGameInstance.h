@@ -29,5 +29,5 @@ private:
 	FDelegateHandle TickDelegateHandle;
 
 	float AverageFPS = 60.0f;
-	float SecondsSinceFPSLog = 1.0f;
+	float SecondsSinceFPSLog = 10.0f;
 };

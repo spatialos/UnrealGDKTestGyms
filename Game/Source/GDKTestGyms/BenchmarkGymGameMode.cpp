@@ -68,8 +68,10 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bPlayersHaveJoined = false;
 	ActivePlayers = 0;
 	bHasFpsFailed = false;
-	MinAcceptableFPS = 20.0f;
-	MinDelayFPS = 120;
+
+	// These values need to match the GDK scenario validation equivalents
+	MinAcceptableFPS = 20.0f;	// Same for both client and server currently
+	MinDelayFPS = 120.0f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -213,6 +215,11 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
+	if (MinDelayFPS > 0.0f)
+	{
+		MinDelayFPS -= DeltaSeconds;
+	}
+
 	float ClientRTTSeconds = 0.0f;
 	int UXComponentCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
@@ -263,15 +270,9 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #endif
 	}
 
-	if (MinDelayFPS > 0.0f)
-	{
-		MinDelayFPS -= DeltaSeconds;
-	}
-
 	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
 	{
-		const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance());
-		if (GameInstance != nullptr)
+		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
 		{
 			float FPS = GameInstance->GetAveragedFPS();
 			if (FPS < MinAcceptableFPS)
