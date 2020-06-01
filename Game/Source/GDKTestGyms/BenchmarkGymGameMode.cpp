@@ -8,13 +8,23 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/Character.h"
+#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/PlayerStart.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
+#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
+
+// Metrics
+namespace
+{
+	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
+	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
+	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+}
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
@@ -49,6 +59,46 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 
 	NPCSToSpawn = 0;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
+
+	MaxClientRoundTripSeconds = MaxClientViewLatenessSeconds = 150;	
+	
+	PrintUXMetric = 10.0f;
+	
+	bHasUxFailed = false;
+	bPlayersHaveJoined = false;
+	ActivePlayers = 0;
+	bHasFpsFailed = false;
+
+	// These values need to match the GDK scenario validation equivalents
+	MinAcceptableFPS = 20.0f;	// Same for both client and server currently
+	MinDelayFPS = 120.0f;
+}
+
+void ABenchmarkGymGameMode::BeginPlay() 
+{
+	if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+	{
+		if (SpatialDriver->SpatialMetrics != nullptr)
+		{
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+			}
+
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+			}
+
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			}
+		}
+	}
 }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
@@ -130,7 +180,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			SecondsTillPlayerCheck -= DeltaSeconds;
 			if (SecondsTillPlayerCheck <= 0.0f)
 			{
-				if (GetNumPlayers() != ExpectedPlayers)
+				if (ActivePlayers != ExpectedPlayers)
 				{
 					// This log is used by the NFR pipeline to indicate if a client failed to connect
 					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
@@ -145,17 +195,94 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 		{
-			checkf(AIControlledPlayers[i].Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = AIControlledPlayers[i].Controller->GetCharacter();
+			AController* Controller = AIControlledPlayers[i].Key.Get();
+			int InfoIndex = AIControlledPlayers[i].Value;
+
+			checkf(Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = Controller->GetCharacter();
 			checkf(Character, TEXT("Simplayer character does not exist."));
-			int InfoIndex = AIControlledPlayers[i].Index;
 			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
 			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
-			
+
 			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
 			Blackboard->ClientSetBlackboardAILocations(Points);
 		}
 		AIControlledPlayers.Empty();
+	}
+
+	ServerUpdateNFRTestMetrics(DeltaSeconds);
+}
+
+void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
+{
+	if (MinDelayFPS > 0.0f)
+	{
+		MinDelayFPS -= DeltaSeconds;
+	}
+
+	float ClientRTTSeconds = 0.0f;
+	int UXComponentCount = 0;
+	float ClientViewLatenessSeconds = 0.0f;
+	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
+	{
+		UUserExperienceReporter* Component = *Itr;
+		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
+		{
+			ClientRTTSeconds += Component->ServerRTT;
+			UXComponentCount++;
+
+			ClientViewLatenessSeconds += Component->ServerViewLateness;
+		}
+	}
+
+	ActivePlayers = UXComponentCount;
+
+	if (UXComponentCount > 0)
+	{
+		bPlayersHaveJoined = true;
+	}
+
+	if (!bPlayersHaveJoined)
+	{
+		return; // We don't start reporting until there are some valid components in the scene.
+	}
+
+	ClientRTTSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
+	ClientViewLatenessSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
+
+	AveragedClientRTTSeconds = ClientRTTSeconds;
+	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
+
+	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
+	{
+		bHasUxFailed = true;
+#if !WITH_EDITOR 
+		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
+#endif
+	}
+
+	PrintUXMetric -= DeltaSeconds;
+	if (PrintUXMetric < 0.0f)
+	{
+		PrintUXMetric = 10.0f;
+#if !WITH_EDITOR
+		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
+#endif
+	}
+
+	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
+	{
+		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
+		{
+			float FPS = GameInstance->GetAveragedFPS();
+			if (FPS < MinAcceptableFPS)
+			{
+				bHasFpsFailed = true;
+#if !WITH_EDITOR 
+				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+#endif		
+			}
+		}
 	}
 }
 
@@ -180,11 +307,14 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		PlayerDensity = ExpectedPlayers;
 		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
 		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
+
+		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
+		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
 	}
 	else
 	{
 		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString TotalPlayersString, PlayerDensityString, TotalNPCsString;
+		FString TotalPlayersString, PlayerDensityString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
 		check(NetDriver);
 		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
 		{
@@ -201,6 +331,15 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
 			{
 				TotalNPCs = FCString::Atoi(*TotalNPCsString);
+			}
+
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_round_trip"), MaxRoundTrip))
+			{
+				MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
+			}
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_lateness"), MaxViewLateness))
+			{
+				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
 			}
 		}
 	}
@@ -293,15 +432,6 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 	}
 }
 
-void ABenchmarkGymGameMode::Logout(AController* Controller)
-{
-	if(SecondsTillPlayerCheck > 0.0f)
-	{
-		// This log is used by the NFR pipeline to indicate if a client disconnected
-		UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d, Controller=%s"), ExpectedPlayers, GetNumPlayers(), *Controller->GetName());
-	}
-}
-
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 {
 	NPCSToSpawn = NumNPCs;
@@ -370,7 +500,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	
 	if (Player->GetIsSimulated())
 	{
-		AIControlledPlayers.Emplace(FControllerIntegerPair{ Player, PlayersSpawned });
+		AIControlledPlayers.Emplace(ControllerIntegerPair{ Player, PlayersSpawned });
 	}
 
 	PlayersSpawned++;

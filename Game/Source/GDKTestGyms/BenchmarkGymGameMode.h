@@ -3,13 +3,15 @@
 #pragma once
 
 #include "BlackboardValues.h"
-#include "ControllerIntegerPair.h"
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "UserExperienceReporter.h"
 
 #include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
+
+typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
 
 /**
  *
@@ -27,8 +29,26 @@ private:
 	TArray<FBlackboardValues> NPCRunPoints;
 	void GenerateTestScenarioLocations();
 
-	UPROPERTY()
-	TArray<FControllerIntegerPair> AIControlledPlayers;
+	TArray<ControllerIntegerPair> AIControlledPlayers;
+
+	void BeginPlay() override; 
+	double GetClientRTT() const { return AveragedClientRTTSeconds; }
+	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
+	double GetPlayersConnected() const { return ActivePlayers; }
+	void ServerUpdateNFRTestMetrics(float DeltaTime);
+
+	// Test scenarios
+	float PrintUXMetric;
+	double AveragedClientRTTSeconds; // The stored average of all the client RTTs 
+	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
+	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
+	int32 MaxClientViewLatenessSeconds;
+	bool bPlayersHaveJoined;
+	bool bHasUxFailed;
+	bool bHasFpsFailed;
+	float MinAcceptableFPS;
+	float MinDelayFPS;
+	int32 ActivePlayers; // A count of visible UX components
 
 	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.
@@ -58,5 +78,4 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-	void Logout(AController* Controller) override;
 };
