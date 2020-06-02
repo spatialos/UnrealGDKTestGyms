@@ -156,7 +156,7 @@ bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
 
 void ABenchmarkGymGameMode::ParsePassedValues()
 {
-	ABenchmarkGymGameModeBase::ParsePassedValues();
+	Super::ParsePassedValues();
 
 	PlayerDensity = ExpectedPlayers;
 
