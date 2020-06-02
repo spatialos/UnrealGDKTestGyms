@@ -73,35 +73,65 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (HasAuthority())
+	TickFPSCheck(DeltaSeconds);
+	TickPlayersConnectedCheck(DeltaSeconds);
+	TickUXMetricCheck(DeltaSeconds);
+}
+
+void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
+{
+	if (!HasAuthority())
 	{
-		if (SecondsTillPlayerCheck > 0.0f)
+		return;
+	}
+
+	if (SecondsTillPlayerCheck > 0.0f)
+	{
+		SecondsTillPlayerCheck -= DeltaSeconds;
+		if (SecondsTillPlayerCheck <= 0.0f)
 		{
-			SecondsTillPlayerCheck -= DeltaSeconds;
-			if (SecondsTillPlayerCheck <= 0.0f)
+			if (ActivePlayers != ExpectedPlayers)
 			{
-				if (ActivePlayers != ExpectedPlayers)
-				{
-					// This log is used by the NFR pipeline to indicate if a client failed to connect
-					UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-				}
-				else
-				{
-					// Useful for NFR log inspection
-					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-				}
+				// This log is used by the NFR pipeline to indicate if a client failed to connect
+				UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			}
+			else
+			{
+				// Useful for NFR log inspection
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
 			}
 		}
 	}
-
-	ServerUpdateNFRTestMetrics(DeltaSeconds);
 }
 
-void ABenchmarkGymGameModeBase::ServerUpdateNFRTestMetrics(float DeltaSeconds)
+void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
 {
 	if (MinDelayFPS > 0.0f)
 	{
 		MinDelayFPS -= DeltaSeconds;
+	}
+
+	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
+	{
+		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
+		{
+			float FPS = GameInstance->GetAveragedFPS();
+			if (FPS < MinAcceptableFPS)
+			{
+				bHasFpsFailed = true;
+#if !WITH_EDITOR
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+#endif
+			}
+		}
+	}
+}
+
+void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
+{
+	if (!HasAuthority())
+	{
+		return;
 	}
 
 	float ClientRTTSeconds = 0.0f;
@@ -110,7 +140,7 @@ void ABenchmarkGymGameModeBase::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
-		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
+		if (Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
 		{
 			ClientRTTSeconds += Component->ServerRTT;
 			UXComponentCount++;
@@ -152,21 +182,6 @@ void ABenchmarkGymGameModeBase::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #if !WITH_EDITOR
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
-	}
-
-	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
-	{
-		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
-		{
-			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < MinAcceptableFPS)
-			{
-				bHasFpsFailed = true;
-#if !WITH_EDITOR
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-#endif
-			}
-		}
 	}
 }
 

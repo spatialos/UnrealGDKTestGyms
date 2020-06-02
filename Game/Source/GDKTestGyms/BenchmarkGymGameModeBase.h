@@ -66,5 +66,7 @@ protected:
 
 private:
 
-	void ServerUpdateNFRTestMetrics(float DeltaTime);
+	void TickPlayersConnectedCheck(float DeltaSeconds);
+	void TickFPSCheck(float DeltaSeconds);
+	void TickUXMetricCheck(float DeltaSeconds);
 };
