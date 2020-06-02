@@ -48,6 +48,8 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ParsePassedValues();
+
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 	USpatialMetrics* SpatialMetrics = SpatialDriver != nullptr ? SpatialDriver->SpatialMetrics : nullptr;
 	if (SpatialMetrics != nullptr)

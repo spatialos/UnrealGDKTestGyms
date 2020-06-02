@@ -88,7 +88,6 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 	if (ShouldUseCustomSpawning())
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Enabling custom density spawning."));
-		ParsePassedValues();
 		ClearExistingSpawnPoints();
 
 		SpawnPoints.Reset();
