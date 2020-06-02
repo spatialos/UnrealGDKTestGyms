@@ -17,7 +17,24 @@ class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 public:
 	ABenchmarkGymGameModeBase();
 
+	UFUNCTION(BlueprintCallable)
+	const FString& GetTotalPlayerWorkerFlag() const { return TotalPlayerWorkerFlag; }
+
+	UFUNCTION(BlueprintCallable)
+	const FString& GetTotalNPCsWorkerFlag() const { return TotalNPCsWorkerFlag; }
+
+	UFUNCTION(BlueprintCallable)
+	const FString& GetTotalPlayerCommandLineArg() const { return TotalPlayerCommandLineArg; }
+
+	UFUNCTION(BlueprintCallable)
+	const FString& GetTotalNPCsCommandLineArg() const { return TotalNPCsCommandLineArg; }
+
 protected:
+
+	static const FString TotalPlayerWorkerFlag;
+	static const FString TotalNPCsWorkerFlag;
+	static const FString TotalPlayerCommandLineArg;
+	static const FString TotalNPCsCommandLineArg;
 
 	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
 	int32 ExpectedPlayers;

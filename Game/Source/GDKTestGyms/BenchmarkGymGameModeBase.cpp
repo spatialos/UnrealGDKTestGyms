@@ -11,6 +11,11 @@
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
+const FString ABenchmarkGymGameModeBase::TotalPlayerWorkerFlag = TEXT("total_players");
+const FString ABenchmarkGymGameModeBase::TotalNPCsWorkerFlag = TEXT("total_npcs");
+const FString ABenchmarkGymGameModeBase::TotalPlayerCommandLineArg = TEXT("TotalPlayers");
+const FString ABenchmarkGymGameModeBase::TotalNPCsCommandLineArg = TEXT("TotalNPCs");
+
 // Metrics
 namespace
 {
@@ -170,8 +175,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	if (FParse::Param(FCommandLine::Get(), TEXT("TotalPlayers")))
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line args, worker flags for custom spawning will be ignored."));
-		FParse::Value(FCommandLine::Get(), TEXT("TotalPlayers="), ExpectedPlayers);
-		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
+		FParse::Value(FCommandLine::Get(), *TotalPlayerCommandLineArg, ExpectedPlayers);
+		FParse::Value(FCommandLine::Get(), *TotalNPCsCommandLineArg, TotalNPCs);
 		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
 		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
 	}
@@ -186,12 +191,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
 		if (SpatialWorkerFlags != nullptr)
 		{
-			if (SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
+			if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, TotalPlayersString))
 			{
 				ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
 			}
 
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
 			{
 				TotalNPCs = FCString::Atoi(*TotalNPCsString);
 			}
