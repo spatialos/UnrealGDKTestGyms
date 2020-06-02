@@ -32,6 +32,7 @@ namespace
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
+	, SecondsTillPlayerCheck(15.0f * 60.0f)
 	, PrintUXMetric(10.0f)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientViewLatenessSeconds(150)
@@ -44,7 +45,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, ActivePlayers(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
-	SecondsTillPlayerCheck = 15.0f * 60.0f;
 
 	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
 	bUseSeamlessTravel = false;
@@ -215,6 +215,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FString TotalPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
 
 		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
+		check(SpatialWorkerFlags != nullptr);
+
 		if (SpatialWorkerFlags != nullptr)
 		{
 			if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, TotalPlayersString))

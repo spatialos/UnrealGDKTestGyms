@@ -172,6 +172,8 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		FString PlayerDensityString;
 
 		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
+		check(SpatialWorkerFlags != nullptr);
+
 		if (SpatialWorkerFlags != nullptr)
 		{
 			if (SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
