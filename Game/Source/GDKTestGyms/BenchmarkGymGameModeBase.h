@@ -31,18 +31,23 @@ public:
 
 protected:
 
+	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
+	int32 ExpectedPlayers;
+	// NPCs will be spread out evenly over the created player clusters.
+	int32 TotalNPCs;
+
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void ParsePassedValues();
+
+private:
+
 	static const FString TotalPlayerWorkerFlag;
 	static const FString TotalNPCsWorkerFlag;
 	static const FString TotalPlayerCommandLineKey;
 	static const FString TotalNPCsCommandLineKey;
 
-	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
-	int32 ExpectedPlayers;
-	// NPCs will be spread out evenly over the created player clusters.
-	int32 TotalNPCs;
-	float SecondsTillPlayerCheck;
-
 	// Test scenarios
+	float SecondsTillPlayerCheck;
 	float PrintUXMetric;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
@@ -55,18 +60,13 @@ protected:
 	float MinDelayFPS;
 	int32 ActivePlayers; // A count of visible UX components
 
-	double GetClientRTT() const { return AveragedClientRTTSeconds; }
-	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
-	double GetPlayersConnected() const { return ActivePlayers; }
-
-	virtual void ParsePassedValues();
-
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
-
-private:
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
+
+	double GetClientRTT() const { return AveragedClientRTTSeconds; }
+	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
+	double GetPlayersConnected() const { return ActivePlayers; }
 };
