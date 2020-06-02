@@ -26,16 +26,16 @@ namespace
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
+	, PrintUXMetric(10.0f)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientViewLatenessSeconds(150)
-	, PrintUXMetric(10.0f)
-	, bHasUxFailed(false)
 	, bPlayersHaveJoined(false)
-	, ActivePlayers(0)
+	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
 	// These values need to match the GDK scenario validation equivalents
 	, MinAcceptableFPS(20.0f) // Same for both client and server currently
 	, MinDelayFPS(120.0f)
+	, ActivePlayers(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
