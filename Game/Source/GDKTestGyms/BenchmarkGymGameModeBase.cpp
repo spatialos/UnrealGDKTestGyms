@@ -13,8 +13,8 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
 const FString ABenchmarkGymGameModeBase::TotalPlayerWorkerFlag = TEXT("total_players");
 const FString ABenchmarkGymGameModeBase::TotalNPCsWorkerFlag = TEXT("total_npcs");
-const FString ABenchmarkGymGameModeBase::TotalPlayerCommandLineArg = TEXT("TotalPlayers");
-const FString ABenchmarkGymGameModeBase::TotalNPCsCommandLineArg = TEXT("TotalNPCs");
+const FString ABenchmarkGymGameModeBase::TotalPlayerCommandLineKey = TEXT("TotalPlayers");
+const FString ABenchmarkGymGameModeBase::TotalNPCsCommandLineKey = TEXT("TotalNPCs");
 
 // Metrics
 namespace
@@ -22,6 +22,12 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+
+	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
+	const FString MaxLatenessWorkerFlag = TEXT("max_lateness");
+	const FString MaxRoundTripCommandLineKey = TEXT("MaxRoundTrip");
+	const FString MaxLatenessCommandLineKey = TEXT("MaxLateness");
+
 } // anonymous namespace
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
@@ -194,11 +200,11 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
 	if (FParse::Param(FCommandLine::Get(), TEXT("TotalPlayers")))
 	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line args, worker flags for custom spawning will be ignored."));
-		FParse::Value(FCommandLine::Get(), *TotalPlayerCommandLineArg, ExpectedPlayers);
-		FParse::Value(FCommandLine::Get(), *TotalNPCsCommandLineArg, TotalNPCs);
-		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
-		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line Keys, worker flags for custom spawning will be ignored."));
+		FParse::Value(FCommandLine::Get(), *TotalPlayerCommandLineKey, ExpectedPlayers);
+		FParse::Value(FCommandLine::Get(), *TotalNPCsCommandLineKey, TotalNPCs);
+		FParse::Value(FCommandLine::Get(), *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
+		FParse::Value(FCommandLine::Get(), *MaxLatenessCommandLineKey, MaxClientViewLatenessSeconds);
 	}
 	else
 	{
@@ -221,12 +227,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				TotalNPCs = FCString::Atoi(*TotalNPCsString);
 			}
 
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_round_trip"), MaxRoundTrip))
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
 			{
 				MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
 			}
 
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_lateness"), MaxViewLateness))
+			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(MaxLatenessWorkerFlag, MaxViewLateness))
 			{
 				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
 			}

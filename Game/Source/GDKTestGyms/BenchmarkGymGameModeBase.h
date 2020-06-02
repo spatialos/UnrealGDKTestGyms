@@ -24,17 +24,17 @@ public:
 	const FString& GetTotalNPCsWorkerFlag() const { return TotalNPCsWorkerFlag; }
 
 	UFUNCTION(BlueprintCallable)
-	const FString& GetTotalPlayerCommandLineArg() const { return TotalPlayerCommandLineArg; }
+	const FString& GetTotalPlayerCommandLineKey() const { return TotalPlayerCommandLineKey; }
 
 	UFUNCTION(BlueprintCallable)
-	const FString& GetTotalNPCsCommandLineArg() const { return TotalNPCsCommandLineArg; }
+	const FString& GetTotalNPCsCommandLineKey() const { return TotalNPCsCommandLineKey; }
 
 protected:
 
 	static const FString TotalPlayerWorkerFlag;
 	static const FString TotalNPCsWorkerFlag;
-	static const FString TotalPlayerCommandLineArg;
-	static const FString TotalNPCsCommandLineArg;
+	static const FString TotalPlayerCommandLineKey;
+	static const FString TotalNPCsCommandLineKey;
 
 	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
 	int32 ExpectedPlayers;
