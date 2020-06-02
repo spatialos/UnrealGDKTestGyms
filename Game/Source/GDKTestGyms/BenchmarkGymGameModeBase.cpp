@@ -39,6 +39,9 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	SecondsTillPlayerCheck = 15.0f * 60.0f;
+
+	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
+	bUseSeamlessTravel = false;
 }
 
 void ABenchmarkGymGameModeBase::BeginPlay()

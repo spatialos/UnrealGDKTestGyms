@@ -33,7 +33,6 @@ private:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ParsePassedValues() override;
 
-	bool bHasUpdatedMaxActorsToReplicate;
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
 	// Number of players per cluster. Players only see other players in the same cluster.

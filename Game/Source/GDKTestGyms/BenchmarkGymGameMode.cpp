@@ -27,16 +27,12 @@ namespace
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: bHasUpdatedMaxActorsToReplicate(false)
-	, bInitializedCustomSpawnParameters(false)
+	: bInitializedCustomSpawnParameters(false)
 	, NumPlayerClusters(4)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
-	bUseSeamlessTravel = false;
 
 	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));
 	DefaultPawnClass = PawnClass.Class;
