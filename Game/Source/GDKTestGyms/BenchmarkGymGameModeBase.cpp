@@ -51,6 +51,11 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	ParsePassedValues();
 
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());

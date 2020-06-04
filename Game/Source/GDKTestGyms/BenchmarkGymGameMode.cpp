@@ -18,14 +18,6 @@
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
-// Metrics
-namespace
-{
-	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
-	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
-	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
-}
-
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: bInitializedCustomSpawnParameters(false)
 	, NumPlayerClusters(4)
