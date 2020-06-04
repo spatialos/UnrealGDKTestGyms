@@ -24,6 +24,7 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+	const FString AverageFPSValid = TEXT("UnrealFPSValid");
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -96,6 +97,12 @@ void ABenchmarkGymGameMode::BeginPlay()
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			}
+
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetFPSValid);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 			}
 		}
 	}
