@@ -26,7 +26,6 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
 
-	UFUNCTION(BlueprintCallable)
 	virtual void ParsePassedValues();
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -37,9 +36,6 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 private:
-
-	// Keep the cached value of the parsed TotalNPC so that we can check if the parsed value changes.
-	int32 ParsedTotalNPCs;
 
 	// Test scenarios
 	float SecondsTillPlayerCheck;
@@ -60,8 +56,6 @@ private:
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
-
-	bool SetTotalNPCsFromParsedValue(const int32 ParsedValue);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }

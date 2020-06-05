@@ -28,8 +28,6 @@ namespace
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
 	const FString TotalPlayerCommandLineKey = TEXT("TotalPlayers");
 	const FString TotalNPCsCommandLineKey = TEXT("TotalNPCs");
-
-
 } // anonymous namespace
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
@@ -216,11 +214,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line Keys, worker flags for custom spawning will be ignored."));
 
 		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
-
-		int32 InTotalNPCs = 0;
-		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, InTotalNPCs);
-		SetTotalNPCsFromParsedValue(InTotalNPCs);
-
+		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, TotalNPCs);
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxLatenessCommandLineKey, MaxClientViewLatenessSeconds);
 	}
@@ -244,7 +238,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
 			{
-				SetTotalNPCsFromParsedValue(FCString::Atoi(*TotalNPCsString));
+				TotalNPCs = FCString::Atoi(*TotalNPCsString);
 			}
 
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
@@ -258,17 +252,5 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			}
 		}
 	}
-
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
-}
-
-bool ABenchmarkGymGameModeBase::SetTotalNPCsFromParsedValue(const int32 ParsedValue)
-{
-	bool bValueChanged = ParsedValue != ParsedTotalNPCs;
-	if (bValueChanged)
-	{
-		ParsedTotalNPCs = ParsedValue;
-		TotalNPCs = ParsedValue;
-	}
-	return bValueChanged;
 }
