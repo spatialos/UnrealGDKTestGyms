@@ -7,14 +7,10 @@
 #include "GDKTestGymsGameInstance.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
+#include "Net/UnrealNetwork.h"
 #include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
-
-const FString ABenchmarkGymGameModeBase::TotalPlayerWorkerFlag = TEXT("total_players");
-const FString ABenchmarkGymGameModeBase::TotalNPCsWorkerFlag = TEXT("total_npcs");
-const FString ABenchmarkGymGameModeBase::TotalPlayerCommandLineKey = TEXT("TotalPlayers");
-const FString ABenchmarkGymGameModeBase::TotalNPCsCommandLineKey = TEXT("TotalNPCs");
 
 // Metrics
 namespace
@@ -27,6 +23,12 @@ namespace
 	const FString MaxLatenessWorkerFlag = TEXT("max_lateness");
 	const FString MaxRoundTripCommandLineKey = TEXT("MaxRoundTrip");
 	const FString MaxLatenessCommandLineKey = TEXT("MaxLateness");
+
+	const FString TotalPlayerWorkerFlag = TEXT("total_players");
+	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
+	const FString TotalPlayerCommandLineKey = TEXT("TotalPlayers");
+	const FString TotalNPCsCommandLineKey = TEXT("TotalNPCs");
+
 
 } // anonymous namespace
 
@@ -44,7 +46,15 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, MinDelayFPS(120.0f)
 	, ActivePlayers(0)
 {
+	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalNPCs);
 }
 
 void ABenchmarkGymGameModeBase::BeginPlay()
@@ -200,13 +210,19 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
-	if (FParse::Param(FCommandLine::Get(), TEXT("TotalPlayers")))
+	const FString& CommandLine = FCommandLine::Get();
+	if (FParse::Param(*CommandLine, *TotalPlayerCommandLineKey))
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line Keys, worker flags for custom spawning will be ignored."));
-		FParse::Value(FCommandLine::Get(), *TotalPlayerCommandLineKey, ExpectedPlayers);
-		FParse::Value(FCommandLine::Get(), *TotalNPCsCommandLineKey, TotalNPCs);
-		FParse::Value(FCommandLine::Get(), *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
-		FParse::Value(FCommandLine::Get(), *MaxLatenessCommandLineKey, MaxClientViewLatenessSeconds);
+
+		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
+
+		int32 InTotalNPCs = 0;
+		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, InTotalNPCs);
+		SetTotalNPCsFromParsedValue(InTotalNPCs);
+
+		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
+		FParse::Value(*CommandLine, *MaxLatenessCommandLineKey, MaxClientViewLatenessSeconds);
 	}
 	else
 	{
@@ -214,21 +230,21 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		check(NetDriver);
 
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString TotalPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
+		FString ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
 
 		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
 		check(SpatialWorkerFlags != nullptr);
 
 		if (SpatialWorkerFlags != nullptr)
 		{
-			if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, TotalPlayersString))
+			if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
 			{
-				ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
+				ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
 			}
 
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
 			{
-				TotalNPCs = FCString::Atoi(*TotalNPCsString);
+				SetTotalNPCsFromParsedValue(FCString::Atoi(*TotalNPCsString));
 			}
 
 			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
@@ -243,5 +259,16 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d"), ExpectedPlayers, TotalNPCs);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
+}
+
+bool ABenchmarkGymGameModeBase::SetTotalNPCsFromParsedValue(const int32 ParsedValue)
+{
+	bool bValueChanged = ParsedValue != ParsedTotalNPCs;
+	if (bValueChanged)
+	{
+		ParsedTotalNPCs = ParsedValue;
+		TotalNPCs = ParsedValue;
+	}
+	return bValueChanged;
 }

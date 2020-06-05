@@ -20,7 +20,7 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: bInitializedCustomSpawnParameters(false)
-	, NumPlayerClusters(4)
+	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
@@ -85,7 +85,7 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 		SpawnPoints.Reset();
 		GenerateSpawnPointClusters(NumPlayerClusters);
 
-		if (SpawnPoints.Num() != ExpectedPlayers) 
+		if (SpawnPoints.Num() != ExpectedPlayers)
 		{
 			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 		}
@@ -151,9 +151,10 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 
 	PlayerDensity = ExpectedPlayers;
 
-	if (FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")))
+	const FString& CommandLine = FCommandLine::Get();
+	if (FParse::Param(*CommandLine, TEXT("OverrideSpawning")))
 	{
-		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
 	}
 	else
 	{
@@ -166,12 +167,9 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
 		check(SpatialWorkerFlags != nullptr);
 
-		if (SpatialWorkerFlags != nullptr)
+		if (SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
 		{
-			if (SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
-			{
-				PlayerDensity = FCString::Atoi(*PlayerDensityString);
-			}
+			PlayerDensity = FCString::Atoi(*PlayerDensityString);
 		}
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));

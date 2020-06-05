@@ -17,34 +17,29 @@ class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 public:
 	ABenchmarkGymGameModeBase();
 
-	UFUNCTION(BlueprintCallable)
-	const FString& GetTotalPlayerWorkerFlag() const { return TotalPlayerWorkerFlag; }
-
-	UFUNCTION(BlueprintCallable)
-	const FString& GetTotalNPCsWorkerFlag() const { return TotalNPCsWorkerFlag; }
-
-	UFUNCTION(BlueprintCallable)
-	const FString& GetTotalPlayerCommandLineKey() const { return TotalPlayerCommandLineKey; }
-
-	UFUNCTION(BlueprintCallable)
-	const FString& GetTotalNPCsCommandLineKey() const { return TotalNPCsCommandLineKey; }
-
 protected:
 
-	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
+	// Total number of players that will connect.
 	int32 ExpectedPlayers;
-	// NPCs will be spread out evenly over the created player clusters.
+
+	// Replicated so that offloading and zoning servers can get updates.
+	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
 
-	virtual void Tick(float DeltaSeconds) override;
+	UFUNCTION(BlueprintCallable)
 	virtual void ParsePassedValues();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnRepTotalNPCs();
+	void OnRepTotalNPCs_Implementation() {}
+
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 private:
 
-	static const FString TotalPlayerWorkerFlag;
-	static const FString TotalNPCsWorkerFlag;
-	static const FString TotalPlayerCommandLineKey;
-	static const FString TotalNPCsCommandLineKey;
+	// Keep the cached value of the parsed TotalNPC so that we can check if the parsed value changes.
+	int32 ParsedTotalNPCs;
 
 	// Test scenarios
 	float SecondsTillPlayerCheck;
@@ -65,6 +60,8 @@ private:
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
+
+	bool SetTotalNPCsFromParsedValue(const int32 ParsedValue);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
