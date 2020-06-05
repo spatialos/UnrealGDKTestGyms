@@ -74,7 +74,7 @@ void UUserExperienceReporter::ReportMetrics()
 
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
 		{
-			if (NFRConstants::Get().SamplesForFPSValid() && GameInstance->GetAveragedFPS() < NFRConstants::Get().MinClientFPS)
+			if (NFRConstants::Get().SamplesForFPSValid() && GameInstance->GetAveragedFPS() < NFRConstants::Get().GetMinClientFPS())
 			{
 				bFrameRateValid = false;
 			}

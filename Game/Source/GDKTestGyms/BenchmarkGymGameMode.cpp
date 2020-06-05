@@ -284,7 +284,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
 		{
 			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < NFRConstants::Get().MinServerFPS)
+			if (FPS < NFRConstants::Get().GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
 #if !WITH_EDITOR 
