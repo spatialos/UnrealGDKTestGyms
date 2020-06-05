@@ -77,6 +77,8 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 		return;
 	}
 
+	ParsePassedValues();
+
 	if (ShouldUseCustomSpawning())
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Enabling custom density spawning."));
