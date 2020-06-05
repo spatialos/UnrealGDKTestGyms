@@ -36,6 +36,7 @@ private:
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
+	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	void ServerUpdateNFRTestMetrics(float DeltaTime);
 
 	// Test scenarios
@@ -47,8 +48,7 @@ private:
 	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
-	float MinAcceptableFPS;
-	float MinDelayFPS;
+	bool bHasClientFpsFailed;
 	int32 ActivePlayers; // A count of visible UX components
 
 	bool bHasUpdatedMaxActorsToReplicate;
