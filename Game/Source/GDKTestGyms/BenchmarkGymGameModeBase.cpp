@@ -215,7 +215,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line Keys, worker flags for custom spawning will be ignored."));
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLineKey in command line Keys, worker flags for custom spawning will be ignored."));
 
 		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
 
@@ -234,7 +234,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
 
-		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
+		USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
 		check(SpatialWorkerFlags != nullptr);
 
 		if (SpatialWorkerFlags != nullptr)
@@ -258,9 +258,35 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			{
 				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
 			}
+
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
+			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
+			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
+			SpatialWorkerFlags->BindToOnWorkerFlagsUpdated(WorkerFlagDelegate);
 		}
 	}
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
+}
+
+void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+{
+	if (FlagName == TotalPlayerWorkerFlag)
+	{
+		ExpectedPlayers = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == TotalNPCsWorkerFlag)
+	{
+		SetTotalNPCs(FCString::Atoi(*FlagValue));
+	}
+	else if (FlagName == MaxRoundTripWorkerFlag)
+	{
+		MaxClientRoundTripSeconds = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == MaxLatenessWorkerFlag)
+	{
+		MaxClientViewLatenessSeconds = FCString::Atoi(*FlagValue);
+	}
+
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Flag updateed - Flag %s, Value %s"), FlagName, FlagValue);
 }
 
 void ABenchmarkGymGameModeBase::SetTotalNPCs_Implementation(int32 Value)
