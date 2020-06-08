@@ -286,7 +286,7 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 		MaxClientViewLatenessSeconds = FCString::Atoi(*FlagValue);
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Flag updateed - Flag %s, Value %s"), FlagName, FlagValue);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
 
 void ABenchmarkGymGameModeBase::SetTotalNPCs_Implementation(int32 Value)
