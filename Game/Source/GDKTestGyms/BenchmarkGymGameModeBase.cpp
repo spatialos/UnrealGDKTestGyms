@@ -289,12 +289,13 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
 
-void ABenchmarkGymGameModeBase::SetTotalNPCs_Implementation(int32 Value)
+void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
 {
 	TotalNPCs = Value;
+	OnTotalNPCsUpdated(TotalNPCs);
 }
 
 void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 {
-	SetTotalNPCs(TotalNPCs);
+	OnTotalNPCsUpdated(TotalNPCs);
 }

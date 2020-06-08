@@ -34,8 +34,8 @@ protected:
 	virtual void OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void SetTotalNPCs(int32 Value);
-	virtual void SetTotalNPCs_Implementation(int32 Value);
+	void OnTotalNPCsUpdated(int32 Value);
+	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
 
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
@@ -61,6 +61,8 @@ private:
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
+
+	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
