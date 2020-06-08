@@ -19,6 +19,8 @@ public:
 
 protected:
 
+	static FString ReadFromCommandLineKey;
+
 	// Total number of players that will connect.
 	int32 ExpectedPlayers;
 

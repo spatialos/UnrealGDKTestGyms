@@ -154,7 +154,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	PlayerDensity = ExpectedPlayers;
 
 	const FString& CommandLine = FCommandLine::Get();
-	if (FParse::Param(*CommandLine, TEXT("OverrideSpawning")))
+	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
 		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
 	}
