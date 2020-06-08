@@ -1,10 +1,18 @@
 #include "NFRConstants.h"
+
 #include "EngineClasses/SpatialNetDriver.h"
+#include "EngineUtils.h"
+#include "GDKTestGymsGameInstance.h"
 #include "Interop/SpatialWorkerFlags.h"
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-bool NFRConstants::SamplesForFPSValid()
+UNFRConstants::UNFRConstants()
+{
+	
+}
+
+bool UNFRConstants::SamplesForFPSValid() const
 {
 	if (bFPSSamplingValid)
 	{
@@ -18,24 +26,25 @@ bool NFRConstants::SamplesForFPSValid()
 	return bIsValidNow;
 }
 
-void NFRConstants::Init(UWorld* World)
+void UNFRConstants::InitWithWorld(UWorld* World)
 {
 	TimeToStartFPSSampling = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(120.0f).GetTicks();
 
 	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
-	// Sever fps
+	// Server fps
 	{
 		float OverrideMinServerFPS;
 		if (FParse::Value(FCommandLine::Get(), TEXT("MinServerFPS="), OverrideMinServerFPS))
 		{
 			MinServerFPS = OverrideMinServerFPS;
 		}
-	}
-	{
-		FString MinServerFPSStr;
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_server_fps"), MinServerFPSStr))
+		else
 		{
-			MinServerFPS = FCString::Atof(*MinServerFPSStr);
+			FString MinServerFPSStr;
+			if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_server_fps"), MinServerFPSStr))
+			{
+				MinServerFPS = FCString::Atof(*MinServerFPSStr);
+			}
 		}
 	}
 	UE_LOG(LogNFRConstants, Log, TEXT("Min server FPS: %.8f."), MinServerFPS);
@@ -46,32 +55,33 @@ void NFRConstants::Init(UWorld* World)
 		{
 			MinClientFPS = OverrideMinClientFPS;
 		}
-	}
-	{
-		FString MinClientFPSStr;
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_client_fps"), MinClientFPSStr))
+		else
 		{
-			MinClientFPS = FCString::Atof(*MinClientFPSStr);
+			FString MinClientFPSStr;
+			if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_client_fps"), MinClientFPSStr))
+			{
+				MinClientFPS = FCString::Atof(*MinClientFPSStr);
+			}
 		}
 	}
 	UE_LOG(LogNFRConstants, Log, TEXT("Min client FPS: %.8f."), MinClientFPS);
-	bInitialized = true;
 }
 
-NFRConstants& NFRConstants::Get()
+const UNFRConstants* UNFRConstants::Get(UWorld* World)
 {
-	static NFRConstants _;
-	return _;
+	if (UGDKTestGymsGameInstance* GameInstance = World->GetGameInstance<UGDKTestGymsGameInstance>())
+	{
+		return GameInstance->GetNFRConstants();
+	}
+	return nullptr;
 }
 
-float NFRConstants::GetMinServerFPS() const
+float UNFRConstants::GetMinServerFPS() const
 {
-	check(bInitialized); 
 	return MinServerFPS;
 }
 
-float NFRConstants::GetMinClientFPS() const
+float UNFRConstants::GetMinClientFPS() const
 {
-	check(bInitialized); 
 	return MinClientFPS;
 }

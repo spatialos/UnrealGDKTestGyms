@@ -7,15 +7,15 @@
 #include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
-#include "GameFramework/Character.h"
 #include "GDKTestGymsGameInstance.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
-#include "Utils/SpatialMetrics.h"
 #include "NFRConstants.h"
+#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
 
@@ -25,7 +25,7 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
-	const FString AverageFPSValid = TEXT("UnrealFPSValid");
+	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 }
 
@@ -80,34 +80,39 @@ void ABenchmarkGymGameMode::BeginPlay()
 	{
 		if (SpatialDriver->SpatialMetrics != nullptr)
 		{
+			if(HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
 			}
 
+			if (HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
 			}
 
+			if (HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
 			}
 
-			{
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetFPSValid);
-				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
-			}
-
+			if (HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientFPSValid);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+			}
+
+			// Valid on all workers
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetFPSValid);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 			}
 		}
 	}
@@ -279,12 +284,15 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #endif
 	}
 
-	if (NFRConstants::Get().SamplesForFPSValid() && !bHasFpsFailed && GetWorld() != nullptr)
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	if (Constants->SamplesForFPSValid() && !bHasFpsFailed && GetWorld() != nullptr)
 	{
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
 		{
 			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < NFRConstants::Get().GetMinServerFPS())
+			if (FPS < Constants->GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
 #if !WITH_EDITOR 
@@ -294,15 +302,12 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 		}
 	}
 
-	if (!bHasClientFpsFailed)
+	if (!bHasClientFpsFailed && !bClientFpsWasValid)
 	{
-		if (!bClientFpsWasValid)
-		{
-			bHasClientFpsFailed = true;
+		bHasClientFpsFailed = true;
 #if !WITH_EDITOR 
-			UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. A client has failed."));
+		UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. A client has failed."));
 #endif		
-		}
 	}
 }
 

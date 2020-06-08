@@ -32,6 +32,7 @@ public:
 	 
 	void OnClientOwnershipGained() override;
 	void ReportMetrics();
+
 	UFUNCTION(Server, reliable)
-	void ServerReportedMetrics(float RTTSeconds, float ViewLatenessSeconds, bool bFrameRateValid);
+	void ServerReportedMetrics(float RTTSeconds, float ViewLatenessSeconds, bool bInFrameRateValid);
 };

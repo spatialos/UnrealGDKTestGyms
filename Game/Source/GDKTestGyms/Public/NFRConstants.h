@@ -4,23 +4,29 @@
 
 #include "CoreMinimal.h"
 
+#include "NFRConstants.generated.h"
+
 DECLARE_LOG_CATEGORY_EXTERN(LogNFRConstants, Log, All);
 
-class NFRConstants
+UCLASS()
+class UNFRConstants : public UObject
 {
-	int64 TimeToStartFPSSampling;
-	bool bFPSSamplingValid{false};
-	bool bInitialized{ false };
-	float MinServerFPS = 20.0f;
-	float MinClientFPS = 20.0f;
-
-	NFRConstants() {}
-public:
+public:	
+	GENERATED_BODY()
 	
-	bool SamplesForFPSValid(); // Wait until this is true until checking FPS values
-	void Init(UWorld* World);
-	static NFRConstants& Get();
+	void InitWithWorld(UWorld* World);
+
+	bool SamplesForFPSValid() const; // Wait until this is true until checking FPS values
 
 	float GetMinServerFPS() const;
 	float GetMinClientFPS() const;
+	
+	static const UNFRConstants* Get(UWorld* World);
+private:
+	int64 TimeToStartFPSSampling;
+	mutable bool bFPSSamplingValid{ false };
+	float MinServerFPS = 20.0f;
+	float MinClientFPS = 20.0f;
+
+	UNFRConstants();
 };
