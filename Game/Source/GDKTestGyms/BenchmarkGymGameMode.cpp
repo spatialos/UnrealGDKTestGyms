@@ -16,6 +16,7 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
 #include "Utils/SpatialMetrics.h"
+#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
@@ -71,12 +72,21 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 	}
 }
 
+void ABenchmarkGymGameMode::SetTotalNPCs_Implementation(int32 Value)
+{
+	CheckCmdLineParameters();
+	Super::SetTotalNPCs_Implementation(Value);
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning %d NPCs"), TotalNPCs);
+	SpawnNPCs(TotalNPCs);
+}
+
 void ABenchmarkGymGameMode::CheckCmdLineParameters()
 {
 	if (bInitializedCustomSpawnParameters)
 	{
 		return;
 	}
+	bInitializedCustomSpawnParameters = true;
 
 	ParsePassedValues();
 
@@ -94,48 +104,41 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 		}
 
 		GenerateTestScenarioLocations();
-
-		SpawnNPCs(TotalNPCs);
 	}
 	else
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Custom density spawning disabled."));
 	}
-
-	bInitializedCustomSpawnParameters = true;
 }
 
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (HasAuthority())
+	if (SpawnPoints.Num() && NPCSToSpawn > 0)
 	{
-		if (NPCSToSpawn > 0)
-		{
-			int32 NPCIndex = --NPCSToSpawn;
-			int32 Cluster = NPCIndex % NumPlayerClusters;
-			int32 SpawnPointIndex = Cluster * PlayerDensity;
-			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-			SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
-		}
-
-		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
-		{
-			AController* Controller = AIControlledPlayers[i].Key.Get();
-			int InfoIndex = AIControlledPlayers[i].Value;
-
-			checkf(Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = Controller->GetCharacter();
-			checkf(Character, TEXT("Simplayer character does not exist."));
-			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
-
-			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
-			Blackboard->ClientSetBlackboardAILocations(Points);
-		}
-		AIControlledPlayers.Empty();
+		int32 NPCIndex = --NPCSToSpawn;
+		int32 Cluster = NPCIndex % NumPlayerClusters;
+		int32 SpawnPointIndex = Cluster * PlayerDensity;
+		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
+		SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
 	}
+
+	for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+	{
+		AController* Controller = AIControlledPlayers[i].Key.Get();
+		int InfoIndex = AIControlledPlayers[i].Value;
+
+		checkf(Controller, TEXT("Simplayer controller has been deleted."));
+		ACharacter* Character = Controller->GetCharacter();
+		checkf(Character, TEXT("Simplayer character does not exist."));
+		UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+		checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
+
+		const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+		Blackboard->ClientSetBlackboardAILocations(Points);
+	}
+	AIControlledPlayers.Empty();
 }
 
 bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()

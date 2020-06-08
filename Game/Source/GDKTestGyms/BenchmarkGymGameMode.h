@@ -48,6 +48,7 @@ private:
 	bool ShouldUseCustomSpawning();
 	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
+	void SetTotalNPCs_Implementation(int32 Value) override;
 	void SpawnNPCs(int NumNPCs);
 	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 	// Generates a grid of points centered at (0, 0), as square-like as possible. A row has a fixed y-value, and a column a fixed x-value.
