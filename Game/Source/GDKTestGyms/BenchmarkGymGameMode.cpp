@@ -8,8 +8,9 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/Character.h"
-#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/PlayerStart.h"
+#include "GDKTestGymsGameInstance.h"
+#include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
@@ -158,7 +159,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	{
 		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
 	}
-	else
+	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		check(NetDriver);

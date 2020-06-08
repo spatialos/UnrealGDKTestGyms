@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GDKTestGymsGameInstance.h"
+#include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
@@ -21,13 +22,13 @@ namespace
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxLatenessWorkerFlag = TEXT("max_lateness");
-	const FString MaxRoundTripCommandLineKey = TEXT("MaxRoundTrip");
-	const FString MaxLatenessCommandLineKey = TEXT("MaxLateness");
+	const FString MaxRoundTripCommandLineKey = TEXT("-MaxRoundTrip=");
+	const FString MaxLatenessCommandLineKey = TEXT("-MaxLateness=");
 
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
-	const FString TotalPlayerCommandLineKey = TEXT("TotalPlayers");
-	const FString TotalNPCsCommandLineKey = TEXT("TotalNPCs");
+	const FString TotalPlayerCommandLineKey = TEXT("-TotalPlayers=");
+	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 
 } // anonymous namespace
 
@@ -217,11 +218,15 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found OverrideSpawning in command line Keys, worker flags for custom spawning will be ignored."));
 
 		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
-		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, TotalNPCs);
+
+		int32 NumNPCs = 0;
+		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
+		SetTotalNPCs(NumNPCs);
+
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxLatenessCommandLineKey, MaxClientViewLatenessSeconds);
 	}
-	else
+	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		check(NetDriver);
@@ -241,7 +246,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 			if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
 			{
-				TotalNPCs = FCString::Atoi(*TotalNPCsString);
+				SetTotalNPCs(FCString::Atoi(*TotalNPCsString));
 			}
 
 			if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
@@ -256,4 +261,14 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
+}
+
+void ABenchmarkGymGameModeBase::SetTotalNPCs_Implementation(int32 Value)
+{
+	TotalNPCs = Value;
+}
+
+void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
+{
+	SetTotalNPCs(TotalNPCs);
 }

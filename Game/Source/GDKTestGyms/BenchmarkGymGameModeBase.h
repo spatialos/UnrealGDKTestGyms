@@ -31,8 +31,8 @@ protected:
 	virtual void ParsePassedValues();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnRepTotalNPCs();
-	void OnRepTotalNPCs_Implementation() {}
+	void SetTotalNPCs(int32 Value);
+	virtual void SetTotalNPCs_Implementation(int32 Value);
 
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
@@ -62,4 +62,7 @@ private:
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
+
+	UFUNCTION()
+	void OnRepTotalNPCs();
 };
