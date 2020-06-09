@@ -12,11 +12,11 @@ DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymNPCSpawner, Log, All);
  *
  */
 UCLASS()
-class GDKTESTGYMS_API UBenchmarkGymNPCSpawner : public AActor
+class GDKTESTGYMS_API ABenchmarkGymNPCSpawner : public AActor
 {
 	GENERATED_BODY()
 public:
-	UBenchmarkGymNPCSpawner();
+	ABenchmarkGymNPCSpawner();
 
 	void Tick(float DeltaSeconds) override;
 private:

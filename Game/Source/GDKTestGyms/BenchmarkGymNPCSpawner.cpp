@@ -4,7 +4,7 @@
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymNPCSpawner);
 
-UBenchmarkGymNPCSpawner::UBenchmarkGymNPCSpawner()
+ABenchmarkGymNPCSpawner::ABenchmarkGymNPCSpawner()
 	: NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -17,7 +17,7 @@ UBenchmarkGymNPCSpawner::UBenchmarkGymNPCSpawner()
 	NumSpawned = NumToSpawn = 0;
 }
 
-void UBenchmarkGymNPCSpawner::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
+void ABenchmarkGymNPCSpawner::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)
@@ -45,7 +45,7 @@ void UBenchmarkGymNPCSpawner::SpawnNPC(const FVector& SpawnLocation, const FBlac
 	Comp->ClientSetBlackboardAILocations(BlackboardValues);
 }
 
-void UBenchmarkGymNPCSpawner::Tick(float DeltaSeconds)
+void ABenchmarkGymNPCSpawner::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
