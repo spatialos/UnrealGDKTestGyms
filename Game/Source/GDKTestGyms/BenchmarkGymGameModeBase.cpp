@@ -10,6 +10,7 @@
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
 #include "Utils/SpatialMetrics.h"
+#include "GDKTestGymsGameInstance.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -19,6 +20,8 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
+	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxLatenessWorkerFlag = TEXT("max_lateness");
@@ -43,6 +46,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bPlayersHaveJoined(false)
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
+	, bHasClientFpsFailed(false)
 	// These values need to match the GDK scenario validation equivalents
 	, MinAcceptableFPS(20.0f) // Same for both client and server currently
 	, MinDelayFPS(120.0f)
@@ -74,22 +78,39 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	USpatialMetrics* SpatialMetrics = SpatialDriver != nullptr ? SpatialDriver->SpatialMetrics : nullptr;
 	if (SpatialMetrics != nullptr)
 	{
+		if(HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
-			SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
 		}
 
+		if (HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
-			SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
 		}
 
+		if (HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
-			SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+		}
+
+		if (HasAuthority())
+		{
+			UserSuppliedMetric Delegate;
+			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+		}
+
+		// Valid on all workers
+		{
+			UserSuppliedMetric Delegate;
+			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
+			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 		}
 	}
 }
@@ -136,19 +157,39 @@ void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
 		MinDelayFPS -= DeltaSeconds;
 	}
 
-	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+	if (Constants->SamplesForFPSValid() && !bHasFpsFailed && GetWorld() != nullptr)
 	{
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
 		{
 			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < MinAcceptableFPS)
+			if (FPS < Constants->GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
-#if !WITH_EDITOR
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-#endif
+#if !WITH_EDITOR 
+				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+#endif		
 			}
 		}
+	}
+
+	bool bClientFpsWasValid = true;
+	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
+	{
+		UUserExperienceReporter* Component = *Itr;
+		if (Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
+		{
+			bClientFpsWasValid = bClientFpsWasValid && Component->bFrameRateValid; // Frame rate wait period is performed by the client and returned valid until then
+		}
+	}
+
+	if (!bHasClientFpsFailed && !bClientFpsWasValid)
+	{
+		bHasClientFpsFailed = true;
+#if !WITH_EDITOR 
+		UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. A client has failed."));
+#endif		
 	}
 }
 

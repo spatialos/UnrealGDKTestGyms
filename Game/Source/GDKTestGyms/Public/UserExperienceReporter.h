@@ -23,13 +23,16 @@ class GDKTESTGYMS_API UUserExperienceReporter : public UActorComponent
 	// Sets default values for this component's properties
 	UUserExperienceReporter();
 public:	
+	// Valid on server
 	float ServerRTT;
 	float ServerViewLateness;
+	bool bFrameRateValid;
 
 	void InitializeComponent() override;
 	 
 	void OnClientOwnershipGained() override;
 	void ReportMetrics();
+
 	UFUNCTION(Server, reliable)
-	void ServerReportedMetrics(float RTTSeconds, float ViewLatenessSeconds);
+	void ServerReportedMetrics(float RTTSeconds, float ViewLatenessSeconds, bool bInFrameRateValid);
 };
