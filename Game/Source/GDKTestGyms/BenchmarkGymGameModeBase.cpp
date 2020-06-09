@@ -47,7 +47,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
 	, bHasClientFpsFailed(false)
-	// These values need to match the GDK scenario validation equivalents
 	, ActivePlayers(0)
 {
 	SetReplicates(true);
