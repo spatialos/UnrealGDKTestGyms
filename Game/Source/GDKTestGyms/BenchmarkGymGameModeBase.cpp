@@ -82,35 +82,35 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+			SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
 		}
 
 		if (HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+			SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
 		}
 
 		if (HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
 		}
 
 		if (HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+			SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
 		}
 
 		// Valid on all workers
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
-			SpatialDriver->SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
+			SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 		}
 	}
 }
@@ -167,9 +167,9 @@ void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
 			if (FPS < Constants->GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
-#if !WITH_EDITOR 
-				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-#endif		
+#if !WITH_EDITOR
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+#endif
 			}
 		}
 	}
