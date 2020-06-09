@@ -15,7 +15,6 @@ typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
 /**
  *
  */
-UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameMode : public ABenchmarkGymGameModeBase
 {
 	GENERATED_BODY()
@@ -41,7 +40,6 @@ private:
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
 	TArray<AActor*> SpawnPoints;
-	TSubclassOf<APawn> NPCPawnClass;
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	int32 NPCSToSpawn;
 
@@ -50,7 +48,6 @@ private:
 	void ClearExistingSpawnPoints();
 	void SetTotalNPCs_Implementation(int32 Value) override;
 	void SpawnNPCs(int NumNPCs);
-	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 	// Generates a grid of points centered at (0, 0), as square-like as possible. A row has a fixed y-value, and a column a fixed x-value.
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
