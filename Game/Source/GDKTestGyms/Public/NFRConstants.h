@@ -28,6 +28,4 @@ private:
 	mutable bool bFPSSamplingValid{ false };
 	float MinServerFPS = 20.0f;
 	float MinClientFPS = 20.0f;
-
-	UNFRConstants();
 };

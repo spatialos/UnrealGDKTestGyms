@@ -3,12 +3,12 @@
 
 #include "UserExperienceReporter.h"
 
+#include "GDKTestGymsGameInstance.h"
+#include "NFRConstants.h"
 #include "Net/UnrealNetwork.h"
 #include "SpatialNetDriver.h"
 #include "UserExperienceComponent.h"
 #include "Utils/SpatialMetrics.h"
-#include "GDKTestGymsGameInstance.h"
-#include "NFRConstants.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceReporter);
 

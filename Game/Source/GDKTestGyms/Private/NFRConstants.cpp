@@ -7,11 +7,6 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-UNFRConstants::UNFRConstants()
-{
-	
-}
-
 bool UNFRConstants::SamplesForFPSValid() const
 {
 	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
