@@ -212,8 +212,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Attempting to parse passed values"));
-
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
