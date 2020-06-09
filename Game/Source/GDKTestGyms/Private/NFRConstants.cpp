@@ -14,6 +14,7 @@ UNFRConstants::UNFRConstants()
 
 bool UNFRConstants::SamplesForFPSValid() const
 {
+	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
 	if (bFPSSamplingValid)
 	{
 		return true;
@@ -65,6 +66,7 @@ void UNFRConstants::InitWithWorld(UWorld* World)
 		}
 	}
 	UE_LOG(LogNFRConstants, Log, TEXT("Min client FPS: %.8f."), MinClientFPS);
+	bIsInitialised = true;
 }
 
 const UNFRConstants* UNFRConstants::Get(UWorld* World)
@@ -78,10 +80,12 @@ const UNFRConstants* UNFRConstants::Get(UWorld* World)
 
 float UNFRConstants::GetMinServerFPS() const
 {
+	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
 	return MinServerFPS;
 }
 
 float UNFRConstants::GetMinClientFPS() const
 {
+	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
 	return MinClientFPS;
 }

@@ -23,6 +23,7 @@ public:
 	
 	static const UNFRConstants* Get(UWorld* World);
 private:
+	bool bIsInitialised{ false };
 	int64 TimeToStartFPSSampling;
 	mutable bool bFPSSamplingValid{ false };
 	float MinServerFPS = 20.0f;
