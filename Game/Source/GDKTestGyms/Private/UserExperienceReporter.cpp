@@ -3,6 +3,8 @@
 
 #include "UserExperienceReporter.h"
 
+#include "GDKTestGymsGameInstance.h"
+#include "NFRConstants.h"
 #include "Net/UnrealNetwork.h"
 #include "SpatialNetDriver.h"
 #include "UserExperienceComponent.h"
@@ -37,6 +39,9 @@ UUserExperienceReporter::UUserExperienceReporter()
 void UUserExperienceReporter::InitializeComponent()
 {
 	UActorComponent::InitializeComponent();
+	bFrameRateValid = true;
+	ServerRTT = 0.0f;
+	ServerViewLateness = 0.0f;
 }
 
 void UUserExperienceReporter::ReportMetrics()
@@ -67,14 +72,27 @@ void UUserExperienceReporter::ReportMetrics()
 			ViewLatenessMS /= ViewLatenessCount + 0.00001f; 
 		}
 
-		ServerReportedMetrics(RoundTripTimeMS, ViewLatenessMS);
+		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
+		{
+			const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+			check(Constants);
+			if (Constants->SamplesForFPSValid() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
+			{
+				bFrameRateValid = false;
+			}
+		}
+		ServerReportedMetrics(RoundTripTimeMS, ViewLatenessMS, bFrameRateValid);
 	}
 }
 
-void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float ViewLatenessSeconds)
+void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float ViewLatenessSeconds, bool bInFrameRateValid)
 {
 	ServerRTT = RTTSeconds;
 	ServerViewLateness = ViewLatenessSeconds;
+	if (!bInFrameRateValid) // Only change from valid to invalid
+	{
+		bFrameRateValid = bInFrameRateValid;
+	}
 }
 
 void UUserExperienceReporter::OnClientOwnershipGained()

@@ -52,6 +52,7 @@ private:
 	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
+	bool bHasClientFpsFailed;
 	float MinAcceptableFPS;
 	float MinDelayFPS;
 	int32 ActivePlayers; // A count of visible UX components
@@ -67,6 +68,8 @@ private:
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
+	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
+	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
