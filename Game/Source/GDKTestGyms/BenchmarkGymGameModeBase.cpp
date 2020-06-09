@@ -212,6 +212,8 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Attempting to parse passed values"));
+
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
@@ -259,12 +261,13 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
 			}
 
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
 			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
 			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
 			SpatialWorkerFlags->BindToOnWorkerFlagsUpdated(WorkerFlagDelegate);
 		}
 	}
+
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
