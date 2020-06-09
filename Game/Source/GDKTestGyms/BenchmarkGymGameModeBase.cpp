@@ -188,7 +188,7 @@ void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
 	{
 		bHasClientFpsFailed = true;
 #if !WITH_EDITOR 
-		UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. A client has failed."));
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
 #endif		
 	}
 }
