@@ -6,6 +6,7 @@
 
 #include "EngineMinimal.h"
 #include "GeneralProjectSettings.h"
+#include "NFRConstants.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -15,6 +16,8 @@ void UGDKTestGymsGameInstance::Init()
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
 	TickWindowTotal = 0;
 	GetEngine()->NetworkFailureEvent.AddUObject(this, &UGDKTestGymsGameInstance::NetworkFailureEventCallback);
+	NFRConstants = NewObject<UNFRConstants>(this);
+	NFRConstants->InitWithWorld(GetWorld());
 }
 
 void UGDKTestGymsGameInstance::OnStart()

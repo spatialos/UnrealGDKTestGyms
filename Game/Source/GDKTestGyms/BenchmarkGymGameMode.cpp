@@ -7,13 +7,14 @@
 #include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
-#include "GameFramework/Character.h"
 #include "GDKTestGymsGameInstance.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
+#include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGym);
@@ -24,6 +25,8 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
+	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 }
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -68,10 +71,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	bPlayersHaveJoined = false;
 	ActivePlayers = 0;
 	bHasFpsFailed = false;
-
-	// These values need to match the GDK scenario validation equivalents
-	MinAcceptableFPS = 20.0f;	// Same for both client and server currently
-	MinDelayFPS = 120.0f;
+	bHasClientFpsFailed = false;
 }
 
 void ABenchmarkGymGameMode::BeginPlay() 
@@ -80,22 +80,39 @@ void ABenchmarkGymGameMode::BeginPlay()
 	{
 		if (SpatialDriver->SpatialMetrics != nullptr)
 		{
+			if(HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
 			}
 
+			if (HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
 			}
 
+			if (HasAuthority())
 			{
 				UserSuppliedMetric Delegate;
 				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
 				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+			}
+
+			if (HasAuthority())
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientFPSValid);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+			}
+
+			// Valid on all workers
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetFPSValid);
+				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 			}
 		}
 	}
@@ -215,14 +232,10 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 
 void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 {
-	if (MinDelayFPS > 0.0f)
-	{
-		MinDelayFPS -= DeltaSeconds;
-	}
-
 	float ClientRTTSeconds = 0.0f;
 	int UXComponentCount = 0;
 	float ClientViewLatenessSeconds = 0.0f;
+	bool bClientFpsWasValid = true;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
@@ -232,6 +245,7 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 			UXComponentCount++;
 
 			ClientViewLatenessSeconds += Component->ServerViewLateness;
+			bClientFpsWasValid = bClientFpsWasValid && Component->bFrameRateValid; // Frame rate wait period is performed by the client and returned valid until then
 		}
 	}
 
@@ -270,12 +284,15 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #endif
 	}
 
-	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	if (Constants->SamplesForFPSValid() && !bHasFpsFailed && GetWorld() != nullptr)
 	{
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
 		{
 			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < MinAcceptableFPS)
+			if (FPS < Constants->GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
 #if !WITH_EDITOR 
@@ -283,6 +300,14 @@ void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
 #endif		
 			}
 		}
+	}
+
+	if (!bHasClientFpsFailed && !bClientFpsWasValid)
+	{
+		bHasClientFpsFailed = true;
+#if !WITH_EDITOR 
+		UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. A client has failed."));
+#endif		
 	}
 }
 
