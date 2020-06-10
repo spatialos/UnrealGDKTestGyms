@@ -86,7 +86,6 @@ void UUserExperienceComponent::TickComponent(float DeltaSeconds, ELevelTick Tick
 	{
 		// Update replicated time to clients
 		ClientTimeTicks = FDateTime::Now().GetTicks();
-		OwnerActor->ForceNetUpdate();
 	}
 }
 

@@ -47,9 +47,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
 	, bHasClientFpsFailed(false)
-	// These values need to match the GDK scenario validation equivalents
-	, MinAcceptableFPS(20.0f) // Same for both client and server currently
-	, MinDelayFPS(120.0f)
 	, ActivePlayers(0)
 {
 	SetReplicates(true);
@@ -177,11 +174,6 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
 {
-	if (MinDelayFPS > 0.0f)
-	{
-		MinDelayFPS -= DeltaSeconds;
-	}
-
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 	if (Constants->SamplesForFPSValid() && !bHasFpsFailed && GetWorld() != nullptr)

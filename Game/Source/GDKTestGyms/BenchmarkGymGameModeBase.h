@@ -53,8 +53,6 @@ private:
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
 	bool bHasClientFpsFailed;
-	float MinAcceptableFPS;
-	float MinDelayFPS;
 	int32 ActivePlayers; // A count of visible UX components
 
 	virtual void BeginPlay() override;
