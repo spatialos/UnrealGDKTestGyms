@@ -73,12 +73,37 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	}
 
 	ParsePassedValues();
+	TryBindWorkerFlagsDelegate();
+	TryAddSpatialMetrics();
+}
 
+void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
+{
+	const FString& CommandLine = FCommandLine::Get();
+	if (!FParse::Param(*CommandLine, *ReadFromCommandLineKey))
+	{
+		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		check(NetDriver);
+
+		USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
+		check(SpatialWorkerFlags != nullptr);
+
+		if (SpatialWorkerFlags != nullptr)
+		{
+			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
+			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
+			SpatialWorkerFlags->BindToOnWorkerFlagsUpdated(WorkerFlagDelegate);
+		}
+	}
+}
+
+void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
+{
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 	USpatialMetrics* SpatialMetrics = SpatialDriver != nullptr ? SpatialDriver->SpatialMetrics : nullptr;
 	if (SpatialMetrics != nullptr)
 	{
-		if(HasAuthority())
+		if (HasAuthority())
 		{
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
@@ -299,10 +324,6 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			{
 				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
 			}
-
-			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
-			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
-			SpatialWorkerFlags->BindToOnWorkerFlagsUpdated(WorkerFlagDelegate);
 		}
 	}
 

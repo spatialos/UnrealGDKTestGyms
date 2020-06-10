@@ -59,6 +59,9 @@ private:
 
 	virtual void BeginPlay() override;
 
+	void TryBindWorkerFlagsDelegate();
+	void TryAddSpatialMetrics();
+
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
