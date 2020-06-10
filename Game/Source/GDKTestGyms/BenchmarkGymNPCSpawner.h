@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "BlackboardValues.h"
+#include "BenchmarkGymSpawnLocations.h"
 #include "BenchmarkGymNPCSpawner.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymNPCSpawner, Log, All);
@@ -19,15 +20,25 @@ public:
 	ABenchmarkGymNPCSpawner();
 
 	void Tick(float DeltaSeconds) override;
+	
+	UFUNCTION(Reliable, CrossServer)
+	void ServerAuthoritiveSpawnNPCs(int32 NumNPCs, int32 Clusters, int32 Density);
+	void ServerAuthoritiveSpawnNPCs_Implementation(int32 NumNPCs, int32 Clusters, int32 Density)
+	{
+		NumToSpawn = NumNPCs;
+		SpawnLocations.Init(NumNPCs, NumNPCs, Clusters, Density, 7500.0f /* Half NCD */);
+		NumClusters = Clusters;
+		PlayerDensity = Density;
+	}
 private:
+	BenchmarkGymSpawnLocations SpawnLocations;
 
 	TSubclassOf<APawn> NPCPawnClass;
 
 	int NumSpawned;
 	int NumToSpawn;
-	
-	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
+	int NumClusters;
+	int PlayerDensity;
 
-	UFUNCTION(Reliable, CrossServer)
-	void ServerAuthoritiveSpawnNPCs(int NumNPCs);
+	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 };

@@ -2,10 +2,14 @@
 
 #include "BenchmarkGymNPCSpawner.h"
 
+#include "BehaviorTree/BlackboardComponent.h"
+#include "DeterministicBlackboardValues.h"
+
 DEFINE_LOG_CATEGORY(LogBenchmarkGymNPCSpawner);
 
 ABenchmarkGymNPCSpawner::ABenchmarkGymNPCSpawner()
-	: NPCSToSpawn(0)
+	: NumSpawned(0)
+	, NumToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -51,10 +55,10 @@ void ABenchmarkGymNPCSpawner::Tick(float DeltaSeconds)
 
 	if (NumSpawned < NumToSpawn)
 	{
-		int32 NPCIndex = --NPCSToSpawn;
-		int32 Cluster = NPCIndex % NumPlayerClusters;
+		int32 NPCIndex = NumSpawned++;
+		int32 Cluster = NPCIndex % NumClusters;
 		int32 SpawnPointIndex = Cluster * PlayerDensity;
-		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-		SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
+
+		SpawnNPC(SpawnLocations.GetSpawnPoint(NPCIndex), SpawnLocations.GetRunBetweenPoints(NPCIndex));
 	}
 }

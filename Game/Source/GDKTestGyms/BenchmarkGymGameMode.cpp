@@ -3,10 +3,10 @@
 #include "BenchmarkGymGameMode.h"
 
 #include "AIController.h"
-#include "BehaviorTree/BlackboardComponent.h"
-#include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "DeterministicBlackboardValues.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "GDKTestGymsGameInstance.h"
@@ -22,9 +22,7 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: bInitializedCustomSpawnParameters(false)
-	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
-	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -43,17 +41,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
 	constexpr float RoamRadius = 7500.0f; // Set to half the NetCullDistance
 	
-	{
-		FRandomStream NPCStream;
-		NPCStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
-		for (int i = 0; i < TotalNPCs; i++)
-		{
-			FVector PointA = NPCStream.VRand()*RoamRadius;
-			FVector PointB = NPCStream.VRand()*RoamRadius;
-			PointA.Z = PointB.Z = 0.0f;
-			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
-		}
-	}
+	SpawnLocations.Init(ExpectedPlayers, ExpectedPlayers, )
 }
 
 void ABenchmarkGymGameMode::SetTotalNPCs_Implementation(int32 Value)
@@ -77,16 +65,7 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 	if (ShouldUseCustomSpawning())
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Enabling custom density spawning."));
-		ClearExistingSpawnPoints();
-
-		SpawnPoints.Reset();
 		GenerateSpawnPointClusters(NumPlayerClusters);
-
-		if (SpawnPoints.Num() != ExpectedPlayers)
-		{
-			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
-		}
-
 		GenerateTestScenarioLocations();
 	}
 	else
@@ -110,7 +89,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
 		checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
 
-		const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+		const FBlackboardValues& Points = SpawnLocations.GetRunBetweenPoints(InfoIndex);
 		Blackboard->ClientSetBlackboardAILocations(Points);
 	}
 	AIControlledPlayers.Empty();
@@ -158,43 +137,34 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
 
-void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
-{
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), SpawnPoints);
-	for (AActor* SpawnPoint : SpawnPoints)
-	{
-		SpawnPoint->Destroy();
-	}
-}
-
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 {
-	NPCSToSpawn = NumNPCs;
+	
 }
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
 	CheckCmdLineParameters();
 
-	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
+	if (!SpawnLocations.IsInitialized() || !ShouldUseCustomSpawning())
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
 
 	if (Player == nullptr) // Work around for load balancing passing nullptr Player
 	{
-		return SpawnPoints[PlayersSpawned % SpawnPoints.Num()];
+		return SpawnLocations.GetSpawnPoint(PlayersSpawned);
 	}
 
 	// Use custom spawning with density controls
 	const int32 PlayerUniqueID = Player->GetUniqueID();
-	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
+	FVector* SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
 	if (SpawnPoint != nullptr)
 	{
 		return *SpawnPoint;
 	}
 
-	AActor* ChosenSpawnPoint = SpawnPoints[PlayersSpawned % SpawnPoints.Num()];
+	FVector ChosenSpawnPoint = SpawnLocations.GetSpawnPoint(PlayersSpawned);
 	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());

@@ -5,8 +5,9 @@
 #include "BlackboardValues.h"
 #include "CoreMinimal.h"
 #include "BenchmarkGymGameModeBase.h"
+#include "BenchmarkGymNPCSpawner.h"
 
-#include "BenchmarkGymGameMode.generated.h"
+//#include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameMode, Log, All);
 
@@ -15,6 +16,7 @@ typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
 /**
  *
  */
+CLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameMode : public ABenchmarkGymGameModeBase
 {
 	GENERATED_BODY()
@@ -23,8 +25,6 @@ public:
 
 	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 private:
-	TArray<FBlackboardValues> PlayerRunPoints;
-	TArray<FBlackboardValues> NPCRunPoints;
 	void GenerateTestScenarioLocations();
 
 	TArray<ControllerIntegerPair> AIControlledPlayers;
@@ -34,14 +34,11 @@ private:
 
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
-	// Number of players per cluster. Players only see other players in the same cluster.
-	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
-	int32 PlayerDensity;
-	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
-	TArray<AActor*> SpawnPoints;
-	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
-	int32 NPCSToSpawn;
+	int32 NumPlayerClusters;
+	int32 PlayerDensity;
+	TMap<int32, FVector> PlayerIdToSpawnPointMap;
+	BenchmarkGymSpawnLocations SpawnLocations;
 
 	bool ShouldUseCustomSpawning();
 	void CheckCmdLineParameters();

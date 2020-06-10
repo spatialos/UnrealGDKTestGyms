@@ -4,28 +4,32 @@
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymSpawnLocations);
 
-void BenchmarkGymSpawnLocations::Init(int32 Seed, int Num, float Radius);
+void BenchmarkGymSpawnLocations::Init(int32 Seed, int NumSpawns, int Clusters, int Density, float Radius)
 {
-	float Radius = 7500.0f /* Half NCD distance */
+	PlayerDensity = Density;
+	NumPlayerClusters = Clusters;
 
-	FRandomStream NPCStream;
-	NPCStream.Initialize(FCrc::MemCrc32(&Seed, sizeof(Seed)));
-	for (int i = 0; i < TotalNPCs; i++)
+	FRandomStream RNDStream;
+	RNDStream.Initialize(FCrc::MemCrc32(&Seed, sizeof(Seed)));
+	for (int i = 0; i < NumSpawns; i++)
 	{
-		FVector PointA = NPCStream.VRand()*Radius;
-		FVector PointB = NPCStream.VRand()*Radius;
+		FVector PointA = RNDStream.VRand()*Radius;
+		FVector PointB = RNDStream.VRand()*Radius;
 		PointA.Z = PointB.Z = 0.0f;
-		NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
+		RunLocations.Emplace(FBlackboardValues{ PointA, PointB });
 	}
+
+	GenerateSpawnPointClusters(Clusters);
+	bIsInitialized = true;
 }
 
-FBlackboardValues BenchmarkGymSpawnLocations::GetSpawn(int Index)
+FBlackboardValues BenchmarkGymSpawnLocations::GetRunBetweenPoints(int Index)
 {
 	if (Index >= RunLocations.Num())
 	{
-		UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Requesting spawn location which was not generated. (%d - %d generated)"), Index, RunLocations.Num());
+		UE_LOG(LogBenchmarkGymSpawnLocations, Warning, TEXT("Requesting run locations which was not generated. (%d - %d generated)"), Index, RunLocations.Num());
 	}
-	return RunLocations
+	return RunLocations[Index];
 }
 
 void BenchmarkGymSpawnLocations::GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum)
@@ -37,13 +41,6 @@ void BenchmarkGymSpawnLocations::GenerateSpawnPoints(int CenterX, int CenterY, i
 	int NumRows, NumCols, MinRelativeX, MinRelativeY;
 	GenerateGridSettings(DistBetweenSpawnPoints, SpawnPointsNum, NumRows, NumCols, MinRelativeX, MinRelativeY);
 
-	UWorld* World = GetWorld();
-	if (World == nullptr)
-	{
-		UE_LOG(LogBenchmarkGymSpawnLocations, Error, TEXT("Cannot spawn spawnpoints, world is null"));
-		return;
-	}
-
 	for (int i = 0; i < SpawnPointsNum; i++)
 	{
 		const int Row = i % NumRows;
@@ -52,14 +49,8 @@ void BenchmarkGymSpawnLocations::GenerateSpawnPoints(int CenterX, int CenterY, i
 		const int X = CenterX + MinRelativeX + Col * DistBetweenSpawnPoints;
 		const int Y = CenterY + MinRelativeY + Row * DistBetweenSpawnPoints;
 
-		FActorSpawnParameters SpawnInfo{};
-		SpawnInfo.Owner = this;
-		SpawnInfo.Instigator = NULL;
-		SpawnInfo.bDeferConstruction = false;
-		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
 		const FVector SpawnLocation = FVector(X, Y, Z);
-		UE_LOG(LogBenchmarkGymSpawnLocations, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
+		UE_LOG(LogBenchmarkGymSpawnLocations, Log, TEXT("Creating a spawn location at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(SpawnLocation);
 	}
 }
