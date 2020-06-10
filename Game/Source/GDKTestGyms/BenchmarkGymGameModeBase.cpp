@@ -346,8 +346,11 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 
 void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
 {
-	TotalNPCs = Value;
-	OnTotalNPCsUpdated(TotalNPCs);
+	if (Value != TotalNPCs)
+	{
+		TotalNPCs = Value;
+		OnTotalNPCsUpdated(TotalNPCs);
+	}
 }
 
 void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
