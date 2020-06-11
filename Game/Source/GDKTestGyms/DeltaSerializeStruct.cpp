@@ -1,38 +1,29 @@
 #include "DeltaSerializeStruct.h"
 #include "Net/UnrealNetwork.h"
 
-void FTestStructItem::PostReplicatedChange(const struct FTestStructContainer& InArraySerializer)
+void FTestStructContainer::PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize)
 {
-  int32 ElementIdx = this - InArraySerializer.Items.GetData();
-  if (Material)
-  {
-    int32 ChangeNum = InArraySerializer.Owner->ElementsHavingChanged.FindOrAdd(ElementIdx, 0);
-    ++ChangeNum;
-  }
+	PostReplicatedAdd(ChangedIndices, FinalSize);
 }
 
-void FTestStructItem::PreReplicatedRemove(const struct FTestStructContainer& InArraySerializer)
+void FTestStructContainer::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
 {
 
 }
 
-void FTestStructItem::PostReplicatedAdd(const struct FTestStructContainer& InArraySerializer)
+void FTestStructContainer::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
 {
-  InArraySerializer.Owner->NumInvalidItems = 0;
-  int32 ElementIdx = this - InArraySerializer.Items.GetData();
+  Owner->NumInvalidItems = 0;
 
-  InArraySerializer.Owner->ElementsHavingChanged.FindOrAdd(ElementIdx, 0);
-
-  for (int i = 0; i< InArraySerializer.Items.Num(); ++i)
+  for (const auto& CurItem : Items)
   {
-    auto const& CurItem = InArraySerializer.Items[i];
-    if (!CurItem.Material)
+    if (CurItem.Material == nullptr)
     {
-      ++InArraySerializer.Owner->NumInvalidItems;
+      ++Owner->NumInvalidItems;
     }
   }
 
-  InArraySerializer.Owner->ReplicationHappened();
+  Owner->ReplicationHappened();
 }
 
 bool FTestStructContainer::NetDeltaSerialize(FNetDeltaSerializeInfo & DeltaParms)
@@ -46,7 +37,7 @@ void ANetSerializeTestActor::OnRep_Container()
 
   for (auto const& Item : TestContainer.Items)
   {
-    if (!Item.Material)
+    if (Item.Material == nullptr)
     {
       ++NumInvalidItems_OnRep;
     }

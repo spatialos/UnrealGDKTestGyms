@@ -12,17 +12,13 @@ struct FTestStructContainer;
 USTRUCT(BlueprintType)
 struct FTestStructItem : public FFastArraySerializerItem
 {
-  GENERATED_USTRUCT_BODY()
+	GENERATED_USTRUCT_BODY()
 
-    FTestStructItem()
-  {}
+	FTestStructItem()
+	{}
   
-  UPROPERTY(BlueprintReadWrite)
-    UMaterial* Material;
-
-  void PreReplicatedRemove(const struct FTestStructContainer& InArraySerializer);
-  void PostReplicatedAdd(const struct FTestStructContainer& InArraySerializer);
-  void PostReplicatedChange(const struct FTestStructContainer& InArraySerializer);
+	UPROPERTY(BlueprintReadWrite)
+	UMaterial* Material;
 };
 
 class ANetSerializeTestActor;
@@ -31,84 +27,85 @@ class ANetSerializeTestActor;
 USTRUCT(BlueprintType)
 struct FTestStructContainer : public FFastArraySerializer
 {
-  GENERATED_USTRUCT_BODY()
+	GENERATED_USTRUCT_BODY()
 
-    FTestStructContainer()
-  {}
+	FTestStructContainer()
+	{}
 
-    FTestStructContainer(ANetSerializeTestActor* InOwner)
-    : Owner(InOwner)
-  {
-  }
+	FTestStructContainer(ANetSerializeTestActor* InOwner)
+	: Owner(InOwner)
+	{
+	}
 
-  UPROPERTY()
-    ANetSerializeTestActor* Owner;
+	UPROPERTY()
+	ANetSerializeTestActor* Owner;
 
-  UPROPERTY(BlueprintReadWrite)
-    TArray<FTestStructItem> Items;
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FTestStructItem> Items;
 
-  bool NetDeltaSerialize(FNetDeltaSerializeInfo & DeltaParms);
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
+
+	void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
+	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
+	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
 };
 
 template<>
 struct TStructOpsTypeTraits< FTestStructContainer > : public TStructOpsTypeTraitsBase2< FTestStructContainer >
 {
-  enum
-  {
-    WithNetDeltaSerializer = true,
-  };
+	enum
+	{
+		WithNetDeltaSerializer = true,
+	};
 };
 
 UCLASS(BlueprintType)
 class ANetSerializeTestActor : public AActor 
 {
-  friend FTestStructItem;
-  friend FTestStructContainer;
+	friend FTestStructItem;
+	friend FTestStructContainer;
 public:
-  GENERATED_BODY()
+	GENERATED_BODY()
 
-  ANetSerializeTestActor()
-    : TestContainer(this)
-  {
-    bReplicates = true;
-  }
+	ANetSerializeTestActor()
+	: TestContainer(this)
+	{
+		bReplicates = true;
+	}
 
-  UFUNCTION(BlueprintCallable)
-    void AddMaterial(UMaterial* InMaterial)
-  {
-    TestContainer.Items.AddDefaulted();
-    TestContainer.Items.Last().Material = InMaterial;
-    TestContainer.MarkArrayDirty();
-  }
+	UFUNCTION(BlueprintCallable)
+	void AddMaterial(UMaterial* InMaterial)
+	{
+		TestContainer.Items.AddDefaulted();
+		TestContainer.Items.Last().Material = InMaterial;
+		TestContainer.MarkArrayDirty();
+	}
 
-  UFUNCTION(BlueprintCallable)
-    void SetMaterial(int32 Index, UMaterial* InMaterial) 
-  { 
-    TestContainer.Items[Index].Material = InMaterial; 
-    TestContainer.MarkItemDirty(TestContainer.Items[Index]);
-  }
+	UFUNCTION(BlueprintCallable)
+	void SetMaterial(int32 Index, UMaterial* InMaterial) 
+	{ 
+		TestContainer.Items[Index].Material = InMaterial; 
+		TestContainer.MarkItemDirty(TestContainer.Items[Index]);
+	}
 
 protected:
 
-  void GetLifetimeReplicatedProps(class TArray<class FLifetimeProperty> &) const;
+	void GetLifetimeReplicatedProps(class TArray<class FLifetimeProperty>&) const;
 
-  UFUNCTION()
-  void OnRep_Container();
+	UFUNCTION()
+	void OnRep_Container();
 
-  UFUNCTION(BlueprintImplementableEvent)
-  void ReplicationHappened();
+	UFUNCTION(BlueprintImplementableEvent)
+	void ReplicationHappened();
 
-  UPROPERTY(BlueprintReadOnly)
-    int32 NumItems = 0;
+	UPROPERTY(BlueprintReadOnly)
+	int32 NumItems = 0;
 
-  UPROPERTY(BlueprintReadOnly)
-    TMap<int32, int32> ElementsHavingChanged;
+	UPROPERTY(BlueprintReadOnly)
+	int32 NumInvalidItems = 0;
+	UPROPERTY(BlueprintReadOnly)
+	int32 NumInvalidItems_OnRep = 0;
 
-  UPROPERTY(BlueprintReadOnly)
-    int32 NumInvalidItems = 0;
-  UPROPERTY(BlueprintReadOnly)
-    int32 NumInvalidItems_OnRep = 0;
-
-  UPROPERTY(ReplicatedUsing = OnRep_Container, EditAnywhere, BlueprintReadWrite)
-    FTestStructContainer TestContainer;
+	UPROPERTY(ReplicatedUsing = OnRep_Container, EditAnywhere, BlueprintReadWrite)
+	FTestStructContainer TestContainer;
 };
