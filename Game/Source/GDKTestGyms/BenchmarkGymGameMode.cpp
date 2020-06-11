@@ -162,19 +162,20 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	}
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
-		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-		check(NetDriver);
-
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString PlayerDensityString;
 
-		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
-		check(SpatialWorkerFlags != nullptr);
-
-		if (SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		if (ensure(NetDriver != nullptr))
 		{
-			PlayerDensity = FCString::Atoi(*PlayerDensityString);
+			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+			if (ensure(SpatialWorkerFlags != nullptr) &&
+				SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+			{
+				PlayerDensity = FCString::Atoi(*PlayerDensityString);
+			}
 		}
+
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 

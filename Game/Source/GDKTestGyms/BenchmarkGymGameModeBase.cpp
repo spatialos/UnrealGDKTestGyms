@@ -76,16 +76,22 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 {
-	const FString& CommandLine = FCommandLine::Get();
-	if (!FParse::Param(*CommandLine, *ReadFromCommandLineKey))
+	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
-		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-		check(NetDriver);
+		return;
+	}
 
-		USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
-		check(SpatialWorkerFlags != nullptr);
+	const FString& CommandLine = FCommandLine::Get();
+	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
+	{
+		return;
+	}
 
-		if (SpatialWorkerFlags != nullptr)
+	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+	if (ensure(SpatialDriver != nullptr))
+	{
+		USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+		if (ensure(SpatialWorkerFlags != nullptr))
 		{
 			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
 			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
@@ -96,43 +102,40 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 
 void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 {
-	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-	USpatialMetrics* SpatialMetrics = SpatialDriver != nullptr ? SpatialDriver->SpatialMetrics : nullptr;
-	if (SpatialMetrics != nullptr)
+	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
-		if (HasAuthority())
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
-			SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
-		}
+		return;
+	}
 
-		if (HasAuthority())
+	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+	if (ensure(SpatialDriver != nullptr))
+	{
+		USpatialMetrics* SpatialMetrics = SpatialDriver->SpatialMetrics;
+		if (ensure(SpatialMetrics != nullptr))
 		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
-			SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
-		}
-
-		if (HasAuthority())
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
-			SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
-		}
-
-		if (HasAuthority())
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
-			SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
-		}
-
-		// Valid on all workers
-		{
+			// Valid on all workers
 			UserSuppliedMetric Delegate;
 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
 			SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
+
+			if (HasAuthority())
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
+				SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
+				SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
+				SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
+				SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+			}
 		}
 	}
 }
@@ -286,35 +289,34 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
-		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-		check(NetDriver);
-
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
 
-		USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
-		check(SpatialWorkerFlags != nullptr);
-
-		if (SpatialWorkerFlags != nullptr)
+		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		if (ensure(SpatialDriver != nullptr))
 		{
-			if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
+			USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+			if (ensure(SpatialWorkerFlags != nullptr))
 			{
-				ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
-			}
+				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
+				{
+					ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
+				}
 
-			if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
-			{
-				SetTotalNPCs(FCString::Atoi(*TotalNPCsString));
-			}
+				if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
+				{
+					SetTotalNPCs(FCString::Atoi(*TotalNPCsString));
+				}
 
-			if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
-			{
-				MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
-			}
+				if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
+				{
+					MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
+				}
 
-			if (SpatialWorkerFlags->GetWorkerFlag(MaxLatenessWorkerFlag, MaxViewLateness))
-			{
-				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
+				if (SpatialWorkerFlags->GetWorkerFlag(MaxLatenessWorkerFlag, MaxViewLateness))
+				{
+					MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
+				}
 			}
 		}
 	}
