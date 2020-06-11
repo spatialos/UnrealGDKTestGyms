@@ -90,7 +90,7 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 	if (ensure(SpatialDriver != nullptr))
 	{
-		USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+		USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
 		if (ensure(SpatialWorkerFlags != nullptr))
 		{
 			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
@@ -120,21 +120,29 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 
 			if (HasAuthority())
 			{
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
-				SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
+					SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+				}
 
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
-				SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
+					SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+				}
 
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
-				SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
+					SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+				}
 
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
-				SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
+					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+				}
 			}
 		}
 	}
@@ -295,7 +303,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
 		{
-			USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+			USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
 				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
