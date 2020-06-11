@@ -154,7 +154,8 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	TickFPSCheck(DeltaSeconds);
+	TickServerFPSCheck(DeltaSeconds);
+	TickAuthServerFPSCheck(DeltaSeconds);
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 }
@@ -185,7 +186,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	}
 }
 
-void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
+void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 {
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
@@ -202,6 +203,14 @@ void ABenchmarkGymGameModeBase::TickFPSCheck(float DeltaSeconds)
 #endif
 			}
 		}
+	}
+}
+
+void ABenchmarkGymGameModeBase::TickAuthServerFPSCheck(float DeltaSeconds)
+{
+	if (!HasAuthority())
+	{
+		return;
 	}
 
 	bool bClientFpsWasValid = true;

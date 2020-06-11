@@ -61,7 +61,8 @@ private:
 	void TryAddSpatialMetrics();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
-	void TickFPSCheck(float DeltaSeconds);
+	void TickServerFPSCheck(float DeltaSeconds);
+	void TickAuthServerFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
