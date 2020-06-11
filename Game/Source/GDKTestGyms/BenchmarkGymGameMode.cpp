@@ -8,25 +8,23 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/Character.h"
-#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/PlayerStart.h"
+#include "GDKTestGymsGameInstance.h"
+#include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
+#include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
 
-DEFINE_LOG_CATEGORY(LogBenchmarkGym);
-
-// Metrics
-namespace
-{
-	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
-	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
-	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
-}
+DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
+	: bInitializedCustomSpawnParameters(false)
+	, NumPlayerClusters(1)
+	, PlayersSpawned(0)
+	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -44,60 +42,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	if (SimulatedBPPawnClass.Class != NULL)
 	{
 		SimulatedPawnClass = SimulatedBPPawnClass.Class;
-	}
-
-	bHasUpdatedMaxActorsToReplicate = false;
-	bInitializedCustomSpawnParameters = false;
-
-	ExpectedPlayers = 1;
-	TotalNPCs = 0;
-	NumPlayerClusters = 4;
-	PlayersSpawned = 0;
-
-	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
-	bUseSeamlessTravel = false;
-
-	NPCSToSpawn = 0;
-	SecondsTillPlayerCheck = 15.0f * 60.0f;
-
-	MaxClientRoundTripSeconds = MaxClientViewLatenessSeconds = 150;	
-	
-	PrintUXMetric = 10.0f;
-	
-	bHasUxFailed = false;
-	bPlayersHaveJoined = false;
-	ActivePlayers = 0;
-	bHasFpsFailed = false;
-
-	// These values need to match the GDK scenario validation equivalents
-	MinAcceptableFPS = 20.0f;	// Same for both client and server currently
-	MinDelayFPS = 120.0f;
-}
-
-void ABenchmarkGymGameMode::BeginPlay() 
-{
-	if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
-	{
-		if (SpatialDriver->SpatialMetrics != nullptr)
-		{
-			{
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientRTT);
-				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
-			}
-
-			{
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetClientViewLateness);
-				SpatialDriver->SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
-			}
-
-			{
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetPlayersConnected);
-				SpatialDriver->SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
-			}
-		}
 	}
 }
 
@@ -135,35 +79,33 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 		return;
 	}
 
-	if (ShouldUseCustomSpawning())
-	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Enabling custom density spawning."));
-		ParsePassedValues();
-		ClearExistingSpawnPoints();
-
-		SpawnPoints.Reset();
-		GenerateSpawnPointClusters(NumPlayerClusters);
-
-		if (SpawnPoints.Num() != ExpectedPlayers) 
-		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
-		}
-
-		GenerateTestScenarioLocations();
-
-		SpawnNPCs(TotalNPCs);
-	}
-	else
-	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Custom density spawning disabled."));
-	}
+	ParsePassedValues();
+	StartCustomNPCSpawning();
 
 	bInitializedCustomSpawnParameters = true;
+}
+
+void ABenchmarkGymGameMode::StartCustomNPCSpawning()
+{
+	ClearExistingSpawnPoints();
+
+	SpawnPoints.Reset();
+	GenerateSpawnPointClusters(NumPlayerClusters);
+
+	if (SpawnPoints.Num() != ExpectedPlayers)
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
+	}
+
+	GenerateTestScenarioLocations();
+
+	SpawnNPCs(TotalNPCs);
 }
 
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
 	if (HasAuthority())
 	{
 		if (NPCSToSpawn > 0)
@@ -173,24 +115,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			int32 SpawnPointIndex = Cluster * PlayerDensity;
 			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
 			SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
-		}
-
-		if (SecondsTillPlayerCheck > 0.0f)
-		{
-			SecondsTillPlayerCheck -= DeltaSeconds;
-			if (SecondsTillPlayerCheck <= 0.0f)
-			{
-				if (ActivePlayers != ExpectedPlayers)
-				{
-					// This log is used by the NFR pipeline to indicate if a client failed to connect
-					UE_LOG(LogBenchmarkGym, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-				}
-				else
-				{
-					// Useful for NFR log inspection
-					UE_LOG(LogBenchmarkGym, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-				}
-			}
 		}
 
 		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
@@ -209,143 +133,39 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		}
 		AIControlledPlayers.Empty();
 	}
-
-	ServerUpdateNFRTestMetrics(DeltaSeconds);
-}
-
-void ABenchmarkGymGameMode::ServerUpdateNFRTestMetrics(float DeltaSeconds)
-{
-	if (MinDelayFPS > 0.0f)
-	{
-		MinDelayFPS -= DeltaSeconds;
-	}
-
-	float ClientRTTSeconds = 0.0f;
-	int UXComponentCount = 0;
-	float ClientViewLatenessSeconds = 0.0f;
-	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
-	{
-		UUserExperienceReporter* Component = *Itr;
-		if(Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
-		{
-			ClientRTTSeconds += Component->ServerRTT;
-			UXComponentCount++;
-
-			ClientViewLatenessSeconds += Component->ServerViewLateness;
-		}
-	}
-
-	ActivePlayers = UXComponentCount;
-
-	if (UXComponentCount > 0)
-	{
-		bPlayersHaveJoined = true;
-	}
-
-	if (!bPlayersHaveJoined)
-	{
-		return; // We don't start reporting until there are some valid components in the scene.
-	}
-
-	ClientRTTSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
-	ClientViewLatenessSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
-
-	AveragedClientRTTSeconds = ClientRTTSeconds;
-	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
-
-	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
-	{
-		bHasUxFailed = true;
-#if !WITH_EDITOR 
-		UE_LOG(LogBenchmarkGym, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
-#endif
-	}
-
-	PrintUXMetric -= DeltaSeconds;
-	if (PrintUXMetric < 0.0f)
-	{
-		PrintUXMetric = 10.0f;
-#if !WITH_EDITOR
-		UE_LOG(LogBenchmarkGym, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
-#endif
-	}
-
-	if (MinDelayFPS <= 0.0f && !bHasFpsFailed && GetWorld() != nullptr)
-	{
-		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
-		{
-			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < MinAcceptableFPS)
-			{
-				bHasFpsFailed = true;
-#if !WITH_EDITOR 
-				UE_LOG(LogBenchmarkGym, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-#endif		
-			}
-		}
-	}
-}
-
-bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
-{
-	FString WorkerValue;
-	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
-	{
-		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
-	}
-	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
 }
 
 void ABenchmarkGymGameMode::ParsePassedValues()
 {
-	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-	if (FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")))
-	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Found OverrideSpawning in command line args, worker flags for custom spawning will be ignored."));
-		FParse::Value(FCommandLine::Get(), TEXT("TotalPlayers="), ExpectedPlayers);
-		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
-		PlayerDensity = ExpectedPlayers;
-		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
-		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
+	Super::ParsePassedValues();
 
-		FParse::Value(FCommandLine::Get(), TEXT("MaxRoundTrip="), MaxClientRoundTripSeconds);
-		FParse::Value(FCommandLine::Get(), TEXT("MaxLateness="), MaxClientViewLatenessSeconds);
-	}
-	else
+	PlayerDensity = ExpectedPlayers;
+
+	const FString& CommandLine = FCommandLine::Get();
+	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString TotalPlayersString, PlayerDensityString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
-		check(NetDriver);
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
+		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+	}
+	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
+		FString PlayerDensityString;
+
+		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		if (ensure(NetDriver != nullptr))
 		{
-			ExpectedPlayers = FCString::Atoi(*TotalPlayersString);
-		}
-		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
-		PlayerDensity = ExpectedPlayers;
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr)
-		{
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+			if (ensure(SpatialWorkerFlags != nullptr) &&
+				SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
 			{
 				PlayerDensity = FCString::Atoi(*PlayerDensityString);
 			}
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
-			{
-				TotalNPCs = FCString::Atoi(*TotalNPCsString);
-			}
-
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_round_trip"), MaxRoundTrip))
-			{
-				MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
-			}
-			if (NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("max_lateness"), MaxViewLateness))
-			{
-				MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
-			}
 		}
+
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Players %d, Density %d, NPCs %d, Clusters %d"), ExpectedPlayers, PlayerDensity, TotalNPCs, NumPlayerClusters);
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
@@ -361,7 +181,7 @@ void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumP
 {
 	if (NumPoints <= 0)
 	{
-		UE_LOG(LogBenchmarkGym, Warning, TEXT("Generating grid settings with non-postive number of points (%d)"), NumPoints);
+		UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Generating grid settings with non-postive number of points (%d)"), NumPoints);
 		OutNumRows = 0;
 		OutNumCols = 0;
 		OutMinRelativeX = 0;
@@ -383,7 +203,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 	int NumRows, NumCols, MinRelativeX, MinRelativeY;
 	GenerateGridSettings(DistBetweenClusterCenters, NumClusters, NumRows, NumCols, MinRelativeX, MinRelativeY);
 
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Creating player cluster grid of %d rows by %d columns"), NumRows, NumCols);
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns"), NumRows, NumCols);
 	for (int i = 0; i < NumClusters; i++)
 	{
 		const int Row = i % NumRows;
@@ -408,7 +228,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 	UWorld* World = GetWorld();
 	if (World == nullptr)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Cannot spawn spawnpoints, world is null"));
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Cannot spawn spawnpoints, world is null"));
 		return;
 	}
 
@@ -427,7 +247,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		const FVector SpawnLocation = FVector(X, Y, Z);
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
+		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
 	}
 }
@@ -442,13 +262,13 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	UWorld* const World = GetWorld();
 	if (World == nullptr)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error spawning NPC, World is null"));
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error spawning NPC, World is null"));
 		return;
 	}
 
 	if (NPCPawnClass == nullptr)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error spawning NPC, NPCPawnClass is not set."));
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error spawning NPC, NPCPawnClass is not set."));
 		return;
 	}
 
@@ -460,7 +280,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 
 	FVector FixedSpawnLocation = SpawnLocation + RandomOffset;
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	APawn* Pawn = World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), FixedSpawnLocation, FRotator::ZeroRotator, SpawnInfo);
@@ -475,7 +295,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	CheckCmdLineParameters();
 
-	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
+	if (SpawnPoints.Num() == 0)
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
@@ -496,7 +316,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	AActor* ChosenSpawnPoint = SpawnPoints[PlayersSpawned % SpawnPoints.Num()];
 	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
 	
 	if (Player->GetIsSimulated())
 	{
