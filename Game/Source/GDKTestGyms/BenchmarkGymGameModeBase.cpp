@@ -113,10 +113,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 		USpatialMetrics* SpatialMetrics = SpatialDriver->SpatialMetrics;
 		if (ensure(SpatialMetrics != nullptr))
 		{
-			// Valid on all workers
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
-			SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
+			{
+				// Valid on all workers
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
+				SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
+			}
 
 			if (HasAuthority())
 			{
@@ -284,7 +286,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLineKey in command line Keys, worker flags for custom spawning will be ignored."));
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLine in command line Keys, worker flags for custom spawning will be ignored."));
 
 		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
 
