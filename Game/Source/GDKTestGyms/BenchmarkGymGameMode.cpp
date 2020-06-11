@@ -284,7 +284,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 	else
 	{
-		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Failed to find NPCSpawner."), );
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Failed to find NPCSpawner."));
 	}
 }
 
