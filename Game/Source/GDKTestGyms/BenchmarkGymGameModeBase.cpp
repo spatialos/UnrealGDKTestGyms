@@ -64,11 +64,6 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	ParsePassedValues();
 	TryBindWorkerFlagsDelegate();
 	TryAddSpatialMetrics();
@@ -102,6 +97,11 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 
 void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		return;

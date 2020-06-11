@@ -80,30 +80,26 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 	}
 
 	ParsePassedValues();
-
-	if (ShouldUseCustomSpawning())
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Enabling custom density spawning."));
-		ClearExistingSpawnPoints();
-
-		SpawnPoints.Reset();
-		GenerateSpawnPointClusters(NumPlayerClusters);
-
-		if (SpawnPoints.Num() != ExpectedPlayers)
-		{
-			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
-		}
-
-		GenerateTestScenarioLocations();
-
-		SpawnNPCs(TotalNPCs);
-	}
-	else
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Custom density spawning disabled."));
-	}
+	StartCustomNPCSpawning();
 
 	bInitializedCustomSpawnParameters = true;
+}
+
+void ABenchmarkGymGameMode::StartCustomNPCSpawning()
+{
+	ClearExistingSpawnPoints();
+
+	SpawnPoints.Reset();
+	GenerateSpawnPointClusters(NumPlayerClusters);
+
+	if (SpawnPoints.Num() != ExpectedPlayers)
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
+	}
+
+	GenerateTestScenarioLocations();
+
+	SpawnNPCs(TotalNPCs);
 }
 
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
@@ -137,16 +133,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		}
 		AIControlledPlayers.Empty();
 	}
-}
-
-bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
-{
-	FString WorkerValue;
-	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
-	{
-		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
-	}
-	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
 }
 
 void ABenchmarkGymGameMode::ParsePassedValues()
@@ -309,7 +295,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	CheckCmdLineParameters();
 
-	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
+	if (SpawnPoints.Num() == 0)
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
