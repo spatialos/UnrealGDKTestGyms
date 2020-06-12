@@ -257,6 +257,13 @@ void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 
 void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
 {
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error spawning NPC, World is null"));
+		return;
+	}
+
 	if (NPCSpawner == nullptr)
 	{
 		ABenchmarkGymNPCSpawner* Spawner = nullptr;
