@@ -21,9 +21,9 @@ class GDKTESTGYMS_API ABenchmarkGymNPCSpawner : public AActor
 public:
 	UFUNCTION(Reliable, CrossServer)
 	void CrossServerSpawn(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
-	void CrossServerSpawn_Implementation(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
 	ABenchmarkGymNPCSpawner();
 private:
+	UPROPERTY()
 	TSubclassOf<APawn> NPCPawnClass;
 };

@@ -47,7 +47,6 @@ private:
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
 
-	bool ShouldUseCustomSpawning();
 	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
 	void StartCustomNPCSpawning();
