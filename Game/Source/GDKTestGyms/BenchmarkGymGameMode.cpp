@@ -286,6 +286,18 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
+	if (!HasAuthority())
+	{
+		for (TActorIterator<APlayerStart> It = TActorIterator<APlayerStart>(GetWorld()); It; ++It)
+		{
+			if (It->GetName() == FString(TEXT("PlayerStartHackMultiWorker")))
+			{
+				return *It;
+			}
+		}
+		checkf(0, TEXT("Failed to find player start work-around actor"));
+	}
+
 	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0)
