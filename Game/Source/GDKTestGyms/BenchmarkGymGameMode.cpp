@@ -76,30 +76,26 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 	}
 
 	ParsePassedValues();
-
-	if (ShouldUseCustomSpawning())
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Enabling custom density spawning."));
-		ClearExistingSpawnPoints();
-
-		SpawnPoints.Reset();
-		GenerateSpawnPointClusters(NumPlayerClusters);
-
-		if (SpawnPoints.Num() != ExpectedPlayers)
-		{
-			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
-		}
-
-		GenerateTestScenarioLocations();
-
-		SpawnNPCs(TotalNPCs);
-	}
-	else
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Custom density spawning disabled."));
-	}
+	StartCustomNPCSpawning();
 
 	bInitializedCustomSpawnParameters = true;
+}
+
+void ABenchmarkGymGameMode::StartCustomNPCSpawning()
+{
+	ClearExistingSpawnPoints();
+
+	SpawnPoints.Reset();
+	GenerateSpawnPointClusters(NumPlayerClusters);
+
+	if (SpawnPoints.Num() != ExpectedPlayers)
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
+	}
+
+	GenerateTestScenarioLocations();
+
+	SpawnNPCs(TotalNPCs);
 }
 
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
@@ -135,16 +131,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 	}
 }
 
-bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
-{
-	FString WorkerValue;
-	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
-	{
-		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
-	}
-	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
-}
-
 void ABenchmarkGymGameMode::ParsePassedValues()
 {
 	Super::ParsePassedValues();
@@ -158,19 +144,20 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	}
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
-		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-		check(NetDriver);
-
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
 		FString PlayerDensityString;
 
-		const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver != nullptr ? NetDriver->SpatialWorkerFlags : nullptr;
-		check(SpatialWorkerFlags != nullptr);
-
-		if (SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		if (ensure(NetDriver != nullptr))
 		{
-			PlayerDensity = FCString::Atoi(*PlayerDensityString);
+			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+			if (ensure(SpatialWorkerFlags != nullptr) &&
+				SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+			{
+				PlayerDensity = FCString::Atoi(*PlayerDensityString);
+			}
 		}
+
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
@@ -294,7 +281,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	CheckCmdLineParameters();
 
-	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
+	if (SpawnPoints.Num() == 0)
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
