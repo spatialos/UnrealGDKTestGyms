@@ -198,7 +198,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 			if (FPS < Constants->GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
-#if !WITH_EDITOR
+#if OUTPUT_NFR_SCENARIO_LOGS
 				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 #endif
 			}
@@ -226,7 +226,7 @@ void ABenchmarkGymGameModeBase::TickAuthServerFPSCheck(float DeltaSeconds)
 	if (!bHasClientFpsFailed && !bClientFpsWasValid)
 	{
 		bHasClientFpsFailed = true;
-#if !WITH_EDITOR 
+#if OUTPUT_NFR_SCENARIO_LOGS
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
 #endif		
 	}
@@ -239,18 +239,29 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		return;
 	}
 
-	float ClientRTTSeconds = 0.0f;
 	int UXComponentCount = 0;
+	int ValidRTTCount = 0;
+	int ValidViewLatenessCount = 0;
+	float ClientRTTSeconds = 0.0f;
 	float ClientViewLatenessSeconds = 0.0f;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
-		if (Component->GetOwner() != nullptr && Component->GetWorld() == GetWorld())
+		if (Component->GetOwner() != nullptr && Component->HasBegunPlay() && Component->GetWorld() == GetWorld())
 		{
-			ClientRTTSeconds += Component->ServerRTT;
-			UXComponentCount++;
+			if (Component->ServerRTT > 0.f)
+			{
+				ClientRTTSeconds += Component->ServerRTT;
+				ValidRTTCount++;
+			}
 
-			ClientViewLatenessSeconds += Component->ServerViewLateness;
+			if (Component->ServerViewLateness > 0.f)
+			{
+				ClientViewLatenessSeconds += Component->ServerViewLateness;
+				ValidViewLatenessCount++;
+			}
+
+			UXComponentCount++;
 		}
 	}
 
@@ -266,8 +277,8 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
 
-	ClientRTTSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
-	ClientViewLatenessSeconds /= static_cast<float>(UXComponentCount) + 0.00001f; // Avoid div 0
+	ClientRTTSeconds /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
+	ClientViewLatenessSeconds /= static_cast<float>(ValidViewLatenessCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
@@ -275,7 +286,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
 	{
 		bHasUxFailed = true;
-#if !WITH_EDITOR
+#if OUTPUT_NFR_SCENARIO_LOGS
 		UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
 	}
@@ -284,7 +295,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (PrintUXMetric < 0.0f)
 	{
 		PrintUXMetric = 10.0f;
-#if !WITH_EDITOR
+#if OUTPUT_NFR_SCENARIO_LOGS
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 #endif
 	}
