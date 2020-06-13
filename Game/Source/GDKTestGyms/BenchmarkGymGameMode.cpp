@@ -17,6 +17,8 @@
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
+#include "BenchmarkGymNPCSpawner.h"
+#include "EngineUtils.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
@@ -31,12 +33,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));
 	DefaultPawnClass = PawnClass.Class;
 	PlayerControllerClass = APlayerController::StaticClass();
-
-	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
-	if (NPCBPClass.Class != NULL) 
-	{
-		NPCPawnClass = NPCBPClass.Class;
-	}
 
 	static ConstructorHelpers::FClassFinder<APawn> SimulatedBPPawnClass(TEXT("/Game/Characters/SimulatedPlayers/SimulatedPlayerCharacter_BP"));
 	if (SimulatedBPPawnClass.Class != NULL)
@@ -266,29 +262,24 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		return;
 	}
 
-	if (NPCPawnClass == nullptr)
+	if (NPCSpawner == nullptr)
 	{
-		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error spawning NPC, NPCPawnClass is not set."));
-		return;
+		ABenchmarkGymNPCSpawner* Spawner = nullptr;
+		for (TActorIterator<ABenchmarkGymNPCSpawner> It(GetWorld()); It; ++It)
+		{
+			Spawner = *It;
+			break;
+		}
+		NPCSpawner = Spawner;
 	}
-
-	const float RandomSpawnOffset = 600.0f;
-	FVector RandomOffset = FMath::VRand()*RandomSpawnOffset;
-	if (RandomOffset.Z < 0.0f)
+	if (NPCSpawner != nullptr)
 	{
-		RandomOffset.Z = -RandomOffset.Z;
+		NPCSpawner->CrossServerSpawn(SpawnLocation, BlackboardValues);
 	}
-
-	FVector FixedSpawnLocation = SpawnLocation + RandomOffset;
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
-	FActorSpawnParameters SpawnInfo{};
-	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	APawn* Pawn = World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), FixedSpawnLocation, FRotator::ZeroRotator, SpawnInfo);
-	checkf(Pawn, TEXT("Pawn failed to spawn at %s"), *FixedSpawnLocation.ToString());
-	
-	UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Pawn->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-	checkf(Comp, TEXT("Pawn must have a UDeterministicBlackboardValues component."));
-	Comp->ClientSetBlackboardAILocations(BlackboardValues);
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Failed to find NPCSpawner."));
+	}
 }
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)

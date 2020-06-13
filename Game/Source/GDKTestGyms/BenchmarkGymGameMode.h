@@ -5,7 +5,7 @@
 #include "BlackboardValues.h"
 #include "CoreMinimal.h"
 #include "BenchmarkGymGameModeBase.h"
-
+#include "BenchmarkGymNPCSpawner.h"
 #include "BenchmarkGymGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameMode, Log, All);
@@ -41,9 +41,11 @@ private:
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
 	TArray<AActor*> SpawnPoints;
-	TSubclassOf<APawn> NPCPawnClass;
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	int32 NPCSToSpawn;
+
+	UPROPERTY()
+	ABenchmarkGymNPCSpawner* NPCSpawner;
 
 	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
