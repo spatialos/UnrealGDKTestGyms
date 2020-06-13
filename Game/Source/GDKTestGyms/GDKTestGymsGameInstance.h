@@ -8,8 +8,8 @@
 
 #include "GDKTestGymsGameInstance.generated.h"
 
-#define OUTPUT_NFR_SCENARIO_LOGS !WITH_EDITOR
-//#define OUTPUT_NFR_SCENARIO_LOGS 1
+//#define OUTPUT_NFR_SCENARIO_LOGS !WITH_EDITOR
+#define OUTPUT_NFR_SCENARIO_LOGS 1
 
 UCLASS()
 class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance

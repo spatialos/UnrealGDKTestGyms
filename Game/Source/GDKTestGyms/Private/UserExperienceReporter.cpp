@@ -63,7 +63,8 @@ void UUserExperienceReporter::ReportMetrics()
 			for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 			{
 				UUserExperienceComponent* Component = *It;
-				if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() == UUserExperienceComponent::NumWindowSamples)
+				//if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() == UUserExperienceComponent::NumWindowSamples)
+				if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == GetWorld())
 				{
 					ViewLatenessMS += CalculateAverage(Component->UpdateRate);
 					ViewLatenessCount++;
