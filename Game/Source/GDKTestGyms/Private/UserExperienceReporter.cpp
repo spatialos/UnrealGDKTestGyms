@@ -64,17 +64,14 @@ void UUserExperienceReporter::ReportMetrics()
 				UUserExperienceComponent* Component = *It;
 				Component->RegisterReporter(this);
 
-				//if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() == UUserExperienceComponent::NumWindowSamples)
-				//if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() >= 10)
 				if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == GetWorld())
 				{
 					if (Component->UpdateRate.Num() == 0)
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Abort"));
+						// Only consider VL valid once we have at least one measurement from all sources
 						ViewLatenessMS = 0;
 						break;
 					}
-					//ViewLatenessMS += CalculateAverage(Component->UpdateRate);
 					ViewLatenessMS += Component->CalculateAverageVL();;
 					ViewLatenessCount++;
 				}

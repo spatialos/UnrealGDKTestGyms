@@ -84,10 +84,14 @@ void UUserExperienceComponent::OnClientOwnershipGained()
 
 float UUserExperienceComponent::CalculateAverageVL() const
 {
+	const float NCDSquared = GetOwner()->NetCullDistanceSquared;
+
 	float Avg = 0.0f;
 	for (int i = 0; i < UpdateRate.Num(); i++)
 	{
-		Avg += UpdateRate[i].DeltaTime;
+		const UpdateInfo& UR = UpdateRate[i];
+		check(UR.DistanceSq < NCDSquared);
+		Avg += (UpdateRate[i].DeltaTime * (1.f - UR.DistanceSq / NCDSquared));
 	}
 	Avg /= static_cast<float>(UpdateRate.Num()) + 0.00001f;
 	return Avg;
