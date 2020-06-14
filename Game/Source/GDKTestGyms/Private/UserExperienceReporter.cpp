@@ -46,8 +46,7 @@ void UUserExperienceReporter::InitializeComponent()
 
 void UUserExperienceReporter::ReportMetrics()
 {
-	UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->FindComponentByClass(UUserExperienceComponent::StaticClass()));
-	if (UXComp)
+	if (UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->FindComponentByClass(UUserExperienceComponent::StaticClass())))
 	{
 		float RoundTripTimeMS = 0.0f;
 		float ViewLatenessMS = 0.0f;
@@ -63,10 +62,20 @@ void UUserExperienceReporter::ReportMetrics()
 			for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 			{
 				UUserExperienceComponent* Component = *It;
+				Component->RegisterReporter(this);
+
 				//if (Component->GetOwner() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() == UUserExperienceComponent::NumWindowSamples)
+				//if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == GetWorld() && Component->UpdateRate.Num() >= 10)
 				if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == GetWorld())
 				{
-					ViewLatenessMS += CalculateAverage(Component->UpdateRate);
+					if (Component->UpdateRate.Num() == 0)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Abort"));
+						ViewLatenessMS = 0;
+						break;
+					}
+					//ViewLatenessMS += CalculateAverage(Component->UpdateRate);
+					ViewLatenessMS += Component->CalculateAverageVL();;
 					ViewLatenessCount++;
 				}
 			}

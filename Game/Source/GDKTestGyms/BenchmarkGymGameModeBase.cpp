@@ -198,9 +198,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 			if (FPS < Constants->GetMinServerFPS())
 			{
 				bHasFpsFailed = true;
-#if OUTPUT_NFR_SCENARIO_LOGS
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-#endif
+				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 			}
 		}
 	}
@@ -226,9 +224,7 @@ void ABenchmarkGymGameModeBase::TickAuthServerFPSCheck(float DeltaSeconds)
 	if (!bHasClientFpsFailed && !bClientFpsWasValid)
 	{
 		bHasClientFpsFailed = true;
-#if OUTPUT_NFR_SCENARIO_LOGS
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
-#endif		
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
 	}
 }
 
@@ -286,18 +282,14 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
 	{
 		bHasUxFailed = true;
-#if OUTPUT_NFR_SCENARIO_LOGS
-		UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
-#endif
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
 	}
 
 	PrintUXMetric -= DeltaSeconds;
 	if (PrintUXMetric < 0.0f)
 	{
 		PrintUXMetric = 10.0f;
-#if OUTPUT_NFR_SCENARIO_LOGS
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), ViewLateness: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientViewLatenessSeconds, ValidViewLatenessCount, ActivePlayers);
-#endif
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), ViewLateness: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientViewLatenessSeconds, ValidViewLatenessCount, ActivePlayers);
 	}
 }
 

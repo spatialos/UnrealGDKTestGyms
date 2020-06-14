@@ -2,6 +2,7 @@
 
 
 #include "UserExperienceComponent.h"
+#include "UserExperienceReporter.h"
 
 #include "Net/UnrealNetwork.h"
 #include "SpatialNetDriver.h"
@@ -60,10 +61,15 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 		return;
 	}
 
-	UpdateRate.Push(FTimespan(ClientTimeTicks - OldTicks).GetTotalMilliseconds());
-	if (UpdateRate.Num() > NumWindowSamples)
+	if (Reporter != nullptr && !Reporter->IsPendingKill())
 	{
-		UpdateRate.RemoveAt(0);
+		float DeltaTime = FTimespan(ClientTimeTicks - OldTicks).GetTotalMilliseconds();
+		float DistanceSq = Reporter->GetOwner()->GetSquaredDistanceTo(GetOwner());
+		UpdateRate.Push({DeltaTime, DistanceSq});
+		if (UpdateRate.Num() > NumWindowSamples)
+		{
+			UpdateRate.RemoveAt(0);
+		}
 	}
 }
 
@@ -74,6 +80,17 @@ void UUserExperienceComponent::OnClientOwnershipGained()
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &UUserExperienceComponent::StartRoundtrip);
 	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
+}
+
+float UUserExperienceComponent::CalculateAverageVL() const
+{
+	float Avg = 0.0f;
+	for (int i = 0; i < UpdateRate.Num(); i++)
+	{
+		Avg += UpdateRate[i].DeltaTime;
+	}
+	Avg /= static_cast<float>(UpdateRate.Num()) + 0.00001f;
+	return Avg;
 }
 
 // Called every frame

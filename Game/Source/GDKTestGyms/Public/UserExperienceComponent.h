@@ -8,6 +8,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceComponent, Log, All);
 
+class UUserExperienceReporter;
+
 // User experience metric
 //
 // This component is designed to track a user experience in a deployment. 
@@ -39,10 +41,19 @@ public:
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	TArray<float> UpdateRate; // Frequency at which ClientTime is updated
+	struct UpdateInfo
+	{
+		float DeltaTime = 0.f;
+		float DistanceSq = 0.f;
+	};
+
+	TArray<UpdateInfo> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
 	bool bHadClientTimeRep;
+
+	UPROPERTY()
+	UUserExperienceReporter* Reporter;
 
 	UFUNCTION()
 	void OnRep_ClientTimeTicks(int64 DeltaTime);
@@ -50,6 +61,9 @@ public:
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	void OnClientOwnershipGained();
+	void RegisterReporter(UUserExperienceReporter* _Reporter) { Reporter = _Reporter; }
+
+	float CalculateAverageVL() const;
 
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
 	int64 ClientTimeTicks; // Replicated from server
