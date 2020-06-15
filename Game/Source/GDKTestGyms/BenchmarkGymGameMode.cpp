@@ -297,7 +297,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	{
 		for (TActorIterator<APlayerStart> It = TActorIterator<APlayerStart>(GetWorld()); It; ++It)
 		{
-			if (It->GetName() == FString(TEXT("PlayerStartHackMultiWorker")))
+			if (It->GetName() == FString(TEXT("DefaultPlayerStart")))
 			{
 				return *It;
 			}
