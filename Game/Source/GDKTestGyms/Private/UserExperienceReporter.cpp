@@ -72,7 +72,7 @@ void UUserExperienceReporter::ReportMetrics()
 						ViewLatenessMS = 0;
 						break;
 					}
-					ViewLatenessMS += Component->CalculateAverageVL();;
+					ViewLatenessMS += Component->CalculateAverageVL();
 					ViewLatenessCount++;
 				}
 			}
