@@ -61,7 +61,7 @@ public:
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	void OnClientOwnershipGained();
-	void RegisterReporter(UUserExperienceReporter* _Reporter) { Reporter = _Reporter; }
+	void RegisterReporter(UUserExperienceReporter* InReporter) { Reporter = InReporter; }
 
 	float CalculateAverageVL() const;
 
