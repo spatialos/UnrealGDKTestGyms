@@ -18,15 +18,15 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 namespace
 {
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
-	const FString AverageClientViewLatenessMetricName = TEXT("UnrealAverageClientViewLateness");
+	const FString AverageClientViewDeltaMetricName = TEXT("UnrealAverageClientViewDelta");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
-	const FString MaxLatenessWorkerFlag = TEXT("max_lateness");
+	const FString MaxViewDeltaWorkerFlag = TEXT("max_view_delta");
 	const FString MaxRoundTripCommandLineKey = TEXT("-MaxRoundTrip=");
-	const FString MaxLatenessCommandLineKey = TEXT("-MaxLateness=");
+	const FString MaxViewDeltaCommandLineKey = TEXT("-MaxViewDelta=");
 
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
@@ -42,7 +42,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, SecondsTillPlayerCheck(15.0f * 60.0f)
 	, PrintUXMetric(10.0f)
 	, MaxClientRoundTripSeconds(150)
-	, MaxClientViewLatenessSeconds(300)
+	, MaxClientViewDeltaSeconds(300)
 	, bPlayersHaveJoined(false)
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
@@ -130,8 +130,8 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 
 				{
 					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewLateness);
-					SpatialMetrics->SetCustomMetric(AverageClientViewLatenessMetricName, Delegate);
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientViewDelta);
+					SpatialMetrics->SetCustomMetric(AverageClientViewDeltaMetricName, Delegate);
 				}
 
 				{
@@ -237,9 +237,9 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	int UXComponentCount = 0;
 	int ValidRTTCount = 0;
-	int ValidViewLatenessCount = 0;
+	int ValidViewDeltaCount = 0;
 	float ClientRTTSeconds = 0.0f;
-	float ClientViewLatenessSeconds = 0.0f;
+	float ClientViewDeltaSeconds = 0.0f;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
@@ -251,10 +251,10 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 				ValidRTTCount++;
 			}
 
-			if (Component->ServerViewLateness > 0.f)
+			if (Component->ServerViewDelta > 0.f)
 			{
-				ClientViewLatenessSeconds += Component->ServerViewLateness;
-				ValidViewLatenessCount++;
+				ClientViewDeltaSeconds += Component->ServerViewDelta;
+				ValidViewDeltaCount++;
 			}
 
 			UXComponentCount++;
@@ -274,22 +274,22 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	}
 
 	ClientRTTSeconds /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
-	ClientViewLatenessSeconds /= static_cast<float>(ValidViewLatenessCount) + 0.00001f; // Avoid div 0
+	ClientViewDeltaSeconds /= static_cast<float>(ValidViewDeltaCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
-	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
+	AveragedClientViewDeltaSeconds = ClientViewDeltaSeconds;
 
-	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
+	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewDeltaSeconds > MaxClientViewDeltaSeconds)
 	{
 		bHasUxFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, ViewLateness: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewLatenessSeconds, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, ViewDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientViewDeltaSeconds, ActivePlayers);
 	}
 
 	PrintUXMetric -= DeltaSeconds;
 	if (PrintUXMetric < 0.0f)
 	{
 		PrintUXMetric = 10.0f;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), ViewLateness: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientViewLatenessSeconds, ValidViewLatenessCount, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), ViewDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientViewDeltaSeconds, ValidViewDeltaCount, ActivePlayers);
 	}
 }
 
@@ -307,12 +307,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		SetTotalNPCs(NumNPCs);
 
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
-		FParse::Value(*CommandLine, *MaxLatenessCommandLineKey, MaxClientViewLatenessSeconds);
+		FParse::Value(*CommandLine, *MaxViewDeltaCommandLineKey, MaxClientViewDeltaSeconds);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewLateness;
+		FString ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxViewDelta;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -335,15 +335,15 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
 				}
 
-				if (SpatialWorkerFlags->GetWorkerFlag(MaxLatenessWorkerFlag, MaxViewLateness))
+				if (SpatialWorkerFlags->GetWorkerFlag(MaxViewDeltaWorkerFlag, MaxViewDelta))
 				{
-					MaxClientViewLatenessSeconds = FCString::Atoi(*MaxViewLateness);
+					MaxClientViewDeltaSeconds = FCString::Atoi(*MaxViewDelta);
 				}
 			}
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewLateness %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewLatenessSeconds);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, ViewDelta %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientViewDeltaSeconds);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -360,9 +360,9 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	{
 		MaxClientRoundTripSeconds = FCString::Atoi(*FlagValue);
 	}
-	else if (FlagName == MaxLatenessWorkerFlag)
+	else if (FlagName == MaxViewDeltaWorkerFlag)
 	{
-		MaxClientViewLatenessSeconds = FCString::Atoi(*FlagValue);
+		MaxClientViewDeltaSeconds = FCString::Atoi(*FlagValue);
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);

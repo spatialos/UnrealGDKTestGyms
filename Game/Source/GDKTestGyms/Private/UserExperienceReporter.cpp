@@ -41,7 +41,7 @@ void UUserExperienceReporter::InitializeComponent()
 	UActorComponent::InitializeComponent();
 	bFrameRateValid = true;
 	ServerRTT = 0.0f;
-	ServerViewLateness = 0.0f;
+	ServerViewDelta = 0.0f;
 }
 
 void UUserExperienceReporter::ReportMetrics()
@@ -49,17 +49,17 @@ void UUserExperienceReporter::ReportMetrics()
 	if (UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->FindComponentByClass(UUserExperienceComponent::StaticClass())))
 	{
 		float RoundTripTimeMS = 0.0f;
-		float ViewLatenessMS = 0.0f;
+		float ViewDeltaMS = 0.0f;
 
 		// Round trip
 		if (UXComp->RoundTripTime.Num() == UUserExperienceComponent::NumWindowSamples) // Only start reporting once window is filled.
 		{
 			RoundTripTimeMS = CalculateAverage(UXComp->RoundTripTime);
 		}
-		// Lateness
+		// View Delta
 		{
 			bool bValidResult = true;
-			int32 ViewLatenessCount = 0;
+			int32 ViewDeltaCount = 0;
 			for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 			{
 				UUserExperienceComponent* Component = *It;
@@ -73,16 +73,16 @@ void UUserExperienceReporter::ReportMetrics()
 						bValidResult = false;
 						break;
 					}
-					ViewLatenessMS += Component->CalculateAverageVL();
-					ViewLatenessCount++;
+					ViewDeltaMS += Component->CalculateAverageVL();
+					ViewDeltaCount++;
 				}
 			}
 			if (!bValidResult)
 			{
 				// A result of zero is used to indicate results aren't ready yet
-				ViewLatenessMS = 0.f;
+				ViewDeltaMS = 0.f;
 			}
-			ViewLatenessMS /= ViewLatenessCount + 0.00001f; 
+			ViewDeltaMS /= ViewDeltaCount + 0.00001f; 
 		}
 
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
@@ -94,14 +94,14 @@ void UUserExperienceReporter::ReportMetrics()
 				bFrameRateValid = false;
 			}
 		}
-		ServerReportedMetrics(RoundTripTimeMS, ViewLatenessMS, bFrameRateValid);
+		ServerReportedMetrics(RoundTripTimeMS, ViewDeltaMS, bFrameRateValid);
 	}
 }
 
-void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float ViewLatenessSeconds, bool bInFrameRateValid)
+void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float ViewDeltaSeconds, bool bInFrameRateValid)
 {
 	ServerRTT = RTTSeconds;
-	ServerViewLateness = ViewLatenessSeconds;
+	ServerViewDelta = ViewDeltaSeconds;
 	if (!bInFrameRateValid) // Only change from valid to invalid
 	{
 		bFrameRateValid = bInFrameRateValid;
