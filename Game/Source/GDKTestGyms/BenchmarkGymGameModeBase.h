@@ -46,9 +46,9 @@ private:
 	float SecondsTillPlayerCheck;
 	float PrintUXMetric;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
-	double AveragedClientViewDeltaSeconds; // The stored average of the client view delta.
+	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
-	int32 MaxClientViewDeltaSeconds;
+	int32 MaxClientUpdateTimeDeltaSeconds;
 	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
@@ -68,7 +68,7 @@ private:
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
-	double GetClientViewDelta() const { return AveragedClientViewDeltaSeconds; }
+	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }

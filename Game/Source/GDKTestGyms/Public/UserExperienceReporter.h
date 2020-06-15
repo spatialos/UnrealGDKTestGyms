@@ -25,7 +25,7 @@ class GDKTESTGYMS_API UUserExperienceReporter : public UActorComponent
 public:	
 	// Valid on server
 	float ServerRTT;
-	float ServerViewDelta;
+	float ServerUpdateTimeDelta;
 	bool bFrameRateValid;
 
 	void InitializeComponent() override;
@@ -33,6 +33,6 @@ public:
 	void OnClientOwnershipGained() override;
 	void ReportMetrics();
 
-	UFUNCTION(Server, reliable)
-	void ServerReportedMetrics(float RTTSeconds, float ViewDeltaSeconds, bool bInFrameRateValid);
+	UFUNCTION(Server, Reliable)
+	void ServerReportedMetrics(float RTTSeconds, float UpdateTimeDeltaSeconds, bool bInFrameRateValid);
 };

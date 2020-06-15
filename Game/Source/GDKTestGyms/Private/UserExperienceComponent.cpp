@@ -82,7 +82,7 @@ void UUserExperienceComponent::OnClientOwnershipGained()
 	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
 }
 
-float UUserExperienceComponent::CalculateAverageViewDelta() const
+float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
 {
 	const float NCDSquared = GetOwner()->NetCullDistanceSquared;
 
@@ -90,10 +90,7 @@ float UUserExperienceComponent::CalculateAverageViewDelta() const
 	for (int i = 0; i < UpdateRate.Num(); i++)
 	{
 		const UpdateInfo& UR = UpdateRate[i];
-		check(UR.DistanceSq < NCDSquared);
-		// Reduce the impact of values that were received by up to half 
-		float Weight = 1.f - (UR.DistanceSq / NCDSquared)*0.5f;
-		Avg += UpdateRate[i].DeltaTime * Weight;
+		Avg += UpdateRate[i].DeltaTime;
 	}
 	Avg /= static_cast<float>(UpdateRate.Num()) + 0.00001f;
 	return Avg;

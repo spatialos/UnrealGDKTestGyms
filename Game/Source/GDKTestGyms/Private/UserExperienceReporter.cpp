@@ -41,7 +41,7 @@ void UUserExperienceReporter::InitializeComponent()
 	UActorComponent::InitializeComponent();
 	bFrameRateValid = true;
 	ServerRTT = 0.0f;
-	ServerViewDelta = 0.0f;
+	ServerUpdateTimeDelta = 0.0f;
 }
 
 void UUserExperienceReporter::ReportMetrics()
@@ -49,17 +49,17 @@ void UUserExperienceReporter::ReportMetrics()
 	if (UUserExperienceComponent* UXComp = Cast<UUserExperienceComponent>(GetOwner()->FindComponentByClass(UUserExperienceComponent::StaticClass())))
 	{
 		float RoundTripTimeMS = 0.0f;
-		float ViewDeltaMS = 0.0f;
+		float UpdateTimeDeltaMS = 0.0f;
 
 		// Round trip
 		if (UXComp->RoundTripTime.Num() == UUserExperienceComponent::NumWindowSamples) // Only start reporting once window is filled.
 		{
 			RoundTripTimeMS = CalculateAverage(UXComp->RoundTripTime);
 		}
-		// View Delta
+		// Update time delta
 		{
 			bool bValidResult = true;
-			int32 ViewDeltaCount = 0;
+			int32 UpdateTimeDeltaCount = 0;
 			for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 			{
 				UUserExperienceComponent* Component = *It;
@@ -73,16 +73,16 @@ void UUserExperienceReporter::ReportMetrics()
 						bValidResult = false;
 						break;
 					}
-					ViewDeltaMS += Component->CalculateAverageViewDelta();
-					ViewDeltaCount++;
+					UpdateTimeDeltaMS += Component->CalculateAverageUpdateTimeDelta();
+					UpdateTimeDeltaCount++;
 				}
 			}
 			if (!bValidResult)
 			{
 				// A result of zero is used to indicate results aren't ready yet
-				ViewDeltaMS = 0.f;
+				UpdateTimeDeltaMS = 0.f;
 			}
-			ViewDeltaMS /= ViewDeltaCount + 0.00001f; 
+			UpdateTimeDeltaMS /= UpdateTimeDeltaCount + 0.00001f; 
 		}
 
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
@@ -94,14 +94,14 @@ void UUserExperienceReporter::ReportMetrics()
 				bFrameRateValid = false;
 			}
 		}
-		ServerReportedMetrics(RoundTripTimeMS, ViewDeltaMS, bFrameRateValid);
+		ServerReportedMetrics(RoundTripTimeMS, UpdateTimeDeltaMS, bFrameRateValid);
 	}
 }
 
-void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float ViewDeltaSeconds, bool bInFrameRateValid)
+void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float UpdateTimeDeltaSeconds, bool bInFrameRateValid)
 {
 	ServerRTT = RTTSeconds;
-	ServerViewDelta = ViewDeltaSeconds;
+	ServerUpdateTimeDelta = UpdateTimeDeltaSeconds;
 	if (!bInFrameRateValid) // Only change from valid to invalid
 	{
 		bFrameRateValid = bInFrameRateValid;

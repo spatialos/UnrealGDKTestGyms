@@ -63,7 +63,7 @@ public:
 	void OnClientOwnershipGained();
 	void RegisterReporter(UUserExperienceReporter* InReporter) { Reporter = InReporter; }
 
-	float CalculateAverageViewDelta() const;
+	float CalculateAverageUpdateTimeDelta() const;
 
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
 	int64 ClientTimeTicks; // Replicated from server
