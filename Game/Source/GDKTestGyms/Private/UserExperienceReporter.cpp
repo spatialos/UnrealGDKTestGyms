@@ -73,7 +73,7 @@ void UUserExperienceReporter::ReportMetrics()
 						bValidResult = false;
 						break;
 					}
-					ViewDeltaMS += Component->CalculateAverageVL();
+					ViewDeltaMS += Component->CalculateAverageViewDelta();
 					ViewDeltaCount++;
 				}
 			}

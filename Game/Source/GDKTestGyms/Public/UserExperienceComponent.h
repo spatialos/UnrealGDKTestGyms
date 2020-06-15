@@ -18,7 +18,7 @@ class UUserExperienceReporter;
 // every second and track the time it was sent, the server handles
 // this RPC and sends back a key which identifies the start time. 
 //
-// A second metric is world view lateness, this looks at all the 
+// A second metric is world view delta, this looks at all the 
 // other UserExperienceComponent objects in view and tracks how
 // often these are updated. This gives us a definition of the 
 // world update rate, this is used to average the time 
@@ -63,7 +63,7 @@ public:
 	void OnClientOwnershipGained();
 	void RegisterReporter(UUserExperienceReporter* InReporter) { Reporter = InReporter; }
 
-	float CalculateAverageVL() const;
+	float CalculateAverageViewDelta() const;
 
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
 	int64 ClientTimeTicks; // Replicated from server

@@ -82,7 +82,7 @@ void UUserExperienceComponent::OnClientOwnershipGained()
 	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
 }
 
-float UUserExperienceComponent::CalculateAverageVL() const
+float UUserExperienceComponent::CalculateAverageViewDelta() const
 {
 	const float NCDSquared = GetOwner()->NetCullDistanceSquared;
 
