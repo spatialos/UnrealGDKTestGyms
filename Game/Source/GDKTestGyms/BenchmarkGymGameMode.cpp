@@ -287,7 +287,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 APlayerController* ABenchmarkGymGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
 	// Workaround for a player spawning issue UNR-3663
-	SetPrioritizedPlayerStart(NULL);
+	SetPrioritizedPlayerStart(nullptr);
 	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
 }
 
@@ -302,7 +302,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 				return *It;
 			}
 		}
-		checkf(0, TEXT("Failed to find player start work-around actor"));
+		checkf(false, TEXT("Failed to find player start work-around actor"));
 	}
 
 	CheckCmdLineParameters();
