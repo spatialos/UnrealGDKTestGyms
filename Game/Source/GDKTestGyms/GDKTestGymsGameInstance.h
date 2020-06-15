@@ -8,8 +8,7 @@
 
 #include "GDKTestGymsGameInstance.generated.h"
 
-//#define OUTPUT_NFR_SCENARIO_LOGS !WITH_EDITOR
-#define OUTPUT_NFR_SCENARIO_LOGS 1
+#define OUTPUT_NFR_SCENARIO_LOGS !WITH_EDITOR
 
 #if OUTPUT_NFR_SCENARIO_LOGS
 #define NFR_LOG UE_LOG

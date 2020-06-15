@@ -58,6 +58,7 @@ void UUserExperienceReporter::ReportMetrics()
 		}
 		// Lateness
 		{
+			bool bValidResult = true;
 			int32 ViewLatenessCount = 0;
 			for (TObjectIterator<UUserExperienceComponent> It; It; ++It)
 			{
@@ -69,12 +70,17 @@ void UUserExperienceReporter::ReportMetrics()
 					if (Component->UpdateRate.Num() == 0)
 					{
 						// Only consider VL valid once we have at least one measurement from all sources
-						ViewLatenessMS = 0;
+						bValidResult = false;
 						break;
 					}
 					ViewLatenessMS += Component->CalculateAverageVL();;
 					ViewLatenessCount++;
 				}
+			}
+			if (!bValidResult)
+			{
+				// A result of zero is used to indicate results aren't ready yet
+				ViewLatenessMS = 0.f;
 			}
 			ViewLatenessMS /= ViewLatenessCount + 0.00001f; 
 		}

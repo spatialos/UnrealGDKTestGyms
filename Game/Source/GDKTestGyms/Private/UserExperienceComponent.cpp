@@ -91,7 +91,9 @@ float UUserExperienceComponent::CalculateAverageVL() const
 	{
 		const UpdateInfo& UR = UpdateRate[i];
 		check(UR.DistanceSq < NCDSquared);
-		Avg += (UpdateRate[i].DeltaTime * (1.f - UR.DistanceSq / NCDSquared));
+		// Reduce the impact of values that were received by up to half 
+		float Weight = 1.f - (UR.DistanceSq / NCDSquared)*0.5f;
+		Avg += UpdateRate[i].DeltaTime * Weight;
 	}
 	Avg /= static_cast<float>(UpdateRate.Num()) + 0.00001f;
 	return Avg;
