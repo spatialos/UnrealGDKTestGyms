@@ -291,8 +291,27 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	Comp->ClientSetBlackboardAILocations(BlackboardValues);
 }
 
+APlayerController* ABenchmarkGymGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	// HACK: Spawn requests coming from NPC worker with invalid start point actors
+	SetPrioritizedPlayerStart(NULL);
+	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
+}
+
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
+	if (!HasAuthority()) // HACK: Spawn requests coming from NPC worker with invalid start point actors
+	{
+		for (TActorIterator<APlayerStart> It = TActorIterator<APlayerStart>(GetWorld()); It; ++It)
+		{
+			if (It->GetName() == FString(TEXT("PlayerStartHackMultiWorker")))
+			{
+				return *It;
+			}
+		}
+		checkf(0, TEXT("Failed to find player start work-around actor"));
+	}
+
 	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0)
