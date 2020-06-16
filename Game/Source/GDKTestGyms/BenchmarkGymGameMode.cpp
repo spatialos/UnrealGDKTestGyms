@@ -172,6 +172,7 @@ void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 	{
 		SpawnPoint->Destroy();
 	}
+	SpawnPoints.SetNum(0);
 }
 
 void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)
