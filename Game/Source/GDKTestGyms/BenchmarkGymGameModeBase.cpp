@@ -97,11 +97,6 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 
 void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		return;
