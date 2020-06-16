@@ -275,7 +275,15 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	GridNode = CreateNewNode<UReplicationGraphNode_GridSpatialization2D>();
 	GridNode->CellSize = 10000.f;
 	GridNode->SpatialBias = FVector2D(-WORLD_MAX, -WORLD_MAX);
-
+	GridNode->CreateCellNodeOverride = [](UReplicationGraphNode_GridSpatialization2D* Parent) -> UReplicationGraphNode_GridCell*
+	{
+		UReplicationGraphNode_GridCell* CellNode = Parent->CreateChildNode<UReplicationGraphNode_GridCell>();
+		CellNode->CreateDynamicNodeOverride = [](UReplicationGraphNode_GridCell* Parent) -> UReplicationGraphNode*
+		{
+			return Parent->CreateChildNode<UReplicationGraphNode>();
+		};
+		return CellNode;
+	};
 	if (CVar_TestGymsRepGraph_DisableSpatialRebuilds)
 	{
 		GridNode->AddSpatialRebuildBlacklistClass(AActor::StaticClass()); // Disable All spatial rebuilding
