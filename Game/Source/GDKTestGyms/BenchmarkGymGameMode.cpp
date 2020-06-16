@@ -86,8 +86,6 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
 	ClearExistingSpawnPoints();
-
-	SpawnPoints.Reset();
 	GenerateSpawnPointClusters(NumPlayerClusters);
 
 	if (SpawnPoints.Num() != ExpectedPlayers)
@@ -172,7 +170,7 @@ void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 	{
 		SpawnPoint->Destroy();
 	}
-	SpawnPoints.SetNum(0);
+	SpawnPoints.Reset();
 }
 
 void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)
