@@ -168,7 +168,6 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 {
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), SpawnPoints);
 	for (AActor* SpawnPoint : SpawnPoints)
 	{
 		SpawnPoint->Destroy();
