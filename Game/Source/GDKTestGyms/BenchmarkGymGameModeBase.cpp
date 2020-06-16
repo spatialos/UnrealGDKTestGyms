@@ -279,7 +279,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientUpdateTimeDeltaSeconds = ClientUpdateTimeDeltaSeconds;
 
-	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientUpdateTimeDeltaSeconds > MaxClientUpdateTimeDeltaSeconds)
+	if (!bHasUxFailed && (AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientUpdateTimeDeltaSeconds > MaxClientUpdateTimeDeltaSeconds))
 	{
 		bHasUxFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);

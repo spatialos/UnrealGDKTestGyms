@@ -21,8 +21,9 @@ class GDKTESTGYMS_API ABenchmarkGymGameMode : public ABenchmarkGymGameModeBase
 	GENERATED_BODY()
 public:
 	ABenchmarkGymGameMode();
-
-	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
+	// Login used as a workaround for a player spawning issue UNR-3663
+	APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
+	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
 	TArray<FBlackboardValues> NPCRunPoints;
