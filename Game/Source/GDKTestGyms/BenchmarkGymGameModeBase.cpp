@@ -272,7 +272,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientViewLatenessSeconds = ClientViewLatenessSeconds;
 
-	if (!bHasUxFailed && AveragedClientRTTSeconds > MaxClientRoundTripSeconds && AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds)
+	if (!bHasUxFailed && (AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientViewLatenessSeconds > MaxClientViewLatenessSeconds))
 	{
 		bHasUxFailed = true;
 #if !WITH_EDITOR
