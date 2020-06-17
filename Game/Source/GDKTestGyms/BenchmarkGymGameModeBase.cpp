@@ -163,6 +163,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		return;
 	}
 
+	// Only check players once
 	if (bHasDonePlayerCheck)
 	{
 		return;
