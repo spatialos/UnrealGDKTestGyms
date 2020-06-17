@@ -56,6 +56,10 @@ void UUserExperienceReporter::ReportMetrics()
 		{
 			RoundTripTimeMS = CalculateAverage(UXComp->RoundTripTime);
 		}
+
+		const UWorld* World = GetWorld();
+		check(World);
+
 		// Update time delta
 		{
 			bool bValidResult = true;
@@ -65,7 +69,7 @@ void UUserExperienceReporter::ReportMetrics()
 				UUserExperienceComponent* Component = *It;
 				Component->RegisterReporter(this);
 
-				if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == GetWorld())
+				if (Component->GetOwner() && Component->HasBegunPlay() && Component->GetOwner()->GetWorld() == World)
 				{
 					if (Component->UpdateRate.Num() == 0)
 					{
@@ -85,11 +89,11 @@ void UUserExperienceReporter::ReportMetrics()
 			UpdateTimeDeltaMS /= UpdateTimeDeltaCount + 0.00001f; 
 		}
 
-		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
+		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance()))
 		{
-			const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+			const UNFRConstants* Constants = UNFRConstants::Get(World);
 			check(Constants);
-			if (Constants->SamplesForFPSValid() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
+			if (Constants->SamplesForClientFPSValid() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
 			{
 				bFrameRateValid = false;
 			}

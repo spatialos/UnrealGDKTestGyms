@@ -42,16 +42,17 @@ protected:
 
 private:
 
+	bool IsUsingSpatialNetworking;
+
 	// Test scenarios
-	float SecondsTillPlayerCheck;
 	float PrintUXMetric;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
 	int32 MaxClientUpdateTimeDeltaSeconds;
-	bool bPlayersHaveJoined;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
+	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
 	int32 ActivePlayers; // A count of visible UX components
 
@@ -62,7 +63,7 @@ private:
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
-	void TickAuthServerFPSCheck(float DeltaSeconds);
+	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
@@ -72,6 +73,10 @@ private:
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
+
+	void FailServerFPSCheck(const float FPS);
+	void FailClientFPSCheck();
+	void FailUXMetricCheck();
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
