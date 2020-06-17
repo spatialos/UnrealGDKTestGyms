@@ -91,9 +91,9 @@ void UUserExperienceReporter::ReportMetrics()
 
 		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance()))
 		{
-			const UNFRConstants* Constants = UNFRConstants::Get(World);
+			UNFRConstants* Constants = UNFRConstants::Get(World);
 			check(Constants);
-			if (Constants->SamplesForClientFPSValid() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
+			if (Constants->ClientFPSMetricDelay.IsReady() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
 			{
 				bFrameRateValid = false;
 			}

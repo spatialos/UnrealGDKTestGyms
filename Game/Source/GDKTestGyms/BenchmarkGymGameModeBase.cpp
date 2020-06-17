@@ -39,6 +39,7 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
+	, bIsUsingSpatialNetworking(false)
 	, PrintUXMetric(10.0f)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientUpdateTimeDeltaSeconds(300)
@@ -63,7 +64,7 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	IsUsingSpatialNetworking = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	bIsUsingSpatialNetworking = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
 
 	ParsePassedValues();
 	TryBindWorkerFlagsDelegate();
@@ -98,7 +99,7 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 
 void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 {
-	if (!IsUsingSpatialNetworking)
+	if (!bIsUsingSpatialNetworking)
 	{
 		return;
 	}
@@ -169,11 +170,11 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		return;
 	}
 
-	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->PlayerCheckValid())
+	if (Constants->PlayerCheckMetricDelay.IsReady())
 	{
 		bHasDonePlayerCheck = true;
 		if (ActivePlayers != ExpectedPlayers)
@@ -210,17 +211,19 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 		return;
 	}
 
-	const UNFRConstants* Constants = UNFRConstants::Get(World);
+	UNFRConstants* Constants = UNFRConstants::Get(World);
 	check(Constants);
 
 	const float FPS = GameInstance->GetAveragedFPS();
 	if (FPS < Constants->GetMinServerFPS())
 	{
-		if (IsUsingSpatialNetworking)
+		// Immediately fail for SpatialOS as we do not need any initial delay. The NFR metrics will use their internal delay.
+		// We still want to print logs in the case of SpatialOS.
+		if (bIsUsingSpatialNetworking)
 		{
 			FailServerFPSCheck(FPS);
 		}
-		else if (Constants->SamplesForServerFPSValid())
+		else if (Constants->ServerFPSMetricDelay.IsReady())
 		{
 			FailServerFPSCheck(FPS);
 		}
@@ -258,16 +261,16 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 	if (!bClientFpsWasValid)
 	{
-		if (IsUsingSpatialNetworking)
+		if (bIsUsingSpatialNetworking)
 		{
 			FailClientFPSCheck();
 		}
 		else
 		{
-			const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+			UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 			check(Constants);
 
-			if (Constants->SamplesForServerFPSValid())
+			if (Constants->ServerFPSMetricDelay.IsReady())
 			{
 				FailClientFPSCheck();
 			}
@@ -335,16 +338,16 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientUpdateTimeDeltaSeconds > MaxClientUpdateTimeDeltaSeconds)
 	{
-		if (IsUsingSpatialNetworking)
+		if (bIsUsingSpatialNetworking)
 		{
 			FailUXMetricCheck();
 		}
 		else
 		{
-			const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+			UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 			check(Constants);
 
-			if (Constants->UXMetricValid())
+			if (Constants->UXMetricDelay.IsReady())
 			{
 				FailUXMetricCheck();
 			}

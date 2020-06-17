@@ -7,49 +7,44 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-bool UNFRConstants::DoValidityCheck(bool& IsValid, int64 TimeToStart) const
+
+FMetricDelay::FMetricDelay()
+	: bIsReady(false)
+	, TimeToStart(0)
 {
-	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
-	if (IsValid)
+}
+
+FMetricDelay::FMetricDelay(int64 InTimeToStart)
+	: bIsReady(false)
+	, TimeToStart(InTimeToStart)
+{
+}
+
+bool FMetricDelay::IsReady()
+{
+	if (bIsReady)
 	{
 		return true;
 	}
 
 	if (FDateTime::Now().GetTicks() > TimeToStart)
 	{
-		IsValid = true;
+		bIsReady = true;
 	}
 
-	return IsValid;
+	return bIsReady;
 }
 
-bool UNFRConstants::PlayerCheckValid() const
+UNFRConstants::UNFRConstants()
+	: PlayerCheckMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(15.0f * 60.0f).GetTicks())
+	, ServerFPSMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(2.0f * 60.0f).GetTicks())
+	, ClientFPSMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(10.0f * 60.0f).GetTicks())
+	, UXMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(10.0f * 60.0f).GetTicks())
 {
-	return DoValidityCheck(bPlayerCheckValid, TimeToStartPlayerCheck);
-}
-
-bool UNFRConstants::SamplesForServerFPSValid() const
-{
-	return DoValidityCheck(bServerFPSSamplingValid, TimeToStartServerFPSSampling);
-}
-
-bool UNFRConstants::SamplesForClientFPSValid() const
-{
-	return DoValidityCheck(bClientFPSSamplingValid, TimeToStartClientFPSSampling);
-}
-
-bool UNFRConstants::UXMetricValid() const
-{
-	return DoValidityCheck(bUXMetricValid, TimeToStartUXMetric);
 }
 
 void UNFRConstants::InitWithWorld(const UWorld* World)
 {
-	TimeToStartPlayerCheck = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(15.0f * 60.0f).GetTicks();
-	TimeToStartClientFPSSampling = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(10.0f * 60.0f).GetTicks();
-	TimeToStartServerFPSSampling = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(2.0f * 60.0f).GetTicks();
-	TimeToStartUXMetric = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(10.0f * 60.0f).GetTicks();
-
 	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
 	// Server fps
 	{
@@ -88,7 +83,7 @@ void UNFRConstants::InitWithWorld(const UWorld* World)
 	bIsInitialised = true;
 }
 
-const UNFRConstants* UNFRConstants::Get(const UWorld* World)
+UNFRConstants* UNFRConstants::Get(const UWorld* World)
 {
 	if (UGDKTestGymsGameInstance* GameInstance = World->GetGameInstance<UGDKTestGymsGameInstance>())
 	{

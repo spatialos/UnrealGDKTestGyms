@@ -42,7 +42,7 @@ protected:
 
 private:
 
-	bool IsUsingSpatialNetworking;
+	bool bIsUsingSpatialNetworking;
 
 	// Test scenarios
 	float PrintUXMetric;
