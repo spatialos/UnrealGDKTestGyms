@@ -172,6 +172,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
+	// This test respects the initial delay timer in both native and GDK
 	if (Constants->PlayerCheckValid())
 	{
 		bHasDonePlayerCheck = true;
