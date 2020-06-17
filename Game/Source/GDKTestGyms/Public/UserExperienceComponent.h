@@ -8,6 +8,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceComponent, Log, All);
 
+class UUserExperienceReporter;
+
 // User experience metric
 //
 // This component is designed to track a user experience in a deployment. 
@@ -16,7 +18,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogUserExperienceComponent, Log, All);
 // every second and track the time it was sent, the server handles
 // this RPC and sends back a key which identifies the start time. 
 //
-// A second metric is world view lateness, this looks at all the 
+// A second metric is world view delta, this looks at all the 
 // other UserExperienceComponent objects in view and tracks how
 // often these are updated. This gives us a definition of the 
 // world update rate, this is used to average the time 
@@ -39,10 +41,19 @@ public:
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	TArray<float> UpdateRate; // Frequency at which ClientTime is updated
+	struct UpdateInfo
+	{
+		float DeltaTime = 0.f;
+		float DistanceSq = 0.f;
+	};
+
+	TArray<UpdateInfo> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
 	
 	bool bHadClientTimeRep;
+
+	UPROPERTY()
+	UUserExperienceReporter* Reporter;
 
 	UFUNCTION()
 	void OnRep_ClientTimeTicks(int64 DeltaTime);
@@ -50,6 +61,9 @@ public:
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	void OnClientOwnershipGained();
+	void RegisterReporter(UUserExperienceReporter* InReporter) { Reporter = InReporter; }
+
+	float CalculateAverageUpdateTimeDelta() const;
 
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
 	int64 ClientTimeTicks; // Replicated from server
