@@ -15,7 +15,9 @@ public:
 	FMetricDelay();
 	FMetricDelay(int64 InTimeToStart);
 
+	void SetDelay(float Seconds);
 	bool IsReady() const;
+
 
 private:
 	int64 TimeToStart;
@@ -26,9 +28,9 @@ class UNFRConstants : public UObject
 {
 public:	
 
-	UNFRConstants();
-
 	GENERATED_BODY()
+
+	UNFRConstants();
 	
 	void InitWithWorld(const UWorld* World);
 

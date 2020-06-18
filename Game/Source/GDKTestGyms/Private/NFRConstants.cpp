@@ -7,15 +7,18 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-
 FMetricDelay::FMetricDelay()
-	: TimeToStart(0)
 {
 }
 
-FMetricDelay::FMetricDelay(int64 InTimeToStart)
-	: TimeToStart(InTimeToStart)
+FMetricDelay::FMetricDelay(int64 Seconds)
 {
+	SetDelay(Seconds);
+}
+
+void FMetricDelay::SetDelay(float Seconds)
+{
+	TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
 }
 
 bool FMetricDelay::IsReady() const
@@ -24,10 +27,10 @@ bool FMetricDelay::IsReady() const
 }
 
 UNFRConstants::UNFRConstants()
-	: PlayerCheckMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(15.0f * 60.0f).GetTicks())
-	, ServerFPSMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(2.0f * 60.0f).GetTicks())
-	, ClientFPSMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(10.0f * 60.0f).GetTicks())
-	, UXMetricDelay(FDateTime::Now().GetTicks() + FTimespan::FromSeconds(10.0f * 60.0f).GetTicks())
+	: PlayerCheckMetricDelay(15.0f * 60.0f)
+	, ServerFPSMetricDelay(2.0f * 60.0f)
+	, ClientFPSMetricDelay(10.0f * 60.0f)
+	, UXMetricDelay(10.0f * 60.0f)
 {
 }
 

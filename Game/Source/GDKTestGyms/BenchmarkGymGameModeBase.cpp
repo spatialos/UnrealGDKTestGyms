@@ -167,7 +167,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		return;
 	}
 
-	UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
@@ -202,7 +202,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 		return;
 	}
 
-	UNFRConstants* Constants = UNFRConstants::Get(World);
+	const UNFRConstants* Constants = UNFRConstants::Get(World);
 	check(Constants);
 
 	const float FPS = GameInstance->GetAveragedFPS();
@@ -238,7 +238,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 		}
 	}
 
-	UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
 	if (!bClientFpsWasValid &&
@@ -295,7 +295,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientUpdateTimeDeltaSeconds = ClientUpdateTimeDeltaSeconds;
 
-	UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
 	const bool bUXMetricValid = AveragedClientRTTSeconds <= MaxClientRoundTripSeconds && AveragedClientUpdateTimeDeltaSeconds <= MaxClientUpdateTimeDeltaSeconds;
@@ -307,14 +307,12 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		bHasUxFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
-	else
+
+	PrintUXMetricTimer -= DeltaSeconds;
+	if (PrintUXMetricTimer < 0.0f)
 	{
-		PrintUXMetricTimer -= DeltaSeconds;
-		if (PrintUXMetricTimer < 0.0f)
-		{
-			PrintUXMetricTimer = 10.0f;
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
-		}
+		PrintUXMetricTimer = 10.0f;
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
 	}
 }
 
