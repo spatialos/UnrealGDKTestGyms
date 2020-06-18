@@ -90,7 +90,7 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 	SpawnPoints.Reset();
 	GenerateSpawnPointClusters(NumPlayerClusters);
 
-	if (SpawnPoints.Num() != ExpectedPlayers)
+	if (SpawnPoints.Num() < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 	}
