@@ -242,7 +242,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 	check(Constants);
 
 	if (!bClientFpsWasValid &&
-		Constants->ServerFPSMetricDelay.IsReady())
+		Constants->ClientFPSMetricDelay.IsReady())
 	{
 		bHasClientFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
