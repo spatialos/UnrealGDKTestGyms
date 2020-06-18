@@ -42,10 +42,8 @@ protected:
 
 private:
 
-	bool bIsUsingSpatialNetworking;
-
 	// Test scenarios
-	float PrintUXMetric;
+	float PrintUXMetricTimer;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip

@@ -39,8 +39,7 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
-	, bIsUsingSpatialNetworking(false)
-	, PrintUXMetric(10.0f)
+	, PrintUXMetricTimer(10.0f)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientUpdateTimeDeltaSeconds(300)
 	, bHasUxFailed(false)
@@ -63,8 +62,6 @@ void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 void ABenchmarkGymGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	bIsUsingSpatialNetworking = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
 
 	ParsePassedValues();
 	TryBindWorkerFlagsDelegate();
@@ -99,7 +96,7 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 
 void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 {
-	if (!bIsUsingSpatialNetworking)
+	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		return;
 	}
@@ -180,30 +177,18 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		if (ActivePlayers != ExpectedPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
 		}
 		else
 		{
 			// Useful for NFR log inspection
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
 		}
 	}
 }
 
-void ABenchmarkGymGameModeBase::FailServerFPSCheck(const float FPS)
-{
-	bHasFpsFailed = true;
-	NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-}
-
 void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 {
-	// Return if we have already failed
-	if (bHasFpsFailed)
-	{
-		return;
-	}
-
 	const UWorld* World = GetWorld();
 	const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance());
 	if (GameInstance == nullptr)
@@ -217,34 +202,18 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 	const float FPS = GameInstance->GetAveragedFPS();
 	if (FPS < Constants->GetMinServerFPS())
 	{
-		// Immediately fail for SpatialOS as we do not need any initial delay. The NFR metrics will use their internal delay.
-		// We still want to print logs in the case of SpatialOS.
-		if (bIsUsingSpatialNetworking)
+		bHasFpsFailed = true;
+
+		if (Constants->ServerFPSMetricDelay.IsReady())
 		{
-			FailServerFPSCheck(FPS);
-		}
-		else if (Constants->ServerFPSMetricDelay.IsReady())
-		{
-			FailServerFPSCheck(FPS);
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 		}
 	}
-}
-
-void ABenchmarkGymGameModeBase::FailClientFPSCheck()
-{
-	bHasClientFpsFailed = true;
-	NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
 }
 
 void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 {
 	if (!HasAuthority())
-	{
-		return;
-	}
-
-	// Return if we have already failed
-	if (bHasClientFpsFailed)
 	{
 		return;
 	}
@@ -261,38 +230,21 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 	if (!bClientFpsWasValid)
 	{
-		if (bIsUsingSpatialNetworking)
-		{
-			FailClientFPSCheck();
-		}
-		else
-		{
-			UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-			check(Constants);
+		bHasClientFpsFailed = true;
 
-			if (Constants->ServerFPSMetricDelay.IsReady())
-			{
-				FailClientFPSCheck();
-			}
+		UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+		check(Constants);
+
+		if (Constants->ServerFPSMetricDelay.IsReady())
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
 		}
 	}
-}
-
-void ABenchmarkGymGameModeBase::FailUXMetricCheck()
-{
-	bHasUxFailed = true;
-	NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 }
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 {
 	if (!HasAuthority())
-	{
-		return;
-	}
-
-	// Return if we have already failed
-	if (bHasUxFailed)
 	{
 		return;
 	}
@@ -338,27 +290,22 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientUpdateTimeDeltaSeconds > MaxClientUpdateTimeDeltaSeconds)
 	{
-		if (bIsUsingSpatialNetworking)
-		{
-			FailUXMetricCheck();
-		}
-		else
-		{
-			UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-			check(Constants);
+		bHasUxFailed = true;
 
-			if (Constants->UXMetricDelay.IsReady())
-			{
-				FailUXMetricCheck();
-			}
+		UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+		check(Constants);
+
+		if (Constants->UXMetricDelay.IsReady())
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 		}
 	}
 	else
 	{
-		PrintUXMetric -= DeltaSeconds;
-		if (PrintUXMetric < 0.0f)
+		PrintUXMetricTimer -= DeltaSeconds;
+		if (PrintUXMetricTimer < 0.0f)
 		{
-			PrintUXMetric = 10.0f;
+			PrintUXMetricTimer = 10.0f;
 			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
 		}
 	}
