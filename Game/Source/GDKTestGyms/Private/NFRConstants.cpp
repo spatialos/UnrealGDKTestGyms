@@ -9,30 +9,18 @@ DEFINE_LOG_CATEGORY(LogNFRConstants);
 
 
 FMetricDelay::FMetricDelay()
-	: bIsReady(false)
-	, TimeToStart(0)
+	: TimeToStart(0)
 {
 }
 
 FMetricDelay::FMetricDelay(int64 InTimeToStart)
-	: bIsReady(false)
-	, TimeToStart(InTimeToStart)
+	: TimeToStart(InTimeToStart)
 {
 }
 
-bool FMetricDelay::IsReady()
+bool FMetricDelay::IsReady() const
 {
-	if (bIsReady)
-	{
-		return true;
-	}
-
-	if (FDateTime::Now().GetTicks() > TimeToStart)
-	{
-		bIsReady = true;
-	}
-
-	return bIsReady;
+	return FDateTime::Now().GetTicks() > TimeToStart;
 }
 
 UNFRConstants::UNFRConstants()
@@ -83,7 +71,7 @@ void UNFRConstants::InitWithWorld(const UWorld* World)
 	bIsInitialised = true;
 }
 
-UNFRConstants* UNFRConstants::Get(const UWorld* World)
+const UNFRConstants* UNFRConstants::Get(const UWorld* World)
 {
 	if (UGDKTestGymsGameInstance* GameInstance = World->GetGameInstance<UGDKTestGymsGameInstance>())
 	{

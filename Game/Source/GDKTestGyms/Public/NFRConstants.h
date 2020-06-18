@@ -15,7 +15,7 @@ public:
 	FMetricDelay();
 	FMetricDelay(int64 InTimeToStart);
 
-	bool IsReady();
+	bool IsReady() const;
 
 private:
 	bool bIsReady;
@@ -36,7 +36,7 @@ public:
 	float GetMinServerFPS() const;
 	float GetMinClientFPS() const;
 	
-	static UNFRConstants* Get(const UWorld* World);
+	static const UNFRConstants* Get(const UWorld* World);
 
 	FMetricDelay PlayerCheckMetricDelay;
 	FMetricDelay ServerFPSMetricDelay;
