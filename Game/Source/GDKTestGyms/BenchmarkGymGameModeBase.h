@@ -72,10 +72,6 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 
-	void FailServerFPSCheck(const float FPS);
-	void FailClientFPSCheck();
-	void FailUXMetricCheck();
-
 	UFUNCTION()
 	void OnRepTotalNPCs();
 };
