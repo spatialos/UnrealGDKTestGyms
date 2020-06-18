@@ -7,11 +7,7 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-FMetricDelay::FMetricDelay()
-{
-}
-
-FMetricDelay::FMetricDelay(int64 Seconds)
+FMetricDelay::FMetricDelay(float Seconds)
 {
 	SetDelay(Seconds);
 }

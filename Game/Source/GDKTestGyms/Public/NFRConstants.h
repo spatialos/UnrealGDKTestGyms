@@ -12,8 +12,8 @@ class FMetricDelay
 {
 public:
 
-	FMetricDelay();
-	FMetricDelay(int64 InTimeToStart);
+	FMetricDelay() = default;
+	FMetricDelay(float InTimeToStart);
 
 	void SetDelay(float Seconds);
 	bool IsReady() const;
