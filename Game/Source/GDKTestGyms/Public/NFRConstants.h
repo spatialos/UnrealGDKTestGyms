@@ -18,7 +18,6 @@ public:
 	bool IsReady() const;
 
 private:
-	bool bIsReady;
 	int64 TimeToStart;
 };
 
