@@ -189,6 +189,12 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 {
+	// We have already failed so no need to keep checking
+	if (bHasFpsFailed)
+	{
+		return;
+	}
+
 	const UWorld* World = GetWorld();
 	const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance());
 	if (GameInstance == nullptr)
@@ -200,20 +206,24 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 	check(Constants);
 
 	const float FPS = GameInstance->GetAveragedFPS();
-	if (FPS < Constants->GetMinServerFPS())
+
+	if (FPS < Constants->GetMinServerFPS() &&
+		Constants->ServerFPSMetricDelay.IsReady())
 	{
 		bHasFpsFailed = true;
-
-		if (Constants->ServerFPSMetricDelay.IsReady())
-		{
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-		}
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 	}
 }
 
 void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 {
 	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// We have already failed so no need to keep checking
+	if (bHasClientFpsFailed)
 	{
 		return;
 	}
@@ -228,17 +238,14 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 		}
 	}
 
-	if (!bClientFpsWasValid)
+	UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	if (!bClientFpsWasValid &&
+		Constants->ServerFPSMetricDelay.IsReady())
 	{
 		bHasClientFpsFailed = true;
-
-		UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-		check(Constants);
-
-		if (Constants->ServerFPSMetricDelay.IsReady())
-		{
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
-		}
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
 	}
 }
 
@@ -288,17 +295,17 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientUpdateTimeDeltaSeconds = ClientUpdateTimeDeltaSeconds;
 
-	if (AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientUpdateTimeDeltaSeconds > MaxClientUpdateTimeDeltaSeconds)
+	UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	const bool bUXMetricValid = AveragedClientRTTSeconds <= MaxClientRoundTripSeconds && AveragedClientUpdateTimeDeltaSeconds <= MaxClientUpdateTimeDeltaSeconds;
+
+	if (!bHasUxFailed &&
+		!bUXMetricValid &&
+		Constants->UXMetricDelay.IsReady())
 	{
 		bHasUxFailed = true;
-
-		UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-		check(Constants);
-
-		if (Constants->UXMetricDelay.IsReady())
-		{
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
-		}
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 	else
 	{
