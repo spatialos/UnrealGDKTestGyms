@@ -48,8 +48,8 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 	constexpr float RoamRadius = 7500.0f; // Set to half the NetCullDistance
 	{
 		FRandomStream PlayerStream;
-		PlayerStream.Initialize(FCrc::MemCrc32(&NumPlayers, sizeof(NumPlayers))); // Ensure we can do deterministic runs
-		for (int i = 0; i < NumPlayers; i++)
+		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
+		for (int i = 0; i < ExpectedPlayers; i++)
 		{
 			FVector PointA = PlayerStream.VRand()*RoamRadius;
 			FVector PointB = PlayerStream.VRand()*RoamRadius;
@@ -88,9 +88,9 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 	ClearExistingSpawnPoints();
 	GenerateSpawnPointClusters(NumPlayerClusters);
 
-	if (SpawnPoints.Num() < NumPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
+	if (SpawnPoints.Num() < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
 	{
-		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), NumPlayers);
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 	}
 
 	GenerateTestScenarioLocations();
@@ -135,7 +135,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 {
 	Super::ParsePassedValues();
 
-	PlayerDensity = NumPlayers;
+	PlayerDensity = ExpectedPlayers;
 
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
@@ -159,7 +159,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		}
 
 	}
-	NumPlayerClusters = FMath::CeilToInt(NumPlayers / static_cast<float>(PlayerDensity));
+	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
