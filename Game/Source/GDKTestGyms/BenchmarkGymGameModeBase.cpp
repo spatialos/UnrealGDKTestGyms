@@ -30,7 +30,7 @@ namespace
 
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
-	const FString ExpectedPlayersWorkerFlag = TEXT("expected_players");
+	const FString ExpectedPlayersWorkerFlag = TEXT("required_players");
 	const FString TotalPlayerCommandLineKey = TEXT("-TotalPlayers=");
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString ExpectedPlayersCommandLineKey = TEXT("-ExpectedPlayers=");
