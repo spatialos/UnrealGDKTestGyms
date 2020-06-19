@@ -49,6 +49,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
 	, ActivePlayers(0)
+	, ExpectedPlayers(4096) 
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
@@ -176,7 +177,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	if (Constants->PlayerCheckMetricDelay.IsReady())
 	{
 		bHasDonePlayerCheck = true;
-		if (ActivePlayers != ExpectedPlayers)
+		if (ActivePlayers <= ExpectedPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
