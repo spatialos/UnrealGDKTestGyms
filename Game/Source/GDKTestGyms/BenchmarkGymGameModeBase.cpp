@@ -30,15 +30,17 @@ namespace
 
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
+	const FString ExpectedPlayersWorkerFlag = TEXT("expected_players");
 	const FString TotalPlayerCommandLineKey = TEXT("-TotalPlayers=");
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
+	const FString ExpectedPlayersCommandLineKey = TEXT("-ExpectedPlayers=");
 
 } // anonymous namespace
 
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
-	: ExpectedPlayers(1)
+	: NumPlayers(1)
 	, PrintUXMetricTimer(10.0f)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientUpdateTimeDeltaSeconds(300)
@@ -323,7 +325,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLine in command line Keys, worker flags for custom spawning will be ignored."));
 
-		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
+		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, NumPlayers);
+		FParse::Value(*CommandLine, *ExpectedPlayersCommandLineKey, ExpectedPlayers);
 
 		int32 NumNPCs = 0;
 		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
@@ -335,7 +338,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
+		FString NumPlayersString, ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -343,7 +346,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
-				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
+				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, NumPlayersString))
+				{
+					NumPlayers = FCString::Atoi(*NumPlayersString);
+				}
+
+				if (SpatialWorkerFlags->GetWorkerFlag(ExpectedPlayersWorkerFlag, ExpectedPlayersString))
 				{
 					ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
 				}
@@ -366,14 +374,14 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"), NumPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	if (FlagName == TotalPlayerWorkerFlag)
 	{
-		ExpectedPlayers = FCString::Atoi(*FlagValue);
+		NumPlayers = FCString::Atoi(*FlagValue);
 	}
 	else if (FlagName == TotalNPCsWorkerFlag)
 	{

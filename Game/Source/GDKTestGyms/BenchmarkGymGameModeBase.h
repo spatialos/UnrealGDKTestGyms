@@ -22,6 +22,7 @@ protected:
 	static FString ReadFromCommandLineKey;
 
 	// Total number of players that will connect.
+	int32 NumPlayers;
 	int32 ExpectedPlayers;
 
 	// Replicated so that offloading and zoning servers can get updates.
