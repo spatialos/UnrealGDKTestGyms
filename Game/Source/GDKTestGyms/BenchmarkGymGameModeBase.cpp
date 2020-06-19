@@ -39,13 +39,12 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
-	, SecondsTillPlayerCheck(15.0f * 60.0f)
-	, PrintUXMetric(10.0f)
+	, PrintUXMetricTimer(10.0f)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientUpdateTimeDeltaSeconds(300)
-	, bPlayersHaveJoined(false)
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
+	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
 	, ActivePlayers(0)
 {
@@ -150,7 +149,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	TickServerFPSCheck(DeltaSeconds);
-	TickAuthServerFPSCheck(DeltaSeconds);
+	TickClientFPSCheck(DeltaSeconds);
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 }
@@ -162,46 +161,69 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		return;
 	}
 
-	if (SecondsTillPlayerCheck > 0.0f)
+	// Only check players once
+	if (bHasDonePlayerCheck)
 	{
-		SecondsTillPlayerCheck -= DeltaSeconds;
-		if (SecondsTillPlayerCheck <= 0.0f)
+		return;
+	}
+
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	// This test respects the initial delay timer in both native and GDK
+	if (Constants->PlayerCheckMetricDelay.IsReady())
+	{
+		bHasDonePlayerCheck = true;
+		if (ActivePlayers != ExpectedPlayers)
 		{
-			if (ActivePlayers != ExpectedPlayers)
-			{
-				// This log is used by the NFR pipeline to indicate if a client failed to connect
-				UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-			}
-			else
-			{
-				// Useful for NFR log inspection
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
-			}
+			// This log is used by the NFR pipeline to indicate if a client failed to connect
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+		}
+		else
+		{
+			// Useful for NFR log inspection
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
 		}
 	}
 }
 
 void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 {
-	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-	check(Constants);
-	if (Constants->SamplesForFPSValid() && !bHasFpsFailed && GetWorld() != nullptr)
+	// We have already failed so no need to keep checking
+	if (bHasFpsFailed)
 	{
-		if (const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(GetWorld()->GetGameInstance()))
-		{
-			float FPS = GameInstance->GetAveragedFPS();
-			if (FPS < Constants->GetMinServerFPS())
-			{
-				bHasFpsFailed = true;
-				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
-			}
-		}
+		return;
+	}
+
+	const UWorld* World = GetWorld();
+	const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance());
+	if (GameInstance == nullptr)
+	{
+		return;
+	}
+
+	const UNFRConstants* Constants = UNFRConstants::Get(World);
+	check(Constants);
+
+	const float FPS = GameInstance->GetAveragedFPS();
+
+	if (FPS < Constants->GetMinServerFPS() &&
+		Constants->ServerFPSMetricDelay.IsReady())
+	{
+		bHasFpsFailed = true;
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
 	}
 }
 
-void ABenchmarkGymGameModeBase::TickAuthServerFPSCheck(float DeltaSeconds)
+void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 {
 	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// We have already failed so no need to keep checking
+	if (bHasClientFpsFailed)
 	{
 		return;
 	}
@@ -216,7 +238,11 @@ void ABenchmarkGymGameModeBase::TickAuthServerFPSCheck(float DeltaSeconds)
 		}
 	}
 
-	if (!bHasClientFpsFailed && !bClientFpsWasValid)
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	if (!bClientFpsWasValid &&
+		Constants->ClientFPSMetricDelay.IsReady())
 	{
 		bHasClientFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
@@ -258,12 +284,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	ActivePlayers = UXComponentCount;
 
-	if (UXComponentCount > 0)
-	{
-		bPlayersHaveJoined = true;
-	}
-
-	if (!bPlayersHaveJoined)
+	if (UXComponentCount == 0)
 	{
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
@@ -274,16 +295,23 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientUpdateTimeDeltaSeconds = ClientUpdateTimeDeltaSeconds;
 
-	if (!bHasUxFailed && (AveragedClientRTTSeconds > MaxClientRoundTripSeconds || AveragedClientUpdateTimeDeltaSeconds > MaxClientUpdateTimeDeltaSeconds))
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	const bool bUXMetricValid = AveragedClientRTTSeconds <= MaxClientRoundTripSeconds && AveragedClientUpdateTimeDeltaSeconds <= MaxClientUpdateTimeDeltaSeconds;
+
+	if (!bHasUxFailed &&
+		!bUXMetricValid &&
+		Constants->UXMetricDelay.IsReady())
 	{
 		bHasUxFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 
-	PrintUXMetric -= DeltaSeconds;
-	if (PrintUXMetric < 0.0f)
+	PrintUXMetricTimer -= DeltaSeconds;
+	if (PrintUXMetricTimer < 0.0f)
 	{
-		PrintUXMetric = 10.0f;
+		PrintUXMetricTimer = 10.0f;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
 	}
 }

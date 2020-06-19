@@ -7,25 +7,31 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-bool UNFRConstants::SamplesForFPSValid() const
+FMetricDelay::FMetricDelay(float Seconds)
 {
-	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
-	if (bFPSSamplingValid)
-	{
-		return true;
-	}
-	bool bIsValidNow = FDateTime::Now().GetTicks() > TimeToStartFPSSampling;
-	if (bIsValidNow)
-	{
-		bFPSSamplingValid = true;
-	}
-	return bIsValidNow;
+	SetDelay(Seconds);
 }
 
-void UNFRConstants::InitWithWorld(UWorld* World)
+void FMetricDelay::SetDelay(float Seconds)
 {
-	TimeToStartFPSSampling = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(120.0f).GetTicks();
+	TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
+}
 
+bool FMetricDelay::IsReady() const
+{
+	return FDateTime::Now().GetTicks() > TimeToStart;
+}
+
+UNFRConstants::UNFRConstants()
+	: PlayerCheckMetricDelay(15.0f * 60.0f)
+	, ServerFPSMetricDelay(2.0f * 60.0f)
+	, ClientFPSMetricDelay(10.0f * 60.0f)
+	, UXMetricDelay(10.0f * 60.0f)
+{
+}
+
+void UNFRConstants::InitWithWorld(const UWorld* World)
+{
 	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
 	// Server fps
 	{
@@ -64,7 +70,7 @@ void UNFRConstants::InitWithWorld(UWorld* World)
 	bIsInitialised = true;
 }
 
-const UNFRConstants* UNFRConstants::Get(UWorld* World)
+const UNFRConstants* UNFRConstants::Get(const UWorld* World)
 {
 	if (UGDKTestGymsGameInstance* GameInstance = World->GetGameInstance<UGDKTestGymsGameInstance>())
 	{
