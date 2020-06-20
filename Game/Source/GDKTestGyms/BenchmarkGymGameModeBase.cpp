@@ -41,7 +41,10 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: NumPlayers(1)
+	, ExpectedPlayers(4096)
 	, PrintUXMetricTimer(10.0f)
+	, AveragedClientRTTSeconds(0.0)
+	, AveragedClientUpdateTimeDeltaSeconds(0.0)
 	, MaxClientRoundTripSeconds(150)
 	, MaxClientUpdateTimeDeltaSeconds(300)
 	, bHasUxFailed(false)
@@ -49,7 +52,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
 	, ActivePlayers(0)
-	, ExpectedPlayers(4096) 
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
