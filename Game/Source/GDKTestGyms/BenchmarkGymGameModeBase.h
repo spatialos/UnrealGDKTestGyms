@@ -24,7 +24,7 @@ protected:
 	// Total number of players that will attempt connect.
 	int32 ExpectedPlayers;
 
-	// Total number of players that must connect for the test to pass. Must be less than ExpectedPlayers
+	// Total number of players that must connect for the test to pass. Must be less than ExpectedPlayers.
 	// This allows some accepted client flakes without failing the overall test.
 	int32 RequiredPlayers;
 
