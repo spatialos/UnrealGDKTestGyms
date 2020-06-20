@@ -30,10 +30,10 @@ namespace
 
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
-	const FString ExpectedPlayersWorkerFlag = TEXT("required_players");
+	const FString RequiredPlayersWorkerFlag = TEXT("required_players");
 	const FString TotalPlayerCommandLineKey = TEXT("-TotalPlayers=");
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
-	const FString ExpectedPlayersCommandLineKey = TEXT("-RequiredPlayers=");
+	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
 } // anonymous namespace
 
@@ -182,12 +182,12 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), RequiredPlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 		else
 		{
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), RequiredPlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 	}
 }
@@ -329,7 +329,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLine in command line Keys, worker flags for custom spawning will be ignored."));
 
 		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, NumPlayers);
-		FParse::Value(*CommandLine, *ExpectedPlayersCommandLineKey, RequiredPlayers);
+		FParse::Value(*CommandLine, *RequiredPlayersCommandLineKey, RequiredPlayers);
 
 		int32 NumNPCs = 0;
 		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
@@ -341,7 +341,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString NumPlayersString, ExpectedPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
+		FString NumPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -354,9 +354,9 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					NumPlayers = FCString::Atoi(*NumPlayersString);
 				}
 
-				if (SpatialWorkerFlags->GetWorkerFlag(ExpectedPlayersWorkerFlag, ExpectedPlayersString))
+				if (SpatialWorkerFlags->GetWorkerFlag(RequiredPlayersWorkerFlag, RequiredPlayersString))
 				{
-					RequiredPlayers = FCString::Atoi(*ExpectedPlayersString);
+					RequiredPlayers = FCString::Atoi(*RequiredPlayersString);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
