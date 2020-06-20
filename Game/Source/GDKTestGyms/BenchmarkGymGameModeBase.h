@@ -21,7 +21,7 @@ protected:
 
 	static FString ReadFromCommandLineKey;
 
-	// Total number of players that will attempt connect.
+	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
 
 	// Total number of players that must connect for the test to pass. Must be less than ExpectedPlayers.
