@@ -41,7 +41,7 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: NumPlayers(1)
-	, ExpectedPlayers(4096)
+	, RequiredPlayers(4096)
 	, PrintUXMetricTimer(10.0f)
 	, AveragedClientRTTSeconds(0.0)
 	, AveragedClientUpdateTimeDeltaSeconds(0.0)
@@ -179,15 +179,15 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	if (Constants->PlayerCheckMetricDelay.IsReady())
 	{
 		bHasDonePlayerCheck = true;
-		if (ActivePlayers <= ExpectedPlayers)
+		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d"), RequiredPlayers, GetNumPlayers());
 		}
 		else
 		{
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), ExpectedPlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d"), RequiredPlayers, GetNumPlayers());
 		}
 	}
 }
@@ -329,7 +329,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLine in command line Keys, worker flags for custom spawning will be ignored."));
 
 		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, NumPlayers);
-		FParse::Value(*CommandLine, *ExpectedPlayersCommandLineKey, ExpectedPlayers);
+		FParse::Value(*CommandLine, *ExpectedPlayersCommandLineKey, RequiredPlayers);
 
 		int32 NumNPCs = 0;
 		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
@@ -356,7 +356,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 				if (SpatialWorkerFlags->GetWorkerFlag(ExpectedPlayersWorkerFlag, ExpectedPlayersString))
 				{
-					ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
+					RequiredPlayers = FCString::Atoi(*ExpectedPlayersString);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
