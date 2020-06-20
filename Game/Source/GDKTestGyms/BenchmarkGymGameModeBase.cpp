@@ -40,7 +40,7 @@ namespace
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
-	: NumPlayers(1)
+	: ExpectedPlayers(1)
 	, RequiredPlayers(4096)
 	, PrintUXMetricTimer(10.0f)
 	, AveragedClientRTTSeconds(0.0)
@@ -182,12 +182,12 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Expected %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 		else
 		{
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Expected %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 	}
 }
@@ -328,7 +328,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLine in command line Keys, worker flags for custom spawning will be ignored."));
 
-		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, NumPlayers);
+		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
 		FParse::Value(*CommandLine, *RequiredPlayersCommandLineKey, RequiredPlayers);
 
 		int32 NumNPCs = 0;
@@ -341,7 +341,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString NumPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
+		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -349,9 +349,9 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
-				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, NumPlayersString))
+				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
 				{
-					NumPlayers = FCString::Atoi(*NumPlayersString);
+					ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(RequiredPlayersWorkerFlag, RequiredPlayersString))
@@ -377,14 +377,14 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"), NumPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	if (FlagName == TotalPlayerWorkerFlag)
 	{
-		NumPlayers = FCString::Atoi(*FlagValue);
+		ExpectedPlayers = FCString::Atoi(*FlagValue);
 	}
 	else if (FlagName == TotalNPCsWorkerFlag)
 	{
