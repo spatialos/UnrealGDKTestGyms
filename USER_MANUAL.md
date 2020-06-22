@@ -37,14 +37,6 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 4. Add a description of the new gym level to this `USER_MANUAL.md` document, in the section below;
   * breifly describe what it demonstrates and how to use it.
 
-#### Load balancing configuration
-
-Some gyms require configuring 4 server worker instances to launch. You can do this by:
-
-* Open the settings in `SpatialOS Settings` -> `Editor Settings` -> `Launch` -> `Server Worker Config`.
-* Untick `Automatically compute number of instances to launch in Editor`
-* Set `Instances to launch in editor` to 4
-
 #### Current gyms
 
 ##### Empty gym
@@ -55,8 +47,6 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
   * Dynamic component are correctly added to and removed from a replicated Actor (with load-balancing enabled).
 * Contains:
   * A character with a PlayerController with key bindings for adding and removing a component.
-* To setup the gym:
-  * Configure the settings to launch 4 workers (see the load balancing notes above).
 * To test the gym:
     * Move the character until the inspector shows that the EntityACL and other server simulated components are on different workers
     * Press "R" to add the TestDynamicComponent to the character.
@@ -69,8 +59,6 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
   * Entities correctly migrate between area of authority.
 * Contains:
   * A set of cubes that moves back and forth across a floor.
-* To setup the gym:
-  * Configure the settings to launch 4 workers (see the load balancing notes above).
 * To test the gym:
   * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
   * Press "L" to toggle locking actor migration.
@@ -84,10 +72,8 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
 * Contains:
   * a cube moving across a server boundary, with a gameplay ability granted to it which takes 4 seconds to complete.
   * a player with a gameplay ability granted to it which takes 4 seconds to complete.
-* To setup the gym:
-  * Configure the settings to launch 4 workers (see the load balancing notes above).
-  * If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
 * To test the gym:
+  * If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
   * Press "Q" to start the ability on the player.
   * Press "T" to start the ability on the cube.
   * The printing in the top-right should count from 1 to 5 over 4 seconds (and for the cube this is also visualized in the client).
@@ -152,8 +138,6 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
     * Randomly send RPCs from each worker to the other cubes in the level.
     * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger).
     * Show a count of how many RPCs have been received which is shown above the cube.
-* To setup the gym:
-  * Configure the settings to launch 4 workers (see the load balancing notes above).
 * If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
@@ -187,8 +171,6 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
     * (Q) Making the client net-owner for the cube,
     * (R) Sending a server RPC from the client on the cube,
     * (T) Removing the client as the net-owner for the cube.
-* To setup the gym:
-  * Configure the settings to launch 4 workers (see the load balancing notes above).
 * To test the gym:
     * Press `Q` to make the client net-owner for the cube.
     * Observe that:
@@ -205,7 +187,6 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
 ##### Server to server Take Damage RPC gym
 * Tests AActor::TakeDamage.
 * Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon recieving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
-* Configure the settings to launch 4 workers (see the load balancing notes above).
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermitantly. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
 
@@ -214,6 +195,6 @@ Some gyms require configuring 4 server worker instances to launch. You can do th
 * Pressing "space" will switch the possession between the two cubes in the gym. This will also ensure that the unpossessed cube will still be owned by the player controller.
 * Pressing "enter" will print out information on the client regarding the owners of each cube. It will also send a server RPC that will print out if it was successfully processed on the server. 
 * Note that initially no cube is possessed so all server RPCs sent on the cubes will fail. After a cube is possessed, the server RPC called on a cube that does not have a player controller owner will not be processed.
-* Ensure load balancing is turned off.
+* Ensure multi-worker is turned off.
 -----
 2019-11-15: Page added with editorial review
