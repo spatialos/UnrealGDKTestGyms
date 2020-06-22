@@ -8,24 +8,46 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNFRConstants, Log, All);
 
+class FMetricDelay
+{
+public:
+
+	FMetricDelay() = default;
+	FMetricDelay(float InTimeToStart);
+
+	void SetDelay(float Seconds);
+	bool IsReady() const;
+
+
+private:
+	int64 TimeToStart;
+};
+
 UCLASS()
 class UNFRConstants : public UObject
 {
 public:	
-	GENERATED_BODY()
-	
-	void InitWithWorld(UWorld* World);
 
-	bool SamplesForFPSValid() const; // Wait until this is true until checking FPS values
+	GENERATED_BODY()
+
+	UNFRConstants();
+	
+	void InitWithWorld(const UWorld* World);
 
 	float GetMinServerFPS() const;
 	float GetMinClientFPS() const;
 	
-	static const UNFRConstants* Get(UWorld* World);
+	static const UNFRConstants* Get(const UWorld* World);
+
+	FMetricDelay PlayerCheckMetricDelay;
+	FMetricDelay ServerFPSMetricDelay;
+	FMetricDelay ClientFPSMetricDelay;
+	FMetricDelay UXMetricDelay;
+
 private:
+
 	bool bIsInitialised{ false };
-	int64 TimeToStartFPSSampling;
-	mutable bool bFPSSamplingValid{ false };
+
 	float MinServerFPS = 20.0f;
 	float MinClientFPS = 20.0f;
 };

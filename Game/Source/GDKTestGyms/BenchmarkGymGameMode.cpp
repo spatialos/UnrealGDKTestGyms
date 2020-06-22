@@ -86,11 +86,9 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
 	ClearExistingSpawnPoints();
-
-	SpawnPoints.Reset();
 	GenerateSpawnPointClusters(NumPlayerClusters);
 
-	if (SpawnPoints.Num() != ExpectedPlayers)
+	if (SpawnPoints.Num() < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 	}
@@ -168,11 +166,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 {
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), SpawnPoints);
 	for (AActor* SpawnPoint : SpawnPoints)
 	{
 		SpawnPoint->Destroy();
 	}
+	SpawnPoints.Reset();
+	PlayerIdToSpawnPointMap.Reset();
 }
 
 void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)

@@ -41,7 +41,9 @@ private:
 	int32 PlayerDensity;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
+	UPROPERTY()
 	TArray<AActor*> SpawnPoints;
+	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	int32 NPCSToSpawn;
 

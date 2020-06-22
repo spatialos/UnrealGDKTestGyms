@@ -21,8 +21,12 @@ protected:
 
 	static FString ReadFromCommandLineKey;
 
-	// Total number of players that will connect.
+	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
+
+	// Total number of players that must connect for the test to pass. Must be less than ExpectedPlayers.
+	// This allows some accepted client flakes without failing the overall test.
+	int32 RequiredPlayers;
 
 	// Replicated so that offloading and zoning servers can get updates.
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
@@ -43,15 +47,14 @@ protected:
 private:
 
 	// Test scenarios
-	float SecondsTillPlayerCheck;
-	float PrintUXMetric;
+	float PrintUXMetricTimer;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
-	double AveragedClientViewLatenessSeconds; // The stored average of the client view lateness.
+	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
-	int32 MaxClientViewLatenessSeconds;
-	bool bPlayersHaveJoined;
+	int32 MaxClientUpdateTimeDeltaSeconds;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
+	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
 	int32 ActivePlayers; // A count of visible UX components
 
@@ -62,13 +65,13 @@ private:
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
-	void TickAuthServerFPSCheck(float DeltaSeconds);
+	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
-	double GetClientViewLateness() const { return AveragedClientViewLatenessSeconds; }
+	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
