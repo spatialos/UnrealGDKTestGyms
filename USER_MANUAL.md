@@ -24,7 +24,7 @@ Content
 ```
 
 Gym levels are in `Content\Maps`: add any new gyms in this directory.
-Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directory.
+Actors used in gyms are in `Content\Actors`: add any new Actors to this directory.
 
 #### How to add a gym
 1. In the Test Gyms Project, create a new level, with a descriptive name, and store it in the `Content\Maps` directory;
@@ -143,7 +143,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 ##### World composition gym
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
-* On starting the gym, move towards the any marked area text to load the assocaited level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
+* On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
 * Moving away from the marked area will cause the level to be unloaded on the client. When it unloads the actor should disappear.
 * Validation:
   1. Each level can be repeatedly loaded and unloaded on the client with no issue.
@@ -186,9 +186,9 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 
 ##### Server to server Take Damage RPC gym
 * Tests AActor::TakeDamage.
-* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon recieving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
+* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon receiving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermitantly. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
 
 ##### Multiple Ownership gym
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller. 
