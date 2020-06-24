@@ -204,7 +204,9 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	PlayerStateRepInfo.ActorChannelFrameTimeout = 0;
 	SetClassInfo( APlayerState::StaticClass(), PlayerStateRepInfo );
 	
-	UReplicationGraphNode_ActorListFrequencyBuckets::DefaultSettings.ListSize = 12;
+	UReplicationGraphNode_ActorListFrequencyBuckets::DefaultSettings.ListSize = 1024;
+	UReplicationGraphNode_ActorListFrequencyBuckets::DefaultSettings.NumBuckets = 1;
+
 
 	// Set FClassReplicationInfo based on legacy settings from all replicated classes
 	for (UClass* ReplicatedClass : AllReplicatedClasses)
