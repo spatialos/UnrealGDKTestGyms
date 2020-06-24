@@ -214,9 +214,9 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 
 ##### Multiple Ownership gym
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller. 
-* Pressing "space" will switch the possession between the two cubes in the gym. This will also ensure that the unpossessed cube will still be owned by the player controller.
-* Pressing "enter" will print out information on the client regarding the owners of each cube. It will also send a server RPC that will print out if it was successfully processed on the server. 
-* Note that initially no cube is possessed so all server RPCs sent from the cubes will fail. This means there will be no messages printed on the server. After a cube is possessed, a server RPC called on a cube that does not have a player controller owner will not be processed.
+* Pressing "enter" will print out information on the client and server regarding the owners of each cube. Logs on the client will inform the user of the ownership state of pawns. Logs on the server will denote the successful attempt to send RPCs on certain pawns.
+* Initially the player controller will not posses any pawn. This will mean that hitting "enter" will reseult in no server logs and client logs suggesting that no pawn is owned by the player controller.
+* Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * Ensure load balancing is turned off.
 -----
 2019-11-15: Page added with editorial review
