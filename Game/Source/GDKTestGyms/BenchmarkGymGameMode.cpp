@@ -29,6 +29,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
+	, InteractablesPerCluster(250)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -40,6 +41,12 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	if (SimulatedBPPawnClass.Class != NULL)
 	{
 		SimulatedPawnClass = SimulatedBPPawnClass.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<AActor> InteractableClass(TEXT("/Game/Benchmark/Interactable_BP"));
+	if (InteractableClass.Class != NULL)
+	{
+		InteractableSpawnClass = InteractableClass.Class;
 	}
 }
 
@@ -141,11 +148,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
 		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, TEXT("InteractablesPerCluster="), InteractablesPerCluster);
 	}
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString PlayerDensityString;
+		FString PlayerDensityString, InteractableString;
 
 		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(NetDriver != nullptr))
@@ -156,8 +164,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 			{
 				PlayerDensity = FCString::Atoi(*PlayerDensityString);
 			}
+			if (ensure(SpatialWorkerFlags != nullptr) &&
+				SpatialWorkerFlags->GetWorkerFlag(TEXT("interactables_per_cluster"), InteractableString))
+			{
+				InteractablesPerCluster = FCString::Atoi(*InteractableString);
+			}
 		}
-
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
@@ -172,6 +184,11 @@ void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 	}
 	SpawnPoints.Reset();
 	PlayerIdToSpawnPointMap.Reset();
+	for (AActor* Interactable : Interactables)
+	{
+		Interactable->Destroy();
+	}
+	Interactables.Reset();
 }
 
 void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)
@@ -246,6 +263,23 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		const FVector SpawnLocation = FVector(X, Y, Z);
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
+	}
+
+	float D = sqrtf(Cast<AActor>(PlayerControllerClass->GetDefaultObject())->NetCullDistanceSquared);
+	FRandomStream Stream;
+	Stream.Initialize(FCrc::MemCrc32(&CenterX, sizeof(CenterX)));
+	for (int j = 0; j < InteractablesPerCluster; j++)
+	{
+		FActorSpawnParameters SpawnInfo{};
+		//SpawnInfo.Owner = this;
+		SpawnInfo.Instigator = NULL;
+		SpawnInfo.bDeferConstruction = false;
+		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		FVector Middle = FVector(CenterX, CenterY, 0.0f);
+		FVector Loc = Middle + Stream.VRand()*D;
+		Loc.Z = 0.0f;
+		Interactables.Add(World->SpawnActor<AActor>(InteractableSpawnClass, Loc, FRotator::ZeroRotator, SpawnInfo));
 	}
 }
 

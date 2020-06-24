@@ -44,8 +44,13 @@ private:
 	UPROPERTY()
 	TArray<AActor*> SpawnPoints;
 	UPROPERTY()
+	TArray<AActor*> Interactables;
+	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	int32 NPCSToSpawn;
+
+	int32 InteractablesPerCluster;
+	TSubclassOf<AActor> InteractableSpawnClass;
 
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
