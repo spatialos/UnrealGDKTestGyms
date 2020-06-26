@@ -30,17 +30,7 @@
         "layer": "UnrealWorker",
         "rectangle_grid": {
           "cols": 1,
-          "rows": 1
-        },
-        "options": {
-          "manual_worker_connection_only": false
-        }
-      },
-      {
-        "layer": "NPCWorker",
-        "rectangle_grid": {
-          "cols": 1,
-          "rows": 1
+          "rows": 2
         },
         "options": {
           "manual_worker_connection_only": false
@@ -51,16 +41,12 @@
   "workers": [
     {
       "worker_type": "UnrealWorker",
-      "flags": [],
-      "permissions": [
-        {
-          "all": {}
+      "flags": [
+		{
+            "name": "total_npcs",
+            "value": "50"
         }
-      ]
-    },
-    {
-      "worker_type": "AIWorker",
-      "flags": [],
+      ],
       "permissions": [
         {
           "all": {}
