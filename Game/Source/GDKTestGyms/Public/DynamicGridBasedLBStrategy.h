@@ -6,7 +6,7 @@
 #include "LoadBalancing/GridBasedLBStrategy.h"
 #include "DynamicGridBasedLBStrategy.generated.h"
 
-//DECLARE_LOG_CATEGORY_EXTERN(LogDynamicGridBasedLBStrategy, Log, All)
+DECLARE_LOG_CATEGORY_EXTERN(LogDynamicGridBasedLBStrategy, Log, All)
 
 /**
  * 
@@ -20,6 +20,7 @@ public:
 	virtual void Init() override;
 
 	virtual bool ShouldHaveAuthority(const AActor& Actor) override;
+	virtual VirtualWorkerId WhoShouldHaveAuthority(const AActor& Actor) const override;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Dynamic Load Balancing")
@@ -28,9 +29,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "1"), Category = "Dynamic Load Balancing")
 		uint32 MaxActorLoad;
 
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.1"), Category = "Dynamic Load Balancing")
+		float BoundaryChangeStep;
+
+	TArray<FBox2D> DynamicWorkerCells;
+
 	void IncreseActorCounter();
 	void DecreaseActorCounter();
 
 private:
 	uint32 ActorCounter;
+	TMap<TWeakObjectPtr<AActor>, FVector2D> ActorPrevPositions;
 };
