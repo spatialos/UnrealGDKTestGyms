@@ -75,6 +75,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasFpsFailed(false)
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
+	, bHasObjectCountFailed(false)
 	, ActivePlayers(0)
 {
 	SetReplicates(true);
@@ -367,7 +368,7 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
-	if (!bHasObjectCountFailed &&
+	if (!bHasActorCountFailed &&
 		Constants->ObjectCheckDelay.IsReady())
 	{
 		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
@@ -376,17 +377,12 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
 			const int32 Variance = ExpectedActorCount.Variance;
 			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
-			bHasObjectCountFailed = ActualCount < ExpectedCount - Variance || ActualCount > ExpectedCount + Variance;
+			bHasActorCountFailed = ActualCount < ExpectedCount - Variance || ActualCount > ExpectedCount + Variance;
 
-			if (bHasObjectCountFailed)
+			if (bHasActorCountFailed)
 			{
 				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was not satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 				break;
-			}
-
-			if (PrintMetricsTimer.ShouldPrint())
-			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Expected object count was satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 			}
 		}
 	}
@@ -489,9 +485,6 @@ void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 
 int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
 {
-	const UWorld* World = GetWorld();
-	check(World != nullptr)
-
 	const UCounterComponent* CounterComponent = Cast<UCounterComponent>(GameState->GetComponentByClass(UCounterComponent::StaticClass()));
 	check(CounterComponent != nullptr)
 

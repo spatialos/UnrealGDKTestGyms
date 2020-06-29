@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "BenchmarkGymGameModeBase.h"
-#include "UObject/ConstructorHelpers.h"
 
 #include "OffloadingBenchmarkGymGameMode.generated.h"
 

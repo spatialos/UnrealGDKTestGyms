@@ -88,7 +88,7 @@ private:
 	bool bHasFpsFailed;
 	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
-	bool bHasObjectCountFailed;
+	bool bHasActorCountFailed;
 	int32 ActivePlayers; // A count of visible UX components
 
 	virtual void BeginPlay() override;
@@ -109,7 +109,7 @@ private:
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
-	double GetObjectCountValid() const { return !bHasObjectCountFailed ? 1.0 : 0.0; }
+	double GetObjectCountValid() const { return !bHasActorCountFailed ? 1.0 : 0.0; }
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

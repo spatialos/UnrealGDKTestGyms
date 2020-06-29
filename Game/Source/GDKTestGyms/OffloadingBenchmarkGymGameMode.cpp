@@ -2,8 +2,7 @@
 
 #include "OffloadingBenchmarkGymGameMode.h"
 
-#include "Engine/World.h"
-#include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogOffloadingBenchmarkGymGameMode);
 
