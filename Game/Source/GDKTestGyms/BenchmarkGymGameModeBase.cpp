@@ -370,23 +370,23 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 	if (!bHasObjectCountFailed &&
 		Constants->ObjectCheckDelay.IsReady())
 	{
-		for (const FExpectedObjectCount& ExpectedObjectCount : ExpectedObjectCounts)
+		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
 		{
-			const FString& ObjectName = ExpectedObjectCount.ObjectClass->GetName();
-			const int32 ExpectedCount = ExpectedObjectCount.ExpectedCount;
-			const int32 Variance = ExpectedObjectCount.Variance;
-			const int32 ActualCount = static_cast<int32>(ExpectedObjectCount.ActorCountDelegate.Execute());
+			const FString& ActorClassName = ExpectedActorCount.ActorClass->GetName();
+			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
+			const int32 Variance = ExpectedActorCount.Variance;
+			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
 			bHasObjectCountFailed = ActualCount < ExpectedCount - Variance || ActualCount > ExpectedCount + Variance;
 
 			if (bHasObjectCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was not satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ObjectName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was not satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 				break;
 			}
 
 			if (PrintMetricsTimer.ShouldPrint())
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ObjectName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 			}
 		}
 	}
@@ -487,7 +487,7 @@ void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 	OnTotalNPCsUpdated(TotalNPCs);
 }
 
-double ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
+int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
 {
 	const UWorld* World = GetWorld();
 	check(World != nullptr)
@@ -495,5 +495,5 @@ double ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorCl
 	const UCounterComponent* CounterComponent = Cast<UCounterComponent>(GameState->GetComponentByClass(UCounterComponent::StaticClass()));
 	check(CounterComponent != nullptr)
 
-	return static_cast<double>(CounterComponent->GetActorClassCount(ActorClass));
+	return CounterComponent->GetActorClassCount(ActorClass);
 }

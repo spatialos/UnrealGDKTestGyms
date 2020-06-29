@@ -16,35 +16,23 @@ AOffloadingBenchmarkGymGameMode::AOffloadingBenchmarkGymGameMode()
 	SimulatedPlayerBPClass = SimulatedPlayerBPClassFinder.Class;
 }
 
-double AOffloadingBenchmarkGymGameMode::GetOffloadingBenchmarkNPCs() const
-{
-	return GetActorClassCount(NPCBPClass);
-}
-
-double AOffloadingBenchmarkGymGameMode::GetOffloadingBenchmarkSimulatedPlayers() const
-{
-	return GetActorClassCount(SimulatedPlayerBPClass);
-}
-
 void AOffloadingBenchmarkGymGameMode::BuildExpectedObjectCounts()
 {
 	Super::BuildExpectedObjectCounts();
 
 	{
-		FExpectedObjectCount ExpectedObjectCount;
-		ExpectedObjectCount.ObjectClass = NPCBPClass;
-		ExpectedObjectCount.ExpectedCount = TotalNPCs;
-		ExpectedObjectCount.Variance = 1;
-		ExpectedObjectCount.ActorCountDelegate.BindUObject(this, &AOffloadingBenchmarkGymGameMode::GetOffloadingBenchmarkNPCs);
-		ExpectedObjectCounts.Add(ExpectedObjectCount);
+		FExpectedActorCount ExpectedActorCount;
+		ExpectedActorCount.ActorClass = NPCBPClass;
+		ExpectedActorCount.ExpectedCount = TotalNPCs;
+		ExpectedActorCount.Variance = 1;
+		ExpectedActorCounts.Add(ExpectedActorCount);
 	}
 
 	{
-		FExpectedObjectCount ExpectedObjectCount;
-		ExpectedObjectCount.ObjectClass = SimulatedPlayerBPClass;
-		ExpectedObjectCount.ExpectedCount = RequiredPlayers;
-		ExpectedObjectCount.Variance = 1;
-		ExpectedObjectCount.ActorCountDelegate.BindUObject(this, &AOffloadingBenchmarkGymGameMode::GetOffloadingBenchmarkNPCs);
-		ExpectedObjectCounts.Add(ExpectedObjectCount);
+		FExpectedActorCount ExpectedActorCount;
+		ExpectedActorCount.ActorClass = SimulatedPlayerBPClass;
+		ExpectedActorCount.ExpectedCount = RequiredPlayers;
+		ExpectedActorCount.Variance = 1;
+		ExpectedActorCounts.Add(ExpectedActorCount);
 	}
 }

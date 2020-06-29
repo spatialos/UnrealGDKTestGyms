@@ -27,7 +27,4 @@ private:
 
 	TSubclassOf<AActor> NPCBPClass;
 	TSubclassOf<AActor> SimulatedPlayerBPClass;
-
-	double GetOffloadingBenchmarkNPCs() const;
-	double GetOffloadingBenchmarkSimulatedPlayers() const;
 };

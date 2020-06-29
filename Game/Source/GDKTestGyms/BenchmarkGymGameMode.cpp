@@ -165,22 +165,16 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
 
-double ABenchmarkGymGameMode::GetBenchmarkNPCs() const
-{
-	return GetActorClassCount(NPCBPClass);
-}
-
 void ABenchmarkGymGameMode::BuildExpectedObjectCounts()
 {
 	Super::BuildExpectedObjectCounts();
 
 	{
-		FExpectedObjectCount ExpectedObjectCount;
-		ExpectedObjectCount.ObjectClass = NPCBPClass;
-		ExpectedObjectCount.ExpectedCount = TotalNPCs;
-		ExpectedObjectCount.Variance = 1;
-		ExpectedObjectCount.ActorCountDelegate.BindUObject(this, &ABenchmarkGymGameMode::GetBenchmarkNPCs);
-		ExpectedObjectCounts.Add(ExpectedObjectCount);
+		FExpectedActorCount ExpectedActorCount;
+		ExpectedActorCount.ActorClass = NPCBPClass;
+		ExpectedActorCount.ExpectedCount = TotalNPCs;
+		ExpectedActorCount.Variance = 1;
+		ExpectedActorCounts.Add(ExpectedActorCount);
 	}
 }
 

@@ -10,8 +10,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
-DECLARE_DELEGATE_RetVal(double, FActorCountDelegate);
-
 class FPrintTimer
 {
 public:
@@ -42,15 +40,14 @@ protected:
 
 	static FString ReadFromCommandLineKey;
 
-	struct FExpectedObjectCount
+	struct FExpectedActorCount
 	{
-		TSubclassOf<UObject> ObjectClass;
+		TSubclassOf<AActor> ActorClass;
 		int32 ExpectedCount;
 		int32 Variance;
-		FActorCountDelegate ActorCountDelegate;
 	};
 
-	TArray<FExpectedObjectCount> ExpectedObjectCounts;
+	TArray<FExpectedActorCount> ExpectedActorCounts;
 
 	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
@@ -64,7 +61,7 @@ protected:
 	int32 TotalNPCs;
 
 	virtual void BuildExpectedObjectCounts() {};
-	double GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
+	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
 	virtual void ParsePassedValues();
 
