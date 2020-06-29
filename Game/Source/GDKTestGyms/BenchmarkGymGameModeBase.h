@@ -100,7 +100,7 @@ private:
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
-	void TickObjectCountCheck(float DeltaSeconds);
+	void TickActorCountCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
@@ -109,7 +109,7 @@ private:
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
-	double GetObjectCountValid() const { return !bHasActorCountFailed ? 1.0 : 0.0; }
+	double GetActorCountValid() const { return !bHasActorCountFailed ? 1.0 : 0.0; }
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

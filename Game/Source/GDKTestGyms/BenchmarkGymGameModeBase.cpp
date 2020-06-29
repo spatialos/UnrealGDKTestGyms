@@ -23,7 +23,7 @@ namespace
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
-	const FString ObjectCountValidMetricName = TEXT("ObjectCountValid");
+	const FString ActorCountValidMetricName = TEXT("ActorCountValid");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
@@ -173,8 +173,8 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 
 				{
 					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetObjectCountValid);
-					SpatialMetrics->SetCustomMetric(ObjectCountValidMetricName, Delegate);
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetActorCountValid);
+					SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
 				}
 			}
 		}
@@ -189,7 +189,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickClientFPSCheck(DeltaSeconds);
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
-	TickObjectCountCheck(DeltaSeconds);
+	TickActorCountCheck(DeltaSeconds);
 
 	if (HasAuthority())
 	{
@@ -357,7 +357,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	}
 }
 
-void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
+void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
 	if (!HasAuthority())
 	{
