@@ -75,7 +75,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasFpsFailed(false)
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
-	, bHasObjectCountFailed(false)
+	, bHasActorCountFailed(false)
 	, ActivePlayers(0)
 {
 	SetReplicates(true);
