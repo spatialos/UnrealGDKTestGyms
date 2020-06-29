@@ -9,13 +9,13 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymNPCSpawner);
 
 ABenchmarkGymNPCSpawner::ABenchmarkGymNPCSpawner()
 {
-	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
-	if (NPCBPClass.Class != NULL)
-	{
-		NPCPawnClass = NPCBPClass.Class;
-	}
 	SetReplicates(true);
 	bAlwaysRelevant = true;
+}
+
+void ABenchmarkGymNPCSpawner::SetNPCClass(TSubclassOf<APawn> NewNPCClass)
+{
+	NPCClass = NewNPCClass;
 }
 
 void ABenchmarkGymNPCSpawner::CrossServerSpawn_Implementation(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
@@ -27,9 +27,9 @@ void ABenchmarkGymNPCSpawner::CrossServerSpawn_Implementation(const FVector& Spa
 		return;
 	}
 
-	if (NPCPawnClass == nullptr)
+	if (NPCClass == nullptr)
 	{
-		UE_LOG(LogBenchmarkGymNPCSpawner, Error, TEXT("Error spawning NPC, NPCPawnClass is not set."));
+		UE_LOG(LogBenchmarkGymNPCSpawner, Error, TEXT("Error spawning NPC, NPCClass is not set."));
 		return;
 	}
 
@@ -44,7 +44,7 @@ void ABenchmarkGymNPCSpawner::CrossServerSpawn_Implementation(const FVector& Spa
 	UE_LOG(LogBenchmarkGymNPCSpawner, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
 	FActorSpawnParameters SpawnInfo{};
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	APawn* Pawn = World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), FixedSpawnLocation, FRotator::ZeroRotator, SpawnInfo);
+	APawn* Pawn = World->SpawnActor<APawn>(NPCClass, FixedSpawnLocation, FRotator::ZeroRotator, SpawnInfo);
 	checkf(Pawn, TEXT("Pawn failed to spawn at %s"), *FixedSpawnLocation.ToString());
 
 	UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Pawn->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));

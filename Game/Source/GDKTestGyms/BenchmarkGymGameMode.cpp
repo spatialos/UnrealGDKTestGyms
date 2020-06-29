@@ -172,6 +172,8 @@ double ABenchmarkGymGameMode::GetBenchmarkNPCs() const
 
 void ABenchmarkGymGameMode::BuildExpectedObjectCounts()
 {
+	Super::BuildExpectedObjectCounts();
+
 	{
 		FExpectedObjectCount ExpectedObjectCount;
 		ExpectedObjectCount.ObjectClass = NPCBPClass;
@@ -293,6 +295,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 	if (NPCSpawner != nullptr)
 	{
+		NPCSpawner->SetNPCClass(NPCBPClass);
 		NPCSpawner->CrossServerSpawn(SpawnLocation, BlackboardValues);
 	}
 	else

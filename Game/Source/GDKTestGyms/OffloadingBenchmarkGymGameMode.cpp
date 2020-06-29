@@ -28,6 +28,8 @@ double AOffloadingBenchmarkGymGameMode::GetOffloadingBenchmarkSimulatedPlayers()
 
 void AOffloadingBenchmarkGymGameMode::BuildExpectedObjectCounts()
 {
+	Super::BuildExpectedObjectCounts();
+
 	{
 		FExpectedObjectCount ExpectedObjectCount;
 		ExpectedObjectCount.ObjectClass = NPCBPClass;

@@ -50,6 +50,7 @@ private:
 	TArray<AActor*> SpawnPoints;
 	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
+	TSubclassOf<APawn> NPCBPClass;
 	int32 NPCSToSpawn;
 
 	UPROPERTY()
@@ -64,8 +65,6 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-
-	TSubclassOf<AActor> NPCBPClass;
 
 	double GetBenchmarkNPCs() const;
 };

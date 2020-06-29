@@ -19,11 +19,16 @@ class GDKTESTGYMS_API ABenchmarkGymNPCSpawner : public AActor
 	GENERATED_BODY()
 
 public:
+
+	ABenchmarkGymNPCSpawner();
+
+	void SetNPCClass(TSubclassOf<APawn> NewNPCClass);
+
 	UFUNCTION(Reliable, CrossServer)
 	void CrossServerSpawn(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
-	ABenchmarkGymNPCSpawner();
 private:
+
 	UPROPERTY()
-	TSubclassOf<APawn> NPCPawnClass;
+	TSubclassOf<APawn> NPCClass;
 };
