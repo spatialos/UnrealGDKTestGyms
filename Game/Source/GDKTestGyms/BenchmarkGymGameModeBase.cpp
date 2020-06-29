@@ -369,7 +369,7 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 
 	// This test respects the initial delay timer in both native and GDK
 	if (!bHasActorCountFailed &&
-		Constants->ObjectCheckDelay.IsReady())
+		Constants->ActorCheckDelay.IsReady())
 	{
 		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
 		{
@@ -381,7 +381,7 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 
 			if (bHasActorCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was not satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Actor count check failed. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 				break;
 			}
 		}

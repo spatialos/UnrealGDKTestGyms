@@ -43,7 +43,7 @@ public:
 	FMetricDelay ServerFPSMetricDelay;
 	FMetricDelay ClientFPSMetricDelay;
 	FMetricDelay UXMetricDelay;
-	FMetricDelay ObjectCheckDelay;
+	FMetricDelay ActorCheckDelay;
 
 private:
 

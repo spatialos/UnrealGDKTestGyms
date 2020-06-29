@@ -27,7 +27,7 @@ UNFRConstants::UNFRConstants()
 	, ServerFPSMetricDelay(2.0f * 60.0f)
 	, ClientFPSMetricDelay(10.0f * 60.0f)
 	, UXMetricDelay(10.0f * 60.0f)
-	, ObjectCheckDelay(15.0f * 60.0f)
+	, ActorCheckDelay(15.0f * 60.0f)
 {
 }
 
