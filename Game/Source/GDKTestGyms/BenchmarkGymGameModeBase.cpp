@@ -11,6 +11,7 @@
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
+#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -374,7 +375,7 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 			const FString& ObjectName = ExpectedObjectCount.ObjectClass->GetName();
 			const int32 ExpectedCount = ExpectedObjectCount.ExpectedCount;
 			const int32 Variance = ExpectedObjectCount.Variance;
-			const int32 ActualCount = static_cast<int32>(ExpectedObjectCount.Delegate.Execute());
+			const int32 ActualCount = static_cast<int32>(ExpectedObjectCount.ActorCountDelegate.Execute());
 			bHasObjectCountFailed = ActualCount < ExpectedCount - Variance || ActualCount > ExpectedCount + Variance;
 
 			if (bHasObjectCountFailed)

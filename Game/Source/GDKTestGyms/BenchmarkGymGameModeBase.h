@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
-#include "Utils/SpatialMetrics.h"
 
 #include "BenchmarkGymGameModeBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
+
+DECLARE_DELEGATE_RetVal(double, FActorCountDelegate);
 
 class FPrintTimer
 {
@@ -46,7 +47,7 @@ protected:
 		TSubclassOf<UObject> ObjectClass;
 		int32 ExpectedCount;
 		int32 Variance;
-		UserSuppliedMetric Delegate;
+		FActorCountDelegate ActorCountDelegate;
 	};
 
 	TArray<FExpectedObjectCount> ExpectedObjectCounts;

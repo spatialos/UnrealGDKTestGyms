@@ -179,7 +179,7 @@ void ABenchmarkGymGameMode::BuildExpectedObjectCounts()
 		ExpectedObjectCount.ObjectClass = NPCBPClass;
 		ExpectedObjectCount.ExpectedCount = TotalNPCs;
 		ExpectedObjectCount.Variance = 1;
-		ExpectedObjectCount.Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetBenchmarkNPCs);
+		ExpectedObjectCount.ActorCountDelegate.BindUObject(this, &ABenchmarkGymGameMode::GetBenchmarkNPCs);
 		ExpectedObjectCounts.Add(ExpectedObjectCount);
 	}
 }
