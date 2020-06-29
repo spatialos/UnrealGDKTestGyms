@@ -4,13 +4,13 @@
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BenchmarkGymNPCSpawner.h"
 #include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "EngineUtils.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerStart.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
@@ -19,8 +19,6 @@
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
-#include "BenchmarkGymNPCSpawner.h"
-#include "EngineUtils.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
@@ -31,6 +29,9 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	ConstructorHelpers::FClassFinder<APawn> NPCBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
+	NPCBPClass = NPCBPClassFinder.Class;
 
 	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));
 	DefaultPawnClass = PawnClass.Class;
@@ -162,6 +163,23 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+}
+
+double ABenchmarkGymGameMode::GetBenchmarkNPCs() const
+{
+	return GetActorClassCount(NPCBPClass);
+}
+
+void ABenchmarkGymGameMode::BuildExpectedObjectCounts()
+{
+	{
+		FExpectedObjectCount ExpectedObjectCount;
+		ExpectedObjectCount.ObjectClass = NPCBPClass;
+		ExpectedObjectCount.ExpectedCount = TotalNPCs;
+		ExpectedObjectCount.Variance = 1;
+		ExpectedObjectCount.Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetBenchmarkNPCs);
+		ExpectedObjectCounts.Add(ExpectedObjectCount);
+	}
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()

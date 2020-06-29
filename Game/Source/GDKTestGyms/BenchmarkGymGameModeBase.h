@@ -5,10 +5,30 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
+#include "Utils/SpatialMetrics.h"
 
 #include "BenchmarkGymGameModeBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
+
+class FPrintTimer
+{
+public:
+
+	FPrintTimer() = default;
+	FPrintTimer(float InResetTime);
+
+	void Tick(float DeltaSeconds);
+	void SetResetTimer(float InResetTime);
+
+	bool ShouldPrint() const { return bShouldPrint; }
+
+private:
+	bool bShouldPrint;
+	float ResetTime;
+	float Timer;
+
+};
 
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
@@ -21,6 +41,16 @@ protected:
 
 	static FString ReadFromCommandLineKey;
 
+	struct FExpectedObjectCount
+	{
+		TSubclassOf<UObject> ObjectClass;
+		int32 ExpectedCount;
+		int32 Variance;
+		UserSuppliedMetric Delegate;
+	};
+
+	TArray<FExpectedObjectCount> ExpectedObjectCounts;
+
 	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
 
@@ -31,6 +61,9 @@ protected:
 	// Replicated so that offloading and zoning servers can get updates.
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
+
+	virtual void BuildExpectedObjectCounts() {};
+	double GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
 	virtual void ParsePassedValues();
 
@@ -47,7 +80,8 @@ protected:
 private:
 
 	// Test scenarios
-	float PrintUXMetricTimer;
+	FPrintTimer PrintMetricsTimer;
+
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
@@ -56,6 +90,7 @@ private:
 	bool bHasFpsFailed;
 	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
+	bool bHasObjectCountFailed;
 	int32 ActivePlayers; // A count of visible UX components
 
 	virtual void BeginPlay() override;
@@ -67,6 +102,7 @@ private:
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
+	void TickObjectCountCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
@@ -75,6 +111,7 @@ private:
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
+	double GetObjectCountValid() const { return !bHasObjectCountFailed ? 1.0 : 0.0; }
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

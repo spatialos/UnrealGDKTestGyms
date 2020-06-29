@@ -24,6 +24,11 @@ public:
 	// Login used as a workaround for a player spawning issue UNR-3663
 	APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
+
+protected:
+
+	virtual void BuildExpectedObjectCounts() override;
+
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
 	TArray<FBlackboardValues> NPCRunPoints;
@@ -59,4 +64,8 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
+
+	TSubclassOf<AActor> NPCBPClass;
+
+	double GetBenchmarkNPCs() const;
 };

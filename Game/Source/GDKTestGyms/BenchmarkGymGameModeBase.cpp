@@ -2,15 +2,15 @@
 
 #include "BenchmarkGymGameModeBase.h"
 
+#include "CounterComponent.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "GameFramework/GameStateBase.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
-#include "Utils/SpatialMetrics.h"
-#include "GDKTestGymsGameInstance.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -22,6 +22,7 @@ namespace
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
+	const FString ObjectCountValidMetricName = TEXT("ObjectCountValid");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
@@ -37,12 +38,34 @@ namespace
 
 } // anonymous namespace
 
+FPrintTimer::FPrintTimer(float InResetTime)
+	: ResetTime(InResetTime)
+	, Timer(ResetTime)
+{}
+
+void FPrintTimer::SetResetTimer(float InResetTime)
+{
+	ResetTime = InResetTime;
+	Timer = InResetTime;
+}
+
+void FPrintTimer::Tick(float DeltaSeconds)
+{
+	bShouldPrint = false;
+	Timer -= DeltaSeconds;
+	if (Timer <= 0.0f)
+	{
+		Timer = ResetTime;
+		bShouldPrint = true;
+	}
+}
+
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
 	, RequiredPlayers(4096)
-	, PrintUXMetricTimer(10.0f)
+	, PrintMetricsTimer(10.0f)
 	, AveragedClientRTTSeconds(0.0)
 	, AveragedClientUpdateTimeDeltaSeconds(0.0)
 	, MaxClientRoundTripSeconds(150)
@@ -69,6 +92,7 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	ParsePassedValues();
+	BuildExpectedObjectCounts();
 	TryBindWorkerFlagsDelegate();
 	TryAddSpatialMetrics();
 }
@@ -144,6 +168,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
 				}
+
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetObjectCountValid);
+					SpatialMetrics->SetCustomMetric(ObjectCountValidMetricName, Delegate);
+				}
 			}
 		}
 	}
@@ -157,6 +187,12 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickClientFPSCheck(DeltaSeconds);
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
+	TickObjectCountCheck(DeltaSeconds);
+
+	if (HasAuthority())
+	{
+		PrintMetricsTimer.Tick(DeltaSeconds);
+	}
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -201,7 +237,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 	}
 
 	const UWorld* World = GetWorld();
-	const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance());
+	const UGDKTestGymsGameInstance* GameInstance = GetGameInstance<UGDKTestGymsGameInstance>();
 	if (GameInstance == nullptr)
 	{
 		return;
@@ -313,11 +349,45 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 
-	PrintUXMetricTimer -= DeltaSeconds;
-	if (PrintUXMetricTimer < 0.0f)
+	if (PrintMetricsTimer.ShouldPrint())
 	{
-		PrintUXMetricTimer = 10.0f;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
+	}
+}
+
+void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	// This test respects the initial delay timer in both native and GDK
+	if (!bHasObjectCountFailed &&
+		Constants->ObjectCheckDelay.IsReady())
+	{
+		for (const FExpectedObjectCount& ExpectedObjectCount : ExpectedObjectCounts)
+		{
+			const FString& ObjectName = ExpectedObjectCount.ObjectClass->GetName();
+			const int32 ExpectedCount = ExpectedObjectCount.ExpectedCount;
+			const int32 Variance = ExpectedObjectCount.Variance;
+			const int32 ActualCount = static_cast<int32>(ExpectedObjectCount.Delegate.Execute());
+			bHasObjectCountFailed = ActualCount < ExpectedCount - Variance || ActualCount > ExpectedCount + Variance;
+
+			if (bHasObjectCountFailed)
+			{
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was not satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ObjectName, ExpectedCount, ActualCount);
+				break;
+			}
+
+			if (PrintMetricsTimer.ShouldPrint())
+			{
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ObjectName, ExpectedCount, ActualCount);
+			}
+		}
 	}
 }
 
@@ -414,4 +484,15 @@ void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
 void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 {
 	OnTotalNPCsUpdated(TotalNPCs);
+}
+
+double ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
+{
+	const UWorld* World = GetWorld();
+	check(World != nullptr)
+
+	const UCounterComponent* CounterComponent = Cast<UCounterComponent>(GameState->GetComponentByClass(UCounterComponent::StaticClass()));
+	check(CounterComponent != nullptr)
+
+	return static_cast<double>(CounterComponent->GetActorClassCount(ActorClass));
 }
