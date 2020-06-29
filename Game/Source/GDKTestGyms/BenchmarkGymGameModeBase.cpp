@@ -386,7 +386,7 @@ void ABenchmarkGymGameModeBase::TickObjectCountCheck(float DeltaSeconds)
 
 			if (PrintMetricsTimer.ShouldPrint())
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Expected object count was satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Expected object count was satisfied. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 			}
 		}
 	}
