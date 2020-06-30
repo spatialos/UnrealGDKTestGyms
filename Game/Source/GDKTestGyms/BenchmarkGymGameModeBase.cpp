@@ -381,7 +381,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 			if (bHasActorCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), *ActorClassName, ExpectedCount, ActualCount);
 				break;
 			}
 		}
