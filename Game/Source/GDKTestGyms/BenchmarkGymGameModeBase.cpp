@@ -220,7 +220,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Client connection dropped. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 		else
 		{
@@ -254,7 +254,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 		Constants->ServerFPSMetricDelay.IsReady())
 	{
 		bHasFpsFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("NFR scenario failed: Server FPS check. FPS: %.8f"), FPS);
 	}
 }
 
@@ -288,7 +288,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 		Constants->ClientFPSMetricDelay.IsReady())
 	{
 		bHasClientFpsFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("NFR scenario failed: Client FPS check."));
 	}
 }
 
@@ -348,7 +348,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		Constants->UXMetricDelay.IsReady())
 	{
 		bHasUxFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 
 	if (PrintMetricsTimer.ShouldPrint())
@@ -381,7 +381,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 			if (bHasActorCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Actor count check failed. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), ActorClassName, ExpectedCount, ActualCount);
 				break;
 			}
 		}
