@@ -23,7 +23,7 @@ namespace
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
-	const FString ActorCountValidMetricName = TEXT("ActorCountValid");
+	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
