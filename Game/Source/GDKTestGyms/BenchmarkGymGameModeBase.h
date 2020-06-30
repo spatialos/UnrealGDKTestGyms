@@ -14,6 +14,7 @@ class PrintTimer
 {
 public:
 
+	PrintTimer() = default;
 	PrintTimer(float InResetTime);
 
 	void Tick(float DeltaSeconds);
