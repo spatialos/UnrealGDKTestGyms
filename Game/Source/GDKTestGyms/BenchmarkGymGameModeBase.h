@@ -10,12 +10,12 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
-class FPrintTimer
+class PrintTimer
 {
 public:
 
-	FPrintTimer() = default;
-	FPrintTimer(float InResetTime);
+	PrintTimer() = default;
+	PrintTimer(float InResetTime);
 
 	void Tick(float DeltaSeconds);
 	void SetResetTimer(float InResetTime);
@@ -78,8 +78,7 @@ protected:
 private:
 
 	// Test scenarios
-	FPrintTimer PrintMetricsTimer;
-
+	PrintTimer PrintMetricsTimer;
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip

@@ -39,18 +39,18 @@ namespace
 
 } // anonymous namespace
 
-FPrintTimer::FPrintTimer(float InResetTime)
+PrintTimer::PrintTimer(float InResetTime)
 	: ResetTime(InResetTime)
 	, Timer(ResetTime)
 {}
 
-void FPrintTimer::SetResetTimer(float InResetTime)
+void PrintTimer::SetResetTimer(float InResetTime)
 {
 	ResetTime = InResetTime;
 	Timer = InResetTime;
 }
 
-void FPrintTimer::Tick(float DeltaSeconds)
+void PrintTimer::Tick(float DeltaSeconds)
 {
 	bShouldPrint = false;
 	Timer -= DeltaSeconds;
