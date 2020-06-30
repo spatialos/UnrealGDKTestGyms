@@ -377,7 +377,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
 			const int32 Variance = ExpectedActorCount.Variance;
 			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
-			bHasActorCountFailed = ActualCount < ExpectedCount - Variance || ActualCount > ExpectedCount + Variance;
+			bHasActorCountFailed = abs(ActualCount - ExpectedCount) > Variance;
 
 			if (bHasActorCountFailed)
 			{
