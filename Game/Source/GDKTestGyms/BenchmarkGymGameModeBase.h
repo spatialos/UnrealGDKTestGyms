@@ -47,8 +47,6 @@ protected:
 		int32 Variance;
 	};
 
-	TArray<FExpectedActorCount> ExpectedActorCounts;
-
 	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
 
@@ -60,7 +58,9 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
 
-	virtual void BuildExpectedObjectCounts() {};
+	virtual void BuildExpectedActorCounts() {};
+	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
+
 	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
 	virtual void ParsePassedValues();
@@ -88,9 +88,14 @@ private:
 	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
 	bool bHasActorCountFailed;
+	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // A count of visible UX components
 
+	TArray<FExpectedActorCount> ExpectedActorCounts;
+
 	virtual void BeginPlay() override;
+
+	void TryInitialiseExpectedActorCounts();
 
 	void TryBindWorkerFlagsDelegate();
 	void TryAddSpatialMetrics();

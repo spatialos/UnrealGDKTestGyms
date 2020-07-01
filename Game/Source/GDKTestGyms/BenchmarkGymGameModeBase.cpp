@@ -76,6 +76,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
 	, bHasActorCountFailed(false)
+	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
 {
 	SetReplicates(true);
@@ -94,9 +95,28 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	ParsePassedValues();
-	BuildExpectedObjectCounts();
 	TryBindWorkerFlagsDelegate();
 	TryAddSpatialMetrics();
+}
+
+void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
+{
+	if (!bExpectedActorCountsInitialised)
+	{
+		BuildExpectedActorCounts();
+		bExpectedActorCountsInitialised = true;
+	}
+}
+
+void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
+{
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
+
+	FExpectedActorCount ExpectedActorCount;
+	ExpectedActorCount.ActorClass = ActorClass;
+	ExpectedActorCount.ExpectedCount = ExpectedCount;
+	ExpectedActorCount.Variance = Variance;
+	ExpectedActorCounts.Add(ExpectedActorCount);
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -371,6 +391,8 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	if (!bHasActorCountFailed &&
 		Constants->ActorCheckDelay.IsReady())
 	{
+		TryInitialiseExpectedActorCounts();
+
 		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
 		{
 			const FString& ActorClassName = ExpectedActorCount.ActorClass->GetName();

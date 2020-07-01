@@ -27,7 +27,7 @@ public:
 
 protected:
 
-	virtual void BuildExpectedObjectCounts() override;
+	virtual void BuildExpectedActorCounts() override;
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;

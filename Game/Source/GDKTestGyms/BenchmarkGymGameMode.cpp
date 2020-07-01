@@ -165,17 +165,11 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
 
-void ABenchmarkGymGameMode::BuildExpectedObjectCounts()
+void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 {
-	Super::BuildExpectedObjectCounts();
+	Super::BuildExpectedActorCounts();
 
-	{
-		FExpectedActorCount ExpectedActorCount;
-		ExpectedActorCount.ActorClass = NPCBPClass;
-		ExpectedActorCount.ExpectedCount = TotalNPCs;
-		ExpectedActorCount.Variance = 1;
-		ExpectedActorCounts.Add(ExpectedActorCount);
-	}
+	AddExpectedActorCount(NPCBPClass, TotalNPCs, 1);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
