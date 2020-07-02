@@ -166,6 +166,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 				SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 			}
 
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetActorCountValid);
+				SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
+			}
+
 			if (HasAuthority())
 			{
 				{
@@ -190,12 +196,6 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					UserSuppliedMetric Delegate;
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
-				}
-
-				{
-					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetActorCountValid);
-					SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
 				}
 			}
 		}
