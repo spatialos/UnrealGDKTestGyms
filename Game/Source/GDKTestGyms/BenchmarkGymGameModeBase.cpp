@@ -475,7 +475,7 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	{
 		ExpectedPlayers = FCString::Atoi(*FlagValue);
 	}
-	if (FlagName == RequiredPlayersWorkerFlag)
+	else if (FlagName == RequiredPlayersWorkerFlag)
 	{
 		RequiredPlayers = FCString::Atoi(*FlagValue);
 	}
