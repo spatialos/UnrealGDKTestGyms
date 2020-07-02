@@ -30,7 +30,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	ConstructorHelpers::FClassFinder<APawn> NPCBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
+	static ConstructorHelpers::FClassFinder<APawn> NPCBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
 	NPCBPClass = NPCBPClassFinder.Class;
 
 	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));

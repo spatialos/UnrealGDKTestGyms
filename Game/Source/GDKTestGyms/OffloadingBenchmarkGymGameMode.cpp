@@ -8,10 +8,10 @@ DEFINE_LOG_CATEGORY(LogOffloadingBenchmarkGymGameMode);
 
 AOffloadingBenchmarkGymGameMode::AOffloadingBenchmarkGymGameMode()
 {
-	ConstructorHelpers::FClassFinder<AActor> NPCBPClassFinder(TEXT("/Game/OffloadingBenchmark/OffloadingBenchmark_NPC_BP"));
+	static ConstructorHelpers::FClassFinder<AActor> NPCBPClassFinder(TEXT("/Game/OffloadingBenchmark/OffloadingBenchmark_NPC_BP"));
 	NPCBPClass = NPCBPClassFinder.Class;
 
-	ConstructorHelpers::FClassFinder<AActor>  SimulatedPlayerBPClassFinder(TEXT("/Game/OffloadingBenchmark/OffloadingBenchmark_SimulatedPlayer_BP"));
+	static ConstructorHelpers::FClassFinder<AActor>  SimulatedPlayerBPClassFinder(TEXT("/Game/OffloadingBenchmark/OffloadingBenchmark_SimulatedPlayer_BP"));
 	SimulatedPlayerBPClass = SimulatedPlayerBPClassFinder.Class;
 }
 
