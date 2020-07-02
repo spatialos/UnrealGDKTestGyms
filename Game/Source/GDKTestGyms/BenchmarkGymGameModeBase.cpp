@@ -12,6 +12,7 @@
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
 #include "Utils/SpatialMetrics.h"
+#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -379,11 +380,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
@@ -395,6 +391,11 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
 		{
+			if (!USpatialStatics::IsActorGroupOwnerForClass(GetWorld(), ExpectedActorCount.ActorClass))
+			{
+				continue;
+			}
+
 			const FString& ActorClassName = ExpectedActorCount.ActorClass->GetName();
 			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
 			const int32 Variance = ExpectedActorCount.Variance;
