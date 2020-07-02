@@ -475,6 +475,10 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	{
 		ExpectedPlayers = FCString::Atoi(*FlagValue);
 	}
+	if (FlagName == RequiredPlayersWorkerFlag)
+	{
+		RequiredPlayers = FCString::Atoi(*FlagValue);
+	}
 	else if (FlagName == TotalNPCsWorkerFlag)
 	{
 		SetTotalNPCs(FCString::Atoi(*FlagValue));
