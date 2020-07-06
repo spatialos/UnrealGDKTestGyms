@@ -8,6 +8,7 @@
 #include "DeltaSerializeStruct.generated.h"
 
 struct FTestStructContainer;
+class FLifetimeProperty;
 
 USTRUCT(BlueprintType)
 struct FTestStructItem : public FFastArraySerializerItem
@@ -90,7 +91,7 @@ public:
 
 protected:
 
-	void GetLifetimeReplicatedProps(class TArray<class FLifetimeProperty>&) const;
+	void GetLifetimeReplicatedProps(class TArray<FLifetimeProperty>&) const;
 
 	UFUNCTION()
 	void OnRep_Container();

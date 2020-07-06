@@ -46,7 +46,7 @@ void ANetSerializeTestActor::OnRep_Container()
   ReplicationHappened();
 }
 
-void ANetSerializeTestActor::GetLifetimeReplicatedProps(class TArray<class FLifetimeProperty> & OutLifetimeProps) const
+void ANetSerializeTestActor::GetLifetimeReplicatedProps(class TArray<FLifetimeProperty> & OutLifetimeProps) const
 {
   Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
