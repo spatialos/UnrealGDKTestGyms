@@ -218,5 +218,19 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 * Pressing "enter" will print out information on the client regarding the owners of each cube. It will also send a server RPC that will print out if it was successfully processed on the server. 
 * Note that initially no cube is possessed so all server RPCs sent on the cubes will fail. After a cube is possessed, the server RPC called on a cube that does not have a player controller owner will not be processed.
 * Ensure load balancing is turned off.
+
+#### FASAsyncGym
+* Checks an edge case of the GDK handling of FastSerialized Arrays.
+* Native Unreal prevents FAS(FastArraySerialization) callbacks being called on null pointers to loadable assets.
+* This test creates a situation where an asset will be loaded on the backgrounds and pointers to it being replicated early.
+* When async loading completes, the pointers should get valued, and FAS callbacks be called with valid pointers.
+* How to test : 
+  * Play the level.
+  * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
+  * Otherwise, a red text will be displayed, or other error messages.
+* NOTE : This test should be ran with "Single Process" disabled in play settings to be valid.
+  * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
+* NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
+
 -----
 2019-11-15: Page added with editorial review
