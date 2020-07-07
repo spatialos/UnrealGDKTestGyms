@@ -221,9 +221,9 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 
 #### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
-* Native Unreal prevents FAS(FastArraySerialization) callbacks being called on null pointers to loadable assets.
-* This test creates a situation where an asset will be loaded on the backgrounds and pointers to it being replicated early.
-* When async loading completes, the pointers should get valued, and FAS callbacks be called with valid pointers.
+* Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
+* This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
+* When async loading completes the FAS callbacks will be called with valid pointers.
 * How to test : 
   * Play the level.
   * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.

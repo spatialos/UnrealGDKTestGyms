@@ -8,47 +8,46 @@ void FTestStructContainer::PostReplicatedChange(const TArrayView<int32>& Changed
 
 void FTestStructContainer::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
 {
-
 }
 
 void FTestStructContainer::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
 {
-  Owner->NumInvalidItems = 0;
+	Owner->NumInvalidItems = 0;
 
-  for (const auto& CurItem : Items)
-  {
-    if (CurItem.Material == nullptr)
-    {
-      ++Owner->NumInvalidItems;
-    }
-  }
+	for (const auto& CurItem : Items)
+	{
+		if (CurItem.Material == nullptr)
+		{
+			++Owner->NumInvalidItems;
+		}
+	}
 
-  Owner->ReplicationHappened();
+	Owner->ReplicationHappened();
 }
 
-bool FTestStructContainer::NetDeltaSerialize(FNetDeltaSerializeInfo & DeltaParms)
+bool FTestStructContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {
-  return FFastArraySerializer::FastArrayDeltaSerialize<FTestStructItem, FTestStructContainer>(Items, DeltaParms, *this);
+	return FFastArraySerializer::FastArrayDeltaSerialize<FTestStructItem, FTestStructContainer>(Items, DeltaParms, *this);
 }
 
 void ANetSerializeTestActor::OnRep_Container()
 {
-  NumInvalidItems_OnRep = 0;
+	NumInvalidItems_OnRep = 0;
 
-  for (auto const& Item : TestContainer.Items)
-  {
-    if (Item.Material == nullptr)
-    {
-      ++NumInvalidItems_OnRep;
-    }
-  }
+	for (auto const& Item : TestContainer.Items)
+	{
+		if (Item.Material == nullptr)
+		{
+			++NumInvalidItems_OnRep;
+		}
+	}
 
-  ReplicationHappened();
+	ReplicationHappened();
 }
 
-void ANetSerializeTestActor::GetLifetimeReplicatedProps(class TArray<FLifetimeProperty> & OutLifetimeProps) const
+void ANetSerializeTestActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
 {
-  Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-  DOREPLIFETIME(ANetSerializeTestActor, TestContainer);
+	DOREPLIFETIME(ANetSerializeTestActor, TestContainer);
 }

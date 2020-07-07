@@ -52,7 +52,7 @@ struct FTestStructContainer : public FFastArraySerializer
 };
 
 template<>
-struct TStructOpsTypeTraits< FTestStructContainer > : public TStructOpsTypeTraitsBase2< FTestStructContainer >
+struct TStructOpsTypeTraits<FTestStructContainer> : public TStructOpsTypeTraitsBase2<FTestStructContainer>
 {
 	enum
 	{
@@ -91,7 +91,7 @@ public:
 
 protected:
 
-	void GetLifetimeReplicatedProps(class TArray<FLifetimeProperty>&) const;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&) const;
 
 	UFUNCTION()
 	void OnRep_Container();
