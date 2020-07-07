@@ -20,5 +20,5 @@ void AOffloadingBenchmarkGymGameMode::BuildExpectedActorCounts()
 	Super::BuildExpectedActorCounts();
 
 	AddExpectedActorCount(NPCBPClass, TotalNPCs, 1);
-	AddExpectedActorCount(SimulatedPlayerBPClass, RequiredPlayers, 1);
+	AddExpectedActorCount(SimulatedPlayerBPClass, ExpectedPlayers, 1);
 }

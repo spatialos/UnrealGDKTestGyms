@@ -33,6 +33,9 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	static ConstructorHelpers::FClassFinder<APawn> NPCBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
 	NPCBPClass = NPCBPClassFinder.Class;
 
+	static ConstructorHelpers::FClassFinder<AActor> SimulatedPlayerBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/SimulatedPlayerCharacter_BP"));
+	SimulatedPlayerBPClass = SimulatedPlayerBPClassFinder.Class;
+
 	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(TEXT("/Game/Benchmark/DropCube_BP"));
 	DropCubeClass = DropCubeClassFinder.Class;
 
@@ -174,7 +177,9 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 
 	AddExpectedActorCount(NPCBPClass, TotalNPCs, 1);
 
-	const int32 DropCubeCountVariance = TotalNPCs * 0.15f;
+	AddExpectedActorCount(SimulatedPlayerBPClass, ExpectedPlayers, 1);
+
+	const int32 DropCubeCountVariance = (TotalNPCs + ExpectedPlayers) * 0.15f;
 	AddExpectedActorCount(DropCubeClass, TotalNPCs, DropCubeCountVariance);
 }
 
