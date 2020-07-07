@@ -22,13 +22,8 @@ public:
 
 	ABenchmarkGymNPCSpawner();
 
-	void SetNPCClass(TSubclassOf<APawn> NewNPCClass);
-
 	UFUNCTION(Reliable, CrossServer)
-	void CrossServerSpawn(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
+	void CrossServerSpawn(TSubclassOf<APawn> NPCClass, const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
 private:
-
-	UPROPERTY()
-	TSubclassOf<APawn> NPCClass;
 };
