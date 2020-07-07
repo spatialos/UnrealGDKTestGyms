@@ -32,8 +32,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.1"), Category = "Dynamic Load Balancing")
 		float BoundaryChangeStep;
 
-	TArray<FBox2D> DynamicWorkerCells;
-
 	void IncreseActorCounter();
 	void DecreaseActorCounter();
 

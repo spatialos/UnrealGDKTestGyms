@@ -14,10 +14,6 @@ void UDynamicGridBasedLBStrategy::Init()
 	Super::Init();
 
 	ActorCounter = 0;
-	for (auto WorkerCell : WorkerCells)
-	{
-		DynamicWorkerCells.Add(FBox2D(WorkerCell.Min, WorkerCell.Max));
-	}
 }
 
 bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
@@ -54,6 +50,12 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 	/* This line doesn't worker as the actor always have authority when it comes here...
 	if (!Actor.HasAuthority())
 	*/
+
+	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
+	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	if (DynamicWorkerCells.Num() == 0)
+		return ShouldHaveAuthroity;
+
 	// Entering local worker cell
 	if (!IsInside(DynamicWorkerCells[LocalVirtualWorkerId - 1], PrevPos))
 	{
@@ -117,11 +119,11 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 				}
 			}
 			DynamicWorkerCells[LocalVirtualWorkerId - 1] = DynamicWorkerCell;
+			NetDriver->DynamicLBSInfo->DynamicWorkerCells = DynamicWorkerCells;
 
 			UE_LOG(LogDynamicGridBasedLBStrategy, Log, TEXT("Actor entering DynamicWorkerCells[%d] from DynamicWorkerCells[%d], new region: %s"), LocalVirtualWorkerId - 1, PrevWorkCellIndex, *DynamicWorkerCell.ToString());
 
 			// Update SpatialDebugger's WorkerRegions
-			const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
 			auto WorkerRegions = NetDriver->SpatialDebugger->WorkerRegions;
 			WorkerRegions.SetNum(DynamicWorkerCells.Num());
 			for (int i = 0; i < DynamicWorkerCells.Num(); i++)
@@ -147,12 +149,18 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 
 VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor& Actor) const
 {
+	VirtualWorkerId AuthorityWorkerId = Super::WhoShouldHaveAuthority(Actor);
 	// For the specific actors, use the dynamic worker cells for authority check
 	// For other actors, use the static worker cells from the base class.
 	if (!Actor.IsA(ActorClassToMonitor))
 	{
-		return Super::WhoShouldHaveAuthority(Actor);;
+		return AuthorityWorkerId;
 	}
+
+	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
+	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	if (DynamicWorkerCells.Num() == 0)
+		return AuthorityWorkerId;
 
 	const FVector2D Actor2DLocation = FVector2D(SpatialGDK::GetActorSpatialPosition(&Actor));
 
