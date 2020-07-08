@@ -9,5 +9,7 @@ public class GDKTestGymsClientTarget : TargetRules
 	{
 		Type = TargetType.Client;
 		ExtraModuleNames.Add("GDKTestGyms");
-	}
+
+        bUseChecksInShipping = bUseLoggingInShipping = true;
+    }
 }
