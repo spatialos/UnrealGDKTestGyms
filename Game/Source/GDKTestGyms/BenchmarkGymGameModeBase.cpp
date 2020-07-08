@@ -31,6 +31,9 @@ namespace
 	const FString MaxRoundTripCommandLineKey = TEXT("-MaxRoundTrip=");
 	const FString MaxUpdateTimeDeltaCommandLineKey = TEXT("-MaxUpdateTimeDelta=");
 
+	const FString TestLiftimeWorkerFlag = TEXT("test_lifetime");
+	const FString TestLiftimeCommandLineKey = TEXT("-TestLifetime=");
+
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
 	const FString RequiredPlayersWorkerFlag = TEXT("required_players");
@@ -40,34 +43,11 @@ namespace
 
 } // anonymous namespace
 
-PrintTimer::PrintTimer(float InResetTime)
-	: ResetTime(InResetTime)
-	, Timer(ResetTime)
-{}
-
-void PrintTimer::SetResetTimer(float InResetTime)
-{
-	ResetTime = InResetTime;
-	Timer = InResetTime;
-}
-
-void PrintTimer::Tick(float DeltaSeconds)
-{
-	bShouldPrint = false;
-	Timer -= DeltaSeconds;
-	if (Timer <= 0.0f)
-	{
-		Timer = ResetTime;
-		bShouldPrint = true;
-	}
-}
-
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
 	, RequiredPlayers(4096)
-	, PrintMetricsTimer(10.0f)
 	, AveragedClientRTTSeconds(0.0)
 	, AveragedClientUpdateTimeDeltaSeconds(0.0)
 	, MaxClientRoundTripSeconds(150)
@@ -79,6 +59,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasActorCountFailed(false)
 	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
+	, PrintMetricsTimer(10.0f)
+	, TestLifetimeTimer(0.0f)
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
@@ -214,7 +196,10 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 
 	if (HasAuthority())
 	{
-		PrintMetricsTimer.Tick(DeltaSeconds);
+		if (PrintMetricsTimer.HasTimerGoneOff())
+		{
+			PrintMetricsTimer.SetTimer(10.0f);
+		}
 	}
 }
 
@@ -235,7 +220,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->PlayerCheckMetricDelay.IsReady())
+	if (Constants->PlayerCheckMetricDelay.HasTimerGoneOff())
 	{
 		bHasDonePlayerCheck = true;
 		if (ActivePlayers < RequiredPlayers)
@@ -272,7 +257,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 	const float FPS = GameInstance->GetAveragedFPS();
 
 	if (FPS < Constants->GetMinServerFPS() &&
-		Constants->ServerFPSMetricDelay.IsReady())
+		Constants->ServerFPSMetricDelay.HasTimerGoneOff())
 	{
 		bHasFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("NFR scenario failed: Server FPS check. FPS: %.8f"), FPS);
@@ -306,7 +291,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 	check(Constants);
 
 	if (!bClientFpsWasValid &&
-		Constants->ClientFPSMetricDelay.IsReady())
+		Constants->ClientFPSMetricDelay.HasTimerGoneOff())
 	{
 		bHasClientFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("NFR scenario failed: Client FPS check."));
@@ -366,13 +351,13 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	if (!bHasUxFailed &&
 		!bUXMetricValid &&
-		Constants->UXMetricDelay.IsReady())
+		Constants->UXMetricDelay.HasTimerGoneOff())
 	{
 		bHasUxFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 
-	if (PrintMetricsTimer.ShouldPrint())
+	if (PrintMetricsTimer.HasTimerGoneOff())
 	{
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
 	}
@@ -385,7 +370,8 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 	// This test respects the initial delay timer in both native and GDK
 	if (!bHasActorCountFailed &&
-		Constants->ActorCheckDelay.IsReady())
+		Constants->ActorCheckDelay.HasTimerGoneOff() &&
+		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
 
@@ -425,13 +411,17 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
 		SetTotalNPCs(NumNPCs);
 
+		float Lifetime = 0.0f;
+		FParse::Value(*CommandLine, *TestLiftimeCommandLineKey, Lifetime);
+		TestLifetimeTimer.SetTimer(Lifetime);
+
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
+		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -463,6 +453,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				{
 					MaxClientUpdateTimeDeltaSeconds = FCString::Atoi(*MaxUpdateTimeDelta);
 				}
+
+				if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
+				{
+					TestLifetimeTimer.SetTimer(FCString::Atof(*LifetimeString));
+				}
+
 			}
 		}
 	}
@@ -491,6 +487,10 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	else if (FlagName == MaxUpdateTimeDeltaWorkerFlag)
 	{
 		MaxClientUpdateTimeDeltaSeconds = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == TestLiftimeWorkerFlag)
+	{
+		TestLifetimeTimer.SetTimer(FCString::Atof(*FlagValue));
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);

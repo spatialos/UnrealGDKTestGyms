@@ -8,15 +8,15 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNFRConstants, Log, All);
 
-class FMetricDelay
+class FMetricTimer
 {
 public:
 
-	FMetricDelay() = default;
-	FMetricDelay(float InTimeToStart);
+	FMetricTimer() = default;
+	FMetricTimer(float InTimeToStart);
 
-	void SetDelay(float Seconds);
-	bool IsReady() const;
+	void SetTimer(float Seconds);
+	bool HasTimerGoneOff() const;
 
 
 private:
@@ -39,11 +39,11 @@ public:
 	
 	static const UNFRConstants* Get(const UWorld* World);
 
-	FMetricDelay PlayerCheckMetricDelay;
-	FMetricDelay ServerFPSMetricDelay;
-	FMetricDelay ClientFPSMetricDelay;
-	FMetricDelay UXMetricDelay;
-	FMetricDelay ActorCheckDelay;
+	FMetricTimer PlayerCheckMetricDelay;
+	FMetricTimer ServerFPSMetricDelay;
+	FMetricTimer ClientFPSMetricDelay;
+	FMetricTimer UXMetricDelay;
+	FMetricTimer ActorCheckDelay;
 
 private:
 

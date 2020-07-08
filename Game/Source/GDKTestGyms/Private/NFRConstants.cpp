@@ -7,27 +7,27 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-FMetricDelay::FMetricDelay(float Seconds)
+FMetricTimer::FMetricTimer(float Seconds)
 {
-	SetDelay(Seconds);
+	SetTimer(Seconds);
 }
 
-void FMetricDelay::SetDelay(float Seconds)
+void FMetricTimer::SetTimer(float Seconds)
 {
 	TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
 }
 
-bool FMetricDelay::IsReady() const
+bool FMetricTimer::HasTimerGoneOff() const
 {
 	return FDateTime::Now().GetTicks() > TimeToStart;
 }
 
 UNFRConstants::UNFRConstants()
-	: PlayerCheckMetricDelay(15.0f * 60.0f)
+	: PlayerCheckMetricDelay(10.0f * 60.0f)
 	, ServerFPSMetricDelay(2.0f * 60.0f)
 	, ClientFPSMetricDelay(10.0f * 60.0f)
 	, UXMetricDelay(10.0f * 60.0f)
-	, ActorCheckDelay(15.0f * 60.0f)
+	, ActorCheckDelay(10.0f * 60.0f)
 {
 }
 

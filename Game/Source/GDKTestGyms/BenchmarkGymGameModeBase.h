@@ -5,29 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
+#include "NFRConstants.h"
 
 #include "BenchmarkGymGameModeBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
-
-class PrintTimer
-{
-public:
-
-	PrintTimer() = default;
-	PrintTimer(float InResetTime);
-
-	void Tick(float DeltaSeconds);
-	void SetResetTimer(float InResetTime);
-
-	bool ShouldPrint() const { return bShouldPrint; }
-
-private:
-	bool bShouldPrint;
-	float ResetTime;
-	float Timer;
-
-};
 
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
@@ -78,7 +60,7 @@ protected:
 private:
 
 	// Test scenarios
-	PrintTimer PrintMetricsTimer;
+
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
@@ -90,6 +72,9 @@ private:
 	bool bHasActorCountFailed;
 	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // A count of visible UX components
+
+	FMetricTimer PrintMetricsTimer;
+	FMetricTimer TestLifetimeTimer;
 
 	TArray<FExpectedActorCount> ExpectedActorCounts;
 
