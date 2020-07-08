@@ -413,7 +413,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 		float Lifetime = 0.0f;
 		FParse::Value(*CommandLine, *TestLiftimeCommandLineKey, Lifetime);
-		TestLifetimeTimer.SetTimer(Lifetime);
+		SetLifetime(Lifetime);
 
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
@@ -456,7 +456,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 				if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
 				{
-					TestLifetimeTimer.SetTimer(FCString::Atof(*LifetimeString));
+					SetLifetime(FCString::Atof(*LifetimeString));
 				}
 
 			}
@@ -490,7 +490,7 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	}
 	else if (FlagName == TestLiftimeWorkerFlag)
 	{
-		TestLifetimeTimer.SetTimer(FCString::Atof(*FlagValue));
+		SetLifetime(FCString::Atof(*FlagValue));
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
@@ -516,4 +516,10 @@ int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorCla
 	check(CounterComponent != nullptr)
 
 	return CounterComponent->GetActorClassCount(ActorClass);
+}
+
+void ABenchmarkGymGameModeBase::SetLifetime(float Lifetime)
+{
+	TestLifetimeTimer.SetTimer(Lifetime);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Setting NFR test lifetime %d"), Lifetime);
 }
