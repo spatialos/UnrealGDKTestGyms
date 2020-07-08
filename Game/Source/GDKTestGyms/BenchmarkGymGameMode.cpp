@@ -179,8 +179,9 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 
 	AddExpectedActorCount(SimulatedPlayerBPClass, ExpectedPlayers, 1);
 
-	const int32 DropCubeCountVariance = (TotalNPCs + ExpectedPlayers) * 0.15f;
-	AddExpectedActorCount(DropCubeClass, TotalNPCs, DropCubeCountVariance);
+	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
+	const int32 DropCubeCountVariance = TotalDropCubes * 0.15f;
+	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
