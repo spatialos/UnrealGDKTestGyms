@@ -91,9 +91,7 @@ bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)
 	if (SecondsSinceFPSLog > 10.0f) 
 	{
 		SecondsSinceFPSLog = 0.0f;
-#if !WITH_EDITOR // Don't pollute logs in editor
-		UE_LOG(LogTemp, Display, TEXT("FramesPerSecond is %f, 2 min avg is %f"), 1.f / DeltaSeconds, AverageFPS);
-#endif
+		NFR_LOG(LogTemp, Log, TEXT("FramesPerSecond is %f, 2 min avg is %f"), 1.f / DeltaSeconds, AverageFPS);
 	}
 
 	return true;
