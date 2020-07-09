@@ -196,5 +196,19 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 * Initially the player controller will not posses any pawn. This will mean that hitting "enter" will result in no server logs and client logs suggesting that no pawn is owned by the player controller.
 * Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * Ensure multi-worker is turned off.
+
+#### FASAsyncGym
+* Checks an edge case of the GDK handling of FastSerialized Arrays.
+* Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
+* This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
+* When async loading completes the FAS callbacks will be called with valid pointers.
+* How to test : 
+  * Play the level.
+  * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
+  * Otherwise, a red text will be displayed, or other error messages.
+* NOTE : This test should be ran with "Single Process" disabled in play settings to be valid.
+  * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
+* NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
+
 -----
 2019-11-15: Page added with editorial review
