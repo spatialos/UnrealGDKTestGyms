@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "NFRConstants.h"
 #include "SpatialGameInstance.h"
+#include "SpatialMetrics.h"
 
 #include "GDKTestGymsGameInstance.generated.h"
 
@@ -41,6 +42,9 @@ private:
 
 	UPROPERTY()
 	UNFRConstants* NFRConstants;
+
+	void SpatialConnected();
+	void MetricsUpdated(const USpatialMetrics::WorkerGuageMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics);
 
 	float AverageFPS = 60.0f;
 	float SecondsSinceFPSLog = 10.0f;
