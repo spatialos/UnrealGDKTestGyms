@@ -36,6 +36,7 @@ private:
 	TArray<FPSTimePoint> TicksForFPS;
 	float AddAndCalcFps(int64 NowReal, float DeltaS);
 
+	void SpatialConnected();
 	FTickerDelegate TickDelegate;
 	FDelegateHandle TickDelegateHandle;
 
