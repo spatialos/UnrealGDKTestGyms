@@ -7,9 +7,11 @@
 #include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "EngineUtils.h"
+#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
-#include "GDKTestGymsGameInstance.h"
+#include "GameFramework/PlayerStart.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
@@ -84,11 +86,9 @@ void ABenchmarkGymGameMode::CheckCmdLineParameters()
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
 	ClearExistingSpawnPoints();
-
-	SpawnPoints.Reset();
 	GenerateSpawnPointClusters(NumPlayerClusters);
 
-	if (SpawnPoints.Num() != ExpectedPlayers)
+	if (SpawnPoints.Num() < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 	}
@@ -166,11 +166,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 {
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), SpawnPoints);
 	for (AActor* SpawnPoint : SpawnPoints)
 	{
 		SpawnPoint->Destroy();
 	}
+	SpawnPoints.Reset();
+	PlayerIdToSpawnPointMap.Reset();
 }
 
 void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)
@@ -282,8 +283,27 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 }
 
+APlayerController* ABenchmarkGymGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	// Workaround for a player spawning issue UNR-3663
+	SetPrioritizedPlayerStart(nullptr);
+	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
+}
+
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
+	if (!HasAuthority()) // Workaround for a player spawning issue UNR-3663
+	{
+		for (TActorIterator<APlayerStart> It = TActorIterator<APlayerStart>(GetWorld()); It; ++It)
+		{
+			if (It->GetName() == FString(TEXT("DefaultPlayerStart")))
+			{
+				return *It;
+			}
+		}
+		checkf(false, TEXT("Failed to find player start work-around actor"));
+	}
+
 	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0)
