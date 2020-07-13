@@ -23,11 +23,11 @@ bool FMetricTimer::HasTimerGoneOff() const
 }
 
 UNFRConstants::UNFRConstants()
-	: PlayerCheckMetricDelay(10.0f * 60.0f)
-	, ServerFPSMetricDelay(2.0f * 60.0f)
-	, ClientFPSMetricDelay(10.0f * 60.0f)
-	, UXMetricDelay(10.0f * 60.0f)
-	, ActorCheckDelay(0.1f * 60.0f)
+	: PlayerCheckMetricDelay(10 * 60)
+	, ServerFPSMetricDelay(60)
+	, ClientFPSMetricDelay(60)
+	, UXMetricDelay(10 * 60)
+	, ActorCheckDelay(10 * 60)
 {
 }
 
