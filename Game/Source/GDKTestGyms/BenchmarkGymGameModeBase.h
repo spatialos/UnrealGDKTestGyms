@@ -100,7 +100,7 @@ private:
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bHasActorCountFailed ? 1.0 : 0.0; }
 
-	void SetLifetime(float Lifetime);
+	void SetLifetime(int32 Lifetime);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

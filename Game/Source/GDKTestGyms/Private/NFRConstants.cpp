@@ -7,12 +7,12 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-FMetricTimer::FMetricTimer(float Seconds)
+FMetricTimer::FMetricTimer(int32 Seconds)
 {
 	SetTimer(Seconds);
 }
 
-void FMetricTimer::SetTimer(float Seconds)
+void FMetricTimer::SetTimer(int32 Seconds)
 {
 	TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
 }
@@ -27,7 +27,7 @@ UNFRConstants::UNFRConstants()
 	, ServerFPSMetricDelay(2.0f * 60.0f)
 	, ClientFPSMetricDelay(10.0f * 60.0f)
 	, UXMetricDelay(10.0f * 60.0f)
-	, ActorCheckDelay(10.0f * 60.0f)
+	, ActorCheckDelay(0.1f * 60.0f)
 {
 }
 

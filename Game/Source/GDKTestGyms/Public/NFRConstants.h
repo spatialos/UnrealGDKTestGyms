@@ -13,9 +13,9 @@ class FMetricTimer
 public:
 
 	FMetricTimer() = default;
-	FMetricTimer(float InTimeToStart);
+	FMetricTimer(int32 InTimeToStart);
 
-	void SetTimer(float Seconds);
+	void SetTimer(int32 Seconds);
 	bool HasTimerGoneOff() const;
 
 
