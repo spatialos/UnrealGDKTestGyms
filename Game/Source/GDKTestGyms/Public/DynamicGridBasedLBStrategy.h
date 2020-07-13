@@ -6,11 +6,6 @@
 #include "LoadBalancing/GridBasedLBStrategy.h"
 #include "DynamicGridBasedLBStrategy.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogDynamicGridBasedLBStrategy, Log, All)
-
-/**
- * 
- */
 UCLASS()
 class GDKTESTGYMS_API UDynamicGridBasedLBStrategy : public UGridBasedLBStrategy
 {
@@ -32,10 +27,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.1"), Category = "Dynamic Load Balancing")
 		float BoundaryChangeStep;
 
-	void IncreseActorCounter();
-	void DecreaseActorCounter();
-
 private:
-	uint32 ActorCounter;
 	TMap<TWeakObjectPtr<AActor>, FVector2D> ActorPrevPositions;
+
+	void UpdateWorkerBounds(const FVector2D PrevPos, const FVector2D Actor2DLocation, const int32 FromWorkerCellIndex, const int32 ToWorkerCellIndex);
 };

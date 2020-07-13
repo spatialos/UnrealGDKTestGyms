@@ -7,144 +7,11 @@
 #include "SpatialNetDriver.h"
 #include "SpatialActorUtils.h"
 
-DEFINE_LOG_CATEGORY(LogDynamicGridBasedLBStrategy);
+DEFINE_LOG_CATEGORY(LogDynamicLBStrategy);
 
 void UDynamicGridBasedLBStrategy::Init()
 {
 	Super::Init();
-
-	ActorCounter = 0;
-}
-
-bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
-{
-	bool ShouldHaveAuthroity = Super::ShouldHaveAuthority(Actor);
-	if (!Actor.IsA(ActorClassToMonitor))
-	{
-		// We only cares actors of the specific type
-		return ShouldHaveAuthroity;
-	}
-
-	const FVector2D* PrevPosPtr = ActorPrevPositions.Find(&Actor);
-	const FVector2D PrevPos = PrevPosPtr != nullptr ? *PrevPosPtr : FVector2D::ZeroVector;
-	const FVector2D Actor2DLocation = FVector2D(SpatialGDK::GetActorSpatialPosition(&Actor));
-	ActorPrevPositions.Add(&Actor, Actor2DLocation);
-
-	if (!ShouldHaveAuthroity)
-	{
-		if (Actor.HasAuthority())
-		{
-			// Lose authority
-			DecreaseActorCounter();
-		}
-		return false;
-	}
-	
-	// Spawn into local worker cell
-	if (PrevPosPtr == nullptr)
-	{
-		IncreseActorCounter();
-		return true;
-	}
-
-	/* This line doesn't worker as the actor always have authority when it comes here...
-	if (!Actor.HasAuthority())
-	*/
-
-	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
-	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
-	if (DynamicWorkerCells.Num() == 0)
-		return ShouldHaveAuthroity;
-
-	// Entering local worker cell
-	if (!IsInside(DynamicWorkerCells[LocalVirtualWorkerId - 1], PrevPos))
-	{
-		if (ActorCounter >= MaxActorLoad)
-		{
-			// Update worker cell boundaries (both local worker and the worker where the actor comes from)
-			auto DynamicWorkerCell = DynamicWorkerCells[LocalVirtualWorkerId - 1];
-			auto PrevWorkCellIndex = DynamicWorkerCells.IndexOfByPredicate([PrevPos](const FBox2D& Cell)
-			{
-				return IsInside(Cell, PrevPos);
-			});
-
-			// X-axis dynamic change
-			if (PrevPos.X < DynamicWorkerCell.Min.X || PrevPos.X > DynamicWorkerCell.Max.X)
-			{
-				// Coming from left region
-				if (DynamicWorkerCell.GetCenter().X > Actor2DLocation.X)
-				{
-					DynamicWorkerCell.Min.X = Actor2DLocation.X + BoundaryChangeStep;
-					if (PrevWorkCellIndex != INDEX_NONE)
-					{
-						auto PrevWorkerCell = DynamicWorkerCells[PrevWorkCellIndex];
-						PrevWorkerCell.Max.X = DynamicWorkerCell.Min.X;
-						DynamicWorkerCells[PrevWorkCellIndex] = PrevWorkerCell;
-					}
-				}
-				else
-				{
-					DynamicWorkerCell.Max.X = Actor2DLocation.X - BoundaryChangeStep;
-					if (PrevWorkCellIndex != INDEX_NONE)
-					{
-						auto PrevWorkerCell = DynamicWorkerCells[PrevWorkCellIndex];
-						PrevWorkerCell.Min.X = DynamicWorkerCell.Max.X;
-						DynamicWorkerCells[PrevWorkCellIndex] = PrevWorkerCell;
-					}
-				}
-			}
-			// Y-axis dynamic change
-			else if (PrevPos.Y < DynamicWorkerCell.Min.Y || PrevPos.Y > DynamicWorkerCell.Max.Y)
-			{
-				// Coming from bottom region
-				if (DynamicWorkerCell.GetCenter().Y > Actor2DLocation.Y)
-				{
-					DynamicWorkerCell.Min.Y = Actor2DLocation.Y + BoundaryChangeStep;
-					if (PrevWorkCellIndex != INDEX_NONE)
-					{
-						auto PrevWorkerCell = DynamicWorkerCells[PrevWorkCellIndex];
-						PrevWorkerCell.Max.Y = DynamicWorkerCell.Min.Y;
-						DynamicWorkerCells[PrevWorkCellIndex] = PrevWorkerCell;
-					}
-				}
-				else
-				{
-					DynamicWorkerCell.Max.Y = Actor2DLocation.Y - BoundaryChangeStep;
-					if (PrevWorkCellIndex != INDEX_NONE)
-					{
-						auto PrevWorkerCell = DynamicWorkerCells[PrevWorkCellIndex];
-						PrevWorkerCell.Min.Y = DynamicWorkerCell.Max.Y;
-						DynamicWorkerCells[PrevWorkCellIndex] = PrevWorkerCell;
-					}
-				}
-			}
-			DynamicWorkerCells[LocalVirtualWorkerId - 1] = DynamicWorkerCell;
-			NetDriver->DynamicLBSInfo->DynamicWorkerCells = DynamicWorkerCells;
-
-			UE_LOG(LogDynamicGridBasedLBStrategy, Log, TEXT("Actor entering DynamicWorkerCells[%d] from DynamicWorkerCells[%d], new region: %s"), LocalVirtualWorkerId - 1, PrevWorkCellIndex, *DynamicWorkerCell.ToString());
-
-			// Update SpatialDebugger's WorkerRegions
-			auto WorkerRegions = NetDriver->SpatialDebugger->WorkerRegions;
-			WorkerRegions.SetNum(DynamicWorkerCells.Num());
-			for (int i = 0; i < DynamicWorkerCells.Num(); i++)
-			{
-				const PhysicalWorkerName* WorkerName = NetDriver->VirtualWorkerTranslator->GetPhysicalWorkerForVirtualWorker(i + 1);
-				FWorkerRegionInfo WorkerRegionInfo;
-				WorkerRegionInfo.Color = (WorkerName == nullptr) ? FColor::Magenta : WorkerRegions[i].Color;//SpatialGDK::GetColorForWorkerName(*WorkerName);
-				WorkerRegionInfo.Extents = DynamicWorkerCells[i];
-				WorkerRegions[i] = WorkerRegionInfo;
-			}
-			NetDriver->SpatialDebugger->WorkerRegions = WorkerRegions;
-
-			return false;
-		}
-		else
-		{
-			IncreseActorCounter();
-		}
-	}
-
-	return true;
 }
 
 VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor& Actor) const
@@ -162,19 +29,169 @@ VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor
 	if (DynamicWorkerCells.Num() == 0)
 		return AuthorityWorkerId;
 
+	AuthorityWorkerId = SpatialConstants::INVALID_VIRTUAL_WORKER_ID;
 	const FVector2D Actor2DLocation = FVector2D(SpatialGDK::GetActorSpatialPosition(&Actor));
-
 	for (int i = 0; i < DynamicWorkerCells.Num(); i++)
 	{
 		if (IsInside(DynamicWorkerCells[i], Actor2DLocation))
 		{
-			return VirtualWorkerIds[i];
+			AuthorityWorkerId = VirtualWorkerIds[i];
+			break;
 		}
 	}
 
-	return SpatialConstants::INVALID_VIRTUAL_WORKER_ID;
+	UE_LOG(LogDynamicLBStrategy, Log, TEXT("VirtualWorker[%d] called WhoShouldHaveAuthority() of Actor %s: %d"), LocalVirtualWorkerId, *Actor.GetFName().ToString(), AuthorityWorkerId);
+
+	return AuthorityWorkerId;
 
 }
+
+bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
+{
+	bool ShouldHaveAuthroity = Super::ShouldHaveAuthority(Actor);
+	if (!Actor.IsA(ActorClassToMonitor))
+	{
+		// We only cares actors of the specific type
+		return ShouldHaveAuthroity;
+	}
+
+	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
+
+	// Store the actor's position for checking if the actor is moving in/out of worker bounds
+	const FVector2D* PrevPosPtr = ActorPrevPositions.Find(&Actor);
+	const FVector2D PrevPos = PrevPosPtr != nullptr ? *PrevPosPtr : FVector2D::ZeroVector;
+	const FVector2D Actor2DLocation = FVector2D(SpatialGDK::GetActorSpatialPosition(&Actor));
+	ActorPrevPositions.Add(&Actor, Actor2DLocation);
+
+	if (PrevPosPtr == nullptr)
+	{
+		// Can always spawn into local worker cell
+		if (ShouldHaveAuthroity)
+		{
+			NetDriver->DynamicLBSInfo->IncreseActorCounter(LocalVirtualWorkerId);
+		}
+		return ShouldHaveAuthroity;
+	}
+
+	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	if (DynamicWorkerCells.Num() == 0)
+		return ShouldHaveAuthroity;
+
+	UE_LOG(LogDynamicLBStrategy, Log, TEXT("VirtualWorker[%d] called ShouldHaveAuthority() of Actor %s"), LocalVirtualWorkerId, *Actor.GetFName().ToString());
+
+	auto LocalWorkerCell = DynamicWorkerCells[LocalVirtualWorkerId - 1];
+	// Leaving local worker cell
+	if (!IsInside(LocalWorkerCell, Actor2DLocation))
+	{
+		if (IsInside(LocalWorkerCell, PrevPos))
+		{
+			int32 ToWorkerCellIndex = DynamicWorkerCells.IndexOfByPredicate([Actor2DLocation](const FBox2D& Cell)
+			{
+				return IsInside(Cell, Actor2DLocation);
+			});
+			if (ToWorkerCellIndex != INDEX_NONE)
+			{
+				uint32 ToWorkerActorCounter = NetDriver->DynamicLBSInfo->GetActorCounter(ToWorkerCellIndex + 1);
+				if (ToWorkerActorCounter >= MaxActorLoad)
+				{
+					UpdateWorkerBounds(PrevPos, Actor2DLocation, LocalVirtualWorkerId - 1, ToWorkerCellIndex);
+					return true;
+				}
+			}
+		}
+		else
+		{
+			// Local worker cell is changed by the movement of other actor.
+			// In this case, the actor will lose authority.
+			return false;
+		}
+	}
+	// Entering local worker cell
+	else if (!IsInside(LocalWorkerCell, PrevPos))
+	{
+		uint32 ActorCounter = NetDriver->DynamicLBSInfo->GetActorCounter(LocalVirtualWorkerId);
+		if (ActorCounter >= MaxActorLoad)
+		{
+			int32 ToWorkerCellIndex = LocalVirtualWorkerId - 1;
+			int32 FromWorkerCellIndex = DynamicWorkerCells.IndexOfByPredicate([PrevPos](const FBox2D& Cell)
+			{
+				return IsInside(Cell, PrevPos);
+			});
+
+			// Update worker cell bounds (both local worker and the worker where the actor comes from)
+			UpdateWorkerBounds(PrevPos, Actor2DLocation, FromWorkerCellIndex, ToWorkerCellIndex);
+
+			return false;
+		}
+		else
+		{
+			NetDriver->DynamicLBSInfo->IncreseActorCounter(LocalVirtualWorkerId);
+		}
+	}
+
+	return true;
+}
+
+void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, const FVector2D Actor2DLocation, const int32 FromWorkerCellIndex, const int32 ToWorkerCellIndex)
+{
+	if (FromWorkerCellIndex == INDEX_NONE || ToWorkerCellIndex == INDEX_NONE)
+		return;
+
+	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
+	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	auto FromWorkerCell = DynamicWorkerCells[FromWorkerCellIndex];
+	auto ToWorkerCell = DynamicWorkerCells[ToWorkerCellIndex];
+
+	// X-axis dynamic change
+	if (PrevPos.X < ToWorkerCell.Min.X || PrevPos.X > ToWorkerCell.Max.X)
+	{
+		// Coming from left region
+		if (ToWorkerCell.GetCenter().X > Actor2DLocation.X)
+		{
+			ToWorkerCell.Min.X = Actor2DLocation.X + BoundaryChangeStep;
+			FromWorkerCell.Max.X = ToWorkerCell.Min.X;
+		}
+		else
+		{
+			ToWorkerCell.Max.X = Actor2DLocation.X - BoundaryChangeStep;
+			FromWorkerCell.Min.X = ToWorkerCell.Max.X;
+		}
+	}
+	// Y-axis dynamic change
+	else if (PrevPos.Y < ToWorkerCell.Min.Y || PrevPos.Y > ToWorkerCell.Max.Y)
+	{
+		// Coming from bottom region
+		if (ToWorkerCell.GetCenter().Y > Actor2DLocation.Y)
+		{
+			ToWorkerCell.Min.Y = Actor2DLocation.Y + BoundaryChangeStep;
+			FromWorkerCell.Max.Y = ToWorkerCell.Min.Y;
+		}
+		else
+		{
+			ToWorkerCell.Max.Y = Actor2DLocation.Y - BoundaryChangeStep;
+			FromWorkerCell.Min.Y = ToWorkerCell.Max.Y;
+		}
+	}
+	DynamicWorkerCells[FromWorkerCellIndex] = FromWorkerCell;
+	DynamicWorkerCells[ToWorkerCellIndex] = ToWorkerCell;
+	NetDriver->DynamicLBSInfo->DynamicWorkerCells = DynamicWorkerCells;
+
+	UE_LOG(LogDynamicLBStrategy, Warning, TEXT("VirtualWorker[%d] updated worker cells: [%d] = %s, [%d] = %s"), LocalVirtualWorkerId, FromWorkerCellIndex, *FromWorkerCell.ToString(), ToWorkerCellIndex, *ToWorkerCell.ToString());
+
+	// Update SpatialDebugger's WorkerRegions
+	auto WorkerRegions = NetDriver->SpatialDebugger->WorkerRegions;
+	WorkerRegions.SetNum(DynamicWorkerCells.Num());
+	for (int i = 0; i < DynamicWorkerCells.Num(); i++)
+	{
+		const PhysicalWorkerName* WorkerName = NetDriver->VirtualWorkerTranslator->GetPhysicalWorkerForVirtualWorker(i + 1);
+		FWorkerRegionInfo WorkerRegionInfo;
+		WorkerRegionInfo.Color = (WorkerName == nullptr) ? FColor::Magenta : WorkerRegions[i].Color;//SpatialGDK::GetColorForWorkerName(*WorkerName);
+		WorkerRegionInfo.Extents = DynamicWorkerCells[i];
+		WorkerRegions[i] = WorkerRegionInfo;
+	}
+	NetDriver->SpatialDebugger->WorkerRegions = WorkerRegions;
+}
+/*
 
 void UDynamicGridBasedLBStrategy::IncreseActorCounter()
 {
@@ -190,3 +207,4 @@ void UDynamicGridBasedLBStrategy::DecreaseActorCounter()
 		UE_LOG(LogDynamicGridBasedLBStrategy, Log, TEXT("VirtualWorker %d decreased actor counter to: %d"), LocalVirtualWorkerId, ActorCounter);
 	}
 }
+*/
