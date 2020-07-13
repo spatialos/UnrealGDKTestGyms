@@ -15,6 +15,7 @@ ABenchmarkGymNPCSpawner::ABenchmarkGymNPCSpawner()
 		NPCPawnClass = NPCBPClass.Class;
 	}
 	SetReplicates(true);
+	bAlwaysRelevant = true;
 }
 
 void ABenchmarkGymNPCSpawner::CrossServerSpawn_Implementation(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
