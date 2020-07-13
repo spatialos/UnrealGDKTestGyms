@@ -22,6 +22,14 @@ bool FMetricTimer::HasTimerGoneOff() const
 	return FDateTime::Now().GetTicks() > TimeToStart;
 }
 
+int32 FMetricTimer::GetSecondsRemaining() const
+{
+	int32 SecondsRemaining = TimeToStart - FDateTime::Now().GetTicks();
+	SecondsRemaining = SecondsRemaining < 0 ? 0 : SecondsRemaining;
+	return SecondsRemaining;
+}
+
+
 UNFRConstants::UNFRConstants()
 	: PlayerCheckMetricDelay(10 * 60)
 	, ServerFPSMetricDelay(60)

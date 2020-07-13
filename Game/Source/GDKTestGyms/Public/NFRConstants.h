@@ -17,7 +17,7 @@ public:
 
 	void SetTimer(int32 Seconds);
 	bool HasTimerGoneOff() const;
-
+	int32 GetSecondsRemaining() const;
 
 private:
 	int64 TimeToStart;
