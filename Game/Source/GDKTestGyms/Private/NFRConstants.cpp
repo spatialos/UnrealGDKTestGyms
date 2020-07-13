@@ -24,7 +24,8 @@ bool FMetricTimer::HasTimerGoneOff() const
 
 int32 FMetricTimer::GetSecondsRemaining() const
 {
-	int32 SecondsRemaining = TimeToStart - FDateTime::Now().GetTicks();
+	FTimespan Timespan = FTimespan(TimeToStart - FDateTime::Now().GetTicks());
+	int32 SecondsRemaining = Timespan.GetTotalSeconds();
 	SecondsRemaining = SecondsRemaining < 0 ? 0 : SecondsRemaining;
 	return SecondsRemaining;
 }
