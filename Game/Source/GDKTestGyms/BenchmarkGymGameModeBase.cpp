@@ -391,7 +391,6 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			if (bHasActorCountFailed)
 			{
 				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), *ActorClassName, ExpectedCount, ActualCount);
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("GetSecondsRemaining %d"), TestLifetimeTimer.GetSecondsRemaining());
 				break;
 			}
 		}
@@ -521,6 +520,14 @@ int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorCla
 
 void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 {
-	TestLifetimeTimer.SetTimer(Lifetime);
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Setting NFR test lifetime %d"), Lifetime);
+	bool bSetTimer = TestLifetimeTimer.SetTimer(Lifetime);
+	if (bSetTimer)
+	{
+		TestLifetimeTimer.SetLock(true);
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Setting NFR test lifetime %d"), Lifetime);
+	}
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Could not set NFR test liftime to %D. Timer was locked."), Lifetime);
+	}
 }

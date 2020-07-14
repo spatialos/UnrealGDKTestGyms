@@ -8,13 +8,23 @@
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
 FMetricTimer::FMetricTimer(int32 Seconds)
+	: bLocked(false)
 {
 	SetTimer(Seconds);
 }
 
-void FMetricTimer::SetTimer(int32 Seconds)
+bool FMetricTimer::SetTimer(int32 Seconds)
 {
-	TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
+	if (!bLocked)
+	{
+		TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
+	}
+	return !bLocked;
+}
+
+void FMetricTimer::SetLock(bool bState)
+{
+	bLocked = bState;
 }
 
 bool FMetricTimer::HasTimerGoneOff() const

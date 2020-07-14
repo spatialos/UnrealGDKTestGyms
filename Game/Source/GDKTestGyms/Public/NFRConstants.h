@@ -15,11 +15,15 @@ public:
 	FMetricTimer() = default;
 	FMetricTimer(int32 InTimeToStart);
 
-	void SetTimer(int32 Seconds);
+	bool SetTimer(int32 Seconds);
+	void SetLock(bool bState);
+
 	bool HasTimerGoneOff() const;
 	int32 GetSecondsRemaining() const;
 
 private:
+
+	bool bLocked;
 	int64 TimeToStart;
 };
 
