@@ -528,6 +528,6 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 	else
 	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Could not set NFR test liftime to %D. Timer was locked."), Lifetime);
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
 	}
 }
