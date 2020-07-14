@@ -12,6 +12,13 @@ DEFINE_LOG_CATEGORY(LogDynamicLBStrategy);
 void UDynamicGridBasedLBStrategy::Init()
 {
 	Super::Init();
+
+	NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
+
+	if (NetDriver->DynamicLBSInfo)
+	{
+		NetDriver->DynamicLBSInfo->Init(WorkerCells);
+	}
 }
 
 VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor& Actor) const
@@ -24,7 +31,6 @@ VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor
 		return AuthorityWorkerId;
 	}
 
-	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
 	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
 	if (DynamicWorkerCells.Num() == 0)
 		return AuthorityWorkerId;
@@ -54,8 +60,6 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 		// We only cares actors of the specific type
 		return ShouldHaveAuthroity;
 	}
-
-	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
 
 	// Store the actor's position for checking if the actor is moving in/out of worker bounds
 	const FVector2D* PrevPosPtr = ActorPrevPositions.Find(&Actor);
@@ -137,7 +141,6 @@ void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, co
 	if (FromWorkerCellIndex == INDEX_NONE || ToWorkerCellIndex == INDEX_NONE)
 		return;
 
-	const USpatialNetDriver* NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
 	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
 	auto FromWorkerCell = DynamicWorkerCells[FromWorkerCellIndex];
 	auto ToWorkerCell = DynamicWorkerCells[ToWorkerCellIndex];
@@ -191,20 +194,3 @@ void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, co
 	}
 	NetDriver->SpatialDebugger->WorkerRegions = WorkerRegions;
 }
-/*
-
-void UDynamicGridBasedLBStrategy::IncreseActorCounter()
-{
-	ActorCounter++;
-	UE_LOG(LogDynamicGridBasedLBStrategy, Log, TEXT("VirtualWorker %d increased actor counter to: %d"), LocalVirtualWorkerId, ActorCounter);
-}
-
-void UDynamicGridBasedLBStrategy::DecreaseActorCounter()
-{
-	if (ActorCounter > 0)
-	{
-		ActorCounter--;
-		UE_LOG(LogDynamicGridBasedLBStrategy, Log, TEXT("VirtualWorker %d decreased actor counter to: %d"), LocalVirtualWorkerId, ActorCounter);
-	}
-}
-*/
