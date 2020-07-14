@@ -26,19 +26,24 @@ void UGDKTestGymsGameInstance::Init()
 
 void UGDKTestGymsGameInstance::SpatialConnected()
 {
-	Cast<USpatialNetDriver>(GetWorld()->GetNetDriver())->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGuageMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
-		{
-			for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
+	UNetDriver * NetDriver = GEngine->FindNamedNetDriver(GetWorld(), NAME_PendingNetDriver);
+	USpatialNetDriver* SpatialNetDriver = Cast<USpatialNetDriver>(NetDriver);
+	if (SpatialNetDriver)
+	{
+		SpatialNetDriver->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGuageMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
 			{
-				if (Metric.Key == "kcp_resends_by_packet" && Metric.Value.Sum > 0)
+				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
 				{
-					for (const auto& X : Metric.Value.Buckets)
+					if (Metric.Key == "kcp_resends_by_packet" && Metric.Value.Sum > 0)
 					{
-						UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), X.Key, X.Value);
+						for (const auto& X : Metric.Value.Buckets)
+						{
+							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), X.Key, X.Value);
+						}
 					}
 				}
-			}
-		});
+			});
+	}	
 }
 
 void UGDKTestGymsGameInstance::OnStart()
