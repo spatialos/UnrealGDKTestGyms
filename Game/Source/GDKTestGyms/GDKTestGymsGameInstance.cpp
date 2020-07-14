@@ -34,11 +34,11 @@ void UGDKTestGymsGameInstance::SpatialConnected()
 			{
 				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
 				{
-					if (Metric.Key == "kcp_resends_by_packet" && Metric.Value.Sum > 0)
+					if (Metric.Key == TEXT("kcp_resends_by_packet") && Metric.Value.Sum > 0)
 					{
-						for (const auto& X : Metric.Value.Buckets)
+						for (const auto& Bucket : Metric.Value.Buckets)
 						{
-							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), X.Key, X.Value);
+							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), Bucket.Key, Bucket.Value);
 						}
 					}
 				}
