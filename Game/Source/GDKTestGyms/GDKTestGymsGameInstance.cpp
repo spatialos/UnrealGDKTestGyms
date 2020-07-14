@@ -34,7 +34,7 @@ void UGDKTestGymsGameInstance::SpatialConnected()
 			{
 				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
 				{
-					if (Metric.Key == TEXT("kcp_resends_by_packet") && Metric.Value.Sum > 0)
+					if (Metric.Key == TEXT("kcp_resends_by_packet") && Metric.Value.Sum > 0.0)
 					{
 						for (const auto& Bucket : Metric.Value.Buckets)
 						{
