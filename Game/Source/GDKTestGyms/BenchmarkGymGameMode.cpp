@@ -30,24 +30,8 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FClassFinder<APawn> NPCBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
-	NPCBPClass = NPCBPClassFinder.Class;
-
-	static ConstructorHelpers::FClassFinder<AActor> SimulatedPlayerBPClassFinder(TEXT("/Game/Characters/SimulatedPlayers/SimulatedPlayerCharacter_BP"));
-	SimulatedPlayerBPClass = SimulatedPlayerBPClassFinder.Class;
-
 	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(TEXT("/Game/Benchmark/DropCube_BP"));
 	DropCubeClass = DropCubeClassFinder.Class;
-
-	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));
-	DefaultPawnClass = PawnClass.Class;
-	PlayerControllerClass = APlayerController::StaticClass();
-
-	static ConstructorHelpers::FClassFinder<APawn> SimulatedBPPawnClass(TEXT("/Game/Characters/SimulatedPlayers/SimulatedPlayerCharacter_BP"));
-	if (SimulatedBPPawnClass.Class != NULL)
-	{
-		SimulatedPawnClass = SimulatedBPPawnClass.Class;
-	}
 }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
@@ -175,10 +159,6 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 {
 	Super::BuildExpectedActorCounts();
 
-	AddExpectedActorCount(NPCBPClass, TotalNPCs, 1);
-
-	AddExpectedActorCount(SimulatedPlayerBPClass, ExpectedPlayers, 1);
-
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = TotalDropCubes * 0.15f;
 	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
@@ -295,7 +275,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 	if (NPCSpawner != nullptr)
 	{
-		NPCSpawner->CrossServerSpawn(NPCBPClass, SpawnLocation, BlackboardValues);
+		NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
 	}
 	else
 	{

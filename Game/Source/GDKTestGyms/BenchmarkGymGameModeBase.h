@@ -40,7 +40,12 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
 
-	virtual void BuildExpectedActorCounts() {}
+	int32 NPCSToSpawn;
+
+	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
+	TSubclassOf<APawn> NPCClass;
+
+	virtual void BuildExpectedActorCounts();
 	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
 
 	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;

@@ -91,6 +91,12 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 	}
 }
 
+void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
+{
+	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
+	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
+}
+
 void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);

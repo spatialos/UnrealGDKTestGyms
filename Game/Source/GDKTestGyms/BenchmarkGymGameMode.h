@@ -50,8 +50,6 @@ private:
 	TArray<AActor*> SpawnPoints;
 	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
-	TSubclassOf<APawn> NPCBPClass;
-	TSubclassOf<APawn> SimulatedPlayerBPClass;
 	TSubclassOf<AActor> DropCubeClass;
 	int32 NPCSToSpawn;
 
