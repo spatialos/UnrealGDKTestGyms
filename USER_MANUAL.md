@@ -178,6 +178,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Play with 2 clients connected.
   * Each connected client should display a log with "UTask_DelaySimulated::InitSimulatedTask".
   * There should not be logs saying "Error: Simulated task is simulating on the owning client".
+
 ##### Client Net Ownership gym
 * Demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
@@ -211,6 +212,17 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
   * Set "Instances to launch in editor" to 4
 * Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
 * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermitantly. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+
+##### Teleporting gym.
+* Tests actor migration when load balancing is enabled.
+* NOTE : This gym is likely to have random failures, as we are still working on load balancing.
+* The gym is separated in 4 load balanced zones, and spawns a character which can teleport around.
+* How to test : 
+  * The character can walk around the center of the map, migrating between zones
+  * Pressing T teleports the character to another zone.
+    * This is a sharp transition far away from boundaries, to test when border interest is absent.
+  * Pressing R spawns a new character in a different zone and posesses it.
+    * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
 
 -----
 2019-11-15: Page added with editorial review
