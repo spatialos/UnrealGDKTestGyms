@@ -216,6 +216,7 @@ Actors used in gyms are in `Contetnt\Actors`: add any new Actors to this directo
 ##### Teleporting gym.
 * Tests actor migration when load balancing is enabled.
 * NOTE : This gym is likely to have random failures, as we are still working on load balancing.
+* Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
 * The gym is separated in 4 load balanced zones, and spawns a character which can teleport around.
 * How to test : 
   * The character can walk around the center of the map, migrating between zones
