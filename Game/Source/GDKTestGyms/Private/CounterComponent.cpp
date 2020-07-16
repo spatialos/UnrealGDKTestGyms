@@ -8,6 +8,7 @@
 DEFINE_LOG_CATEGORY(LogCounterComponent);
 
 UCounterComponent::UCounterComponent()
+	: Timer(0.0f)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -20,7 +21,7 @@ void UCounterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	if (Timer <= 0.0f)
 	{
 		Timer = ReportFrequency;
-		CountClasses();
+		UpdateCachedActorCounts();
 	}
 }
 
@@ -36,12 +37,13 @@ int32 UCounterComponent::GetActorClassCount(TSubclassOf<AActor> ActorClass) cons
 	return *CachedCount;
 }
 
-void UCounterComponent::CountClasses()
+void UCounterComponent::UpdateCachedActorCounts()
 {
+	const UWorld* World = GetWorld();
 	for (TSubclassOf<AActor> ActorClass : ClassesToCount)
 	{
 		TArray<AActor*> Actors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ActorClass, Actors);
+		UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
 		int32& CachedCount = CachedClassCounts.FindOrAdd(ActorClass);
 		CachedCount = Actors.Num();
 

@@ -46,8 +46,6 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
 
-	int32 NPCSToSpawn;
-
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<APawn> NPCClass;
 

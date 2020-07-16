@@ -195,12 +195,10 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
 
-	if (HasAuthority())
+	if (HasAuthority() &&
+		PrintMetricsTimer.HasTimerGoneOff())
 	{
-		if (PrintMetricsTimer.HasTimerGoneOff())
-		{
-			PrintMetricsTimer.SetTimer(10);
-		}
+		PrintMetricsTimer.SetTimer(10);
 	}
 }
 
@@ -376,14 +374,14 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	{
 		TryInitialiseExpectedActorCounts();
 
+		const UWorld* World = GetWorld();
 		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
 		{
-			if (!USpatialStatics::IsActorGroupOwnerForClass(GetWorld(), ExpectedActorCount.ActorClass))
+			if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
 			{
 				continue;
 			}
 
-			const FString& ActorClassName = ExpectedActorCount.ActorClass->GetName();
 			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
 			const int32 Variance = ExpectedActorCount.Variance;
 			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
@@ -391,7 +389,10 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 			if (bHasActorCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), *ActorClassName, ExpectedCount, ActualCount);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), 
+					*ExpectedActorCount.ActorClass->GetName(),
+					ExpectedCount, 
+					ActualCount);
 				break;
 			}
 		}
@@ -521,8 +522,7 @@ int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorCla
 
 void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 {
-	bool bSetTimer = TestLifetimeTimer.SetTimer(Lifetime);
-	if (bSetTimer)
+	if (TestLifetimeTimer.SetTimer(Lifetime))
 	{
 		TestLifetimeTimer.SetLock(true);
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Setting NFR test lifetime %d"), Lifetime);
