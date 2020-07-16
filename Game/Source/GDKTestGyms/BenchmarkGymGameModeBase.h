@@ -24,6 +24,12 @@ protected:
 
 	struct FExpectedActorCount
 	{
+		explicit FExpectedActorCount(TSubclassOf<AActor> InActorClass, int32 InExpectedCount, int32 InVariance)
+			: ActorClass(InActorClass)
+			, ExpectedCount(InExpectedCount)
+			, Variance(InVariance)
+		{}
+
 		TSubclassOf<AActor> ActorClass;
 		int32 ExpectedCount;
 		int32 Variance;

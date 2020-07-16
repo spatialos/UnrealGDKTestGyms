@@ -100,12 +100,7 @@ void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
-
-	FExpectedActorCount ExpectedActorCount;
-	ExpectedActorCount.ActorClass = ActorClass;
-	ExpectedActorCount.ExpectedCount = ExpectedCount;
-	ExpectedActorCount.Variance = Variance;
-	ExpectedActorCounts.Add(ExpectedActorCount);
+	ExpectedActorCounts.Add(FExpectedActorCount(ActorClass, ExpectedCount, Variance));
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
