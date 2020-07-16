@@ -59,8 +59,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasActorCountFailed(false)
 	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
-	, PrintMetricsTimer(10.0f)
-	, TestLifetimeTimer(0.0f)
+	, PrintMetricsTimer(10)
+	, TestLifetimeTimer(0)
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
@@ -204,7 +204,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	{
 		if (PrintMetricsTimer.HasTimerGoneOff())
 		{
-			PrintMetricsTimer.SetTimer(10.0f);
+			PrintMetricsTimer.SetTimer(10);
 		}
 	}
 }
