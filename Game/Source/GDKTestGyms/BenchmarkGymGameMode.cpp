@@ -28,7 +28,8 @@ namespace
 } // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: NumPlayerClusters(1)
+	: bInitializedCustomSpawnParameters(false)
+	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
@@ -63,6 +64,19 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
+}
+
+void ABenchmarkGymGameMode::CheckCmdLineParameters()
+{
+	if (bInitializedCustomSpawnParameters)
+	{
+		return;
+	}
+
+	ParsePassedValues();
+	StartCustomNPCSpawning();
+
+	bInitializedCustomSpawnParameters = true;
 }
 
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
@@ -304,7 +318,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		checkf(false, TEXT("Failed to find player start work-around actor"));
 	}
 
-	StartCustomNPCSpawning();
+	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0)
 	{
