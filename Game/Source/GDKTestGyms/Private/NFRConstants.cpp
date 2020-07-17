@@ -7,26 +7,46 @@
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
-FMetricDelay::FMetricDelay(float Seconds)
+FMetricTimer::FMetricTimer(int32 Seconds)
+	: bLocked(false)
 {
-	SetDelay(Seconds);
+	SetTimer(Seconds);
 }
 
-void FMetricDelay::SetDelay(float Seconds)
+bool FMetricTimer::SetTimer(int32 Seconds)
 {
-	TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
+	if (!bLocked)
+	{
+		TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
+	}
+	return !bLocked;
 }
 
-bool FMetricDelay::IsReady() const
+void FMetricTimer::SetLock(bool bState)
+{
+	bLocked = bState;
+}
+
+bool FMetricTimer::HasTimerGoneOff() const
 {
 	return FDateTime::Now().GetTicks() > TimeToStart;
 }
 
+int32 FMetricTimer::GetSecondsRemaining() const
+{
+	FTimespan Timespan = FTimespan(TimeToStart - FDateTime::Now().GetTicks());
+	int32 SecondsRemaining = Timespan.GetTotalSeconds();
+	SecondsRemaining = SecondsRemaining < 0 ? 0 : SecondsRemaining;
+	return SecondsRemaining;
+}
+
+
 UNFRConstants::UNFRConstants()
-	: PlayerCheckMetricDelay(15.0f * 60.0f)
-	, ServerFPSMetricDelay(2.0f * 60.0f)
-	, ClientFPSMetricDelay(10.0f * 60.0f)
-	, UXMetricDelay(10.0f * 60.0f)
+	: PlayerCheckMetricDelay(10 * 60)
+	, ServerFPSMetricDelay(60)
+	, ClientFPSMetricDelay(60)
+	, UXMetricDelay(10 * 60)
+	, ActorCheckDelay(10 * 60)
 {
 }
 

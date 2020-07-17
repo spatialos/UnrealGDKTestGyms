@@ -4,13 +4,13 @@
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BenchmarkGymNPCSpawner.h"
 #include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "EngineUtils.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerStart.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
@@ -19,10 +19,13 @@
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
-#include "BenchmarkGymNPCSpawner.h"
-#include "EngineUtils.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
+
+namespace
+{
+	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+} // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: bInitializedCustomSpawnParameters(false)
@@ -32,15 +35,8 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));
-	DefaultPawnClass = PawnClass.Class;
-	PlayerControllerClass = APlayerController::StaticClass();
-
-	static ConstructorHelpers::FClassFinder<APawn> SimulatedBPPawnClass(TEXT("/Game/Characters/SimulatedPlayers/SimulatedPlayerCharacter_BP"));
-	if (SimulatedBPPawnClass.Class != NULL)
-	{
-		SimulatedPawnClass = SimulatedBPPawnClass.Class;
-	}
+	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(TEXT("/Game/Benchmark/DropCube_BP"));
+	DropCubeClass = DropCubeClassFinder.Class;
 }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
@@ -152,7 +148,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		{
 			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
 			if (ensure(SpatialWorkerFlags != nullptr) &&
-				SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+				SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
 			{
 				PlayerDensity = FCString::Atoi(*PlayerDensityString);
 			}
@@ -162,6 +158,24 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+}
+
+void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+{
+	Super::OnWorkerFlagUpdated(FlagName, FlagValue);
+	if (FlagName == PlayerDensityWorkerFlag)
+	{
+		PlayerDensity = FCString::Atoi(*FlagValue);
+	}
+}
+
+void ABenchmarkGymGameMode::BuildExpectedActorCounts()
+{
+	Super::BuildExpectedActorCounts();
+
+	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
+	const int32 DropCubeCountVariance = TotalDropCubes * 0.08f;
+	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
@@ -275,7 +289,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 	if (NPCSpawner != nullptr)
 	{
-		NPCSpawner->CrossServerSpawn(SpawnLocation, BlackboardValues);
+		NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
 	}
 	else
 	{
