@@ -59,6 +59,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
 	, bHasActorCountFailed(false)
+	, bActorCountFailureState(false)
 	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
 	, PrintMetricsTimer(10)
@@ -197,6 +198,8 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
 
+	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
+	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
 	if (HasAuthority() &&
 		PrintMetricsTimer.HasTimerGoneOff())
 	{
@@ -370,8 +373,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
-	if (!bHasActorCountFailed &&
-		Constants->ActorCheckDelay.HasTimerGoneOff() &&
+	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
 		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
@@ -387,15 +389,19 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
 			const int32 Variance = ExpectedActorCount.Variance;
 			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
-			bHasActorCountFailed = abs(ActualCount - ExpectedCount) > Variance;
+			bActorCountFailureState = abs(ActualCount - ExpectedCount) > Variance;
 
-			if (bHasActorCountFailed)
+			if (bActorCountFailureState)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), 
-					*NFRFailureString,
-					*ExpectedActorCount.ActorClass->GetName(),
-					ExpectedCount, 
-					ActualCount);
+				if (!bHasActorCountFailed)
+				{
+					bHasActorCountFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
+						*NFRFailureString,
+						*ExpectedActorCount.ActorClass->GetName(),
+						ExpectedCount,
+						ActualCount);
+				}
 				break;
 			}
 		}

@@ -79,6 +79,8 @@ private:
 	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
 	bool bHasActorCountFailed;
+	// bActorCountFailureState will be true if the test has failed
+	bool bActorCountFailureState;
 	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // A count of visible UX components
 
@@ -107,7 +109,7 @@ private:
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
-	double GetActorCountValid() const { return !bHasActorCountFailed ? 1.0 : 0.0; }
+	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
 
