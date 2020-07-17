@@ -28,6 +28,7 @@ public:
 protected:
 
 	virtual void BuildExpectedActorCounts() override;
+	virtual void OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
@@ -39,8 +40,6 @@ private:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ParsePassedValues() override;
 
-	// Custom density spawning parameters.
-	bool bInitializedCustomSpawnParameters;
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
@@ -56,7 +55,6 @@ private:
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
 
-	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
 	void StartCustomNPCSpawning();
 	void SpawnNPCs(int NumNPCs);

@@ -41,6 +41,8 @@ namespace
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
+	const FString NFRFailureString = TEXT("NFR scenario failed");
+
 } // anonymous namespace
 
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
@@ -225,7 +227,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Client connection dropped. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d, num players %d"), *NFRFailureString, RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 		else
 		{
@@ -259,7 +261,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 		Constants->ServerFPSMetricDelay.HasTimerGoneOff())
 	{
 		bHasFpsFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("NFR scenario failed: Server FPS check. FPS: %.8f"), FPS);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Server FPS check. FPS: %.8f"), *NFRFailureString, FPS);
 	}
 }
 
@@ -293,7 +295,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 		Constants->ClientFPSMetricDelay.HasTimerGoneOff())
 	{
 		bHasClientFpsFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("NFR scenario failed: Client FPS check."));
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Client FPS check."), *NFRFailureString);
 	}
 }
 
@@ -353,7 +355,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		Constants->UXMetricDelay.HasTimerGoneOff())
 	{
 		bHasUxFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), *NFRFailureString, AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 
 	if (PrintMetricsTimer.HasTimerGoneOff())
@@ -389,7 +391,8 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 			if (bHasActorCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("NFR scenario failed: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), 
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"), 
+					*NFRFailureString,
 					*ExpectedActorCount.ActorClass->GetName(),
 					ExpectedCount, 
 					ActualCount);
@@ -529,6 +532,6 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 	else
 	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
 	}
 }

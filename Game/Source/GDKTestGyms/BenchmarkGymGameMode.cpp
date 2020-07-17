@@ -22,9 +22,13 @@
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
+namespace
+{
+	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+} // anonymous namespace
+
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: bInitializedCustomSpawnParameters(false)
-	, NumPlayerClusters(1)
+	: NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
@@ -59,19 +63,6 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
-}
-
-void ABenchmarkGymGameMode::CheckCmdLineParameters()
-{
-	if (bInitializedCustomSpawnParameters)
-	{
-		return;
-	}
-
-	ParsePassedValues();
-	StartCustomNPCSpawning();
-
-	bInitializedCustomSpawnParameters = true;
 }
 
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
@@ -143,7 +134,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 		{
 			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
 			if (ensure(SpatialWorkerFlags != nullptr) &&
-				SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
+				SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
 			{
 				PlayerDensity = FCString::Atoi(*PlayerDensityString);
 			}
@@ -153,6 +144,15 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+}
+
+void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+{
+	Super::OnWorkerFlagUpdated(FlagName, FlagValue);
+	if (FlagName == PlayerDensityWorkerFlag)
+	{
+		PlayerDensity = FCString::Atoi(*FlagValue);
+	}
 }
 
 void ABenchmarkGymGameMode::BuildExpectedActorCounts()
@@ -304,7 +304,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		checkf(false, TEXT("Failed to find player start work-around actor"));
 	}
 
-	CheckCmdLineParameters();
+	StartCustomNPCSpawning();
 
 	if (SpawnPoints.Num() == 0)
 	{
