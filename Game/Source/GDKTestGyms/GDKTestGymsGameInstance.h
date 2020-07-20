@@ -2,9 +2,12 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "NFRConstants.h"
 #include "SpatialGameInstance.h"
+
+#include "CoreMinimal.h"
+#include "Engine/NetDriver.h"
+#include "Containers/Ticker.h"
 
 #include "GDKTestGymsGameInstance.generated.h"
 
