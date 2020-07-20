@@ -66,19 +66,6 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 	}
 }
 
-void ABenchmarkGymGameMode::CheckCmdLineParameters()
-{
-	if (bInitializedCustomSpawnParameters)
-	{
-		return;
-	}
-
-	ParsePassedValues();
-	StartCustomNPCSpawning();
-
-	bInitializedCustomSpawnParameters = true;
-}
-
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
 	ClearExistingSpawnPoints();
@@ -131,12 +118,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 {
 	Super::ParsePassedValues();
 
-	PlayerDensity = ExpectedPlayers;
+	int32 NewPlayerDensity = ExpectedPlayers;
 
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, TEXT("PlayerDensity="), NewPlayerDensity);
 	}
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -150,12 +137,12 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 			if (ensure(SpatialWorkerFlags != nullptr) &&
 				SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
 			{
-				PlayerDensity = FCString::Atoi(*PlayerDensityString);
+				NewPlayerDensity = FCString::Atoi(*PlayerDensityString);
 			}
 		}
-
 	}
-	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
+
+	SetPlayerDensity(NewPlayerDensity);
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
@@ -165,7 +152,7 @@ void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const F
 	Super::OnWorkerFlagUpdated(FlagName, FlagValue);
 	if (FlagName == PlayerDensityWorkerFlag)
 	{
-		PlayerDensity = FCString::Atoi(*FlagValue);
+		SetPlayerDensity(FCString::Atoi(*FlagValue));
 	}
 }
 
@@ -318,7 +305,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		checkf(false, TEXT("Failed to find player start work-around actor"));
 	}
 
-	CheckCmdLineParameters();
+	StartCustomNPCSpawning();
 
 	if (SpawnPoints.Num() == 0)
 	{
@@ -351,4 +338,10 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+void ABenchmarkGymGameMode::SetPlayerDensity(int32 NewPlayerDensity)
+{
+	PlayerDensity = NewPlayerDensity;
+	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 }

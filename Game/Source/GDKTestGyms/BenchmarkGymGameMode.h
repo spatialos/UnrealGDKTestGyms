@@ -57,7 +57,8 @@ private:
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
 
-	void CheckCmdLineParameters();
+	void SetPlayerDensity(int32 NewPlayerDensity);
+
 	void ClearExistingSpawnPoints();
 	void StartCustomNPCSpawning();
 	void SpawnNPCs(int NumNPCs);
