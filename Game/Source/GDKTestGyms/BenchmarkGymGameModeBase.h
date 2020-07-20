@@ -49,12 +49,14 @@ protected:
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<APawn> NPCClass;
 
-	virtual void BuildExpectedActorCounts();
 	void AddOrModifyExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
 
 	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
 	virtual void ParsePassedValues();
+
+	virtual void SetTotalNPCs(int32 Value);
+	virtual void SetExpectedPlayers(int32 Value);
 
 	UFUNCTION()
 	virtual void OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue);
@@ -98,9 +100,6 @@ private:
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorCountCheck(float DeltaSeconds);
-
-	void SetTotalNPCs(int32 Value);
-	void SetExpectedPlayers(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }

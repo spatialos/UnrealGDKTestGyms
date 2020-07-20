@@ -27,8 +27,10 @@ public:
 
 protected:
 
-	virtual void BuildExpectedActorCounts() override;
 	virtual void OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
+
+	virtual void SetTotalNPCs(int32 Value) override;
+	virtual void SetExpectedPlayers(int32 Value) override;
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;

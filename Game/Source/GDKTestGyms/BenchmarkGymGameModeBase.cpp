@@ -84,12 +84,6 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	TryAddSpatialMetrics();
 }
 
-void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
-{
-	AddOrModifyExpectedActorCount(NPCClass, TotalNPCs, 1);
-	AddOrModifyExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
-}
-
 void ABenchmarkGymGameModeBase::AddOrModifyExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);

@@ -160,10 +160,17 @@ void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const F
 	}
 }
 
-void ABenchmarkGymGameMode::BuildExpectedActorCounts()
+void ABenchmarkGymGameMode::SetTotalNPCs(int32 Value)
 {
-	Super::BuildExpectedActorCounts();
+	Super::SetTotalNPCs(Value);
+	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
+	const int32 DropCubeCountVariance = TotalDropCubes * 0.08f;
+	AddOrModifyExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
+}
 
+void ABenchmarkGymGameMode::SetExpectedPlayers(int32 Value)
+{
+	Super::SetExpectedPlayers(Value);
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = TotalDropCubes * 0.08f;
 	AddOrModifyExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
