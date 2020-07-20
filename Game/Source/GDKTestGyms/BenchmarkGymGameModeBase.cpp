@@ -34,7 +34,6 @@ namespace
 	const FString TestLiftimeWorkerFlag = TEXT("test_lifetime");
 	const FString TestLiftimeCommandLineKey = TEXT("-TestLifetime=");
 
-	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
 	const FString RequiredPlayersWorkerFlag = TEXT("required_players");
 	const FString TotalPlayerCommandLineKey = TEXT("-TotalPlayers=");
@@ -46,6 +45,7 @@ namespace
 } // anonymous namespace
 
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
+FString ABenchmarkGymGameModeBase::TotalPlayerWorkerFlag = TEXT("total_players");
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)

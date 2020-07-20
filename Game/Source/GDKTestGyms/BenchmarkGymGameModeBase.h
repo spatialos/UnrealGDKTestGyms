@@ -21,6 +21,7 @@ public:
 protected:
 
 	static FString ReadFromCommandLineKey;
+	static FString TotalPlayerWorkerFlag;
 
 	struct FExpectedActorCount
 	{

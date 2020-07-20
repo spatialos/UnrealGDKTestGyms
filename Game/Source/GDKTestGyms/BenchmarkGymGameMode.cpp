@@ -154,6 +154,10 @@ void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const F
 	{
 		SetPlayerDensity(FCString::Atoi(*FlagValue));
 	}
+	else if (FlagName == TotalPlayerWorkerFlag)
+	{
+		CalculateNumPlayerClusters();
+	}
 }
 
 void ABenchmarkGymGameMode::BuildExpectedActorCounts()
@@ -343,5 +347,10 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 void ABenchmarkGymGameMode::SetPlayerDensity(int32 NewPlayerDensity)
 {
 	PlayerDensity = NewPlayerDensity;
+	CalculateNumPlayerClusters();
+}
+
+void ABenchmarkGymGameMode::CalculateNumPlayerClusters()
+{
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 }

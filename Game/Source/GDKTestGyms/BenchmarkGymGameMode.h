@@ -58,6 +58,7 @@ private:
 	ABenchmarkGymNPCSpawner* NPCSpawner;
 
 	void SetPlayerDensity(int32 NewPlayerDensity);
+	void CalculateNumPlayerClusters();
 
 	void ClearExistingSpawnPoints();
 	void StartCustomNPCSpawning();
