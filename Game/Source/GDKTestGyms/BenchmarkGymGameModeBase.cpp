@@ -60,7 +60,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasClientFpsFailed(false)
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
-	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
 	, PrintMetricsTimer(TEXT("PrintMetrics"), 10)
 	, TestLifetimeTimer(TEXT("TestLifetime"), 0)
@@ -85,25 +84,18 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	TryAddSpatialMetrics();
 }
 
-void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
-{
-	if (!bExpectedActorCountsInitialised)
-	{
-		BuildExpectedActorCounts();
-		bExpectedActorCountsInitialised = true;
-	}
-}
-
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
-	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
-	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
+	AddOrModifyExpectedActorCount(NPCClass, TotalNPCs, 1);
+	AddOrModifyExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
 }
 
-void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
+void ABenchmarkGymGameModeBase::AddOrModifyExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
-	ExpectedActorCounts.Add(FExpectedActorCount(ActorClass, ExpectedCount, Variance));
+	FExpectedActorCount& ExpectedActorCount = ExpectedActorCounts.FindOrAdd(ActorClass);
+	ExpectedActorCount.ExpectedCount = ExpectedCount;
+	ExpectedActorCount.Variance = Variance;
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -372,38 +364,36 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
-	// This test respects the initial delay timer in both native and GDK
-	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
-		!TestLifetimeTimer.HasTimerGoneOff())
+	const UWorld* World = GetWorld();
+	for (const auto& Pair : ExpectedActorCounts)
 	{
-		TryInitialiseExpectedActorCounts();
+		TSubclassOf<AActor> ActorClass = Pair.Key;
+		const FExpectedActorCount& ExpectedActorCount = Pair.Value;
 
-		const UWorld* World = GetWorld();
-		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
+		if (!USpatialStatics::IsActorGroupOwnerForClass(World, ActorClass))
 		{
-			if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
-			{
-				continue;
-			}
+			continue;
+		}
 
-			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
-			const int32 Variance = ExpectedActorCount.Variance;
-			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
-			bActorCountFailureState = abs(ActualCount - ExpectedCount) > Variance;
+		const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
+		const int32 Variance = ExpectedActorCount.Variance;
+		const int32 ActualCount = GetActorClassCount(ActorClass);
+		bActorCountFailureState = abs(ActualCount - ExpectedCount) > Variance;
 
-			if (bActorCountFailureState)
+		if (bActorCountFailureState)
+		{
+			if (!bHasActorCountFailed &&
+				Constants->ActorCheckDelay.HasTimerGoneOff() &&
+				!TestLifetimeTimer.HasTimerGoneOff())
 			{
-				if (!bHasActorCountFailed)
-				{
-					bHasActorCountFailed = true;
-					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
-						*NFRFailureString,
-						*ExpectedActorCount.ActorClass->GetName(),
-						ExpectedCount,
-						ActualCount);
-				}
-				break;
+				bHasActorCountFailed = true;
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
+					*NFRFailureString,
+					*ExpectedActorCount.ActorClass->GetName(),
+					ExpectedCount,
+					ActualCount);
 			}
+			break;
 		}
 	}
 }
@@ -415,7 +405,10 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Found ReadFromCommandLine in command line Keys, worker flags for custom spawning will be ignored."));
 
-		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
+		int32 NewExpectedPlayers = 0;
+		FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, NewExpectedPlayers);
+		SetExpectedPlayers(NewExpectedPlayers);
+
 		FParse::Value(*CommandLine, *RequiredPlayersCommandLineKey, RequiredPlayers);
 
 		int32 NumNPCs = 0;
@@ -442,7 +435,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			{
 				if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
 				{
-					ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
+					SetExpectedPlayers(FCString::Atoi(*ExpectedPlayersString));
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(RequiredPlayersWorkerFlag, RequiredPlayersString))
@@ -481,7 +474,7 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 {
 	if (FlagName == TotalPlayerWorkerFlag)
 	{
-		ExpectedPlayers = FCString::Atoi(*FlagValue);
+		SetExpectedPlayers(FCString::Atoi(*FlagValue));
 	}
 	else if (FlagName == RequiredPlayersWorkerFlag)
 	{
@@ -512,7 +505,17 @@ void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
 	if (Value != TotalNPCs)
 	{
 		TotalNPCs = Value;
+		AddOrModifyExpectedActorCount(NPCClass, TotalNPCs, 1);
 		OnTotalNPCsUpdated(TotalNPCs);
+	}
+}
+
+void ABenchmarkGymGameModeBase::SetExpectedPlayers(int32 Value)
+{
+	if (Value != ExpectedPlayers)
+	{
+		ExpectedPlayers = Value;
+		AddOrModifyExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
 	}
 }
 

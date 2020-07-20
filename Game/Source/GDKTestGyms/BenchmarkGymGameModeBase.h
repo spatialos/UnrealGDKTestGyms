@@ -25,13 +25,11 @@ protected:
 
 	struct FExpectedActorCount
 	{
-		explicit FExpectedActorCount(TSubclassOf<AActor> InActorClass, int32 InExpectedCount, int32 InVariance)
-			: ActorClass(InActorClass)
+		explicit FExpectedActorCount(int32 InExpectedCount, int32 InVariance)
 			, ExpectedCount(InExpectedCount)
 			, Variance(InVariance)
 		{}
 
-		TSubclassOf<AActor> ActorClass;
 		int32 ExpectedCount;
 		int32 Variance;
 	};
@@ -51,7 +49,7 @@ protected:
 	TSubclassOf<APawn> NPCClass;
 
 	virtual void BuildExpectedActorCounts();
-	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
+	void AddOrModifyExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
 
 	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
@@ -82,17 +80,14 @@ private:
 	bool bHasActorCountFailed;
 	// bActorCountFailureState will be true if the test has failed
 	bool bActorCountFailureState;
-	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // A count of visible UX components
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 
-	TArray<FExpectedActorCount> ExpectedActorCounts;
+	TMap<TSubclassOf<AActor>, FExpectedActorCount> ExpectedActorCounts;
 
 	virtual void BeginPlay() override;
-
-	void TryInitialiseExpectedActorCounts();
 
 	void TryBindWorkerFlagsDelegate();
 	void TryAddSpatialMetrics();
@@ -104,6 +99,7 @@ private:
 	void TickActorCountCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
+	void SetExpectedPlayers(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
