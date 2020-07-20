@@ -25,8 +25,9 @@ protected:
 
 	struct FExpectedActorCount
 	{
+		FExpectedActorCount() = default;
 		explicit FExpectedActorCount(int32 InExpectedCount, int32 InVariance)
-			, ExpectedCount(InExpectedCount)
+			: ExpectedCount(InExpectedCount)
 			, Variance(InVariance)
 		{}
 
