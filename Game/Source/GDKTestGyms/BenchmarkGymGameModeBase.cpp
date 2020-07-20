@@ -62,8 +62,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bActorCountFailureState(false)
 	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
-	, PrintMetricsTimer(10)
-	, TestLifetimeTimer(0)
+	, PrintMetricsTimer(TEXT("PrintMetrics"), 10)
+	, TestLifetimeTimer(TEXT("TestLifetime"), 0)
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;

@@ -6,9 +6,11 @@
 #include "Interop/SpatialWorkerFlags.h"
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
+DEFINE_LOG_CATEGORY(LogMetricTimer);
 
-FMetricTimer::FMetricTimer(int32 Seconds)
-	: bLocked(false)
+FMetricTimer::FMetricTimer(FString InTimerName, int32 Seconds)
+	: TimerName(InTimerName)
+	, bLocked(false)
 {
 	SetTimer(Seconds);
 }
@@ -18,6 +20,7 @@ bool FMetricTimer::SetTimer(int32 Seconds)
 	if (!bLocked)
 	{
 		TimeToStart = FDateTime::Now().GetTicks() + FTimespan::FromSeconds(Seconds).GetTicks();
+		UE_LOG(LogMetricTimer, Log, TEXT("Setting timer %s. Timer will go off at %s (%d seconds)"), *TimerName, *FDateTime(TimeToStart).ToString(), Seconds);
 	}
 	return !bLocked;
 }
@@ -42,11 +45,11 @@ int32 FMetricTimer::GetSecondsRemaining() const
 
 
 UNFRConstants::UNFRConstants()
-	: PlayerCheckMetricDelay(10 * 60)
-	, ServerFPSMetricDelay(60)
-	, ClientFPSMetricDelay(60)
-	, UXMetricDelay(10 * 60)
-	, ActorCheckDelay(10 * 60)
+	: PlayerCheckMetricDelay(TEXT("PlayerCheck"), 10 * 60)
+	, ServerFPSMetricDelay(TEXT("ServerFPS"), 60)
+	, ClientFPSMetricDelay(TEXT("ClientFPS"), 60)
+	, UXMetricDelay(TEXT("UXMetric"), 10 * 60)
+	, ActorCheckDelay(TEXT("ActorCheck"), 10 * 60)
 {
 }
 

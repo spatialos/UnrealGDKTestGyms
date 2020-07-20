@@ -7,13 +7,14 @@
 #include "NFRConstants.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNFRConstants, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogMetricTimer, Log, All);
 
 class FMetricTimer
 {
 public:
 
 	FMetricTimer() = default;
-	FMetricTimer(int32 InTimeToStart);
+	FMetricTimer(FString InTimerName, int32 InTimeToStart);
 
 	bool SetTimer(int32 Seconds);
 	void SetLock(bool bState);
@@ -23,6 +24,7 @@ public:
 
 private:
 
+	FString TimerName;
 	bool bLocked;
 	int64 TimeToStart;
 };
