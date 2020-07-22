@@ -103,6 +103,10 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
 ##### Net reference test gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestNetReference1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * Test that references to replicated actors are stable when actors go in and out of relevance
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
 * Validation:
@@ -112,6 +116,10 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   4. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
 
 ##### ReplicatedStartupActor gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * For QA workflows Test Replicated startup actor are correctly spawned on all clients
 * Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients"
 * Validation

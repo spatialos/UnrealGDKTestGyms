@@ -4,11 +4,13 @@
 
 #include "Interop/Connection/SpatialConnectionManager.h"
 
-#include "EngineMinimal.h"
-#include "GeneralProjectSettings.h"
 #include "NFRConstants.h"
 #include "SpatialNetDriver.h"
 #include "Utils/SpatialMetrics.h"
+
+#include "GeneralProjectSettings.h"
+#include "EngineMinimal.h"
+#include "Engine/Engine.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -30,7 +32,7 @@ void UGDKTestGymsGameInstance::SpatialConnected()
 	USpatialNetDriver* SpatialNetDriver = Cast<USpatialNetDriver>(NetDriver);
 	if (SpatialNetDriver)
 	{
-		SpatialNetDriver->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGuageMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
+		SpatialNetDriver->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGaugeMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
 			{
 				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
 				{
