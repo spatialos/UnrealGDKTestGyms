@@ -7,6 +7,8 @@
 #include "EngineMinimal.h"
 #include "GeneralProjectSettings.h"
 #include "NFRConstants.h"
+#include "SpatialNetDriver.h"
+#include "Utils/SpatialMetrics.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -18,6 +20,30 @@ void UGDKTestGymsGameInstance::Init()
 	GetEngine()->NetworkFailureEvent.AddUObject(this, &UGDKTestGymsGameInstance::NetworkFailureEventCallback);
 	NFRConstants = NewObject<UNFRConstants>(this);
 	NFRConstants->InitWithWorld(GetWorld());
+
+	OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
+}
+
+void UGDKTestGymsGameInstance::SpatialConnected()
+{
+	UNetDriver * NetDriver = GEngine->FindNamedNetDriver(GetWorld(), NAME_PendingNetDriver);
+	USpatialNetDriver* SpatialNetDriver = Cast<USpatialNetDriver>(NetDriver);
+	if (SpatialNetDriver)
+	{
+		SpatialNetDriver->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGuageMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
+			{
+				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
+				{
+					if (Metric.Key == TEXT("kcp_resends_by_packet") && Metric.Value.Sum > 0.0)
+					{
+						for (const auto& Bucket : Metric.Value.Buckets)
+						{
+							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), Bucket.Key, Bucket.Value);
+						}
+					}
+				}
+			});
+	}	
 }
 
 void UGDKTestGymsGameInstance::OnStart()

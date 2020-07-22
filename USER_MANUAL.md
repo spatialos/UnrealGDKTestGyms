@@ -210,5 +210,17 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
 
+##### Teleporting gym.
+* Tests actor migration when load balancing is enabled.
+* NOTE : This gym is likely to have random failures, as we are still working on load balancing.
+* Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
+* The gym is separated in 4 load balanced zones, and spawns a character which can teleport around.
+* How to test : 
+  * The character can walk around the center of the map, migrating between zones
+  * Pressing T teleports the character to another zone.
+    * This is a sharp transition far away from boundaries, to test when border interest is absent.
+  * Pressing R spawns a new character in a different zone and posesses it.
+    * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+
 -----
 2019-11-15: Page added with editorial review
