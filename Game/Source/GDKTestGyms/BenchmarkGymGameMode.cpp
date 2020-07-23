@@ -174,7 +174,7 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 	Super::BuildExpectedActorCounts();
 
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
-	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.08f) + 2;
+	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f);
 	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
 }
 
