@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "LoadBalancing/GridBasedLBStrategy.h"
 #include "SpatialNetDriver.h"
+#include "DynamicLBSInfo.h"
 #include "DynamicGridBasedLBStrategy.generated.h"
 
 UCLASS()
@@ -15,7 +16,7 @@ class GDKTESTGYMS_API UDynamicGridBasedLBStrategy : public UGridBasedLBStrategy
 public:
 	virtual void Init() override;
 
-	virtual bool ShouldHaveAuthority(const AActor& Actor) override;
+	virtual bool ShouldHaveAuthority(const AActor& Actor) const override;
 	virtual VirtualWorkerId WhoShouldHaveAuthority(const AActor& Actor) const override;
 
 protected:
@@ -31,7 +32,9 @@ protected:
 private:
 	USpatialNetDriver* NetDriver;
 
-	TMap<TWeakObjectPtr<AActor>, FVector2D> ActorPrevPositions;
+	ADynamicLBSInfo* DynamicLBSInfo;
 
-	void UpdateWorkerBounds(const FVector2D PrevPos, const FVector2D Actor2DLocation, const int32 FromWorkerCellIndex, const int32 ToWorkerCellIndex);
+	mutable TMap<TWeakObjectPtr<AActor>, FVector2D> ActorPrevPositions;
+
+	void UpdateWorkerBounds(const FVector2D PrevPos, const FVector2D Actor2DLocation, const int32 FromWorkerCellIndex, const int32 ToWorkerCellIndex) const;
 };

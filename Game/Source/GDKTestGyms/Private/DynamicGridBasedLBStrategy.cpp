@@ -6,6 +6,7 @@
 #include "Utils/InspectionColors.h"
 #include "SpatialNetDriver.h"
 #include "SpatialActorUtils.h"
+#include "DynamicLBSGameMode.h"
 
 DEFINE_LOG_CATEGORY(LogDynamicLBStrategy);
 
@@ -14,10 +15,11 @@ void UDynamicGridBasedLBStrategy::Init()
 	Super::Init();
 
 	NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
-
-	if (NetDriver->DynamicLBSInfo)
+	const ADynamicLBSGameMode* GameMode = StaticCast<ADynamicLBSGameMode*>(GetWorld()->GetAuthGameMode());
+	DynamicLBSInfo = GameMode->DynamicLBSInfo;
+	if (GameMode->HasAuthority())
 	{
-		NetDriver->DynamicLBSInfo->Init(WorkerCells);
+		DynamicLBSInfo->Init(WorkerCells);
 	}
 }
 
@@ -31,7 +33,7 @@ VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor
 		return AuthorityWorkerId;
 	}
 
-	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	const TArray<FBox2D>& DynamicWorkerCells = DynamicLBSInfo->GetWorkerCells();
 	if (DynamicWorkerCells.Num() == 0)
 		return AuthorityWorkerId;
 
@@ -52,7 +54,7 @@ VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor
 
 }
 
-bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
+bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor) const
 {
 	bool ShouldHaveAuthroity = Super::ShouldHaveAuthority(Actor);
 	if (!Actor.IsA(ActorClassToMonitor))
@@ -72,12 +74,12 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 		// Can always spawn into local worker cell
 		if (ShouldHaveAuthroity)
 		{
-			NetDriver->DynamicLBSInfo->IncreseActorCounter(LocalVirtualWorkerId);
+			DynamicLBSInfo->IncreseActorCounter(LocalVirtualWorkerId);
 		}
 		return ShouldHaveAuthroity;
 	}
 
-	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	TArray<FBox2D>& DynamicWorkerCells = DynamicLBSInfo->GetWorkerCells();
 	if (DynamicWorkerCells.Num() == 0)
 		return ShouldHaveAuthroity;
 
@@ -95,7 +97,7 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 			});
 			if (ToWorkerCellIndex != INDEX_NONE)
 			{
-				uint32 ToWorkerActorCounter = NetDriver->DynamicLBSInfo->GetActorCounter(ToWorkerCellIndex + 1);
+				uint32 ToWorkerActorCounter = DynamicLBSInfo->GetActorCounter(ToWorkerCellIndex + 1);
 				if (ToWorkerActorCounter >= MaxActorLoad)
 				{
 					UpdateWorkerBounds(PrevPos, Actor2DLocation, LocalVirtualWorkerId - 1, ToWorkerCellIndex);
@@ -113,7 +115,7 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 	// Entering local worker cell
 	else if (!IsInside(LocalWorkerCell, PrevPos))
 	{
-		uint32 ActorCounter = NetDriver->DynamicLBSInfo->GetActorCounter(LocalVirtualWorkerId);
+		uint32 ActorCounter = DynamicLBSInfo->GetActorCounter(LocalVirtualWorkerId);
 		if (ActorCounter >= MaxActorLoad)
 		{
 			int32 ToWorkerCellIndex = LocalVirtualWorkerId - 1;
@@ -129,19 +131,19 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor)
 		}
 		else
 		{
-			NetDriver->DynamicLBSInfo->IncreseActorCounter(LocalVirtualWorkerId);
+			DynamicLBSInfo->IncreseActorCounter(LocalVirtualWorkerId);
 		}
 	}
 
 	return true;
 }
 
-void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, const FVector2D Actor2DLocation, const int32 FromWorkerCellIndex, const int32 ToWorkerCellIndex)
+void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, const FVector2D Actor2DLocation, const int32 FromWorkerCellIndex, const int32 ToWorkerCellIndex) const
 {
 	if (FromWorkerCellIndex == INDEX_NONE || ToWorkerCellIndex == INDEX_NONE)
 		return;
 
-	auto DynamicWorkerCells = NetDriver->DynamicLBSInfo->DynamicWorkerCells;
+	TArray<FBox2D>& DynamicWorkerCells = DynamicLBSInfo->GetWorkerCells();
 	auto FromWorkerCell = DynamicWorkerCells[FromWorkerCellIndex];
 	auto ToWorkerCell = DynamicWorkerCells[ToWorkerCellIndex];
 
@@ -177,7 +179,8 @@ void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, co
 	}
 	DynamicWorkerCells[FromWorkerCellIndex] = FromWorkerCell;
 	DynamicWorkerCells[ToWorkerCellIndex] = ToWorkerCell;
-	NetDriver->DynamicLBSInfo->DynamicWorkerCells = DynamicWorkerCells;
+	//DynamicLBSInfo->DynamicWorkerCells = DynamicWorkerCells;
+	DynamicLBSInfo->UpdateWorkerCells(DynamicWorkerCells);
 
 	UE_LOG(LogDynamicLBStrategy, Warning, TEXT("VirtualWorker[%d] updated worker cells: [%d] = %s, [%d] = %s"), LocalVirtualWorkerId, FromWorkerCellIndex, *FromWorkerCell.ToString(), ToWorkerCellIndex, *ToWorkerCell.ToString());
 
