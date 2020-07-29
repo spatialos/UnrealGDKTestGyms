@@ -10,6 +10,6 @@ public class GDKTestGymsServerTarget : TargetRules
 		Type = TargetType.Server;
 		ExtraModuleNames.Add("GDKTestGyms");
 
-        bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
-    }
+		bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
+	}
 }
