@@ -139,18 +139,23 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
 
 ##### Server to server RPC gym
-* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+* This gym demonstrates that:
+  * Actors owned by different servers correctly send server-to-server RPCs.
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
   2. On the Automation tab, search for SpatialTestCrossServerRPC1, tick the box corresponding to it and hit Start Tests.
   3. The Session Frontend will then prompt you with the result of the test.
-* Demonstrates that:
-  * Actors owned by different servers correctly send server-to-server RPCs.
-* Contains:
+* The manual gym contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
     * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger).
     * Show a count of how many RPCs have been received which is shown above the cube.
-* If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
+* Steps to run the gym manually: 
+    * In the Content Browser, under Content, search for the Maps folder.
+    * Open the ServerToServerRPCGym and hit Play.
+    * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
 * Tests level loading and unloading.
