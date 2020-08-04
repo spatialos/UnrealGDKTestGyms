@@ -181,14 +181,20 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * There should not be logs saying "Error: Simulated task is simulating on the owning client".
 
 ##### Client Net Ownership gym
-* Demonstrates that:
+* This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* Contains:
+* NOTE: This gym can be run both as an automated test and as a manual one.
+* Steps to run the automated version of the gym:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestNetOwnership1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+  Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
     * (R) Sending a server RPC from the client on the cube,
     * (T) Removing the client as the net-owner for the cube.
-* To test the gym:
+* Steps to run the gym manually:
     * Press `Q` to make the client net-owner for the cube.
     * Observe that:
       * the `SpatialDebugger` authority icon updates to the virtual worker ID relating to the character.
