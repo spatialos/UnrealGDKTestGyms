@@ -120,8 +120,8 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
   2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
   3. The Session Frontend will then prompt you with the result of the test.
-* For QA workflows Test Replicated startup actor are correctly spawned on all clients
-* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients"
+* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
+* Also covers the QA work-flow of checking that "Startup actors correctly replicate arbitrary properties".
 * Validation
   1. After two seconds checks that actor is visible to client and reports pass or fail
 
