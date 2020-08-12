@@ -15,12 +15,13 @@ void UDynamicGridBasedLBStrategy::Init()
 	Super::Init();
 
 	NetDriver = StaticCast<USpatialNetDriver*>(GetWorld()->GetNetDriver());
-	const ADynamicLBSGameMode* GameMode = StaticCast<ADynamicLBSGameMode*>(GetWorld()->GetAuthGameMode());
-	DynamicLBSInfo = GameMode->DynamicLBSInfo;
-	if (GameMode->HasAuthority())
-	{
-		DynamicLBSInfo->Init(WorkerCells);
-	}
+	DynamicLBSGameMode = StaticCast<ADynamicLBSGameMode*>(GetWorld()->GetAuthGameMode());
+	DynamicLBSGameMode->OnDynamicLBSInfoCreated.BindUObject(this, &UDynamicGridBasedLBStrategy::InitDynamicLBSInfo);
+}
+
+void UDynamicGridBasedLBStrategy::InitDynamicLBSInfo(ADynamicLBSInfo* DynamicLBSInfo)
+{
+	DynamicLBSInfo->Init(WorkerCells);
 }
 
 VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor& Actor) const
@@ -32,6 +33,10 @@ VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor
 	{
 		return AuthorityWorkerId;
 	}
+
+	ADynamicLBSInfo* DynamicLBSInfo = DynamicLBSGameMode->DynamicLBSInfo;
+	if (DynamicLBSInfo == nullptr)
+		return AuthorityWorkerId;
 
 	const TArray<FBox2D>& DynamicWorkerCells = DynamicLBSInfo->GetWorkerCells();
 	if (DynamicWorkerCells.Num() == 0)
@@ -48,7 +53,7 @@ VirtualWorkerId UDynamicGridBasedLBStrategy::WhoShouldHaveAuthority(const AActor
 		}
 	}
 
-	UE_LOG(LogDynamicLBStrategy, Log, TEXT("VirtualWorker[%d] called WhoShouldHaveAuthority() of Actor %s: %d"), LocalVirtualWorkerId, *Actor.GetFName().ToString(), AuthorityWorkerId);
+	UE_LOG(LogDynamicLBStrategy, Verbose, TEXT("VirtualWorker[%d] called WhoShouldHaveAuthority() of Actor %s: %d"), LocalVirtualWorkerId, *Actor.GetFName().ToString(), AuthorityWorkerId);
 
 	return AuthorityWorkerId;
 
@@ -62,6 +67,10 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor) const
 		// We only cares actors of the specific type
 		return ShouldHaveAuthroity;
 	}
+
+	ADynamicLBSInfo* DynamicLBSInfo = DynamicLBSGameMode->DynamicLBSInfo;
+	if (DynamicLBSInfo == nullptr)
+		return ShouldHaveAuthroity;
 
 	// Store the actor's position for checking if the actor is moving in/out of worker bounds
 	const FVector2D* PrevPosPtr = ActorPrevPositions.Find(&Actor);
@@ -83,7 +92,7 @@ bool UDynamicGridBasedLBStrategy::ShouldHaveAuthority(const AActor& Actor) const
 	if (DynamicWorkerCells.Num() == 0)
 		return ShouldHaveAuthroity;
 
-	UE_LOG(LogDynamicLBStrategy, Log, TEXT("VirtualWorker[%d] called ShouldHaveAuthority() of Actor %s"), LocalVirtualWorkerId, *Actor.GetFName().ToString());
+	//UE_LOG(LogDynamicLBStrategy, Verbose, TEXT("VirtualWorker[%d] called ShouldHaveAuthority() of Actor %s"), LocalVirtualWorkerId, *Actor.GetFName().ToString());
 
 	auto LocalWorkerCell = DynamicWorkerCells[LocalVirtualWorkerId - 1];
 	// Leaving local worker cell
@@ -143,6 +152,10 @@ void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, co
 	if (FromWorkerCellIndex == INDEX_NONE || ToWorkerCellIndex == INDEX_NONE)
 		return;
 
+	ADynamicLBSInfo* DynamicLBSInfo = DynamicLBSGameMode->DynamicLBSInfo;
+	if (DynamicLBSInfo == nullptr)
+		return;
+
 	TArray<FBox2D>& DynamicWorkerCells = DynamicLBSInfo->GetWorkerCells();
 	auto FromWorkerCell = DynamicWorkerCells[FromWorkerCellIndex];
 	auto ToWorkerCell = DynamicWorkerCells[ToWorkerCellIndex];
@@ -182,7 +195,7 @@ void UDynamicGridBasedLBStrategy::UpdateWorkerBounds(const FVector2D PrevPos, co
 	//DynamicLBSInfo->DynamicWorkerCells = DynamicWorkerCells;
 	DynamicLBSInfo->UpdateWorkerCells(DynamicWorkerCells);
 
-	UE_LOG(LogDynamicLBStrategy, Warning, TEXT("VirtualWorker[%d] updated worker cells: [%d] = %s, [%d] = %s"), LocalVirtualWorkerId, FromWorkerCellIndex, *FromWorkerCell.ToString(), ToWorkerCellIndex, *ToWorkerCell.ToString());
+	UE_LOG(LogDynamicLBStrategy, Log, TEXT("VirtualWorker[%d] updated worker cells: [%d] = %s, [%d] = %s"), LocalVirtualWorkerId, FromWorkerCellIndex, *FromWorkerCell.ToString(), ToWorkerCellIndex, *ToWorkerCell.ToString());
 
 	// Update SpatialDebugger's WorkerRegions
 	auto WorkerRegions = NetDriver->SpatialDebugger->WorkerRegions;

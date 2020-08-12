@@ -4,8 +4,6 @@
 #include "LoadBalancing/GridBasedLBStrategy.h"
 #include "Net/UnrealNetwork.h"
 
-//DEFINE_LOG_CATEGORY(LogDynamicLBStrategy);
-
 using namespace SpatialGDK;
 
 ADynamicLBSInfo::ADynamicLBSInfo(const FObjectInitializer& ObjectInitializer)
@@ -31,15 +29,12 @@ void ADynamicLBSInfo::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 void ADynamicLBSInfo::Init(const TArray<FBox2D> WorkerCells)
 {
 	NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-	if (HasAuthority())
+	DynamicWorkerCells.SetNum(WorkerCells.Num());
+	ActorCounters.SetNum(WorkerCells.Num());
+	for (int i = 0; i < WorkerCells.Num(); i++)
 	{
-		DynamicWorkerCells.SetNum(WorkerCells.Num());
-		ActorCounters.SetNum(WorkerCells.Num());
-		for (int i = 0; i < WorkerCells.Num(); i++)
-		{
-			DynamicWorkerCells[i] = FBox2D(WorkerCells[i].Min, WorkerCells[i].Max);
-			ActorCounters[i] = 0;
-		}
+		DynamicWorkerCells[i] = FBox2D(WorkerCells[i].Min, WorkerCells[i].Max);
+		ActorCounters[i] = 0;
 	}
 }
 
@@ -50,7 +45,10 @@ void ADynamicLBSInfo::OnAuthorityGained()
 
 void ADynamicLBSInfo::OnRep_DynamicWorkerCells()
 {
-	UE_LOG(LogDynamicLBStrategy, Warning, TEXT("[DynamicLBSInfo] VirtualWorker[%d] received worker cells change!!!"), NetDriver->VirtualWorkerTranslator->GetLocalVirtualWorkerId());
+	if (NetDriver)
+	{
+		UE_LOG(LogDynamicLBStrategy, Verbose, TEXT("[DynamicLBSInfo] VirtualWorker[%d] received worker cells change!!!"), NetDriver->VirtualWorkerTranslator->GetLocalVirtualWorkerId());
+	}
 }
 
 void ADynamicLBSInfo::OnRep_ActorCounters()

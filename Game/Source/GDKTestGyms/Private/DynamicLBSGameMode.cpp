@@ -4,6 +4,7 @@
 #include "DynamicLBSGameMode.h"
 #include "UnrealNetwork.h"
 #include "SpatialNetDriver.h"
+#include "DynamicGridBasedLBStrategy.h"
 
 ADynamicLBSGameMode::ADynamicLBSGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -19,14 +20,18 @@ void ADynamicLBSGameMode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 }
 
-void ADynamicLBSGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+void ADynamicLBSGameMode::BeginPlay()
 {
-	Super::InitGame(MapName, Options, ErrorMessage);
-	DynamicLBSInfo = NewObject<ADynamicLBSInfo>(this);
+	Super::BeginPlay();
+	if (HasAuthority())
+	{
+		DynamicLBSInfo = GetWorld()->SpawnActor<ADynamicLBSInfo>();
+		OnDynamicLBSInfoCreated.ExecuteIfBound(DynamicLBSInfo);
+	}
 }
 
 void ADynamicLBSGameMode::OnRep_DynamicLBSInfo()
 {
 	auto NetDriver = StaticCast<USpatialNetDriver*>(GetNetDriver());
-	UE_LOG(LogDynamicLBStrategy, Warning, TEXT("[DynamicLBSGameMode] VirtualWorker[%d] received DynamicLBSInfo change!!!"), NetDriver->VirtualWorkerTranslator->GetLocalVirtualWorkerId());
+	UE_LOG(LogDynamicLBStrategy, Verbose, TEXT("[DynamicLBSGameMode] VirtualWorker[%d] received DynamicLBSInfo change!!!"), NetDriver->VirtualWorkerTranslator->GetLocalVirtualWorkerId());
 }

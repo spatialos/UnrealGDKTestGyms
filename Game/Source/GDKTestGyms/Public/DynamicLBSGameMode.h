@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "DynamicLBSInfo.h"
+#include "DelegateCombinations.h"
 #include "DynamicLBSGameMode.generated.h"
+
+DECLARE_DELEGATE_OneParam(DynamicLBSInfoDelegate, ADynamicLBSInfo*);
 
 /**
  * 
@@ -22,7 +25,9 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_DynamicLBSInfo)
 	ADynamicLBSInfo* DynamicLBSInfo;
 
-	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	DynamicLBSInfoDelegate OnDynamicLBSInfoCreated;
+
+	virtual void BeginPlay() override;
 
 private:
 	UFUNCTION()
