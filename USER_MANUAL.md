@@ -57,9 +57,15 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* Contains:
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestHandover1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+* The manual version of the gym contains:
   * A set of cubes that moves back and forth across a floor.
-* To test the gym:
+* Steps to run the manual version of the gym:
   * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
   * Press "L" to toggle locking actor migration.
   * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
