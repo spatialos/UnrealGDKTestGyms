@@ -16,6 +16,8 @@ class GDKTESTGYMS_API AShutdownPreparationGameMode : public AGameModeBase
 
 	virtual void BeginPlay() override;
 
+	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
+
 	UFUNCTION()
 	void HandleOnPrepareShutdown();
 };

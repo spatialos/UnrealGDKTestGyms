@@ -29,3 +29,17 @@ void AShutdownPreparationGameMode::HandleOnPrepareShutdown()
 	}
 	UE_LOG(LogTemp, Log, TEXT("Controllers returned: %d"), NumControllersReturned);
 }
+
+void AShutdownPreparationGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	if (ErrorMessage.IsEmpty())
+	{
+		USpatialGameInstance* GameInstance = GetGameInstance<USpatialGameInstance>();
+		if (GameInstance->IsPreparingForShutdown())
+		{
+			ErrorMessage = TEXT("preparing_for_shutdown");
+			return;
+		}
+	}
+}
