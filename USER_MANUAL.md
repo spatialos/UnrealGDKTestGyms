@@ -57,9 +57,15 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* Contains:
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestHandover1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+* The manual version of the gym contains:
   * A set of cubes that moves back and forth across a floor.
-* To test the gym:
+* Steps to run the manual version of the gym:
   * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
   * Press "L" to toggle locking actor migration.
   * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
@@ -120,8 +126,8 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
   2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
   3. The Session Frontend will then prompt you with the result of the test.
-* For QA workflows Test Replicated startup actor are correctly spawned on all clients
-* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients"
+* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
+* Also covers the QA work-flow of checking that "Startup actors correctly replicate arbitrary properties".
 * Validation
   1. After two seconds checks that actor is visible to client and reports pass or fail
 
@@ -158,6 +164,10 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestWorldComposition1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
