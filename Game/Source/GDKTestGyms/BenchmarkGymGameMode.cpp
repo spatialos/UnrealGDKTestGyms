@@ -25,6 +25,8 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const FString NumWorkersWorkerFlag = TEXT("num_workers");
+	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
 } // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -32,6 +34,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
+	, NumWorkers(1)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -141,16 +144,23 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString PlayerDensityString;
 
 		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(NetDriver != nullptr))
 		{
 			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
-			if (ensure(SpatialWorkerFlags != nullptr) &&
-				SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+			if (ensure(SpatialWorkerFlags != nullptr))
 			{
-				PlayerDensity = FCString::Atoi(*PlayerDensityString);
+				FString PlayerDensityString;
+				if(SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				{
+					PlayerDensity = FCString::Atoi(*PlayerDensityString);
+				}
+				FString NumWorkersString;
+				if (SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, NumWorkersString))
+				{
+					NumWorkers = FCString::Atoi(*NumWorkersString);
+				}
 			}
 		}
 
@@ -166,6 +176,10 @@ void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const F
 	if (FlagName == PlayerDensityWorkerFlag)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
+	}
+	if (FlagName == NumWorkersWorkerFlag)
+	{
+		NumWorkers = FCString::Atoi(*FlagValue);
 	}
 }
 
@@ -211,19 +225,65 @@ void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumP
 void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
 	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
-	int NumRows, NumCols, MinRelativeX, MinRelativeY;
-	GenerateGridSettings(DistBetweenClusterCenters, NumClusters, NumRows, NumCols, MinRelativeX, MinRelativeY);
 
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns"), NumRows, NumCols);
-	for (int i = 0; i < NumClusters; i++)
+	//we use a fixed size 10km
+	const float ZoneWidth = 1000000.0f / NumWorkers;
+	const float StartingX = -500000.0f;
+
+	if (NumWorkers > 1)
 	{
-		const int Row = i % NumRows;
-		const int Col = i / NumRows;
+		//for multiworker configuration we will place a percentage of spawn points
+		int ClustersOnBoundaries = FMath::CeilToInt(NumClusters * PercentageSpawnpointsOnWorkerBoundary);
+		int RemainingClusters = NumClusters - ClustersOnBoundaries;
 
-		const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
-		const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+		TArray<float> Boundaries;
+		for (int i = 1; i < NumWorkers; ++i)
+		{
+			Boundaries.Emplace(StartingX + ZoneWidth * i);
+		}
 
-		GenerateSpawnPoints(ClusterCenterX, ClusterCenterY, PlayerDensity);
+		int NumPerBoundary = FMath::CeilToInt(ClustersOnBoundaries / static_cast<float>(Boundaries.Num()));
+		int StartingY = FMath::RoundToInt(-((NumPerBoundary - 1) * DistBetweenClusterCenters) / 2.0f);
+		int BoundaryIndex = 0;
+		while(ClustersOnBoundaries > 0)
+		{
+			int ClusterCenterX = FMath::RoundToInt(Boundaries[BoundaryIndex]);
+			for (int y = 0; y < NumPerBoundary && ClustersOnBoundaries > 0; ++y)
+			{
+				int ClusterCenterY = StartingY + y * DistBetweenClusterCenters;
+				//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+				GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+				UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster near boundary location: %d , %d"), ClusterCenterY, ClusterCenterX);
+				--ClustersOnBoundaries;
+			}
+			++BoundaryIndex;
+		}
+
+		NumClusters = RemainingClusters;
+	}
+
+	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(NumWorkers));
+	for (int w = 0; w < NumWorkers; ++w)
+	{
+		int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
+		NumClusters -= ClusterCount;
+		int NumRows, NumCols, MinRelativeX, MinRelativeY;
+		GenerateGridSettings(DistBetweenClusterCenters, ClusterCount, NumRows, NumCols, MinRelativeX, MinRelativeY);
+
+		//Adjust the lefthand side of the grid to so that the grid is centered in the zone
+		MinRelativeX = FMath::RoundToInt(MinRelativeX + StartingX + (w * ZoneWidth) + (ZoneWidth / 2.0f));
+
+		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
+		for (int i = 0; i < ClusterCount; i++)
+		{
+			const int Row = i % NumRows;
+			const int Col = i / NumRows;
+
+			const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
+			const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+			//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+			GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+		}
 	}
 }
 
