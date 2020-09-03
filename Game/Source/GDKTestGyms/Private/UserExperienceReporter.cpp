@@ -93,7 +93,7 @@ void UUserExperienceReporter::ReportMetrics()
 		{
 			const UNFRConstants* Constants = UNFRConstants::Get(World);
 			check(Constants);
-			if (Constants->ClientFPSMetricDelay.IsReady() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
+			if (Constants->ClientFPSMetricDelay.HasTimerGoneOff() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
 			{
 				bFrameRateValid = false;
 			}

@@ -103,6 +103,10 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
 ##### Net reference test gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestNetReference1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * Test that references to replicated actors are stable when actors go in and out of relevance
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
 * Validation:
@@ -112,6 +116,10 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   4. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
 
 ##### ReplicatedStartupActor gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * For QA workflows Test Replicated startup actor are correctly spawned on all clients
 * Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients"
 * Validation
@@ -196,5 +204,31 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 * Initially the player controller will not posses any pawn. This will mean that hitting "enter" will result in no server logs and client logs suggesting that no pawn is owned by the player controller.
 * Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * Ensure multi-worker is turned off.
+
+#### FASAsyncGym
+* Checks an edge case of the GDK handling of FastSerialized Arrays.
+* Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
+* This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
+* When async loading completes the FAS callbacks will be called with valid pointers.
+* How to test : 
+  * Play the level.
+  * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
+  * Otherwise, a red text will be displayed, or other error messages.
+* NOTE : This test should be ran with "Single Process" disabled in play settings to be valid.
+  * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
+* NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
+
+##### Teleporting gym.
+* Tests actor migration when load balancing is enabled.
+* NOTE : This gym is likely to have random failures, as we are still working on load balancing.
+* Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
+* The gym is separated in 4 load balanced zones, and spawns a character which can teleport around.
+* How to test : 
+  * The character can walk around the center of the map, migrating between zones
+  * Pressing T teleports the character to another zone.
+    * This is a sharp transition far away from boundaries, to test when border interest is absent.
+  * Pressing R spawns a new character in a different zone and posesses it.
+    * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+
 -----
 2019-11-15: Page added with editorial review

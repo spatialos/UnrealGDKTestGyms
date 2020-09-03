@@ -2,15 +2,17 @@
 
 #include "BenchmarkGymGameModeBase.h"
 
+#include "CounterComponent.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "GameFramework/GameStateBase.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
 #include "Utils/SpatialMetrics.h"
-#include "GDKTestGymsGameInstance.h"
+#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -22,11 +24,15 @@ namespace
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
+	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
 	const FString MaxRoundTripCommandLineKey = TEXT("-MaxRoundTrip=");
 	const FString MaxUpdateTimeDeltaCommandLineKey = TEXT("-MaxUpdateTimeDelta=");
+
+	const FString TestLiftimeWorkerFlag = TEXT("test_lifetime");
+	const FString TestLiftimeCommandLineKey = TEXT("-TestLifetime=");
 
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
@@ -35,6 +41,8 @@ namespace
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
+	const FString NFRFailureString = TEXT("NFR scenario failed");
+
 } // anonymous namespace
 
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
@@ -42,7 +50,6 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
 	, RequiredPlayers(4096)
-	, PrintUXMetricTimer(10.0f)
 	, AveragedClientRTTSeconds(0.0)
 	, AveragedClientUpdateTimeDeltaSeconds(0.0)
 	, MaxClientRoundTripSeconds(150)
@@ -51,7 +58,12 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasFpsFailed(false)
 	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
+	, bHasActorCountFailed(false)
+	, bActorCountFailureState(false)
+	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
+	, PrintMetricsTimer(10)
+	, TestLifetimeTimer(0)
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
@@ -71,6 +83,27 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	ParsePassedValues();
 	TryBindWorkerFlagsDelegate();
 	TryAddSpatialMetrics();
+}
+
+void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
+{
+	if (!bExpectedActorCountsInitialised)
+	{
+		BuildExpectedActorCounts();
+		bExpectedActorCountsInitialised = true;
+	}
+}
+
+void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
+{
+	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
+	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
+}
+
+void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
+{
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
+	ExpectedActorCounts.Add(FExpectedActorCount(ActorClass, ExpectedCount, Variance));
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -119,6 +152,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 				SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
 			}
 
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetActorCountValid);
+				SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
+			}
+
 			if (HasAuthority())
 			{
 				{
@@ -157,6 +196,15 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickClientFPSCheck(DeltaSeconds);
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
+	TickActorCountCheck(DeltaSeconds);
+
+	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
+	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
+	if (HasAuthority() &&
+		PrintMetricsTimer.HasTimerGoneOff())
+	{
+		PrintMetricsTimer.SetTimer(10);
+	}
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -176,13 +224,13 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->PlayerCheckMetricDelay.IsReady())
+	if (Constants->PlayerCheckMetricDelay.HasTimerGoneOff())
 	{
 		bHasDonePlayerCheck = true;
 		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("A client connection was dropped. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d, num players %d"), *NFRFailureString, RequiredPlayers, ActivePlayers, GetNumPlayers());
 		}
 		else
 		{
@@ -201,7 +249,7 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 	}
 
 	const UWorld* World = GetWorld();
-	const UGDKTestGymsGameInstance* GameInstance = Cast<UGDKTestGymsGameInstance>(World->GetGameInstance());
+	const UGDKTestGymsGameInstance* GameInstance = GetGameInstance<UGDKTestGymsGameInstance>();
 	if (GameInstance == nullptr)
 	{
 		return;
@@ -213,10 +261,10 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 	const float FPS = GameInstance->GetAveragedFPS();
 
 	if (FPS < Constants->GetMinServerFPS() &&
-		Constants->ServerFPSMetricDelay.IsReady())
+		Constants->ServerFPSMetricDelay.HasTimerGoneOff())
 	{
 		bHasFpsFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. FPS: %.8f"), FPS);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Server FPS check. FPS: %.8f"), *NFRFailureString, FPS);
 	}
 }
 
@@ -247,10 +295,10 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 	check(Constants);
 
 	if (!bClientFpsWasValid &&
-		Constants->ClientFPSMetricDelay.IsReady())
+		Constants->ClientFPSMetricDelay.HasTimerGoneOff())
 	{
 		bHasClientFpsFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("FPS check failed. A client has failed."));
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Client FPS check."), *NFRFailureString);
 	}
 }
 
@@ -307,17 +355,56 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	if (!bHasUxFailed &&
 		!bUXMetricValid &&
-		Constants->UXMetricDelay.IsReady())
+		Constants->UXMetricDelay.HasTimerGoneOff())
 	{
 		bHasUxFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("UX metric has failed. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), *NFRFailureString, AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
 	}
 
-	PrintUXMetricTimer -= DeltaSeconds;
-	if (PrintUXMetricTimer < 0.0f)
+	if (PrintMetricsTimer.HasTimerGoneOff())
 	{
-		PrintUXMetricTimer = 10.0f;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
+	}
+}
+
+void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
+{
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
+	// This test respects the initial delay timer in both native and GDK
+	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
+		!TestLifetimeTimer.HasTimerGoneOff())
+	{
+		TryInitialiseExpectedActorCounts();
+
+		const UWorld* World = GetWorld();
+		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
+		{
+			if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
+			{
+				continue;
+			}
+
+			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
+			const int32 Variance = ExpectedActorCount.Variance;
+			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
+			bActorCountFailureState = abs(ActualCount - ExpectedCount) > Variance;
+
+			if (bActorCountFailureState)
+			{
+				if (!bHasActorCountFailed)
+				{
+					bHasActorCountFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
+						*NFRFailureString,
+						*ExpectedActorCount.ActorClass->GetName(),
+						ExpectedCount,
+						ActualCount);
+				}
+				break;
+			}
+		}
 	}
 }
 
@@ -335,13 +422,17 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
 		SetTotalNPCs(NumNPCs);
 
+		int32 Lifetime = 0;
+		FParse::Value(*CommandLine, *TestLiftimeCommandLineKey, Lifetime);
+		SetLifetime(Lifetime);
+
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta;
+		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -373,6 +464,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				{
 					MaxClientUpdateTimeDeltaSeconds = FCString::Atoi(*MaxUpdateTimeDelta);
 				}
+
+				if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
+				{
+					SetLifetime(FCString::Atoi(*LifetimeString));
+				}
+
 			}
 		}
 	}
@@ -386,6 +483,10 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	{
 		ExpectedPlayers = FCString::Atoi(*FlagValue);
 	}
+	else if (FlagName == RequiredPlayersWorkerFlag)
+	{
+		RequiredPlayers = FCString::Atoi(*FlagValue);
+	}
 	else if (FlagName == TotalNPCsWorkerFlag)
 	{
 		SetTotalNPCs(FCString::Atoi(*FlagValue));
@@ -397,6 +498,10 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	else if (FlagName == MaxUpdateTimeDeltaWorkerFlag)
 	{
 		MaxClientUpdateTimeDeltaSeconds = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == TestLiftimeWorkerFlag)
+	{
+		SetLifetime(FCString::Atoi(*FlagValue));
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
@@ -414,4 +519,25 @@ void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
 void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 {
 	OnTotalNPCsUpdated(TotalNPCs);
+}
+
+int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
+{
+	const UCounterComponent* CounterComponent = Cast<UCounterComponent>(GameState->GetComponentByClass(UCounterComponent::StaticClass()));
+	check(CounterComponent != nullptr)
+
+	return CounterComponent->GetActorClassCount(ActorClass);
+}
+
+void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
+{
+	if (TestLifetimeTimer.SetTimer(Lifetime))
+	{
+		TestLifetimeTimer.SetLock(true);
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Setting NFR test lifetime %d"), Lifetime);
+	}
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
+	}
 }

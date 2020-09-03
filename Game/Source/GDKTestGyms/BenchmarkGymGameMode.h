@@ -24,6 +24,12 @@ public:
 	// Login used as a workaround for a player spawning issue UNR-3663
 	APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
+
+protected:
+
+	virtual void BuildExpectedActorCounts() override;
+	virtual void OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
+
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
 	TArray<FBlackboardValues> NPCRunPoints;
@@ -45,6 +51,7 @@ private:
 	TArray<AActor*> SpawnPoints;
 	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
+	TSubclassOf<AActor> DropCubeClass;
 	int32 NPCSToSpawn;
 
 	UPROPERTY()
