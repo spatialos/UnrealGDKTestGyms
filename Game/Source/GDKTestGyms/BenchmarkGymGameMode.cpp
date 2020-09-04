@@ -226,13 +226,14 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
 	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
 
-	//we use a fixed size 10km
+	// We use a fixed size 10km
 	const float ZoneWidth = 1000000.0f / NumWorkers;
 	const float StartingX = -500000.0f;
 
 	if (NumWorkers > 1)
 	{
-		//for multiworker configuration we will place a percentage of spawn points
+		// For multiworker configuration we will place a percentage of spawn points
+		// on/near the boundary between two zones
 		int ClustersOnBoundaries = FMath::CeilToInt(NumClusters * PercentageSpawnpointsOnWorkerBoundary);
 		int RemainingClusters = NumClusters - ClustersOnBoundaries;
 
