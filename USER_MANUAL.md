@@ -57,9 +57,15 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* Contains:
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestHandover1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+* The manual version of the gym contains:
   * A set of cubes that moves back and forth across a floor.
-* To test the gym:
+* Steps to run the manual version of the gym:
   * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
   * Press "L" to toggle locking actor migration.
   * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
@@ -120,8 +126,8 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
   2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
   3. The Session Frontend will then prompt you with the result of the test.
-* For QA workflows Test Replicated startup actor are correctly spawned on all clients
-* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients"
+* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
+* Also covers the QA work-flow of checking that "Startup actors correctly replicate arbitrary properties".
 * Validation
   1. After two seconds checks that actor is visible to client and reports pass or fail
 
@@ -139,16 +145,29 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
 
 ##### Server to server RPC gym
-* Demonstrates that:
+* This gym demonstrates that:
   * Actors owned by different servers correctly send server-to-server RPCs.
-* Contains:
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestCrossServerRPC1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+* The manual gym contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
     * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger).
     * Show a count of how many RPCs have been received which is shown above the cube.
-* If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
+* Steps to run the gym manually: 
+    * In the Content Browser, under Content, search for the Maps folder.
+    * Open the ServerToServerRPCGym and hit Play.
+    * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestWorldComposition1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
@@ -172,14 +191,20 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * There should not be logs saying "Error: Simulated task is simulating on the owning client".
 
 ##### Client Net Ownership gym
-* Demonstrates that:
+* This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* Contains:
+* NOTE: This gym can be run both as an automated test and as a manual one.
+* Steps to run the automated version of the gym:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestNetOwnership1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+  Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
     * (R) Sending a server RPC from the client on the cube,
     * (T) Removing the client as the net-owner for the cube.
-* To test the gym:
+* Steps to run the gym manually:
     * Press `Q` to make the client net-owner for the cube.
     * Observe that:
       * the `SpatialDebugger` authority icon updates to the virtual worker ID relating to the character.
