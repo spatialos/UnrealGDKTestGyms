@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
+#include "NFRConstants.h"
 
 #include "BenchmarkGymGameModeBase.generated.h"
 
@@ -21,6 +22,19 @@ protected:
 
 	static FString ReadFromCommandLineKey;
 
+	struct FExpectedActorCount
+	{
+		explicit FExpectedActorCount(TSubclassOf<AActor> InActorClass, int32 InExpectedCount, int32 InVariance)
+			: ActorClass(InActorClass)
+			, ExpectedCount(InExpectedCount)
+			, Variance(InVariance)
+		{}
+
+		TSubclassOf<AActor> ActorClass;
+		int32 ExpectedCount;
+		int32 Variance;
+	};
+
 	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
 
@@ -31,6 +45,14 @@ protected:
 	// Replicated so that offloading and zoning servers can get updates.
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
+
+	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
+	TSubclassOf<APawn> NPCClass;
+
+	virtual void BuildExpectedActorCounts();
+	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
+
+	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
 	virtual void ParsePassedValues();
 
@@ -47,7 +69,7 @@ protected:
 private:
 
 	// Test scenarios
-	float PrintUXMetricTimer;
+
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
 	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
@@ -56,9 +78,20 @@ private:
 	bool bHasFpsFailed;
 	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
+	bool bHasActorCountFailed;
+	// bActorCountFailureState will be true if the test has failed
+	bool bActorCountFailureState;
+	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // A count of visible UX components
 
+	FMetricTimer PrintMetricsTimer;
+	FMetricTimer TestLifetimeTimer;
+
+	TArray<FExpectedActorCount> ExpectedActorCounts;
+
 	virtual void BeginPlay() override;
+
+	void TryInitialiseExpectedActorCounts();
 
 	void TryBindWorkerFlagsDelegate();
 	void TryAddSpatialMetrics();
@@ -67,6 +100,7 @@ private:
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
+	void TickActorCountCheck(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
@@ -75,6 +109,9 @@ private:
 	double GetPlayersConnected() const { return ActivePlayers; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
+	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
+
+	void SetLifetime(int32 Lifetime);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
