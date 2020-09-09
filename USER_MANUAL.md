@@ -271,12 +271,12 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 *   - Each worker tests if it can initially see the AReplicatedVisibilityTestActor.
 *   - After ensuring possession happened, the Server moves Client 1's Character to a remote location, so it cannot see the AReplicatedVisibilityTestActor.
 *   - After ensuring movement replicated correctly, Client 1 checks it can no longer see the AReplicatedVisibilityTestActor.
-*	  - The Server sets the AReplicatedVisibilityTestActor to hidden.
-*	  - All Clients check they can no longer see the AReplicatedVisibilityTestActor.
-*	  - The Server moves the character of Client 1 back close to its spawn location, so that the AReplicatedVisibilityTestActor is in its interest area.
-*	  - All Clients check they can still not see the AReplicatedVisibilityTestActor.
-*	  - The Server sets the AReplicatedVisibilityTestActor to not be hidden.
-*	  - All Clients check they can now see the AReplicatedVisibilityTestActor.
+*   - The Server sets the AReplicatedVisibilityTestActor to hidden.
+*   - All Clients check they can no longer see the AReplicatedVisibilityTestActor.
+*   - The Server moves the character of Client 1 back close to its spawn location, so that the AReplicatedVisibilityTestActor is in its interest area.
+*   - All Clients check they can still not see the AReplicatedVisibilityTestActor.
+*   - The Server sets the AReplicatedVisibilityTestActor to not be hidden.
+*   - All Clients check they can now see the AReplicatedVisibilityTestActor.
 * - Cleanup:
 *   - Client 1 repossesses its default pawn.
 *   - The spawned Character is destroyed.
