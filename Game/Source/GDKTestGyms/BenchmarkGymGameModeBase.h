@@ -107,13 +107,13 @@ private:
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorCountCheck(float DeltaSeconds);
 
-	int GetAuthoritativePlayers();
+	int GetAuthoritativePlayers() const;
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
-	double GetTotalAuthoritativePlayers();
+	double GetTotalAuthoritativePlayers() const;
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }

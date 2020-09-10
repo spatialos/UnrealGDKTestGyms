@@ -550,13 +550,13 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 }
 
-int ABenchmarkGymGameModeBase::GetAuthoritativePlayers()
+int ABenchmarkGymGameModeBase::GetAuthoritativePlayers() const
 {
 	int PlayerCount = 0;
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PlayerActor = Iterator->Get();
-		if (PlayerActor && PlayerActor->PlayerState && !MustSpectate(PlayerActor) && PlayerActor->HasAuthority())
+		if (PlayerActor != nullptr && PlayerActor->PlayerState != nullptr && !MustSpectate(PlayerActor) && PlayerActor->HasAuthority())
 		{
 			PlayerCount++;
 		}
@@ -568,16 +568,15 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 {
 	if (HasAuthority())
 	{
-		int& value = MapAuthoritativePlayers.FindOrAdd(WorkerID);
-		if (value != AuthoritativePlayers)
+		int& Value = MapAuthoritativePlayers.FindOrAdd(WorkerID);
+		if (Value != AuthoritativePlayers)
 		{
-			value = AuthoritativePlayers;
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers:%s=%d"), *WorkerID, AuthoritativePlayers);
+			Value = AuthoritativePlayers;
 		}
 	}
 }
 
-double ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers()
+double ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers() const
 {
 	double TotalPlayers = 0;
 	for (const auto& kv : MapAuthoritativePlayers)
