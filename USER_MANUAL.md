@@ -254,5 +254,6 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+
 -----
 2019-11-15: Page added with editorial review
