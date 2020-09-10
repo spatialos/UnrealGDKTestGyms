@@ -22,6 +22,7 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientUpdateTimeDeltaMetricName = TEXT("UnrealAverageClientUpdateTimeDelta");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+	const FString AuthoritativePlayersMetricName = TEXT("UnrealTotalAuthoritativePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
@@ -74,6 +75,7 @@ void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalNPCs);
+	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalAuthoritativePlayers);
 }
 
 void ABenchmarkGymGameModeBase::BeginPlay()
@@ -158,6 +160,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 				SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
 			}
 
+			{
+				UserSuppliedMetric Delegate;
+				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers);
+				SpatialMetrics->SetCustomMetric(AuthoritativePlayersMetricName, Delegate);
+			}
+
 			if (HasAuthority())
 			{
 				{
@@ -178,6 +186,7 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
 				}
 
+
 				{
 					UserSuppliedMetric Delegate;
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
@@ -197,6 +206,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
+	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetAuthoritativePlayers());
 
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
@@ -539,5 +549,37 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	else
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
+	}
+}
+
+int ABenchmarkGymGameModeBase::GetAuthoritativePlayers()
+{
+	int PlayerCount = 0;
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		APlayerController* PlayerActor = Iterator->Get();
+		if (PlayerActor && PlayerActor->PlayerState && !MustSpectate(PlayerActor) && PlayerActor->HasAuthority())
+		{
+			PlayerCount++;
+		}
+	}
+	return PlayerCount;
+}
+
+void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers)
+{
+	if (HasAuthority())
+	{
+		int& value = MapAuthoritativePlayers.FindOrAdd(WorkerID);
+		if (value != AuthoritativePlayers)
+		{
+			value = AuthoritativePlayers;
+			TotalAuthoritativePlayers = 0;
+			for (const auto& kv : MapAuthoritativePlayers)
+			{
+				TotalAuthoritativePlayers += kv.Value;
+			}
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers:%s=%d total:%d"), *WorkerID, AuthoritativePlayers, TotalAuthoritativePlayers);
+		}
 	}
 }
