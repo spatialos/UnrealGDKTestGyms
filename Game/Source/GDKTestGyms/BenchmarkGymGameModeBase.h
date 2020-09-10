@@ -46,10 +46,6 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
 	int32 TotalNPCs;
 
-	// Replicated so that all the workers know how many total players.
-	UPROPERTY(Replicated)
-	int32 TotalAuthoritativePlayers;
-
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<APawn> NPCClass;
 
@@ -73,7 +69,6 @@ protected:
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayers(const FString& WorkerID, int AuthoritativePlayers);
 	void ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers);
-
 
 private:
 	// Test scenarios
@@ -118,7 +113,7 @@ private:
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return ActivePlayers; }
-	double GetTotalAuthoritativePlayers() { return (double)TotalAuthoritativePlayers; }
+	double GetTotalAuthoritativePlayers();
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }

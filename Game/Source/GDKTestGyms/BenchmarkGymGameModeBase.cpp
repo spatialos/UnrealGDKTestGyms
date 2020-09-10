@@ -75,7 +75,6 @@ void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalNPCs);
-	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalAuthoritativePlayers);
 }
 
 void ABenchmarkGymGameModeBase::BeginPlay()
@@ -160,12 +159,6 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 				SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
 			}
 
-			{
-				UserSuppliedMetric Delegate;
-				Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers);
-				SpatialMetrics->SetCustomMetric(AuthoritativePlayersMetricName, Delegate);
-			}
-
 			if (HasAuthority())
 			{
 				{
@@ -191,6 +184,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
 				}
+
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers);
+					SpatialMetrics->SetCustomMetric(AuthoritativePlayersMetricName, Delegate);
+				}
 			}
 		}
 	}
@@ -206,7 +205,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
 	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetAuthoritativePlayers());
-
+	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
 	if (HasAuthority() &&
@@ -573,12 +572,17 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 		if (value != AuthoritativePlayers)
 		{
 			value = AuthoritativePlayers;
-			TotalAuthoritativePlayers = 0;
-			for (const auto& kv : MapAuthoritativePlayers)
-			{
-				TotalAuthoritativePlayers += kv.Value;
-			}
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers:%s=%d total:%d"), *WorkerID, AuthoritativePlayers, TotalAuthoritativePlayers);
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers:%s=%d"), *WorkerID, AuthoritativePlayers);
 		}
 	}
+}
+
+double ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers()
+{
+	double TotalPlayers = 0;
+	for (const auto& kv : MapAuthoritativePlayers)
+	{
+		TotalPlayers += kv.Value;
+	}
+	return TotalPlayers;
 }
