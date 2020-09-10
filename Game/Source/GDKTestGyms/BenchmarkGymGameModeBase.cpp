@@ -186,7 +186,6 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
 				}
 
-
 				{
 					UserSuppliedMetric Delegate;
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
