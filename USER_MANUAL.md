@@ -254,31 +254,6 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
-
-#### Current automated test maps
-
-##### HiddenActor map / Visibility Test.
-* Tests bHidden relevancy flag functionality.
-* Known issues: UNR-4215
-* The map includes one cube actor already placed in the level at Location FVector(0.0f, 0.0f, 80.0f).
-* This test tests if a bHidden Actor is replicating properly to Server and Clients.
-* The test includes a single server and two client workers.
-* The flow is as follows:
-* - Setup:
-*   - One cube actor already placed in the level at Location FVector(0.0f, 0.0f, 80.0f).
-*   - The Server spawns a TestMovementCharacter and makes Client 1 possess it.
-* - Test:
-*   - Each worker tests if it can initially see the AReplicatedVisibilityTestActor.
-*   - After ensuring possession happened, the Server moves Client 1's Character to a remote location, so it cannot see the AReplicatedVisibilityTestActor.
-*   - After ensuring movement replicated correctly, Client 1 checks it can no longer see the AReplicatedVisibilityTestActor.
-*   - The Server sets the AReplicatedVisibilityTestActor to hidden.
-*   - All Clients check they can no longer see the AReplicatedVisibilityTestActor.
-*   - The Server moves the character of Client 1 back close to its spawn location, so that the AReplicatedVisibilityTestActor is in its interest area.
-*   - All Clients check they can still not see the AReplicatedVisibilityTestActor.
-*   - The Server sets the AReplicatedVisibilityTestActor to not be hidden.
-*   - All Clients check they can now see the AReplicatedVisibilityTestActor.
-* - Cleanup:
-*   - Client 1 repossesses its default pawn.
-*   - The spawned Character is destroyed.
+    
 -----
 2019-11-15: Page added with editorial review
