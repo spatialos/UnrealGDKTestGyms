@@ -22,7 +22,6 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientUpdateTimeDeltaMetricName = TEXT("UnrealAverageClientUpdateTimeDelta");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
-	const FString AuthoritativePlayersMetricName = TEXT("UnrealTotalAuthoritativePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
@@ -184,12 +183,6 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
 				}
-
-				{
-					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers);
-					SpatialMetrics->SetCustomMetric(AuthoritativePlayersMetricName, Delegate);
-				}
 			}
 		}
 	}
@@ -238,12 +231,12 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		if (ActivePlayers < RequiredPlayers)
 		{
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d, num players %d"), *NFRFailureString, RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, ActivePlayers);
 		}
 		else
 		{
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d"), RequiredPlayers, ActivePlayers);
 		}
 	}
 }
@@ -342,8 +335,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 			UXComponentCount++;
 		}
 	}
-
-	ActivePlayers = UXComponentCount;
 
 	if (UXComponentCount == 0)
 	{
@@ -572,16 +563,11 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 		if (Value != AuthoritativePlayers)
 		{
 			Value = AuthoritativePlayers;
+			ActivePlayers = 0;
+			for (const auto& kv : MapAuthoritativePlayers)
+			{
+				ActivePlayers += kv.Value;
+			}
 		}
 	}
-}
-
-double ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers() const
-{
-	double TotalPlayers = 0;
-	for (const auto& kv : MapAuthoritativePlayers)
-	{
-		TotalPlayers += kv.Value;
-	}
-	return TotalPlayers;
 }
