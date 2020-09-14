@@ -106,7 +106,6 @@ private:
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorCountCheck(float DeltaSeconds);
 
-	int GetAuthoritativePlayers() const;
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
