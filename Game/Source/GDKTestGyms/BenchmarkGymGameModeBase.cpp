@@ -197,7 +197,6 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
-	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetAuthoritativePlayers());
 	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
@@ -305,11 +304,6 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	int UXComponentCount = 0;
 	int ValidRTTCount = 0;
 	int ValidUpdateTimeDeltaCount = 0;
@@ -332,9 +326,13 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 				ValidUpdateTimeDeltaCount++;
 			}
 
-			UXComponentCount++;
+			if (Component->GetOwner()->HasAuthority())
+			{
+				UXComponentCount++;
+			}
 		}
 	}
+	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXComponentCount);
 
 	if (UXComponentCount == 0)
 	{
