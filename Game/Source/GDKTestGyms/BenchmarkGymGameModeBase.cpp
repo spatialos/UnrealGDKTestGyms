@@ -334,7 +334,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	}
 	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXComponentCount);
 
-	if (UXComponentCount == 0)
+	if (UXComponentCount == 0 || !HasAuthority())
 	{
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
