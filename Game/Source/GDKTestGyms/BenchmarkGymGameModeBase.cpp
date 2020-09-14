@@ -22,7 +22,6 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientUpdateTimeDeltaMetricName = TEXT("UnrealAverageClientUpdateTimeDelta");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
-	const FString AuthoritativePlayersMetricName = TEXT("UnrealTotalAuthoritativePlayers");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
@@ -184,12 +183,6 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
 				}
-
-				{
-					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers);
-					SpatialMetrics->SetCustomMetric(AuthoritativePlayersMetricName, Delegate);
-				}
 			}
 		}
 	}
@@ -204,7 +197,6 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
-	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetAuthoritativePlayers());
 	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
@@ -312,11 +304,6 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	int UXComponentCount = 0;
 	int ValidRTTCount = 0;
 	int ValidUpdateTimeDeltaCount = 0;
@@ -339,13 +326,15 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 				ValidUpdateTimeDeltaCount++;
 			}
 
-			UXComponentCount++;
+			if (Component->GetOwner()->HasAuthority())
+			{
+				UXComponentCount++;
+			}
 		}
 	}
+	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXComponentCount);
 
-	ActivePlayers = UXComponentCount;
-
-	if (UXComponentCount == 0)
+	if (UXComponentCount == 0 || !HasAuthority())
 	{
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
@@ -550,20 +539,6 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 }
 
-int ABenchmarkGymGameModeBase::GetAuthoritativePlayers() const
-{
-	int PlayerCount = 0;
-	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-	{
-		APlayerController* PlayerActor = Iterator->Get();
-		if (PlayerActor != nullptr && PlayerActor->PlayerState != nullptr && !MustSpectate(PlayerActor) && PlayerActor->HasAuthority())
-		{
-			PlayerCount++;
-		}
-	}
-	return PlayerCount;
-}
-
 void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers)
 {
 	if (HasAuthority())
@@ -572,16 +547,11 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 		if (Value != AuthoritativePlayers)
 		{
 			Value = AuthoritativePlayers;
+			ActivePlayers = 0;
+			for (const auto& kv : MapAuthoritativePlayers)
+			{
+				ActivePlayers += kv.Value;
+			}
 		}
 	}
-}
-
-double ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers() const
-{
-	double TotalPlayers = 0;
-	for (const auto& kv : MapAuthoritativePlayers)
-	{
-		TotalPlayers += kv.Value;
-	}
-	return TotalPlayers;
 }
