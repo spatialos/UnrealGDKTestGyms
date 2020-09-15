@@ -70,6 +70,9 @@ protected:
 	virtual void ReportAuthoritativePlayers(const FString& WorkerID, int AuthoritativePlayers);
 	void ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers);
 
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportHandOverActors(const FString& WorkerID, int HandOverActors);
+	void ReportHandOverActors_Implementation(const FString& WorkerID, int HandOverActors);
 private:
 	// Test scenarios
 
@@ -86,6 +89,14 @@ private:
 	bool bActorCountFailureState;
 	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // All authoritative players from all workers
+
+	// For hand over authoritative actors count
+	int LastTimeHandOverActors;
+	TArray<int> ToBeRemovedHandOverActors;
+	int TotalHandOverdActorsOfCurrentWorker;
+	int HandOverFrameCount;
+	int HandOverTotalFrameCount;
+	TMap<FString, int>	MapHandOverActors;
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
@@ -105,12 +116,16 @@ private:
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorCountCheck(float DeltaSeconds);
+	void TickActorHandOver(float DeltaSeconds);
 
+	int GetAuthoritativePlayers() const;
+	int GetAuthoritativeActors() const;
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
+	double GetTotalHandOverActors() const;
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
