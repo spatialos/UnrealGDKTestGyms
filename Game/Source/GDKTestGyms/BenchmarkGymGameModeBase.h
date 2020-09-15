@@ -66,8 +66,11 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-private:
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportAuthoritativePlayers(const FString& WorkerID, int AuthoritativePlayers);
+	void ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers);
 
+private:
 	// Test scenarios
 
 	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
@@ -82,12 +85,13 @@ private:
 	// bActorCountFailureState will be true if the test has failed
 	bool bActorCountFailureState;
 	bool bExpectedActorCountsInitialised;
-	int32 ActivePlayers; // A count of visible UX components
+	int32 ActivePlayers; // All authoritative players from all workers
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 
 	TArray<FExpectedActorCount> ExpectedActorCounts;
+	TMap<FString, int>	MapAuthoritativePlayers;
 
 	virtual void BeginPlay() override;
 
@@ -106,7 +110,7 @@ private:
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
-	double GetPlayersConnected() const { return ActivePlayers; }
+	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
