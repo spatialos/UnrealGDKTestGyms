@@ -1,8 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 
 #include "ShutdownPreparationGameMode.h"
 #include "EngineClasses/SpatialGameInstance.h"
+
+DEFINE_LOG_CATEGORY(LogShutdownPreparationGameMode);
+
+AShutdownPreparationGameMode::AShutdownPreparationGameMode()
+	: Super()
+{
+	static ConstructorHelpers::FClassFinder<AActor> PawnClassFinder(TEXT("/Game/Characters/PlayerCharacter_BP"));
+	DefaultPawnClass = PawnClassFinder.Class;
+}
 
 void AShutdownPreparationGameMode::BeginPlay()
 {
@@ -15,7 +24,7 @@ void AShutdownPreparationGameMode::BeginPlay()
 void AShutdownPreparationGameMode::HandleOnPrepareShutdown()
 {
 	UWorld* World = GetWorld();
-	UE_LOG(LogTemp, Log, TEXT("Num player controllers: %d"), World->GetNumPlayerControllers());
+	UE_LOG(LogShutdownPreparationGameMode, Log, TEXT("Num player controllers: %d"), World->GetNumPlayerControllers());
 
 	int NumControllersReturned = 0;
 	for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
@@ -27,7 +36,7 @@ void AShutdownPreparationGameMode::HandleOnPrepareShutdown()
 			NumControllersReturned++;
 		}
 	}
-	UE_LOG(LogTemp, Log, TEXT("Controllers returned: %d"), NumControllersReturned);
+	UE_LOG(LogShutdownPreparationGameMode, Log, TEXT("Controllers returned: %d"), NumControllersReturned);
 }
 
 void AShutdownPreparationGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
