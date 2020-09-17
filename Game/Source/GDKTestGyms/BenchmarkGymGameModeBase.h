@@ -93,7 +93,7 @@ private:
 	// For hand over authoritative actors count
 	int LastTimeHandOverActors;
 	TArray<int> ToBeRemovedHandOverActors;
-	int TotalHandOverdActorsOfCurrentWorker;
+	int HandOverdActorsOfCurrentWorker;
 	int HandOverFrameCount;
 	int HandOverTotalFrameCount;
 	TMap<FString, int>	MapHandOverActors;
@@ -118,8 +118,7 @@ private:
 	void TickActorCountCheck(float DeltaSeconds);
 	void TickActorHandOver(float DeltaSeconds);
 
-	int GetAuthoritativePlayers() const;
-	int GetAuthoritativeActors() const;
+	int GetAuthMovingActors() const;
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }

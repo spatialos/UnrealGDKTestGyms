@@ -68,9 +68,9 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
 	, LastTimeHandOverActors(0)
-	, TotalHandOverdActorsOfCurrentWorker(0)
+	, HandOverdActorsOfCurrentWorker(0)
 	, HandOverFrameCount(0)
-	, HandOverTotalFrameCount(1800)
+	, HandOverTotalFrameCount(9000)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
 {
@@ -572,50 +572,43 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 	}
 }
 
-double ABenchmarkGymGameModeBase::GetTotalAuthoritativePlayers() const
-{
-	double TotalPlayers = 0;
-	for (const auto& kv : MapAuthoritativePlayers)
-	{
-		TotalPlayers += kv.Value;
-	}
-	return TotalPlayers;
-}
-
 void ABenchmarkGymGameModeBase::TickActorHandOver(float DeltaSeconds)
 {
 	// Count how many actors hand over authority in 1 tick
-	int AuthoritativeActors = GetAuthoritativeActors();
-	int Delta = FMath::Abs(AuthoritativeActors - LastTimeHandOverActors);
+	int AuthMovingActors = GetAuthMovingActors();
+	int Delta = FMath::Abs(AuthMovingActors - LastTimeHandOverActors);
 	ToBeRemovedHandOverActors.Push(Delta);
 	if (HandOverFrameCount > HandOverTotalFrameCount)
 	{
 		int RemoveValue = ToBeRemovedHandOverActors.Pop(true);
-		TotalHandOverdActorsOfCurrentWorker -= RemoveValue;
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("RemoveValue=%d"), RemoveValue);
+		HandOverdActorsOfCurrentWorker -= RemoveValue;
+		//UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("RemoveValue=%d"), RemoveValue);
 	}
-	TotalHandOverdActorsOfCurrentWorker += Delta;
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Delta=%d,TotalHandOverdActorsOfCurrentWorker=%d,AuthoritativeActors=%d,LastTimeHandOverActors=%d"), 
-		Delta, TotalHandOverdActorsOfCurrentWorker, AuthoritativeActors, LastTimeHandOverActors);
-	LastTimeHandOverActors = AuthoritativeActors;
+	HandOverdActorsOfCurrentWorker += Delta;
+	if (Delta > 0)
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Delta=%d,HandOverdActorsOfCurrentWorker=%d,AuthMovingActors=%d,LastTimeHandOverActors=%d"),
+			Delta, HandOverdActorsOfCurrentWorker, AuthMovingActors, LastTimeHandOverActors);
+	}
+	LastTimeHandOverActors = AuthMovingActors;
 	++HandOverFrameCount;
 
-	// Report TotalHandOverdActorsOfCurrentWorker to the worker which has authority
-	ReportHandOverActors(FPlatformProcess::ComputerName(), TotalHandOverdActorsOfCurrentWorker);
+	// Report HandOverdActorsOfCurrentWorker to the worker which has authority
+	ReportHandOverActors(FPlatformProcess::ComputerName(), HandOverdActorsOfCurrentWorker);
 }
 
-int ABenchmarkGymGameModeBase::GetAuthoritativeActors() const
+int ABenchmarkGymGameModeBase::GetAuthMovingActors() const
 {
-	int TotalAuthoritativeActors = 0;
+	int TotalAuthMovingActors = 0;
 	for (TObjectIterator<UMovementComponent> Itr; Itr; ++Itr)
 	{
 		UMovementComponent* Component = *Itr;
 		if (Component->GetOwner() != nullptr && Component->GetOwner()->HasAuthority() && Component->GetWorld() == GetWorld())
 		{
-			TotalAuthoritativeActors += 1;
+			++TotalAuthMovingActors;
 		}
 	}
-	return TotalAuthoritativeActors;
+	return TotalAuthMovingActors;
 }
 
 void ABenchmarkGymGameModeBase::ReportHandOverActors_Implementation(const FString& WorkerID, int HandOverActors)
@@ -629,11 +622,11 @@ void ABenchmarkGymGameModeBase::ReportHandOverActors_Implementation(const FStrin
 
 double ABenchmarkGymGameModeBase::GetTotalHandOverActors() const
 {
-	double TotalHandOverActors = 0;
+	int32 TotalHandOverActors = 0;
 	for (const auto& kv : MapHandOverActors)
 	{
 		TotalHandOverActors += kv.Value;
 	}
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("TotalHandOverActors=%d"), TotalHandOverActors);
-	return TotalHandOverActors;
+	return static_cast<double>(TotalHandOverActors);
 }
