@@ -5,7 +5,6 @@
 #include "CounterComponent.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/MovementComponent.h"
 #include "GDKTestGymsGameInstance.h"
@@ -38,7 +37,7 @@ namespace
 	const FString TestLiftimeWorkerFlag = TEXT("test_lifetime");
 	const FString TestLiftimeCommandLineKey = TEXT("-TestLifetime=");
 
-	const FString HandOverTotalFrameCountWorkerFlag = TEXT("HandOver_total_frame_count");
+	const FString HandOverTotalFrameCountWorkerFlag = TEXT("handover_total_frame_count");
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
 	const FString RequiredPlayersWorkerFlag = TEXT("required_players");
@@ -70,7 +69,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, LastTimeHandOverActors(0)
 	, HandOverdActorsOfCurrentWorker(0)
 	, HandOverFrameCount(0)
-	, HandOverTotalFrameCount(9000)
+	, HandOverTotalFrameCount(9000) // About 5Mins(FPS=30 on worker)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
 {
@@ -621,6 +620,5 @@ double ABenchmarkGymGameModeBase::GetTotalHandOverActors() const
 	{
 		TotalHandOverActors += kv.Value;
 	}
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("TotalHandOverActors=%d"), TotalHandOverActors);
 	return static_cast<double>(TotalHandOverActors);
 }
