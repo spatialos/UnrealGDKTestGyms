@@ -575,29 +575,23 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 void ABenchmarkGymGameModeBase::TickActorHandOver(float DeltaSeconds)
 {
 	// Count how many actors hand over authority in 1 tick
-	int AuthMovingActors = GetAuthMovingActors();
-	int Delta = FMath::Abs(AuthMovingActors - LastTimeHandOverActors);
+	int MovementAuthActors = GetMovementAuthActors();
+	int Delta = FMath::Abs(MovementAuthActors - LastTimeHandOverActors);
 	ToBeRemovedHandOverActors.Push(Delta);
 	if (HandOverFrameCount > HandOverTotalFrameCount)
 	{
 		int RemoveValue = ToBeRemovedHandOverActors.Pop(true);
 		HandOverdActorsOfCurrentWorker -= RemoveValue;
-		//UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("RemoveValue=%d"), RemoveValue);
 	}
 	HandOverdActorsOfCurrentWorker += Delta;
-	if (Delta > 0)
-	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Delta=%d,HandOverdActorsOfCurrentWorker=%d,AuthMovingActors=%d,LastTimeHandOverActors=%d"),
-			Delta, HandOverdActorsOfCurrentWorker, AuthMovingActors, LastTimeHandOverActors);
-	}
-	LastTimeHandOverActors = AuthMovingActors;
+	LastTimeHandOverActors = MovementAuthActors;
 	++HandOverFrameCount;
 
 	// Report HandOverdActorsOfCurrentWorker to the worker which has authority
 	ReportHandOverActors(FPlatformProcess::ComputerName(), HandOverdActorsOfCurrentWorker);
 }
 
-int ABenchmarkGymGameModeBase::GetAuthMovingActors() const
+int ABenchmarkGymGameModeBase::GetMovementAuthActors() const
 {
 	int TotalAuthMovingActors = 0;
 	for (TObjectIterator<UMovementComponent> Itr; Itr; ++Itr)

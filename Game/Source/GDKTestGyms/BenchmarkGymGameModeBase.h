@@ -118,7 +118,7 @@ private:
 	void TickActorCountCheck(float DeltaSeconds);
 	void TickActorHandOver(float DeltaSeconds);
 
-	int GetAuthMovingActors() const;
+	int GetMovementAuthActors() const;
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
