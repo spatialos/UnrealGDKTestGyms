@@ -255,5 +255,12 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
 
+#### SpatialEventTracingTests
+* Tests whether key trace events have the appropriate cause events.
+* Ensure that the following settings are added to DefaultSpatialGDKSettings.ini :
+  * bEventTracingEnabled=True
+  * MaxEventTracingFileSizeBytes=104857600
+* You will probably want to remove these setting after you have finished running these tests.
+
 -----
 2019-11-15: Page added with editorial review
