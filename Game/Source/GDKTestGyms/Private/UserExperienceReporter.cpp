@@ -3,10 +3,10 @@
 
 #include "UserExperienceReporter.h"
 
-#include "GDKTestGymsGameInstance.h"
+#include "GDKTestGyms/GDKTestGymsGameInstance.h"
 #include "NFRConstants.h"
 #include "Net/UnrealNetwork.h"
-#include "SpatialNetDriver.h"
+#include "EngineClasses/SpatialNetDriver.h"
 #include "UserExperienceComponent.h"
 #include "Utils/SpatialMetrics.h"
 

@@ -6,6 +6,7 @@ public class GDKTestGyms : ModuleRules
 {
 	public GDKTestGyms(ReadOnlyTargetRules Target) : base(Target)
 	{
+		bLegacyPublicIncludePaths = false;
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(
