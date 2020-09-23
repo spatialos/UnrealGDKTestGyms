@@ -5,7 +5,7 @@
 #include "UserExperienceReporter.h"
 
 #include "Net/UnrealNetwork.h"
-#include "SpatialNetDriver.h"
+#include "EngineClasses/SpatialNetDriver.h"
 #include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceComponent);
