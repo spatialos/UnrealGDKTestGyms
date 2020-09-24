@@ -10,5 +10,5 @@ steps:
       commit: "${GDK_COMMIT:-HEAD}"
       message: "TestGyms ${BUILDKITE_BRANCH} ${BUILDKITE_MESSAGE}"
       env:
-        NATIVE_TEST_REPO_BRANCH: "${BUILDKITE_BRANCH}"
+        TEST_REPO_BRANCH: "${BUILDKITE_BRANCH}"
         ENGINE_NET_TEST: "true"
