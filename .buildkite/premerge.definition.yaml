@@ -1,0 +1,11 @@
+agent_queue_id: trigger-pipelines
+description: TestGyms premerge (calls GDK premerge)
+github:
+  default_branch: master
+teams:
+- name: Everyone
+  permission: BUILD_AND_READ
+- name: gbu/develop/unreal
+  permission: MANAGE_BUILD_AND_READ
+- name: gen/team/unreal
+  permission: MANAGE_BUILD_AND_READ
