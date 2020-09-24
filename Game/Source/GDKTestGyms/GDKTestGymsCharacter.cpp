@@ -11,7 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "EngineClasses/SpatialNetDriver.h"
 
-#include "UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AGDKTestGymsCharacter
