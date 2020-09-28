@@ -1,0 +1,14 @@
+---
+steps:
+  # Run the UnrealGDK premerge with this version of the TestGyms repo.
+  # Only run for PRs or as a post-merge on important branches, or if triggered manually.
+  - label: "unreal-gdk-premerge"
+    if: build.pull_request.id != null || build.source == "ui" || build.branch == "master" || build.branch == "release" || build.branch == "preview" || build.branch =~ /-rc/
+    trigger: "unrealgdk-premerge"
+    build:
+      branch: "${GDK_BRANCH:-master}"
+      commit: "${GDK_COMMIT:-HEAD}"
+      message: "TestGyms ${BUILDKITE_BRANCH} ${BUILDKITE_MESSAGE}"
+      env:
+        TEST_REPO_BRANCH: "${BUILDKITE_BRANCH}"
+        ENGINE_NET_TEST: "true"
