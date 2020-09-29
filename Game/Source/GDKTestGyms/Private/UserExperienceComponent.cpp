@@ -44,7 +44,13 @@ void UUserExperienceComponent::EndRoundtrip(int32 Key)
 	if (int64* StartTime = OpenRPCs.Find(Key))
 	{
 		int64_t Diff = FDateTime::Now().GetTicks() - *StartTime;
-		RoundTripTime.Push(FTimespan(Diff).GetTotalMilliseconds());
+		static int logmod = 0;
+		double delta{ FTimespan(Diff).GetTotalMilliseconds() };
+		if (++logmod % 20 == 0)
+		{
+			UE_LOG(LogUserExperienceComponent, Log, TEXT("Client RTT: %g"), delta);
+		}
+		RoundTripTime.Push(delta);
 		if (RoundTripTime.Num() > NumWindowSamples)
 		{
 			RoundTripTime.RemoveAt(0);
