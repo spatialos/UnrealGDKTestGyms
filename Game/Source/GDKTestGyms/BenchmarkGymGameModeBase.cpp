@@ -197,7 +197,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
-
+	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
 	if (HasAuthority() &&
@@ -304,11 +304,6 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	int UXComponentCount = 0;
 	int ValidRTTCount = 0;
 	int ValidUpdateTimeDeltaCount = 0;
@@ -331,13 +326,15 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 				ValidUpdateTimeDeltaCount++;
 			}
 
-			UXComponentCount++;
+			if (Component->GetOwner()->HasAuthority())
+			{
+				UXComponentCount++;
+			}
 		}
 	}
+	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXComponentCount);
 
-	ActivePlayers = UXComponentCount;
-
-	if (UXComponentCount == 0)
+	if (UXComponentCount == 0 || !HasAuthority())
 	{
 		return; // We don't start reporting until there are some valid components in the scene.
 	}
@@ -539,5 +536,22 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	else
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
+	}
+}
+
+void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers)
+{
+	if (HasAuthority())
+	{
+		int& Value = MapAuthoritativePlayers.FindOrAdd(WorkerID);
+		if (Value != AuthoritativePlayers)
+		{
+			Value = AuthoritativePlayers;
+			ActivePlayers = 0;
+			for (const auto& kv : MapAuthoritativePlayers)
+			{
+				ActivePlayers += kv.Value;
+			}
+		}
 	}
 }

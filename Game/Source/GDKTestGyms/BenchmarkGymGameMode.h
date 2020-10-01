@@ -53,6 +53,7 @@ private:
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	TSubclassOf<AActor> DropCubeClass;
 	int32 NPCSToSpawn;
+	int32 NumWorkers;
 
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "NFRConstants.h"
-#include "SpatialGameInstance.h"
+#include "EngineClasses/SpatialGameInstance.h"
 
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
