@@ -1,9 +1,8 @@
 ---
 steps:
   # Run the UnrealGDK premerge with this version of the TestGyms repo.
-  # Only run for PRs or as a post-merge on important branches, or if triggered manually.
+  # Unfortunately we can't easily detect if we are running for a branch with a PR or not, so we just always run.
   - label: "unreal-gdk-premerge"
-    if: build.pull_request.id != null || build.source == "ui" || build.branch == "master" || build.branch == "release" || build.branch == "preview" || build.branch =~ /-rc/
     trigger: "unrealgdk-premerge"
     build:
       branch: "${GDK_BRANCH:-master}"
