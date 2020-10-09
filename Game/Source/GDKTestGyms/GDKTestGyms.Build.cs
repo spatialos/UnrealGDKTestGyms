@@ -1,7 +1,6 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 using UnrealBuildTool;
-using System.IO;
 
 public class GDKTestGyms : ModuleRules
 {
