@@ -2,6 +2,7 @@
 
 #include "GDKTestGymsGameInstance.h"
 
+
 #include "Interop/Connection/SpatialConnectionManager.h"
 
 #include "NFRConstants.h"
@@ -45,7 +46,7 @@ void UGDKTestGymsGameInstance::SpatialConnected()
 					}
 				}
 			});
-	}	
+	}
 }
 
 void UGDKTestGymsGameInstance::OnStart()

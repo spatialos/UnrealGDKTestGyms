@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "BackgroundEncoder.h"
 #include "GameFramework/Character.h"
 #include "GDKTestGymsCharacter.generated.h"
 
@@ -69,5 +71,16 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+public:
+	UFUNCTION(Client, Reliable)
+	void OnNetworkDelta(const TArray<uint8>& NetworkDelta);
+
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void PreReplication(IRepChangedPropertyTracker & ChangedPropertyTracker) override;
+private:
+	BackgroundEncoder Encoder{ 7, 32, 8192 };
+	float NextBackgroundUpdateTime;
+	float NextTrainOutput;
 };
 
