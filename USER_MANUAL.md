@@ -230,7 +230,7 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 * Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * Ensure multi-worker is turned off.
 
-#### FASAsyncGym
+##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
 * Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
 * This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
@@ -243,7 +243,7 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
 
-##### Teleporting gym.
+##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
 * NOTE : This gym is likely to have random failures, as we are still working on load balancing.
 * Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
@@ -254,6 +254,17 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+
+##### Spatial Debugger Config UI gym
+* Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
+* Gives an example of using that callback to return your game to the correct input mode after closing the debugger config UI, depending on whether your game itself had a UI open.
+* How to test:
+  * Press U to open the in-game UI. Check that the mouse cursor appears and that you are able to click the button.
+  * Press F9 to open the spatial debugger config UI. Check that you are able to interact with that UI.
+  * Press F9 again to close the debugger config UI. The mouse cursor should stay visible, and you should be able to interact with the in-game UI.
+  * Press U to close the in-game UI. The mouse cursor should now be captured by the game, and moving the mouse should control the character camera again.
+  * Press F9 to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
+  * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
 #### SpatialEventTracingTests
 * Tests whether key trace events have the appropriate cause events.

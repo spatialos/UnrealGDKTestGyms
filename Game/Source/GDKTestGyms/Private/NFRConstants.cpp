@@ -2,7 +2,7 @@
 
 #include "EngineClasses/SpatialNetDriver.h"
 #include "EngineUtils.h"
-#include "GDKTestGymsGameInstance.h"
+#include "GDKTestGyms/GDKTestGymsGameInstance.h"
 #include "Interop/SpatialWorkerFlags.h"
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);

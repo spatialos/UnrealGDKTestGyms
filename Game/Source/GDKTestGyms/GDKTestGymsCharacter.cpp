@@ -9,9 +9,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "SpatialNetDriver.h"
-
-#include "UnrealNetwork.h"
+#include "EngineClasses/SpatialNetDriver.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AGDKTestGymsCharacter
