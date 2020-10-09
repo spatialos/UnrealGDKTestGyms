@@ -67,12 +67,10 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativePlayers(const FString& WorkerID, int AuthoritativePlayers);
-	void ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers);
+	virtual void ReportAuthoritativePlayers(const FString& WorkerID, const int AuthoritativePlayers);
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportHandOverActors(const FString& WorkerID, int HandOverActors);
-	void ReportHandOverActors_Implementation(const FString& WorkerID, int HandOverActors);
+	virtual void ReportMigration(const FString& WorkerID, const int Migration);
 private:
 	// Test scenarios
 
@@ -90,13 +88,13 @@ private:
 	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // All authoritative players from all workers
 
-	// For hand over authoritative actors count
-	int LastTimeHandOverActors;
-	TArray<int> ToBeRemovedHandOverActors;
-	int HandOverdActorsOfCurrentWorker;
-	int HandOverFrameCount;
-	int HandOverTotalFrameCount;
-	TMap<FString, int>	MapHandOverActors;
+	// For actor migration count
+	int32 PreviousTickMigration;
+	TArray<int32> ToBeRemovedMigration;
+	int32 MigrationOfCurrentWorker;
+	int32 MigrationFrameCount;
+	int32 MigrationWindowFrameCount;
+	TMap<FString, int32>	MapWorkerActorMigration;
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
@@ -116,7 +114,7 @@ private:
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorCountCheck(float DeltaSeconds);
-	void TickActorHandOver(float DeltaSeconds);
+	void TickActorMigration(float DeltaSeconds);
 
 	int GetMovementAuthActors() const;
 	void SetTotalNPCs(int32 Value);
@@ -124,7 +122,7 @@ private:
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
-	double GetTotalHandOverActors() const;
+	double GetTotalMigrations() const;
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }

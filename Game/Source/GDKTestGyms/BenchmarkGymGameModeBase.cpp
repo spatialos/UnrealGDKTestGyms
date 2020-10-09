@@ -10,7 +10,6 @@
 #include "GDKTestGymsGameInstance.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
-#include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
 #include "Utils/SpatialMetrics.h"
@@ -24,7 +23,7 @@ namespace
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientUpdateTimeDeltaMetricName = TEXT("UnrealAverageClientUpdateTimeDelta");
 	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
-	const FString HandOverActorsMetricName = TEXT("UnrealHandOverActors");
+	const FString ActorMigrationMetricName = TEXT("UnrealActorMigration");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
@@ -37,7 +36,6 @@ namespace
 	const FString TestLiftimeWorkerFlag = TEXT("test_lifetime");
 	const FString TestLiftimeCommandLineKey = TEXT("-TestLifetime=");
 
-	const FString HandOverTotalFrameCountWorkerFlag = TEXT("handover_total_frame_count");
 	const FString TotalPlayerWorkerFlag = TEXT("total_players");
 	const FString TotalNPCsWorkerFlag = TEXT("total_npcs");
 	const FString RequiredPlayersWorkerFlag = TEXT("required_players");
@@ -66,10 +64,10 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bActorCountFailureState(false)
 	, bExpectedActorCountsInitialised(false)
 	, ActivePlayers(0)
-	, LastTimeHandOverActors(0)
-	, HandOverdActorsOfCurrentWorker(0)
-	, HandOverFrameCount(0)
-	, HandOverTotalFrameCount(9000) // About 5Mins(FPS=30 on worker)
+	, PreviousTickMigration(0)
+	, MigrationOfCurrentWorker(0)
+	, MigrationFrameCount(0)
+	, MigrationWindowFrameCount(9000) // About 5Mins(FPS=30 on worker)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
 {
@@ -194,8 +192,8 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 
 				{
 					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalHandOverActors);
-					SpatialMetrics->SetCustomMetric(HandOverActorsMetricName, Delegate);
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalMigrations);
+					SpatialMetrics->SetCustomMetric(ActorMigrationMetricName, Delegate);
 				}
 			}
 		}
@@ -211,7 +209,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
-	TickActorHandOver(DeltaSeconds);
+	TickActorMigration(DeltaSeconds);
 	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
@@ -554,7 +552,7 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 }
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers)
+void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, const int AuthoritativePlayers)
 {
 	if (HasAuthority())
 	{
@@ -571,23 +569,23 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 	}
 }
 
-void ABenchmarkGymGameModeBase::TickActorHandOver(float DeltaSeconds)
+void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 {
 	// Count how many actors hand over authority in 1 tick
 	int MovementAuthActors = GetMovementAuthActors();
-	int Delta = FMath::Abs(MovementAuthActors - LastTimeHandOverActors);
-	ToBeRemovedHandOverActors.Push(Delta);
-	if (HandOverFrameCount > HandOverTotalFrameCount)
+	int Delta = FMath::Abs(MovementAuthActors - PreviousTickMigration);
+	ToBeRemovedMigration.Push(Delta);
+	if (MigrationFrameCount > MigrationWindowFrameCount)
 	{
-		int RemoveValue = ToBeRemovedHandOverActors.Pop(true);
-		HandOverdActorsOfCurrentWorker -= RemoveValue;
+		int RemoveValue = ToBeRemovedMigration.Pop(true);
+		MigrationOfCurrentWorker -= RemoveValue;
 	}
-	HandOverdActorsOfCurrentWorker += Delta;
-	LastTimeHandOverActors = MovementAuthActors;
-	++HandOverFrameCount;
+	MigrationOfCurrentWorker += Delta;
+	PreviousTickMigration = MovementAuthActors;
+	++MigrationFrameCount;
 
-	// Report HandOverdActorsOfCurrentWorker to the worker which has authority
-	ReportHandOverActors(FPlatformProcess::ComputerName(), HandOverdActorsOfCurrentWorker);
+	// Report MigratedActorsOfCurrentWorker to the worker which has authority
+	ReportMigration(FPlatformProcess::ComputerName(), MigrationOfCurrentWorker);
 }
 
 int ABenchmarkGymGameModeBase::GetMovementAuthActors() const
@@ -604,21 +602,21 @@ int ABenchmarkGymGameModeBase::GetMovementAuthActors() const
 	return TotalAuthMovingActors;
 }
 
-void ABenchmarkGymGameModeBase::ReportHandOverActors_Implementation(const FString& WorkerID, int HandOverActors)
+void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& WorkerID, const int Migration)
 {
 	if (HasAuthority())
 	{
-		int& Value = MapHandOverActors.FindOrAdd(WorkerID);
-		Value = HandOverActors;
+		int& Value = MapWorkerActorMigration.FindOrAdd(WorkerID);
+		Value = Migration;
 	}
 }
 
-double ABenchmarkGymGameModeBase::GetTotalHandOverActors() const
+double ABenchmarkGymGameModeBase::GetTotalMigrations() const
 {
-	int32 TotalHandOverActors = 0;
-	for (const auto& kv : MapHandOverActors)
+	int32 TotalMigrations = 0;
+	for (const auto& KeyValue : MapWorkerActorMigration)
 	{
-		TotalHandOverActors += kv.Value;
+		TotalMigrations += KeyValue.Value;
 	}
-	return static_cast<double>(TotalHandOverActors);
+	return static_cast<double>(TotalMigrations);
 }
