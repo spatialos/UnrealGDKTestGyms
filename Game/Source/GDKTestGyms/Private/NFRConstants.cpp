@@ -47,6 +47,7 @@ UNFRConstants::UNFRConstants()
 	, ClientFPSMetricDelay(60)
 	, UXMetricDelay(10 * 60)
 	, ActorCheckDelay(10 * 60)
+	, ActorMigrationCheckDelay(5 * 60)
 {
 }
 

@@ -89,12 +89,15 @@ private:
 	int32 ActivePlayers; // All authoritative players from all workers
 
 	// For actor migration count
+	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
-	TArray<int32> ToBeRemovedMigration;
+	TArray<int32> ToBeRemovedMigrationDeltas;
 	int32 MigrationOfCurrentWorker;
 	int32 MigrationFrameCount;
 	int32 MigrationWindowFrameCount;
 	TMap<FString, int32>	MapWorkerActorMigration;
+	int32 MinActorMigration;
+	FMetricTimer ActorMigrationCheckTimer;
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
@@ -122,7 +125,7 @@ private:
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
-	double GetTotalMigrations() const;
+	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
