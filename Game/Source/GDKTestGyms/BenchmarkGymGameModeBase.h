@@ -96,7 +96,7 @@ private:
 	int32 MigrationFrameCount;
 	int32 MigrationWindowFrameCount;
 	TMap<FString, int32>	MapWorkerActorMigration;
-	int32 MinActorMigration;
+	double MinActorMigration;
 	FMetricTimer ActorMigrationCheckTimer;
 
 	FMetricTimer PrintMetricsTimer;
