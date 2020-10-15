@@ -8,6 +8,8 @@ public class GDKTestGymsServerTarget : TargetRules
 	public GDKTestGymsServerTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Server;
-		ExtraModuleNames.Add("GDKTestGyms");
+        bOverrideBuildEnvironment = true;
+        bUseLoggingInShipping = true;
+        ExtraModuleNames.Add("GDKTestGyms");
 	}
 }
