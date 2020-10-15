@@ -7,5 +7,3 @@ teams:
   permission: BUILD_AND_READ
 - name: gen/team/unreal
   permission: MANAGE_BUILD_AND_READ
-- name: gen/team/unreal
-  permission: MANAGE_BUILD_AND_READ
