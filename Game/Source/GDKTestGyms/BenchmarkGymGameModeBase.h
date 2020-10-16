@@ -92,11 +92,12 @@ private:
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
 	TArray<int32> ToBeRemovedMigrationDeltas;
+	int32 UXAuthActorCount;
 	int32 MigrationOfCurrentWorker;
 	int32 MigrationFrameCount;
 	int32 MigrationWindowFrameCount;
 	TMap<FString, int32>	MapWorkerActorMigration;
-	double MinActorMigration;
+	float MinActorMigration;
 	FMetricTimer ActorMigrationCheckTimer;
 
 	FMetricTimer PrintMetricsTimer;
@@ -119,7 +120,6 @@ private:
 	void TickActorCountCheck(float DeltaSeconds);
 	void TickActorMigration(float DeltaSeconds);
 
-	int GetMovementAuthActors() const;
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }

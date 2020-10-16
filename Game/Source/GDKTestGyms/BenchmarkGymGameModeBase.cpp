@@ -70,6 +70,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, ActivePlayers(0)
 	, bHasActorMigrationCheckFailed(false)
 	, PreviousTickMigration(0)
+	, UXAuthActorCount(0)
 	, MigrationOfCurrentWorker(0)
 	, MigrationFrameCount(0)
 	, MigrationWindowFrameCount(9000) // About 5Mins(FPS=30 on worker)
@@ -324,7 +325,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 {
-	int UXComponentCount = 0;
+	UXAuthActorCount = 0;
 	int ValidRTTCount = 0;
 	int ValidUpdateTimeDeltaCount = 0;
 	float ClientRTTSeconds = 0.0f;
@@ -348,15 +349,21 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 			if (Component->GetOwner()->HasAuthority())
 			{
-				UXComponentCount++;
+				UXAuthActorCount++;
 			}
 		}
 	}
-	ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXComponentCount);
-
-	if (UXComponentCount == 0 || !HasAuthority())
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+	if (Constants->UXMetricDelay.HasTimerGoneOff())
 	{
-		return; // We don't start reporting until there are some valid components in the scene.
+		// We don't start reporting until UXMetricDelay has gone off
+		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXAuthActorCount);
+	}
+
+	if (!HasAuthority())
+	{
+		return;
 	}
 
 	ClientRTTSeconds /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
@@ -364,9 +371,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	AveragedClientRTTSeconds = ClientRTTSeconds;
 	AveragedClientUpdateTimeDeltaSeconds = ClientUpdateTimeDeltaSeconds;
-
-	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-	check(Constants);
 
 	const bool bUXMetricValid = AveragedClientRTTSeconds <= MaxClientRoundTripSeconds && AveragedClientUpdateTimeDeltaSeconds <= MaxClientUpdateTimeDeltaSeconds;
 
@@ -445,9 +449,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
-		float fValue = 0.0f;
-		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, fValue);
-		MinActorMigration = fValue;
+		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigration);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -492,7 +494,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				
 				if (SpatialWorkerFlags->GetWorkerFlag(MinActorMigrationWorkerFlag, MinActorMigrationString))
 				{
-					MinActorMigration = FCString::Atod(*MinActorMigrationString);
+					MinActorMigration = FCString::Atof(*MinActorMigrationString);
 				}
 			}
 		}
@@ -529,7 +531,7 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	}
 	else if (FlagName == MinActorMigrationWorkerFlag)
 	{
-		MinActorMigration = FCString::Atod(*FlagValue);
+		MinActorMigration = FCString::Atof(*FlagValue);
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
@@ -601,8 +603,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 	if (Constants->ActorMigrationCheckDelay.HasTimerGoneOff())
 	{
 		// Count how many actors hand over authority in 1 tick
-		int MovementAuthActors = GetMovementAuthActors();
-		int Delta = FMath::Abs(MovementAuthActors - PreviousTickMigration);
+		int Delta = FMath::Abs(UXAuthActorCount - PreviousTickMigration);
 		ToBeRemovedMigrationDeltas.Push(Delta);
 		int RemoveValue = 0;
 		bool bChanged = false;
@@ -614,7 +615,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 			bChanged = (Delta != RemoveValue);
 		}
 		MigrationOfCurrentWorker += Delta;
-		PreviousTickMigration = MovementAuthActors;
+		PreviousTickMigration = UXAuthActorCount;
 		++MigrationFrameCount;
 
 		if (MigrationFrameCount > MigrationWindowFrameCount)
@@ -645,25 +646,13 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 					{
 						// reset timer for next check after 10s
 						ActorMigrationCheckTimer.SetTimer(10);
+						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f"),
+							TotalMigrations, AverageActorMigration, MinActorMigration);
 					}
 				}
 			}
 		}
 	}
-}
-
-int ABenchmarkGymGameModeBase::GetMovementAuthActors() const
-{
-	int TotalAuthMovingActors = 0;
-	for (TObjectIterator<UUserExperienceComponent> Itr; Itr; ++Itr)
-	{
-		UUserExperienceComponent* Component = *Itr;
-		if (Component->GetOwner() != nullptr && Component->GetOwner()->HasAuthority() && Component->GetWorld() == GetWorld())
-		{
-			++TotalAuthMovingActors;
-		}
-	}
-	return TotalAuthMovingActors;
 }
 
 void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& WorkerID, const int Migration)
