@@ -31,14 +31,14 @@ void UEventTracerComponent::TimerFunction()
 {
 	// Create a user trace event for sending a property update
 	FString SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-	USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent(), SpanId);
+	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
 	USpatialEventTracerUserInterface::AddLatentSpanId(this, this, SpanId);
 
 	bTestBool = !bTestBool;
 
 	// Create a user trace event for sending an RPC
 	SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-	USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent(), SpanId);
+	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent());
 
 	USpatialEventTracerUserInterface::AddSpanIdToStack(this, SpanId);
 	RunOnClient();
@@ -51,7 +51,7 @@ void UEventTracerComponent::OnRepBool()
 	{
 		// Create a user trace event for receiving a property update
 		FString SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-		USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent(), SpanId);
+		USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent());
 	}
 }
 
@@ -59,7 +59,7 @@ void UEventTracerComponent::RunOnClient_Implementation()
 {
 	// Create a user trace event for receiving an RPC
 	FString SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-	USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent(), SpanId);
+	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent());
 }
 
 bool UEventTracerComponent::OwnerHasAuthority() const
