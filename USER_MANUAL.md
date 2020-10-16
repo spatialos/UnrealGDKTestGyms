@@ -266,5 +266,12 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * Press F9 to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
   * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
+#### SpatialEventTracingTests
+* Tests whether key trace events have the appropriate cause events.
+* Ensure that the following settings are added to DefaultSpatialGDKSettings.ini :
+  * bEventTracingEnabled=True
+  * MaxEventTracingFileSizeBytes=104857600
+* You will probably want to remove these setting after you have finished running these tests.
+
 -----
 2019-11-15: Page added with editorial review
