@@ -94,10 +94,10 @@ private:
 	TArray<int32> ToBeRemovedMigrationDeltas;
 	int32 UXAuthActorCount;
 	int32 MigrationOfCurrentWorker;
-	int32 MigrationFrameCount;
-	int32 MigrationWindowFrameCount;
+	float MingrationCountSeconds;
+	float MigrationWindowSeconds;
 	TMap<FString, int32>	MapWorkerActorMigration;
-	float MinActorMigration;
+	float MinActorMigrationPerSecond;
 	FMetricTimer ActorMigrationCheckTimer;
 
 	FMetricTimer PrintMetricsTimer;

@@ -72,9 +72,9 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, PreviousTickMigration(0)
 	, UXAuthActorCount(0)
 	, MigrationOfCurrentWorker(0)
-	, MigrationFrameCount(0)
-	, MigrationWindowFrameCount(9000) // About 5Mins(FPS=30 on worker)
-	, MinActorMigration(0.0)
+	, MingrationCountSeconds(0.0)
+	, MigrationWindowSeconds(5*60.0f)
+	, MinActorMigrationPerSecond(0.0)
 	, ActorMigrationCheckTimer(10)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
@@ -449,7 +449,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
-		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigration);
+		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -494,13 +494,13 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				
 				if (SpatialWorkerFlags->GetWorkerFlag(MinActorMigrationWorkerFlag, MinActorMigrationString))
 				{
-					MinActorMigration = FCString::Atof(*MinActorMigrationString);
+					MinActorMigrationPerSecond = FCString::Atof(*MinActorMigrationString);
 				}
 			}
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigration %.8f"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds, MinActorMigration);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigration %.8f"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds, MinActorMigrationPerSecond);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -531,7 +531,7 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	}
 	else if (FlagName == MinActorMigrationWorkerFlag)
 	{
-		MinActorMigration = FCString::Atof(*FlagValue);
+		MinActorMigrationPerSecond = FCString::Atof(*FlagValue);
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
@@ -605,20 +605,18 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 		// Count how many actors hand over authority in 1 tick
 		int Delta = FMath::Abs(UXAuthActorCount - PreviousTickMigration);
 		ToBeRemovedMigrationDeltas.Push(Delta);
-		int RemoveValue = 0;
 		bool bChanged = false;
-		if (MigrationFrameCount > MigrationWindowFrameCount)
+		if (MingrationCountSeconds > MigrationWindowSeconds)
 		{
-			RemoveValue = ToBeRemovedMigrationDeltas[0];
+			int RemoveValue = ToBeRemovedMigrationDeltas[0];
 			ToBeRemovedMigrationDeltas.RemoveAt(0);
 			MigrationOfCurrentWorker -= RemoveValue;
 			bChanged = (Delta != RemoveValue);
 		}
 		MigrationOfCurrentWorker += Delta;
 		PreviousTickMigration = UXAuthActorCount;
-		++MigrationFrameCount;
 
-		if (MigrationFrameCount > MigrationWindowFrameCount)
+		if (MingrationCountSeconds > MigrationWindowSeconds)
 		{
 			if (bChanged)
 			{
@@ -630,28 +628,29 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 			{
 				if (MapWorkerActorMigration.Num() > 1)
 				{
-					double TotalMigrations = 0;
+					float TotalMigrations = 0;
 					for (const auto& KeyValue : MapWorkerActorMigration)
 					{
 						TotalMigrations += KeyValue.Value;
 					}
-					double AverageActorMigration = TotalMigrations / static_cast<double>(MigrationWindowFrameCount);
-					if (AverageActorMigration < MinActorMigration)
+					float AverageActorMigration = TotalMigrations / MigrationWindowSeconds;
+					if (AverageActorMigration < MinActorMigrationPerSecond)
 					{
 						bHasActorMigrationCheckFailed = true;
 						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f"),
-							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigration);
+							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond);
 					}
 					else
 					{
 						// reset timer for next check after 10s
 						ActorMigrationCheckTimer.SetTimer(10);
 						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f"),
-							TotalMigrations, AverageActorMigration, MinActorMigration);
+							TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond);
 					}
 				}
 			}
 		}
+		MingrationCountSeconds += DeltaSeconds;
 	}
 }
 
