@@ -91,10 +91,12 @@ private:
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
-	TArray<int32> ToBeRemovedMigrationDeltas;
+	TQueue<int32> ToBeRemovedMigrationDeltas;
+	TQueue<float> ToBeRemovedDeltaSeconds;
 	int32 UXAuthActorCount;
 	int32 MigrationOfCurrentWorker;
-	float MingrationCountSeconds;
+	float MigrationExactlyWindowSeconds;
+	float MigrationCountSeconds;
 	float MigrationWindowSeconds;
 	TMap<FString, int32>	MapWorkerActorMigration;
 	float MinActorMigrationPerSecond;

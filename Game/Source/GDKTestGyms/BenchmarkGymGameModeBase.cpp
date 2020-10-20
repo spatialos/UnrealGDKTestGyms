@@ -72,7 +72,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, PreviousTickMigration(0)
 	, UXAuthActorCount(0)
 	, MigrationOfCurrentWorker(0)
-	, MingrationCountSeconds(0.0)
+	, MigrationCountSeconds(0.0)
 	, MigrationWindowSeconds(5*60.0f)
 	, MinActorMigrationPerSecond(0.0)
 	, ActorMigrationCheckTimer(10)
@@ -245,7 +245,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	check(Constants);
 
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->PlayerCheckMetricDelay.HasTimerGoneOff())
+	if (Constants->PlayerCheckMetricDelay.HasTimerGoneOff() && MapAuthoritativePlayers.Num() > 1)
 	{
 		bHasDonePlayerCheck = true;
 		if (ActivePlayers < RequiredPlayers)
@@ -604,19 +604,31 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 	{
 		// Count how many actors hand over authority in 1 tick
 		int Delta = FMath::Abs(UXAuthActorCount - PreviousTickMigration);
-		ToBeRemovedMigrationDeltas.Push(Delta);
+		ToBeRemovedMigrationDeltas.Enqueue(Delta);
 		bool bChanged = false;
-		if (MingrationCountSeconds > MigrationWindowSeconds)
+		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
-			int RemoveValue = ToBeRemovedMigrationDeltas[0];
-			ToBeRemovedMigrationDeltas.RemoveAt(0);
-			MigrationOfCurrentWorker -= RemoveValue;
-			bChanged = (Delta != RemoveValue);
+			int32 RemoveDelta = 0;
+			if (ToBeRemovedMigrationDeltas.Peek(RemoveDelta))
+			{
+				ToBeRemovedMigrationDeltas.Pop();
+				MigrationOfCurrentWorker -= RemoveDelta;
+				bChanged = (Delta != RemoveDelta);
+			}
+
+			// If a frame is very long, the actual duration may be greater than MigrationWindowSeconds. 
+			// Record the actual duration to ensure more accurate results.
+			float RemoveDeltaSeconds;
+			if (ToBeRemovedDeltaSeconds.Peek(RemoveDeltaSeconds))
+			{
+				ToBeRemovedDeltaSeconds.Pop();
+				MigrationExactlyWindowSeconds -= RemoveDeltaSeconds;
+			}
 		}
 		MigrationOfCurrentWorker += Delta;
 		PreviousTickMigration = UXAuthActorCount;
 
-		if (MingrationCountSeconds > MigrationWindowSeconds)
+		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
 			if (bChanged)
 			{
@@ -633,7 +645,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 					{
 						TotalMigrations += KeyValue.Value;
 					}
-					float AverageActorMigration = TotalMigrations / MigrationWindowSeconds;
+					float AverageActorMigration = TotalMigrations / MigrationExactlyWindowSeconds;
 					if (AverageActorMigration < MinActorMigrationPerSecond)
 					{
 						bHasActorMigrationCheckFailed = true;
@@ -650,7 +662,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 				}
 			}
 		}
-		MingrationCountSeconds += DeltaSeconds;
+		MigrationCountSeconds += DeltaSeconds;
 	}
 }
 
