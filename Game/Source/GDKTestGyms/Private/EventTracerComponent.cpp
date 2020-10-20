@@ -2,6 +2,7 @@
 
 #include "Interop/Connection/SpatialEventTracerUserInterface.h"
 #include "Interop/Connection/SpatialTraceEventBuilder.h"
+#include "Interop/Connection/UserSpanId.h"
 #include "Net/UnrealNetwork.h"
 
 UEventTracerComponent::UEventTracerComponent()
@@ -30,7 +31,7 @@ void UEventTracerComponent::BeginPlay()
 void UEventTracerComponent::TimerFunction()
 {
 	// Create a user trace event for sending a property update
-	FString SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
+	FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
 	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
 	USpatialEventTracerUserInterface::AddLatentSpanId(this, this, SpanId);
 
@@ -50,7 +51,7 @@ void UEventTracerComponent::OnRepBool()
 	if (!OwnerHasAuthority())
 	{
 		// Create a user trace event for receiving a property update
-		FString SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
+		FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
 		USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent());
 	}
 }
@@ -58,7 +59,7 @@ void UEventTracerComponent::OnRepBool()
 void UEventTracerComponent::RunOnClient_Implementation()
 {
 	// Create a user trace event for receiving an RPC
-	FString SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
+	FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
 	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent());
 }
 
