@@ -70,7 +70,7 @@ protected:
 	virtual void ReportAuthoritativePlayers(const FString& WorkerID, const int AuthoritativePlayers);
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportMigration(const FString& WorkerID, const int Migration);
+	virtual void ReportMigration(const FString& WorkerID, const float AverageMigration);
 private:
 	// Test scenarios
 
@@ -91,14 +91,14 @@ private:
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
-	TQueue<int32> ToBeRemovedMigrationDeltas;
-	TQueue<float> ToBeRemovedDeltaSeconds;
+	typedef TTuple<int32, float> ToBeRemovedDelta;
+	TQueue<ToBeRemovedDelta> ToBeRemovedMigrationDeltas;
 	int32 UXAuthActorCount;
 	int32 MigrationOfCurrentWorker;
-	float MigrationExactlyWindowSeconds;
+	float MigrationSeconds;
 	float MigrationCountSeconds;
 	float MigrationWindowSeconds;
-	TMap<FString, int32>	MapWorkerActorMigration;
+	TMap<FString, float> MapWorkerActorMigration;
 	float MinActorMigrationPerSecond;
 	FMetricTimer ActorMigrationCheckTimer;
 

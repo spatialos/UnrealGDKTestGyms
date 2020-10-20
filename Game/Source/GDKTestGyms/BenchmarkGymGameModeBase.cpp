@@ -604,29 +604,21 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 	{
 		// Count how many actors hand over authority in 1 tick
 		int Delta = FMath::Abs(UXAuthActorCount - PreviousTickMigration);
-		ToBeRemovedMigrationDeltas.Enqueue(Delta);
+		ToBeRemovedMigrationDeltas.Enqueue(ToBeRemovedDelta(Delta, DeltaSeconds));
 		bool bChanged = false;
 		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
-			int32 RemoveDelta = 0;
-			if (ToBeRemovedMigrationDeltas.Peek(RemoveDelta))
+			ToBeRemovedDelta RemoveValue;
+			if (ToBeRemovedMigrationDeltas.Peek(RemoveValue))
 			{
 				ToBeRemovedMigrationDeltas.Pop();
-				MigrationOfCurrentWorker -= RemoveDelta;
-				bChanged = (Delta != RemoveDelta);
-			}
-
-			// If a frame is very long, the actual duration may be greater than MigrationWindowSeconds. 
-			// Record the actual duration to ensure more accurate results.
-			float RemoveDeltaSeconds;
-			if (ToBeRemovedDeltaSeconds.Peek(RemoveDeltaSeconds))
-			{
-				ToBeRemovedDeltaSeconds.Pop();
-				MigrationExactlyWindowSeconds -= RemoveDeltaSeconds;
+				MigrationOfCurrentWorker -= RemoveValue.Key;
+				MigrationSeconds -= RemoveValue.Value;
+				bChanged = (Delta != RemoveValue.Key);
 			}
 		}
 		MigrationOfCurrentWorker += Delta;
-		MigrationExactlyWindowSeconds += DeltaSeconds;
+		MigrationSeconds += DeltaSeconds;
 		PreviousTickMigration = UXAuthActorCount;
 
 		if (MigrationCountSeconds > MigrationWindowSeconds)
@@ -634,7 +626,8 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 			if (bChanged)
 			{
 				// Only report MigratedActorsOfCurrentWorker to the worker which has authority and the Migration changed
-				ReportMigration(FPlatformProcess::ComputerName(), MigrationOfCurrentWorker);
+				float AverageMigrationOfCurrentWorker = MigrationOfCurrentWorker / MigrationSeconds;
+				ReportMigration(FPlatformProcess::ComputerName(), AverageMigrationOfCurrentWorker);
 			}
 
 			if (HasAuthority() && ActorMigrationCheckTimer.HasTimerGoneOff())
@@ -646,19 +639,19 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 					{
 						TotalMigrations += KeyValue.Value;
 					}
-					float AverageActorMigration = TotalMigrations / MigrationExactlyWindowSeconds;
+					float AverageActorMigration = TotalMigrations / MapWorkerActorMigration.Num();
 					if (AverageActorMigration < MinActorMigrationPerSecond)
 					{
 						bHasActorMigrationCheckFailed = true;
 						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f MigrationExactlyWindowSeconds=%.3f"),
-							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationExactlyWindowSeconds);
+							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationSeconds);
 					}
 					else
 					{
-						// reset timer for next check after 10s
+						// Reset timer for next check after 10s
 						ActorMigrationCheckTimer.SetTimer(10);
 						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f MigrationExactlyWindowSeconds=%.3f"),
-							TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationExactlyWindowSeconds);
+							TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationSeconds);
 					}
 				}
 			}
@@ -667,11 +660,11 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 	}
 }
 
-void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& WorkerID, const int Migration)
+void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& WorkerID, const float AverageMigration)
 {
 	if (HasAuthority())
 	{
-		int& Value = MapWorkerActorMigration.FindOrAdd(WorkerID);
-		Value = Migration;
+		float& Value = MapWorkerActorMigration.FindOrAdd(WorkerID);
+		Value = AverageMigration;
 	}
 }
