@@ -54,5 +54,5 @@ private:
 	bool bIsInitialised{ false };
 
 	float MinServerFPS = 10.0f;
-	float MinClientFPS = 20.0f;
+	float MinClientFPS = 10.0f;
 };
