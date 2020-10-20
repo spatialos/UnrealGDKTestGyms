@@ -626,6 +626,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 			}
 		}
 		MigrationOfCurrentWorker += Delta;
+		MigrationExactlyWindowSeconds += DeltaSeconds;
 		PreviousTickMigration = UXAuthActorCount;
 
 		if (MigrationCountSeconds > MigrationWindowSeconds)
@@ -649,15 +650,15 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 					if (AverageActorMigration < MinActorMigrationPerSecond)
 					{
 						bHasActorMigrationCheckFailed = true;
-						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f"),
-							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond);
+						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f MigrationExactlyWindowSeconds=%.3f"),
+							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationExactlyWindowSeconds);
 					}
 					else
 					{
 						// reset timer for next check after 10s
 						ActorMigrationCheckTimer.SetTimer(10);
-						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f"),
-							TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond);
+						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigration=%.3f MigrationExactlyWindowSeconds=%.3f"),
+							TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationExactlyWindowSeconds);
 					}
 				}
 			}
