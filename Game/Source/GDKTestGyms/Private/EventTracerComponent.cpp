@@ -16,7 +16,7 @@ void UEventTracerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UEventTracerComponent, bTestBool);
+	DOREPLIFETIME(UEventTracerComponent, bTestInt);
 }
 
 void UEventTracerComponent::BeginPlay()
@@ -35,15 +35,15 @@ void UEventTracerComponent::TimerFunction()
 	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
 	USpatialEventTracerUserInterface::AddLatentSpanId(this, this, SpanId);
 
-	bTestBool = !bTestBool;
+	bTestInt++;
 
 	// Create a user trace event for sending an RPC
 	SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
 	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent());
 
-	USpatialEventTracerUserInterface::AddSpanIdToStack(this, SpanId);
-	RunOnClient();
-	USpatialEventTracerUserInterface::PopSpanIdFromStack(this);
+	FEventTracerDynamicDelegate Delegate;
+	Delegate.BindUFunction(this, "RunOnClient");
+	USpatialEventTracerUserInterface::SetActiveSpanId(this, Delegate, SpanId);
 }
 
 void UEventTracerComponent::OnRepBool()

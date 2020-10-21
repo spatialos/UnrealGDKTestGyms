@@ -23,7 +23,7 @@ public:
 private:
 
 	UPROPERTY(ReplicatedUsing = OnRepBool)
-	bool bTestBool;
+	int32 bTestInt;
 
 	FTimerHandle TimerHandle;
 
