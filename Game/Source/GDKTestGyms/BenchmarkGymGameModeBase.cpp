@@ -500,7 +500,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigration %.8f"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds, MinActorMigrationPerSecond);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds, MinActorMigrationPerSecond);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -576,7 +576,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 {
 	if (HasAuthority())
 	{
-		int& Value = MapAuthoritativePlayers.FindOrAdd(WorkerID);
+		int& Value = MapAuthoritativePlayers.Emplace(WorkerID, AuthoritativePlayers);
 		if (Value != AuthoritativePlayers)
 		{
 			Value = AuthoritativePlayers;
@@ -604,17 +604,17 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 	{
 		// Count how many actors hand over authority in 1 tick
 		int Delta = FMath::Abs(UXAuthActorCount - PreviousTickMigration);
-		ToBeRemovedMigrationDeltas.Enqueue(ToBeRemovedDelta(Delta, DeltaSeconds));
+		ToBeRemovedMigrationDeltas.Enqueue(MigrationDeltaPair(Delta, DeltaSeconds));
 		bool bChanged = false;
 		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
-			ToBeRemovedDelta RemoveValue;
-			if (ToBeRemovedMigrationDeltas.Peek(RemoveValue))
+			MigrationDeltaPair OldestValue;
+			if (ToBeRemovedMigrationDeltas.Peek(OldestValue))
 			{
 				ToBeRemovedMigrationDeltas.Pop();
-				MigrationOfCurrentWorker -= RemoveValue.Key;
-				MigrationSeconds -= RemoveValue.Value;
-				bChanged = (Delta != RemoveValue.Key);
+				MigrationOfCurrentWorker -= OldestValue.Key;
+				MigrationSeconds -= OldestValue.Value;
+				bChanged = (Delta != OldestValue.Key);
 			}
 		}
 		MigrationOfCurrentWorker += Delta;
@@ -643,14 +643,14 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 					if (AverageActorMigration < MinActorMigrationPerSecond)
 					{
 						bHasActorMigrationCheckFailed = true;
-						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigrationPerSecond=%.3f MigrationExactlyWindowSeconds=%.3f"),
+						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. TotalMigrations=%.8f AverageActorMigration=%.8f MinActorMigrationPerSecond=%.8f MigrationExactlyWindowSeconds=%.8f"),
 							*NFRFailureString, TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationSeconds);
 					}
 					else
 					{
 						// Reset timer for next check after 10s
 						ActorMigrationCheckTimer.SetTimer(10);
-						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.3f AverageActorMigration=%.3f MinActorMigrationPerSecond=%.3f MigrationExactlyWindowSeconds=%.3f"),
+						UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.8f AverageActorMigration=%.8f MinActorMigrationPerSecond=%.8f MigrationExactlyWindowSeconds=%.8f"),
 							TotalMigrations, AverageActorMigration, MinActorMigrationPerSecond, MigrationSeconds);
 					}
 				}
@@ -664,7 +664,6 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 {
 	if (HasAuthority())
 	{
-		float& Value = MapWorkerActorMigration.FindOrAdd(WorkerID);
-		Value = AverageMigration;
+		MapWorkerActorMigration.Emplace(WorkerID, AverageMigration);
 	}
 }

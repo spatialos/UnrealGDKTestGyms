@@ -91,8 +91,8 @@ private:
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
-	typedef TTuple<int32, float> ToBeRemovedDelta;
-	TQueue<ToBeRemovedDelta> ToBeRemovedMigrationDeltas;
+	typedef TTuple<int32, float> MigrationDeltaPair;
+	TQueue<MigrationDeltaPair> ToBeRemovedMigrationDeltas;
 	int32 UXAuthActorCount;
 	int32 MigrationOfCurrentWorker;
 	float MigrationSeconds;
