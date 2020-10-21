@@ -92,7 +92,7 @@ private:
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
 	typedef TTuple<int32, float> MigrationDeltaPair;
-	TQueue<MigrationDeltaPair> ToBeRemovedMigrationDeltas;
+	TQueue<MigrationDeltaPair> MigrationDeltaHistory;
 	int32 UXAuthActorCount;
 	int32 MigrationOfCurrentWorker;
 	float MigrationSeconds;
@@ -101,7 +101,8 @@ private:
 	TMap<FString, float> MapWorkerActorMigration;
 	float MinActorMigrationPerSecond;
 	FMetricTimer ActorMigrationCheckTimer;
-
+	
+	FMetricTimer ActivePlayerReportDelayTimer;
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 
