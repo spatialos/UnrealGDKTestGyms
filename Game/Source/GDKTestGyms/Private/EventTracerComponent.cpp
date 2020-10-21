@@ -50,17 +50,25 @@ void UEventTracerComponent::OnRepBool()
 {
 	if (!OwnerHasAuthority())
 	{
-		// Create a user trace event for receiving a property update
-		FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-		USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent());
+		FUserSpanId SpanId;
+		if (USpatialEventTracerUserInterface::GetActiveSpanId(this, SpanId))
+		{
+			FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanIdWithCauses(this, { SpanId });
+			USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent());
+		}
 	}
 }
 
 void UEventTracerComponent::RunOnClient_Implementation()
 {
 	// Create a user trace event for receiving an RPC
-	FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent());
+
+	FUserSpanId SpanId;
+	if (USpatialEventTracerUserInterface::GetActiveSpanId(this, SpanId))
+	{
+		FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanIdWithCauses(this, { SpanId });
+		USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent());
+	}
 }
 
 bool UEventTracerComponent::OwnerHasAuthority() const
