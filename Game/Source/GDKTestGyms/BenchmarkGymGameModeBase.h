@@ -67,9 +67,10 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativePlayers(const FString& WorkerID, int AuthoritativePlayers);
-	void ReportAuthoritativePlayers_Implementation(const FString& WorkerID, int AuthoritativePlayers);
+	virtual void ReportAuthoritativePlayers(const FString& WorkerID, const int AuthoritativePlayers);
 
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportMigration(const FString& WorkerID, const float AverageMigration);
 private:
 	// Test scenarios
 
@@ -87,6 +88,21 @@ private:
 	bool bExpectedActorCountsInitialised;
 	int32 ActivePlayers; // All authoritative players from all workers
 
+	// For actor migration count
+	bool bHasActorMigrationCheckFailed;
+	int32 PreviousTickMigration;
+	typedef TTuple<int32, float> MigrationDeltaPair;
+	TQueue<MigrationDeltaPair> MigrationDeltaHistory;
+	int32 UXAuthActorCount;
+	int32 MigrationOfCurrentWorker;
+	float MigrationSeconds;
+	float MigrationCountSeconds;
+	float MigrationWindowSeconds;
+	TMap<FString, float> MapWorkerActorMigration;
+	float MinActorMigrationPerSecond;
+	FMetricTimer ActorMigrationCheckTimer;
+	
+	FMetricTimer ActivePlayerReportDelayTimer;
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 
@@ -105,12 +121,14 @@ private:
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorCountCheck(float DeltaSeconds);
+	void TickActorMigration(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTSeconds; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
 	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
+	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
