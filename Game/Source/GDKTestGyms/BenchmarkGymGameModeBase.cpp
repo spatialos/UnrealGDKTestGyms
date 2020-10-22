@@ -579,9 +579,9 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 	{
 		MapAuthoritativePlayers.Emplace(WorkerID, AuthoritativePlayers);
 		ActivePlayers = 0;
-		for (const auto& kv : MapAuthoritativePlayers)
+		for (const auto& KeyValue : MapAuthoritativePlayers)
 		{
-			ActivePlayers += kv.Value;
+			ActivePlayers += KeyValue.Value;
 		}
 	}
 }
@@ -610,7 +610,6 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 			{
 				MigrationOfCurrentWorker -= OldestValue.Key;
 				MigrationSeconds -= OldestValue.Value;
-				bChanged = (Delta != OldestValue.Key);
 			}
 		}
 		MigrationOfCurrentWorker += Delta;
@@ -619,12 +618,9 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 
 		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
-			if (bChanged)
-			{
-				// Only report MigratedActorsOfCurrentWorker to the worker which has authority and the Migration changed
-				float AverageMigrationOfCurrentWorker = MigrationOfCurrentWorker / MigrationSeconds;
-				ReportMigration(FPlatformProcess::ComputerName(), AverageMigrationOfCurrentWorker);
-			}
+			// Only report MigratedActorsOfCurrentWorker to the worker which has authority and the Migration changed
+			float AverageMigrationOfCurrentWorkerPerSecond = MigrationOfCurrentWorker / MigrationSeconds;
+			ReportMigration(FPlatformProcess::ComputerName(), AverageMigrationOfCurrentWorkerPerSecond);
 
 			if (HasAuthority() && ActorMigrationCheckTimer.HasTimerGoneOff())
 			{
