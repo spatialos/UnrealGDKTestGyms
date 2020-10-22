@@ -606,9 +606,8 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
 			MigrationDeltaPair OldestValue;
-			if (MigrationDeltaHistory.Peek(OldestValue))
+			if (MigrationDeltaHistory.Dequeue(OldestValue))
 			{
-				MigrationDeltaHistory.Pop();
 				MigrationOfCurrentWorker -= OldestValue.Key;
 				MigrationSeconds -= OldestValue.Value;
 				bChanged = (Delta != OldestValue.Key);
