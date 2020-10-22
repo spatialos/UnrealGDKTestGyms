@@ -75,7 +75,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, MigrationCountSeconds(0.0)
 	, MigrationWindowSeconds(5*60.0f)
 	, MinActorMigrationPerSecond(0.0)
-	, ActorMigrationCheckTimer(6*60) // 1-minute later then UNFRConstants::ActorMigrationCheckDelay to make sure all the workers had reported their migration
+	, ActorMigrationCheckTimer(11*60) // 1-minute later then UNFRConstants::ActorMigrationCheckDelay + MigrationWindowSeconds to make sure all the workers had reported their migration
 	, ActivePlayerReportDelayTimer(5*60)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
