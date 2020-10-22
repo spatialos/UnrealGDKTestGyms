@@ -618,7 +618,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 
 		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
-			// Only report MigratedActorsOfCurrentWorker to the worker which has authority and the Migration changed
+			// Only report AverageMigrationOfCurrentWorkerPerSecond to the worker which has authority
 			float AverageMigrationOfCurrentWorkerPerSecond = MigrationOfCurrentWorker / MigrationSeconds;
 			ReportMigration(FPlatformProcess::ComputerName(), AverageMigrationOfCurrentWorkerPerSecond);
 
