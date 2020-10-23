@@ -22,7 +22,7 @@ public:
 
 private:
 
-	UPROPERTY(ReplicatedUsing = OnRepBool)
+	UPROPERTY(ReplicatedUsing = OnRepTestInt)
 	int32 bTestInt;
 
 	FTimerHandle TimerHandle;
@@ -34,7 +34,7 @@ private:
 	void RunOnClient();
 
 	UFUNCTION()
-	void OnRepBool();
+	void OnRepTestInt();
 
 	bool OwnerHasAuthority() const;
 	

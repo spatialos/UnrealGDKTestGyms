@@ -46,7 +46,7 @@ void UEventTracerComponent::TimerFunction()
 	USpatialEventTracerUserInterface::TraceRPC(this, Delegate, SpanId);
 }
 
-void UEventTracerComponent::OnRepBool()
+void UEventTracerComponent::OnRepTestInt()
 {
 	if (!OwnerHasAuthority())
 	{
