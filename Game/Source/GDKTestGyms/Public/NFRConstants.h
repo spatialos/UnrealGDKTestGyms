@@ -48,6 +48,7 @@ public:
 	FMetricTimer ClientFPSMetricDelay;
 	FMetricTimer UXMetricDelay;
 	FMetricTimer ActorCheckDelay;
+	FMetricTimer ActorMigrationCheckDelay;
 
 private:
 
