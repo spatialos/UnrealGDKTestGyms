@@ -37,6 +37,17 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 4. Add a description of the new gym level to this `USER_MANUAL.md` document, in the section below;
   * breifly describe what it demonstrates and how to use it.
 
+### Current tests
+
+Tests can be run by following these steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
+  3. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
+  3. The Session Frontend will then prompt you with the results of the tests.
+
+Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
+The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
+
 #### Current gyms
 
 ##### Empty gym
@@ -265,6 +276,13 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * Press U to close the in-game UI. The mouse cursor should now be captured by the game, and moving the mouse should control the character camera again.
   * Press F9 to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
   * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
+
+#### SpatialEventTracingTests
+* Tests whether key trace events have the appropriate cause events.
+* Ensure that the following settings are added to DefaultSpatialGDKSettings.ini :
+  * bEventTracingEnabled=True
+  * MaxEventTracingFileSizeBytes=104857600
+* You will probably want to remove these setting after you have finished running these tests.
 
 -----
 2019-11-15: Page added with editorial review
