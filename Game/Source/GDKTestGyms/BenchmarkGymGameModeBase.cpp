@@ -56,10 +56,10 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
 	, RequiredPlayers(4096)
-	, AveragedClientRTTMilliSeconds(0.0)
-	, AveragedClientUpdateTimeDeltaMilliSeconds(0.0)
-	, MaxClientRoundTripMilliSeconds(150)
-	, MaxClientUpdateTimeDeltaMilliSeconds(300)
+	, AveragedClientRTTMS(0.0)
+	, AveragedClientUpdateTimeDeltaMS(0.0)
+	, MaxClientRoundTripMS(150)
+	, MaxClientUpdateTimeDeltaMS(300)
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
 	, bHasDonePlayerCheck(false)
@@ -329,22 +329,22 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	UXAuthActorCount = 0;
 	int ValidRTTCount = 0;
 	int ValidUpdateTimeDeltaCount = 0;
-	float ClientRTTMilliSeconds = 0.0f;
-	float ClientUpdateTimeDeltaMilliSeconds = 0.0f;
+	float ClientRTTMS = 0.0f;
+	float ClientUpdateTimeDeltaMS = 0.0f;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
 		if (Component->GetOwner() != nullptr && Component->HasBegunPlay() && Component->GetWorld() == GetWorld())
 		{
-			if (Component->ServerRTTMilliSecond > 0.f)
+			if (Component->ServerRTTMS > 0.f)
 			{
-				ClientRTTMilliSeconds += Component->ServerRTTMilliSecond;
+				ClientRTTMS += Component->ServerRTTMS;
 				ValidRTTCount++;
 			}
 
-			if (Component->ServerUpdateTimeDeltaMilliSecond > 0.f)
+			if (Component->ServerUpdateTimeDeltaMS > 0.f)
 			{
-				ClientUpdateTimeDeltaMilliSeconds += Component->ServerUpdateTimeDeltaMilliSecond;
+				ClientUpdateTimeDeltaMS += Component->ServerUpdateTimeDeltaMS;
 				ValidUpdateTimeDeltaCount++;
 			}
 
@@ -365,13 +365,13 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		return;
 	}
 
-	ClientRTTMilliSeconds /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
-	ClientUpdateTimeDeltaMilliSeconds /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
+	ClientRTTMS /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
+	ClientUpdateTimeDeltaMS /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
 
-	AveragedClientRTTMilliSeconds = ClientRTTMilliSeconds;
-	AveragedClientUpdateTimeDeltaMilliSeconds = ClientUpdateTimeDeltaMilliSeconds;
+	AveragedClientRTTMS = ClientRTTMS;
+	AveragedClientUpdateTimeDeltaMS = ClientUpdateTimeDeltaMS;
 
-	const bool bUXMetricValid = AveragedClientRTTMilliSeconds <= MaxClientRoundTripMilliSeconds && AveragedClientUpdateTimeDeltaMilliSeconds <= MaxClientUpdateTimeDeltaMilliSeconds;
+	const bool bUXMetricValid = AveragedClientRTTMS <= MaxClientRoundTripMS && AveragedClientUpdateTimeDeltaMS <= MaxClientUpdateTimeDeltaMS;
 	
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
@@ -380,12 +380,12 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		Constants->UXMetricDelay.HasTimerGoneOff())
 	{
 		bHasUxFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), *NFRFailureString, AveragedClientRTTMilliSeconds, AveragedClientUpdateTimeDeltaMilliSeconds, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), *NFRFailureString, AveragedClientRTTMS, AveragedClientUpdateTimeDeltaMS, ActivePlayers);
 	}
 
 	if (PrintMetricsTimer.HasTimerGoneOff())
 	{
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTMilliSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaMilliSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTMS, ValidRTTCount, AveragedClientUpdateTimeDeltaMS, ValidUpdateTimeDeltaCount, ActivePlayers);
 	}
 }
 
@@ -448,8 +448,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *TestLiftimeCommandLineKey, Lifetime);
 		SetLifetime(Lifetime);
 
-		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripMilliSeconds);
-		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMilliSeconds);
+		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripMS);
+		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
 		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
@@ -480,12 +480,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 				if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
 				{
-					MaxClientRoundTripMilliSeconds = FCString::Atoi(*MaxRoundTrip);
+					MaxClientRoundTripMS = FCString::Atoi(*MaxRoundTrip);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(MaxUpdateTimeDeltaWorkerFlag, MaxUpdateTimeDelta))
 				{
-					MaxClientUpdateTimeDeltaMilliSeconds = FCString::Atoi(*MaxUpdateTimeDelta);
+					MaxClientUpdateTimeDeltaMS = FCString::Atoi(*MaxUpdateTimeDelta);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
@@ -501,7 +501,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripMilliSeconds, MaxClientUpdateTimeDeltaMilliSeconds, MinActorMigrationPerSecond);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond);
 }
 
 void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -520,11 +520,11 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	}
 	else if (FlagName == MaxRoundTripWorkerFlag)
 	{
-		MaxClientRoundTripMilliSeconds = FCString::Atoi(*FlagValue);
+		MaxClientRoundTripMS = FCString::Atoi(*FlagValue);
 	}
 	else if (FlagName == MaxUpdateTimeDeltaWorkerFlag)
 	{
-		MaxClientUpdateTimeDeltaMilliSeconds = FCString::Atoi(*FlagValue);
+		MaxClientUpdateTimeDeltaMS = FCString::Atoi(*FlagValue);
 	}
 	else if (FlagName == TestLiftimeWorkerFlag)
 	{
