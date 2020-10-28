@@ -34,5 +34,5 @@ public:
 	void ReportMetrics();
 
 	UFUNCTION(Server, Reliable)
-	void ServerReportedMetrics(float RTTMilliSeconds, float UpdateTimeDeltaSeconds, bool bInFrameRateValid);
+	void ServerReportedMetrics(float RTTMilliSeconds, float UpdateTimeDeltaMilliSeconds, bool bInFrameRateValid);
 };
