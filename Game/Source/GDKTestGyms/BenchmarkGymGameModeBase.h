@@ -74,10 +74,10 @@ protected:
 private:
 	// Test scenarios
 
-	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
-	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
-	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
-	int32 MaxClientUpdateTimeDeltaSeconds;
+	double AveragedClientRTTMilliSeconds; // The stored average of all the client RTTs
+	double AveragedClientUpdateTimeDeltaMilliSeconds; // The stored average of the client view delta.
+	int32 MaxClientRoundTripMilliSeconds; // Maximum allowed roundtrip
+	int32 MaxClientUpdateTimeDeltaMilliSeconds;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
 	bool bHasDonePlayerCheck;
@@ -125,8 +125,8 @@ private:
 
 	void SetTotalNPCs(int32 Value);
 
-	double GetClientRTT() const { return AveragedClientRTTSeconds; }
-	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
+	double GetClientRTT() const { return AveragedClientRTTMilliSeconds; }
+	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaMilliSeconds; }
 	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
 	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }

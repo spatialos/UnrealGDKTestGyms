@@ -40,8 +40,8 @@ void UUserExperienceReporter::InitializeComponent()
 {
 	UActorComponent::InitializeComponent();
 	bFrameRateValid = true;
-	ServerRTT = 0.0f;
-	ServerUpdateTimeDelta = 0.0f;
+	ServerRTTMilliSecond = 0.0f;
+	ServerUpdateTimeDeltaMilliSecond = 0.0f;
 }
 
 void UUserExperienceReporter::ReportMetrics()
@@ -102,10 +102,10 @@ void UUserExperienceReporter::ReportMetrics()
 	}
 }
 
-void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTSeconds, float UpdateTimeDeltaSeconds, bool bInFrameRateValid)
+void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTMilliSeconds, float UpdateTimeDeltaMilliSeconds, bool bInFrameRateValid)
 {
-	ServerRTT = RTTSeconds;
-	ServerUpdateTimeDelta = UpdateTimeDeltaSeconds;
+	ServerRTTMilliSecond = RTTMilliSeconds;
+	ServerUpdateTimeDeltaMilliSecond = UpdateTimeDeltaMilliSeconds;
 	if (!bInFrameRateValid) // Only change from valid to invalid
 	{
 		bFrameRateValid = bInFrameRateValid;
