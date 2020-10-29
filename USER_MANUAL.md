@@ -265,10 +265,11 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
-  * Pressing C spawns an Actor with a static mesh (cube).
-    * Spawning an Actor is currently used for testing hierarchy migration as it causes failure.
   * Pressing G spawns a GymCube.
     * Spawning the GymCube is currently used for testing hierarchy migration as it does not cause failure.
+  * Pressing C spawns an Actor with a static mesh (cube).
+    * Spawning an Actor is currently used for testing hierarchy migration as it causes failure.
+    * This is a known issue: https://improbableio.atlassian.net/browse/UNR-4417 and this keypress and associated functionality can be removed once the failure is resolved.
 
 ##### Spatial Debugger Config UI gym
 * Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
