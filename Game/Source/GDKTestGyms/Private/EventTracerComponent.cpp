@@ -24,18 +24,10 @@ void UEventTracerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const UWorld* World = GetWorld();
-	TArray<AActor*> Actors;
-
-	UGameplayStatics::GetAllActorsOfClass(World, AEventTracingTest::StaticClass(), Actors);
-	if (Actors.Num() > 0)
-	{
-		AEventTracingTest* Test = Cast<AEventTracingTest>(Actors[0]);
-		UserSendRPCEventName = Test->UserSendRPCEventName.ToString();
-		UserProcessRPCEventName = Test->UserProcessRPCEventName.ToString();
-		UserSendComponentPropertyEventName = Test->UserSendComponentPropertyEventName.ToString();
-		UserReceiveComponentPropertyEventName = Test->UserReceiveComponentPropertyEventName.ToString();
-	}
+	UserSendRPCEventName = AEventTracingTest::GetUserSendRPCEventName().ToString();
+	UserProcessRPCEventName = AEventTracingTest::GetUserProcessRPCEventName().ToString();
+	UserSendComponentPropertyEventName = AEventTracingTest::GetUserSendComponentPropertyEventName().ToString();
+	UserReceiveComponentPropertyEventName = AEventTracingTest::GetUserReceiveComponentPropertyEventName().ToString();
 
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
