@@ -361,7 +361,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	if (RequiredPlayerReportTimer.HasTimerGoneOff())
 	{
-		// We don't start reporting until PlayerCheckMetricDelay has gone off
+		// We don't start reporting until RequiredPlayerReportTimer has gone off
 		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXAuthActorCount);
 		RequiredPlayerReportTimer.SetTimer(1);
 	}
