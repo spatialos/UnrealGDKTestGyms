@@ -1,13 +1,10 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+
 #include "BenchmarkGymPlayerState.h"
 
-ABenchmarkGymPlayerState::ABenchmarkGymPlayerState()
+bool ABenchmarkGymPlayerState::ShouldBroadCastWelcomeMessage(bool /*bExiting*/)
 {
-
-}
-
-bool ABenchmarkGymPlayerState::ShouldBroadCastWelcomeMessage(bool bExiting)
-{
-	//we do not want to send notifications between players
+	// We do not want to send notifications between players.
 	return false;
 }
 

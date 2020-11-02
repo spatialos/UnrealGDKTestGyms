@@ -1,3 +1,5 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,9 +11,8 @@ UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymPlayerState : public APlayerState
 {
 	GENERATED_BODY()
-public:
-	ABenchmarkGymPlayerState();
 
+public:
 	virtual bool ShouldBroadCastWelcomeMessage(bool bExiting = false) override;
 
 };
