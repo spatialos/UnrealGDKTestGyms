@@ -49,7 +49,7 @@ void UEventTracerComponent::TimerFunction()
 	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder(UserSendRPCEventName).GetEvent());
 
 	FEventTracerRPCDelegate Delegate;
-	Delegate.BindUFunction(this, "RunOnClient");
+	Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UEventTracerComponent, RunOnClient));
 	USpatialEventTracerUserInterface::TraceRPC(this, Delegate, SpanId);
 }
 
