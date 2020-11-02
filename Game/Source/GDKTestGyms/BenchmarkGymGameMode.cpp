@@ -358,27 +358,8 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 }
 
-APlayerController* ABenchmarkGymGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
-{
-	// Workaround for a player spawning issue UNR-3663
-	SetPrioritizedPlayerStart(nullptr);
-	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
-}
-
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	if (!HasAuthority()) // Workaround for a player spawning issue UNR-3663
-	{
-		for (TActorIterator<APlayerStart> It = TActorIterator<APlayerStart>(GetWorld()); It; ++It)
-		{
-			if (It->GetName() == FString(TEXT("DefaultPlayerStart")))
-			{
-				return *It;
-			}
-		}
-		checkf(false, TEXT("Failed to find player start work-around actor"));
-	}
-
 	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0)
