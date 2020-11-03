@@ -1,11 +1,11 @@
 #include "EventTracerComponent.h"
 
 #include "Interop/Connection/SpatialEventTracerUserInterface.h"
-#include "SpatialGDKFunctionalTests/SpatialGDK/EventTracingTests/EventTracingTest.h"
 #include "Interop/Connection/SpatialTraceEventBuilder.h"
 #include "Interop/Connection/UserSpanId.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "SpatialGDKFunctionalTests/SpatialGDK/EventTracingTests/EventTracingTestConstants.h"
 
 UEventTracerComponent::UEventTracerComponent()
 {
@@ -24,10 +24,10 @@ void UEventTracerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UserSendRPCEventName = AEventTracingTest::GetUserSendRPCEventName().ToString();
-	UserProcessRPCEventName = AEventTracingTest::GetUserProcessRPCEventName().ToString();
-	UserSendComponentPropertyEventName = AEventTracingTest::GetUserSendComponentPropertyEventName().ToString();
-	UserReceiveComponentPropertyEventName = AEventTracingTest::GetUserReceiveComponentPropertyEventName().ToString();
+	UserSendRPCEventName = UEventTracingTestConstants::GetUserSendRPCEventName().ToString();
+	UserProcessRPCEventName = UEventTracingTestConstants::GetUserProcessRPCEventName().ToString();
+	UserSendComponentPropertyEventName = UEventTracingTestConstants::GetUserSendComponentPropertyEventName().ToString();
+	UserReceiveComponentPropertyEventName = UEventTracingTestConstants::GetUserReceiveComponentPropertyEventName().ToString();
 
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
