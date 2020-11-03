@@ -607,7 +607,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 			}
 			else
 			{
-				SmoothedTotalAuthPlayers = (SmoothedTotalAuthPlayers + TotalPlayers) * 0.5f;
+				SmoothedTotalAuthPlayers = SmoothedTotalAuthPlayers * 0.9f + TotalPlayers * 0.1;
 			}
 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%.1f"),
 				*WorkerID, AuthoritativePlayers, SmoothedTotalAuthPlayers);
