@@ -24,10 +24,10 @@ void UEventTracerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UserSendRPCEventName = AEventTracingTest::GetUserSendRPCEventName().ToString();
-	UserProcessRPCEventName = AEventTracingTest::GetUserProcessRPCEventName().ToString();
-	UserSendComponentPropertyEventName = AEventTracingTest::GetUserSendComponentPropertyEventName().ToString();
-	UserReceiveComponentPropertyEventName = AEventTracingTest::GetUserReceiveComponentPropertyEventName().ToString();
+	UserSendRPCEventName = AEventTracingTest::GetUserSendRPCEventName();
+	UserProcessRPCEventName = AEventTracingTest::GetUserProcessRPCEventName();
+	UserSendComponentPropertyEventName = AEventTracingTest::GetUserSendComponentPropertyEventName();
+	UserReceiveComponentPropertyEventName = AEventTracingTest::GetUserReceiveComponentPropertyEventName();
 
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
