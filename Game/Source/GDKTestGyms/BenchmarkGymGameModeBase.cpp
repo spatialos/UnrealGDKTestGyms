@@ -82,7 +82,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
 	, bHasRequiredPlayersCheckFailed(false)
-	, AveragedTotalAuthPlayers(-1.0f)
+	, SmoothedTotalAuthPlayers(-1.0f)
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, NumWorkers(1)
@@ -251,17 +251,17 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 	if (RequiredPlayerCheckTimer.HasTimerGoneOff())
 	{
-		if (AveragedTotalAuthPlayers < RequiredPlayers)
+		if (SmoothedTotalAuthPlayers < RequiredPlayers)
 		{
 			bHasRequiredPlayersCheckFailed = true;
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %.1f"), *NFRFailureString, RequiredPlayers, AveragedTotalAuthPlayers);
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %.1f"), *NFRFailureString, RequiredPlayers, SmoothedTotalAuthPlayers);
 		}
 		else
 		{
 			RequiredPlayerCheckTimer.SetTimer(10);
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %.1f"), RequiredPlayers, AveragedTotalAuthPlayers);
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %.1f"), RequiredPlayers, SmoothedTotalAuthPlayers);
 		}
 	}
 }
@@ -594,23 +594,23 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 	if (HasAuthority())
 	{
 		MapAuthoritativePlayers.Emplace(WorkerID, AuthoritativePlayers);
-		int TotalPlayers = 0;
+		int32 TotalPlayers = 0;
 		for (const auto& KeyValue : MapAuthoritativePlayers)
 		{
 			TotalPlayers += KeyValue.Value;
 		}
 		if (MapAuthoritativePlayers.Num() == NumWorkers)
 		{
-			if (AveragedTotalAuthPlayers < 0.0f)
+			if (SmoothedTotalAuthPlayers < 0.0f)
 			{
-				AveragedTotalAuthPlayers = TotalPlayers;
+				SmoothedTotalAuthPlayers = TotalPlayers;
 			}
 			else
 			{
-				AveragedTotalAuthPlayers = (AveragedTotalAuthPlayers + TotalPlayers) * 0.5f;
+				SmoothedTotalAuthPlayers = (SmoothedTotalAuthPlayers + TotalPlayers) * 0.5f;
 			}
 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%.1f"),
-				*WorkerID, AuthoritativePlayers, AveragedTotalAuthPlayers);
+				*WorkerID, AuthoritativePlayers, SmoothedTotalAuthPlayers);
 		}
 	}
 }
@@ -654,7 +654,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 
 			if (HasAuthority() && ActorMigrationCheckTimer.HasTimerGoneOff())
 			{
-				float Migration = 0;
+				float Migration = 0.0f;
 				for (const auto& KeyValue : MapWorkerActorMigration)
 				{
 					Migration += KeyValue.Value;

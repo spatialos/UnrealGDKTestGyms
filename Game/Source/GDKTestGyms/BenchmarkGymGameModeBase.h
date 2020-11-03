@@ -112,7 +112,7 @@ private:
 
 	// For total player
 	bool bHasRequiredPlayersCheckFailed;
-	float AveragedTotalAuthPlayers;
+	float SmoothedTotalAuthPlayers;
 	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	
