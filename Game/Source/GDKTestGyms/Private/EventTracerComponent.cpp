@@ -5,7 +5,6 @@
 #include "Interop/Connection/UserSpanId.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
-#include "SpatialGDKFunctionalTests/SpatialGDK/EventTracingTests/EventTracingTestConstants.h"
 
 UEventTracerComponent::UEventTracerComponent()
 {
@@ -24,11 +23,6 @@ void UEventTracerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UserSendRPCEventName = UEventTracingTestConstants::GetUserSendRPCEventName().ToString();
-	UserProcessRPCEventName = UEventTracingTestConstants::GetUserProcessRPCEventName().ToString();
-	UserSendComponentPropertyEventName = UEventTracingTestConstants::GetUserSendComponentPropertyEventName().ToString();
-	UserReceiveComponentPropertyEventName = UEventTracingTestConstants::GetUserReceiveComponentPropertyEventName().ToString();
-
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UEventTracerComponent::TimerFunction, 5.0f, true);
@@ -39,14 +33,14 @@ void UEventTracerComponent::TimerFunction()
 {
 	// Create a user trace event for sending a property update
 	FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder(UserSendComponentPropertyEventName).GetEvent());
+	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
 	USpatialEventTracerUserInterface::TraceProperty(this, this, SpanId);
 
 	TestInt++;
 
 	// Create a user trace event for sending an RPC
 	SpanId = USpatialEventTracerUserInterface::CreateSpanId(this);
-	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder(UserSendRPCEventName).GetEvent());
+	USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent());
 
 	FEventTracerRPCDelegate Delegate;
 	Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UEventTracerComponent, RunOnClient));
@@ -61,7 +55,7 @@ void UEventTracerComponent::OnRepTestInt()
 		if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 		{
 			FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanIdWithCauses(this, { CauseSpanId });
-			USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder(UserReceiveComponentPropertyEventName).GetEvent());
+			USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent());
 		}
 	}
 }
@@ -74,7 +68,7 @@ void UEventTracerComponent::RunOnClient_Implementation()
 	if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 	{
 		FUserSpanId SpanId = USpatialEventTracerUserInterface::CreateSpanIdWithCauses(this, { CauseSpanId });
-		USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder(UserProcessRPCEventName).GetEvent());
+		USpatialEventTracerUserInterface::TraceEvent(this, SpanId, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent());
 	}
 }
 
