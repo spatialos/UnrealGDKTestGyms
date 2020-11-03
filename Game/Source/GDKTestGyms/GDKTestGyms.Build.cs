@@ -23,10 +23,14 @@ public class GDKTestGyms : ModuleRules
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
 				"SpatialGDK",
-				"SpatialGDKFunctionalTests",
 				"ReplicationGraph",
 				"AIModule",
 				"NavigationSystem"
 			});
+
+		if (Target.bBuildEditor)
+		{
+			PublicDependencyModuleNames.Add("SpatialGDKFunctionalTests");
+		}
 	}
 }
