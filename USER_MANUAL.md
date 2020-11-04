@@ -230,7 +230,7 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 * Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * Ensure multi-worker is turned off.
 
-#### FASAsyncGym
+##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
 * Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
 * This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
@@ -243,7 +243,7 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
 
-##### Teleporting gym.
+##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
 * NOTE : This gym is likely to have random failures, as we are still working on load balancing.
 * Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
@@ -254,6 +254,15 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+
+##### Gameplay Cues gym
+* Tests that gameplay cues get correctly activated on all clients.
+* Includes both a non-instanced gameplay cue that gets executed, and an instanced cue that gets added and removed as a gameplay effect with duration is added and removed.
+* How to test:
+  * Run the map with multiple clients.
+  * Position one client's character in view of the other client.
+  * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
+  * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client.
 
 -----
 2019-11-15: Page added with editorial review
