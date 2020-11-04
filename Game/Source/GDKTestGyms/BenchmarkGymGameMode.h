@@ -21,8 +21,6 @@ class GDKTESTGYMS_API ABenchmarkGymGameMode : public ABenchmarkGymGameModeBase
 	GENERATED_BODY()
 public:
 	ABenchmarkGymGameMode();
-	// Login used as a workaround for a player spawning issue UNR-3663
-	APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 
 protected:
@@ -53,7 +51,6 @@ private:
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	TSubclassOf<AActor> DropCubeClass;
 	int32 NPCSToSpawn;
-	int32 NumWorkers;
 
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;

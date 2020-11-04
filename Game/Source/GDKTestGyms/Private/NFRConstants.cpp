@@ -42,8 +42,7 @@ int32 FMetricTimer::GetSecondsRemaining() const
 
 
 UNFRConstants::UNFRConstants()
-	: PlayerCheckMetricDelay(10 * 60)
-	, ServerFPSMetricDelay(60)
+	: ServerFPSMetricDelay(60)
 	, ClientFPSMetricDelay(60)
 	, UXMetricDelay(10 * 60)
 	, ActorCheckDelay(10 * 60)

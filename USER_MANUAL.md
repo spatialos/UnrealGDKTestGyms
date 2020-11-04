@@ -37,6 +37,17 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 4. Add a description of the new gym level to this `USER_MANUAL.md` document, in the section below;
   * breifly describe what it demonstrates and how to use it.
 
+### Current tests
+
+Tests can be run by following these steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
+  3. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
+  3. The Session Frontend will then prompt you with the results of the tests.
+
+Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
+The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
+
 #### Current gyms
 
 ##### Empty gym
@@ -254,6 +265,29 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+  * Pressing G spawns a GymCube.
+    * Spawning the GymCube is currently used for testing hierarchy migration as it does not cause failure.
+  * Pressing C spawns an Actor with a static mesh (cube).
+    * Spawning an Actor is currently used for testing hierarchy migration as it causes failure.
+    * This is a known issue: https://improbableio.atlassian.net/browse/UNR-4417 and this keypress and associated functionality can be removed once the failure is resolved.
+
+##### Spatial Debugger Config UI gym
+* Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
+* Gives an example of using that callback to return your game to the correct input mode after closing the debugger config UI, depending on whether your game itself had a UI open.
+* How to test:
+  * Press U to open the in-game UI. Check that the mouse cursor appears and that you are able to click the button.
+  * Press F9 to open the spatial debugger config UI. Check that you are able to interact with that UI.
+  * Press F9 again to close the debugger config UI. The mouse cursor should stay visible, and you should be able to interact with the in-game UI.
+  * Press U to close the in-game UI. The mouse cursor should now be captured by the game, and moving the mouse should control the character camera again.
+  * Press F9 to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
+  * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
+
+#### SpatialEventTracingTests
+* Tests whether key trace events have the appropriate cause events.
+* Ensure that the following settings are added to DefaultSpatialGDKSettings.ini :
+  * bEventTracingEnabled=True
+  * MaxEventTracingFileSizeBytes=104857600
+* You will probably want to remove these setting after you have finished running these tests.
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
