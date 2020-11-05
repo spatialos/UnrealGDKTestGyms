@@ -115,6 +115,7 @@ private:
 	float SmoothedTotalAuthPlayers;
 	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
+	FMetricTimer DeploymentValidTimer;
 	
 	int32 NumWorkers;
 
