@@ -89,6 +89,11 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (USpatialStatics::IsSpatialNetworkingEnabled())
+	{
+		bAlwaysRelevant = true;
+	}
 }
 
 void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
