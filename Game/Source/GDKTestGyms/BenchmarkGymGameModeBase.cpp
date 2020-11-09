@@ -87,7 +87,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, NumWorkers(1)
 {
-	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
 
 	if (USpatialStatics::IsSpatialNetworkingEnabled())
