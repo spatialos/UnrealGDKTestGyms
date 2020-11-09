@@ -88,8 +88,12 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, NumWorkers(1)
 {
-	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (USpatialStatics::IsSpatialNetworkingEnabled())
+	{
+		bAlwaysRelevant = true;
+	}
 }
 
 void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
