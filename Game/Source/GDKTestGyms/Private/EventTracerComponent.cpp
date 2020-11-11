@@ -23,11 +23,6 @@ void UEventTracerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UserSendRPCEventName = AEventTracingTest::GetUserSendRPCEventName();
-	UserProcessRPCEventName = AEventTracingTest::GetUserProcessRPCEventName();
-	UserSendComponentPropertyEventName = AEventTracingTest::GetUserSendComponentPropertyEventName();
-	UserReceiveComponentPropertyEventName = AEventTracingTest::GetUserReceiveComponentPropertyEventName();
-
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UEventTracerComponent::TimerFunction, 5.0f, true);
