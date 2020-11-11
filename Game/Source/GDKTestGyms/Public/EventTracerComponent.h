@@ -27,11 +27,6 @@ private:
 
 	FTimerHandle TimerHandle;
 
-	FName UserSendRPCEventName;
-	FName UserProcessRPCEventName;
-	FName UserSendComponentPropertyEventName;
-	FName UserReceiveComponentPropertyEventName;
-
 	UFUNCTION()
 	void TimerFunction();
 
