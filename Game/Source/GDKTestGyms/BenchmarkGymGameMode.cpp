@@ -25,7 +25,6 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
-	const FString NumWorkersWorkerFlag = TEXT("num_workers");
 	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
 } // anonymous namespace
 
@@ -34,7 +33,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
-	, NumWorkers(1)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -156,11 +154,6 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 				{
 					PlayerDensity = FCString::Atoi(*PlayerDensityString);
 				}
-				FString NumWorkersString;
-				if (SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, NumWorkersString))
-				{
-					NumWorkers = FCString::Atoi(*NumWorkersString);
-				}
 			}
 		}
 
@@ -176,10 +169,6 @@ void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const F
 	if (FlagName == PlayerDensityWorkerFlag)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
-	}
-	if (FlagName == NumWorkersWorkerFlag)
-	{
-		NumWorkers = FCString::Atoi(*FlagValue);
 	}
 }
 
@@ -227,10 +216,10 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
 
 	// We use a fixed size 10km
-	const float ZoneWidth = 1000000.0f / NumWorkers;
+	const float ZoneWidth = 1000000.0f / GetNumWorkers();
 	const float StartingX = -500000.0f;
 
-	if (NumWorkers > 1)
+	if (GetNumWorkers() > 1)
 	{
 		// For multiworker configuration we will place a percentage of spawn points
 		// on/near the boundary between two zones
@@ -238,7 +227,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 		int RemainingClusters = NumClusters - ClustersOnBoundaries;
 
 		TArray<float> Boundaries;
-		for (int i = 1; i < NumWorkers; ++i)
+		for (int i = 1; i < GetNumWorkers(); ++i)
 		{
 			Boundaries.Emplace(StartingX + ZoneWidth * i);
 		}
@@ -263,8 +252,8 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 		NumClusters = RemainingClusters;
 	}
 
-	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(NumWorkers));
-	for (int w = 0; w < NumWorkers; ++w)
+	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(GetNumWorkers()));
+	for (int w = 0; w < GetNumWorkers(); ++w)
 	{
 		int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
 		NumClusters -= ClusterCount;
