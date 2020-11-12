@@ -85,10 +85,15 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, SmoothedTotalAuthPlayers(-1.0f)
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
+	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, NumWorkers(1)
 {
-	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (USpatialStatics::IsSpatialNetworkingEnabled())
+	{
+		bAlwaysRelevant = true;
+	}
 }
 
 void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -249,7 +254,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		return;
 	}
 
-	if (RequiredPlayerCheckTimer.HasTimerGoneOff())
+	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
 		if (SmoothedTotalAuthPlayers < RequiredPlayers)
 		{
