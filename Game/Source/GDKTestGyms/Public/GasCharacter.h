@@ -16,7 +16,7 @@ class GDKTESTGYMS_API AGasCharacter : public AGDKTestGymsCharacter, public IAbil
 {
 	GENERATED_BODY()
 	
-	//Implement IAbilitySystemInterface.
+	// Implement IAbilitySystemInterface.
 	UAbilitySystemComponent* GetAbilitySystemComponent() const override	
 	{
 		return AbilitySystemComponent;
@@ -26,7 +26,7 @@ public:
 	AGasCharacter();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
-	class UAbilitySystemComponent* AbilitySystemComponent;
+	UAbilitySystemComponent* AbilitySystemComponent;
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;

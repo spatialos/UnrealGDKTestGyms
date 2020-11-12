@@ -295,8 +295,8 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * How to test:
   * Run the map with multiple clients.
   * Position one client's character in view of the other client.
-  * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
-  * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client.
+  * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client. Both clients should print "Executed Gameplay Cue" to the log.
+  * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client. Both clients should print "Added Gameplay Cue" to the log.
 
 -----
 2019-11-15: Page added with editorial review
