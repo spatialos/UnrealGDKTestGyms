@@ -57,7 +57,7 @@ protected:
 	virtual void ParsePassedValues();
 
 	UFUNCTION()
-	virtual void OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue);
+	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnTotalNPCsUpdated(int32 Value);
