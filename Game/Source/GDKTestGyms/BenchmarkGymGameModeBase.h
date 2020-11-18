@@ -70,23 +70,23 @@ protected:
 	virtual void ReportAuthoritativePlayers(const FString& WorkerID, const int AuthoritativePlayers);
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportMigration(const FString& WorkerID, const float AverageMigration);
+	virtual void ReportMigration(const FString& WorkerID, const float Migration);
+
+	int32 GetNumWorkers() const { return NumWorkers; }
 private:
 	// Test scenarios
 
-	double AveragedClientRTTSeconds; // The stored average of all the client RTTs
-	double AveragedClientUpdateTimeDeltaSeconds; // The stored average of the client view delta.
-	int32 MaxClientRoundTripSeconds; // Maximum allowed roundtrip
-	int32 MaxClientUpdateTimeDeltaSeconds;
+	double AveragedClientRTTMS; // The stored average of all the client RTTs
+	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
+	int32 MaxClientRoundTripMS; // Maximum allowed roundtrip
+	int32 MaxClientUpdateTimeDeltaMS;
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
-	bool bHasDonePlayerCheck;
 	bool bHasClientFpsFailed;
 	bool bHasActorCountFailed;
 	// bActorCountFailureState will be true if the test has failed
 	bool bActorCountFailureState;
 	bool bExpectedActorCountsInitialised;
-	int32 ActivePlayers; // All authoritative players from all workers
 
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
@@ -100,14 +100,24 @@ private:
 	float MigrationWindowSeconds;
 	TMap<FString, float> MapWorkerActorMigration;
 	float MinActorMigrationPerSecond;
+	FMetricTimer ActorMigrationReportTimer;
 	FMetricTimer ActorMigrationCheckTimer;
+	FMetricTimer ActorMigrationCheckDelay;
 	
-	FMetricTimer ActivePlayerReportDelayTimer;
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 
 	TArray<FExpectedActorCount> ExpectedActorCounts;
 	TMap<FString, int>	MapAuthoritativePlayers;
+
+	// For total player
+	bool bHasRequiredPlayersCheckFailed;
+	float SmoothedTotalAuthPlayers;
+	FMetricTimer RequiredPlayerReportTimer;
+	FMetricTimer RequiredPlayerCheckTimer;
+	FMetricTimer DeploymentValidTimer;
+	
+	int32 NumWorkers;
 
 	virtual void BeginPlay() override;
 
@@ -125,9 +135,9 @@ private:
 
 	void SetTotalNPCs(int32 Value);
 
-	double GetClientRTT() const { return AveragedClientRTTSeconds; }
-	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaSeconds; }
-	double GetPlayersConnected() const { return static_cast<double>(ActivePlayers); }
+	double GetClientRTT() const { return AveragedClientRTTMS; }
+	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaMS; }
+	double GetRequiredPlayersValid() const { return !bHasRequiredPlayersCheckFailed ? 1.0 : 0.0; }
 	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
