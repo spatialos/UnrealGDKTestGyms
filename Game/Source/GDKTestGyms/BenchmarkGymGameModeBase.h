@@ -119,6 +119,10 @@ private:
 	
 	int32 NumWorkers;
 
+	// For stat profile
+	FMetricTimer StatStartFileTimer;
+	FMetricTimer StatStopFileTimer;
+
 	virtual void BeginPlay() override;
 
 	void TryInitialiseExpectedActorCounts();
@@ -144,6 +148,8 @@ private:
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
+
+	void SetStatStartStopTime(int32 StartDelayTime, int32 StopDelayTime);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

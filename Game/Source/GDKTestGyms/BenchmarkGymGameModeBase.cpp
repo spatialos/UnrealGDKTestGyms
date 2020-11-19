@@ -50,6 +50,12 @@ namespace
 	const FString NumWorkersWorkerFlag = TEXT("num_workers");
 	const FString NumWorkersCommandLineKey = TEXT("-NumWorkers=");
 
+	const FString StartProfileWorkerFlag = TEXT("start_profile_after_beginning");
+	const FString StartProfileCommandLineKey = TEXT("-StartProfileAfterBeginning=");
+		
+	const FString StopProfileWorkerFlag = TEXT("stop_profile_after_startfile");
+	const FString StopProfileCommandLineKey = TEXT("-StopProfileAfterStartfile=");
+
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
 } // anonymous namespace
@@ -87,6 +93,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, NumWorkers(1)
+	, StatStartFileTimer(60 * 60 * 24)
+	, StatStopFileTimer(60)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -238,6 +246,23 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		PrintMetricsTimer.HasTimerGoneOff())
 	{
 		PrintMetricsTimer.SetTimer(10);
+	}
+	
+	if (StatStartFileTimer.HasTimerGoneOff())
+	{
+		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		if (ensure(SpatialDriver != nullptr))
+		{
+			FString FileName = FString::Format(TEXT("stat startfile ../../../../../../improbable/logs/UnrealWorker/{0}.ue4stats"), { SpatialDriver->Connection->GetWorkerId() });
+			GEngine->Exec(GetWorld(), *FileName);
+			StatStartFileTimer.SetTimer(999999);
+			StatStopFileTimer.SetTimer(3 * 60);
+		}
+	}
+	if (StatStopFileTimer.HasTimerGoneOff())
+	{
+		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
+		StatStopFileTimer.SetTimer(999999);
 	}
 }
 
@@ -463,6 +488,11 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
 		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
+
+		int32 StatStartProfileDelaySeconds, StatStopProfileDelaySeconds;
+		FParse::Value(*CommandLine, *StartProfileCommandLineKey, StatStartProfileDelaySeconds);
+		FParse::Value(*CommandLine, *StopProfileCommandLineKey, StatStopProfileDelaySeconds);
+		SetStatStartStopTime(StatStartProfileDelaySeconds, StatStopProfileDelaySeconds);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -513,6 +543,15 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				if (SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, NumWorkersString))
 				{
 					NumWorkers = FCString::Atoi(*NumWorkersString);
+				}
+
+				FString StatStartProfileDelaySring, StatStopProfileDelayString;
+				if (SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, StatStartProfileDelaySring) && SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, StatStopProfileDelayString))
+				{
+					int32 StatStartProfileDelaySeconds, StatStopProfileDelaySeconds;
+					StatStartProfileDelaySeconds = FCString::Atoi(*StatStartProfileDelaySring);
+					StatStopProfileDelaySeconds = FCString::Atoi(*StatStopProfileDelayString);
+					SetStatStartStopTime(StatStartProfileDelaySeconds, StatStopProfileDelaySeconds);
 				}
 			}
 		}
@@ -689,4 +728,10 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 	{
 		MapWorkerActorMigration.Emplace(WorkerID, Migration);
 	}
+}
+
+void ABenchmarkGymGameModeBase::SetStatStartStopTime(int32 StartDelayTime, int32 StopDelayTime)
+{
+	StatStartFileTimer.SetTimer(StartDelayTime);
+	StatStopFileTimer.SetTimer(StartDelayTime + StopDelayTime);
 }
