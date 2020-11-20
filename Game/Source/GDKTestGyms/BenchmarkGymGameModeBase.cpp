@@ -253,7 +253,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
 		{
-			FString FileName = FString::Format(TEXT("stat startfile ../../../../../../improbable/logs/UnrealWorker/{0}.ue4stats"), { SpatialDriver->Connection->GetWorkerId() });
+			FString FileName = FString::Format(TEXT("stat startfile {0}.ue4stats"), { SpatialDriver->Connection->GetWorkerId() });
 			GEngine->Exec(GetWorld(), *FileName);
 			StatStartFileTimer.SetTimer(999999);
 			StatStopFileTimer.SetTimer(3 * 60);
