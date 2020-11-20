@@ -6,10 +6,11 @@
 
 #include "TestGymsReplicationGraph.h"
 
-#include "Net/UnrealNetwork.h"
+#include "CoreGlobals.h"
 #include "Engine/LevelStreaming.h"
 #include "EngineUtils.h"
-#include "CoreGlobals.h"
+#include "Net/UnrealNetwork.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/GameModeBase.h"
@@ -467,7 +468,11 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorList
 		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
 		{
 			// 50% throttling of PlayerStates.
+#if ENGINE_MINOR_VERSION < 26
 			const bool bReplicatePS = (Params.ConnectionManager.ConnectionId % 2) == (Params.ReplicationFrameNum % 2);
+#else
+			const bool bReplicatePS = (Params.ConnectionManager.ConnectionOrderNum % 2) == (Params.ReplicationFrameNum % 2);
+#endif
 			if (bReplicatePS)
 			{
 				// Always return the player state to the owning player. Simulated proxy player states are handled by UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
