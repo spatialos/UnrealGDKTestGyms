@@ -149,7 +149,7 @@ private:
 
 	void SetLifetime(int32 Lifetime);
 
-	void SetStatStartStopTime(int32 StartDelayTime, int32 StopDelayTime);
+	void SetStatTimer(const FString& TimeString);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

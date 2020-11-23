@@ -50,11 +50,8 @@ namespace
 	const FString NumWorkersWorkerFlag = TEXT("num_workers");
 	const FString NumWorkersCommandLineKey = TEXT("-NumWorkers=");
 
-	const FString StartProfileWorkerFlag = TEXT("start_profile_after_beginning");
-	const FString StartProfileCommandLineKey = TEXT("-StartProfileAfterBeginning=");
-		
-	const FString StopProfileWorkerFlag = TEXT("stop_profile_after_startfile");
-	const FString StopProfileCommandLineKey = TEXT("-StopProfileAfterStartfile=");
+	const FString StatProfileWorkerFlag = TEXT("stat_profile");
+	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
 
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
@@ -488,10 +485,9 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
 
-		int32 StatStartProfileDelaySeconds, StatStopProfileDelaySeconds;
-		FParse::Value(*CommandLine, *StartProfileCommandLineKey, StatStartProfileDelaySeconds);
-		FParse::Value(*CommandLine, *StopProfileCommandLineKey, StatStopProfileDelaySeconds);
-		SetStatStartStopTime(StatStartProfileDelaySeconds, StatStopProfileDelaySeconds);
+		FString StatProfileString;
+		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
+		
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -544,13 +540,10 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					NumWorkers = FCString::Atoi(*NumWorkersString);
 				}
 
-				FString StatStartProfileDelaySring, StatStopProfileDelayString;
-				if (SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, StatStartProfileDelaySring) && SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, StatStopProfileDelayString))
+				FString StatProfileString;
+				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
 				{
-					int32 StatStartProfileDelaySeconds, StatStopProfileDelaySeconds;
-					StatStartProfileDelaySeconds = FCString::Atoi(*StatStartProfileDelaySring);
-					StatStopProfileDelaySeconds = FCString::Atoi(*StatStopProfileDelayString);
-					SetStatStartStopTime(StatStartProfileDelaySeconds, StatStopProfileDelaySeconds);
+					SetStatTimer(StatProfileString);
 				}
 			}
 		}
@@ -592,6 +585,10 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	else if (FlagName == NumWorkersWorkerFlag)
 	{
 		NumWorkers = FCString::Atof(*FlagValue);
+	}
+	else if (FlagName == StatProfileWorkerFlag)
+	{
+		SetStatTimer(FlagValue);
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
@@ -729,8 +726,14 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 	}
 }
 
-void ABenchmarkGymGameModeBase::SetStatStartStopTime(int32 StartDelayTime, int32 StopDelayTime)
+void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
 {
-	StatStartFileTimer.SetTimer(StartDelayTime);
-	StatStopFileTimer.SetTimer(StartDelayTime + StopDelayTime);
+	FString StartDelayString, DurationString;
+	if (TimeString.Split(TEXT(","), &StartDelayString, &DurationString))
+	{
+		int32 StartDelay = FCString::Atoi(*StartDelayString);
+		int32 Duration = FCString::Atoi(*DurationString);
+		StatStartFileTimer.SetTimer(StartDelay);
+		StatStopFileTimer.SetTimer(StartDelay + Duration);
+	}
 }
