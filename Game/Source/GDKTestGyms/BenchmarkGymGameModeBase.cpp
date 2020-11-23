@@ -154,7 +154,7 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 		{
 			FOnAnyWorkerFlagUpdatedBP WorkerFlagDelegate;
 			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated);
-			SpatialWorkerFlags->RegisterAnyFlagUpdatedCallback(WorkerFlagDelegate);
+			SpatialWorkerFlags->RegisterAnyFlagUpdatedCallback(WorkerFlagDelegate, ESpatialCallbackStyle::InvokeOnNewUpdateOnly);
 		}
 	}
 }
