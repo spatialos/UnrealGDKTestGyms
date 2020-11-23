@@ -256,7 +256,6 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 			FString FileName = FString::Format(TEXT("stat startfile {0}.ue4stats"), { SpatialDriver->Connection->GetWorkerId() });
 			GEngine->Exec(GetWorld(), *FileName);
 			StatStartFileTimer.SetTimer(999999);
-			StatStopFileTimer.SetTimer(3 * 60);
 		}
 	}
 	if (StatStopFileTimer.HasTimerGoneOff())
