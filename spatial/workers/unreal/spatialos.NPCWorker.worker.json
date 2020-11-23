@@ -79,7 +79,10 @@
         "+linkProtocol",
         "Tcp",
         "-NoVerifyGC"
-      ]
+      ],
+      "container_config": {
+        "image": "eu.gcr.io/semiotic-pact-170516/worker_15@sha256:46a79a0cdbe8d49a585b5896413eca7aa59ffc95f9dd7f510b600623e1429143"
+      }
     }
   }
 }
