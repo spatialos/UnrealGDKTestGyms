@@ -6,7 +6,6 @@
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
 #include "NFRConstants.h"
-
 #include "BenchmarkGymGameModeBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
@@ -118,6 +117,11 @@ private:
 	FMetricTimer DeploymentValidTimer;
 	
 	int32 NumWorkers;
+#if	STATS
+	// For stat profile
+	FMetricTimer StatStartFileTimer;
+	FMetricTimer StatStopFileTimer;
+#endif
 
 	virtual void BeginPlay() override;
 
@@ -144,6 +148,9 @@ private:
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
+#if	STATS
+	void SetStatTimer(const FString& TimeString);
+#endif
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
