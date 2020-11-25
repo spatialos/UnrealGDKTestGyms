@@ -343,7 +343,7 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 	{
 		case EClassRepNodeMapping::NotRouted:
 		{
-			UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
+			UE_LOG(LogTestGymsReplicationGraph, Verbose, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
 			break;
 		}
 		
