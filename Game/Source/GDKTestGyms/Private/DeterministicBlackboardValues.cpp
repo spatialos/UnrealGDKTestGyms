@@ -17,7 +17,7 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 	if (Controller == nullptr)
 	{
 #if !WITH_EDITOR
-		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Pawn controller is not set, retrying in 1 second."));
+		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Pawn controller is not set, retrying in 1 second. Pawn:%s Controller:%s"), *Pawn->GetName(), Controller ? *Controller->GetName() : TEXT("Unset"));
 #endif
 		return;
 	}
