@@ -6,11 +6,13 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameFramework/MovementComponent.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
+#include "UserExperienceComponent.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
 
@@ -21,7 +23,8 @@ namespace
 {
 	const FString AverageClientRTTMetricName = TEXT("UnrealAverageClientRTT");
 	const FString AverageClientUpdateTimeDeltaMetricName = TEXT("UnrealAverageClientUpdateTimeDelta");
-	const FString PlayersSpawnedMetricName = TEXT("UnrealActivePlayers");
+	const FString ExpectedPlayersValidMetricName = TEXT("ExpectedPlayersValid");
+	const FString ActorMigrationValidMetricName = TEXT("UnrealActorMigration");
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
@@ -41,6 +44,15 @@ namespace
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
+	const FString MinActorMigrationWorkerFlag = TEXT("min_actor_migration");
+	const FString MinActorMigrationCommandLineKey = TEXT("-MinActorMigration=");
+	
+	const FString NumWorkersWorkerFlag = TEXT("num_workers");
+	const FString NumWorkersCommandLineKey = TEXT("-NumWorkers=");
+#if	STATS
+	const FString StatProfileWorkerFlag = TEXT("stat_profile");
+	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
+#endif
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
 } // anonymous namespace
@@ -50,23 +62,45 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(1)
 	, RequiredPlayers(4096)
-	, AveragedClientRTTSeconds(0.0)
-	, AveragedClientUpdateTimeDeltaSeconds(0.0)
-	, MaxClientRoundTripSeconds(150)
-	, MaxClientUpdateTimeDeltaSeconds(300)
+	, AveragedClientRTTMS(0.0)
+	, AveragedClientUpdateTimeDeltaMS(0.0)
+	, MaxClientRoundTripMS(150)
+	, MaxClientUpdateTimeDeltaMS(300)
 	, bHasUxFailed(false)
 	, bHasFpsFailed(false)
-	, bHasDonePlayerCheck(false)
 	, bHasClientFpsFailed(false)
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
 	, bExpectedActorCountsInitialised(false)
-	, ActivePlayers(0)
+	, bHasActorMigrationCheckFailed(false)
+	, PreviousTickMigration(0)
+	, UXAuthActorCount(0)
+	, MigrationOfCurrentWorker(0)
+	, MigrationCountSeconds(0.0)
+	, MigrationWindowSeconds(5*60.0f)
+	, MinActorMigrationPerSecond(0.0)
+	, ActorMigrationReportTimer(1)
+	, ActorMigrationCheckTimer(11*60) // 1-minute later then ActorMigrationCheckDelay + MigrationWindowSeconds to make sure all the workers had reported their migration	
+	, ActorMigrationCheckDelay(5*60)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
+	, bHasRequiredPlayersCheckFailed(false)
+	, SmoothedTotalAuthPlayers(-1.0f)
+	, RequiredPlayerReportTimer(10 * 60)
+	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
+	, DeploymentValidTimer(16*60) // 16-minute window to check between
+	, NumWorkers(1)
+#if	STATS
+	, StatStartFileTimer(60 * 60 * 24)
+	, StatStopFileTimer(60)
+#endif
 {
-	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (USpatialStatics::IsSpatialNetworkingEnabled())
+	{
+		bAlwaysRelevant = true;
+	}
 }
 
 void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -125,9 +159,9 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 		USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
 		if (ensure(SpatialWorkerFlags != nullptr))
 		{
-			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
-			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
-			SpatialWorkerFlags->BindToOnWorkerFlagsUpdated(WorkerFlagDelegate);
+			FOnAnyWorkerFlagUpdatedBP WorkerFlagDelegate;
+			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated);
+			SpatialWorkerFlags->RegisterAnyFlagUpdatedCallback(WorkerFlagDelegate);
 		}
 	}
 }
@@ -174,14 +208,20 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 
 				{
 					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayersConnected);
-					SpatialMetrics->SetCustomMetric(PlayersSpawnedMetricName, Delegate);
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetRequiredPlayersValid);
+					SpatialMetrics->SetCustomMetric(ExpectedPlayersValidMetricName, Delegate);
 				}
 
 				{
 					UserSuppliedMetric Delegate;
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 					SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+				}
+
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalMigrationValid);
+					SpatialMetrics->SetCustomMetric(ActorMigrationValidMetricName, Delegate);
 				}
 			}
 		}
@@ -197,7 +237,8 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
-
+	TickActorMigration(DeltaSeconds);
+	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
 	if (HasAuthority() &&
@@ -205,6 +246,27 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	{
 		PrintMetricsTimer.SetTimer(10);
 	}
+#if	STATS
+	if (StatStartFileTimer.HasTimerGoneOff())
+	{
+		FString Cmd(TEXT("stat startfile"));
+		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+		{
+			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+			if (ensure(SpatialDriver != nullptr))
+			{
+				Cmd = FString::Printf(TEXT("stat startfile %s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
+			}
+		}
+		GEngine->Exec(GetWorld(), *Cmd);
+		StatStartFileTimer.SetTimer(999999);
+	}
+	if (StatStopFileTimer.HasTimerGoneOff())
+	{
+		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
+		StatStopFileTimer.SetTimer(999999);
+	}
+#endif
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -215,27 +277,24 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	}
 
 	// Only check players once
-	if (bHasDonePlayerCheck)
+	if (bHasRequiredPlayersCheckFailed)
 	{
 		return;
 	}
 
-	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-	check(Constants);
-
-	// This test respects the initial delay timer in both native and GDK
-	if (Constants->PlayerCheckMetricDelay.HasTimerGoneOff())
+	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
-		bHasDonePlayerCheck = true;
-		if (ActivePlayers < RequiredPlayers)
+		if (SmoothedTotalAuthPlayers < RequiredPlayers)
 		{
+			bHasRequiredPlayersCheckFailed = true;
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d, num players %d"), *NFRFailureString, RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %.1f"), *NFRFailureString, RequiredPlayers, SmoothedTotalAuthPlayers);
 		}
 		else
 		{
+			RequiredPlayerCheckTimer.SetTimer(10);
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d, num players %d"), RequiredPlayers, ActivePlayers, GetNumPlayers());
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %.1f"), RequiredPlayers, SmoothedTotalAuthPlayers);
 		}
 	}
 }
@@ -304,66 +363,68 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	int UXComponentCount = 0;
+	UXAuthActorCount = 0;
 	int ValidRTTCount = 0;
 	int ValidUpdateTimeDeltaCount = 0;
-	float ClientRTTSeconds = 0.0f;
-	float ClientUpdateTimeDeltaSeconds = 0.0f;
+	float ClientRTTMS = 0.0f;
+	float ClientUpdateTimeDeltaMS = 0.0f;
 	for (TObjectIterator<UUserExperienceReporter> Itr; Itr; ++Itr) // These exist on player characters
 	{
 		UUserExperienceReporter* Component = *Itr;
 		if (Component->GetOwner() != nullptr && Component->HasBegunPlay() && Component->GetWorld() == GetWorld())
 		{
-			if (Component->ServerRTT > 0.f)
+			if (Component->ServerRTTMS > 0.f)
 			{
-				ClientRTTSeconds += Component->ServerRTT;
+				ClientRTTMS += Component->ServerRTTMS;
 				ValidRTTCount++;
 			}
 
-			if (Component->ServerUpdateTimeDelta > 0.f)
+			if (Component->ServerUpdateTimeDeltaMS > 0.f)
 			{
-				ClientUpdateTimeDeltaSeconds += Component->ServerUpdateTimeDelta;
+				ClientUpdateTimeDeltaMS += Component->ServerUpdateTimeDeltaMS;
 				ValidUpdateTimeDeltaCount++;
 			}
 
-			UXComponentCount++;
+			if (Component->GetOwner()->HasAuthority())
+			{
+				UXAuthActorCount++;
+			}
 		}
-	}
+	}	
 
-	ActivePlayers = UXComponentCount;
-
-	if (UXComponentCount == 0)
+	if (RequiredPlayerReportTimer.HasTimerGoneOff())
 	{
-		return; // We don't start reporting until there are some valid components in the scene.
+		// We don't start reporting until RequiredPlayerReportTimer has gone off
+		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXAuthActorCount);
+		RequiredPlayerReportTimer.SetTimer(1);
 	}
 
-	ClientRTTSeconds /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
-	ClientUpdateTimeDeltaSeconds /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
+	if (!HasAuthority())
+	{
+		return;
+	}
 
-	AveragedClientRTTSeconds = ClientRTTSeconds;
-	AveragedClientUpdateTimeDeltaSeconds = ClientUpdateTimeDeltaSeconds;
+	ClientRTTMS /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
+	ClientUpdateTimeDeltaMS /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
 
+	AveragedClientRTTMS = ClientRTTMS;
+	AveragedClientUpdateTimeDeltaMS = ClientUpdateTimeDeltaMS;
+
+	const bool bUXMetricValid = AveragedClientRTTMS <= MaxClientRoundTripMS && AveragedClientUpdateTimeDeltaMS <= MaxClientUpdateTimeDeltaMS;
+	
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
-
-	const bool bUXMetricValid = AveragedClientRTTSeconds <= MaxClientRoundTripSeconds && AveragedClientUpdateTimeDeltaSeconds <= MaxClientUpdateTimeDeltaSeconds;
-
 	if (!bHasUxFailed &&
 		!bUXMetricValid &&
 		Constants->UXMetricDelay.HasTimerGoneOff())
 	{
 		bHasUxFailed = true;
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f, ActivePlayers: %d"), *NFRFailureString, AveragedClientRTTSeconds, AveragedClientUpdateTimeDeltaSeconds, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f"), *NFRFailureString, AveragedClientRTTMS, AveragedClientUpdateTimeDeltaMS);
 	}
 
 	if (PrintMetricsTimer.HasTimerGoneOff())
 	{
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d), ActivePlayers: %d"), AveragedClientRTTSeconds, ValidRTTCount, AveragedClientUpdateTimeDeltaSeconds, ValidUpdateTimeDeltaCount, ActivePlayers);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d)"), AveragedClientRTTMS, ValidRTTCount, AveragedClientUpdateTimeDeltaMS, ValidUpdateTimeDeltaCount);
 	}
 }
 
@@ -426,13 +487,21 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *TestLiftimeCommandLineKey, Lifetime);
 		SetLifetime(Lifetime);
 
-		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
-		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
+		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripMS);
+		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
+		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
+		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
+		
+#if	STATS
+		FString StatProfileString;
+		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
+		SetStatTimer(StatProfileString);
+#endif
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString;
+		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, MinActorMigrationString, NumWorkersString;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -457,27 +526,43 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 				if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
 				{
-					MaxClientRoundTripSeconds = FCString::Atoi(*MaxRoundTrip);
+					MaxClientRoundTripMS = FCString::Atoi(*MaxRoundTrip);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(MaxUpdateTimeDeltaWorkerFlag, MaxUpdateTimeDelta))
 				{
-					MaxClientUpdateTimeDeltaSeconds = FCString::Atoi(*MaxUpdateTimeDelta);
+					MaxClientUpdateTimeDeltaMS = FCString::Atoi(*MaxUpdateTimeDelta);
 				}
 
 				if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
 				{
 					SetLifetime(FCString::Atoi(*LifetimeString));
 				}
+				
+				if (SpatialWorkerFlags->GetWorkerFlag(MinActorMigrationWorkerFlag, MinActorMigrationString))
+				{
+					MinActorMigrationPerSecond = FCString::Atof(*MinActorMigrationString);
+				}
 
+				if (SpatialWorkerFlags->GetWorkerFlag(NumWorkersWorkerFlag, NumWorkersString))
+				{
+					NumWorkers = FCString::Atoi(*NumWorkersString);
+				}
+#if	STATS
+				FString StatProfileString;
+				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
+				{
+					SetStatTimer(StatProfileString);
+				}
+#endif
 			}
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripSeconds, MaxClientUpdateTimeDeltaSeconds);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers);
 }
 
-void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	if (FlagName == TotalPlayerWorkerFlag)
 	{
@@ -493,16 +578,30 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	}
 	else if (FlagName == MaxRoundTripWorkerFlag)
 	{
-		MaxClientRoundTripSeconds = FCString::Atoi(*FlagValue);
+		MaxClientRoundTripMS = FCString::Atoi(*FlagValue);
 	}
 	else if (FlagName == MaxUpdateTimeDeltaWorkerFlag)
 	{
-		MaxClientUpdateTimeDeltaSeconds = FCString::Atoi(*FlagValue);
+		MaxClientUpdateTimeDeltaMS = FCString::Atoi(*FlagValue);
 	}
 	else if (FlagName == TestLiftimeWorkerFlag)
 	{
 		SetLifetime(FCString::Atoi(*FlagValue));
 	}
+	else if (FlagName == MinActorMigrationWorkerFlag)
+	{
+		MinActorMigrationPerSecond = FCString::Atof(*FlagValue);
+	}
+	else if (FlagName == NumWorkersWorkerFlag)
+	{
+		NumWorkers = FCString::Atof(*FlagValue);
+	}
+#if	STATS
+	else if (FlagName == StatProfileWorkerFlag)
+	{
+		SetStatTimer(FlagValue);
+	}
+#endif
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
@@ -541,3 +640,113 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
 	}
 }
+
+void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, const int AuthoritativePlayers)
+{
+	if (HasAuthority())
+	{
+		MapAuthoritativePlayers.Emplace(WorkerID, AuthoritativePlayers);
+		int32 TotalPlayers = 0;
+		for (const auto& KeyValue : MapAuthoritativePlayers)
+		{
+			TotalPlayers += KeyValue.Value;
+		}
+		if (MapAuthoritativePlayers.Num() == NumWorkers)
+		{
+			if (SmoothedTotalAuthPlayers < 0.0f)
+			{
+				SmoothedTotalAuthPlayers = TotalPlayers;
+			}
+			else
+			{
+				SmoothedTotalAuthPlayers = SmoothedTotalAuthPlayers * 0.9f + TotalPlayers * 0.1;
+			}
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%.1f"),
+				*WorkerID, AuthoritativePlayers, SmoothedTotalAuthPlayers);
+		}
+	}
+}
+
+void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
+{
+	if (bHasActorMigrationCheckFailed)
+	{
+		return;
+	}
+
+	// This test respects the initial delay timer only for multiworker
+	if (ActorMigrationCheckDelay.HasTimerGoneOff())
+	{
+		// Count how many actors hand over authority in 1 tick
+		int Delta = FMath::Abs(UXAuthActorCount - PreviousTickMigration);
+		MigrationDeltaHistory.Enqueue(MigrationDeltaPair(Delta, DeltaSeconds));
+		bool bChanged = false;
+		if (MigrationCountSeconds > MigrationWindowSeconds)
+		{
+			MigrationDeltaPair OldestValue;
+			if (MigrationDeltaHistory.Dequeue(OldestValue))
+			{
+				MigrationOfCurrentWorker -= OldestValue.Key;
+				MigrationSeconds -= OldestValue.Value;
+			}
+		}
+		MigrationOfCurrentWorker += Delta;
+		MigrationSeconds += DeltaSeconds;
+		PreviousTickMigration = UXAuthActorCount;
+
+		if (MigrationCountSeconds > MigrationWindowSeconds)
+		{
+			if (ActorMigrationReportTimer.HasTimerGoneOff())
+			{
+				// Only report AverageMigrationOfCurrentWorkerPerSecond to the worker which has authority
+				float AverageMigrationOfCurrentWorkerPerSecond = MigrationOfCurrentWorker / MigrationSeconds;
+				ReportMigration(FPlatformProcess::ComputerName(), AverageMigrationOfCurrentWorkerPerSecond);
+				ActorMigrationReportTimer.SetTimer(1);
+			}
+
+			if (HasAuthority() && ActorMigrationCheckTimer.HasTimerGoneOff())
+			{
+				float Migration = 0.0f;
+				for (const auto& KeyValue : MapWorkerActorMigration)
+				{
+					Migration += KeyValue.Value;
+				}
+				if (Migration < MinActorMigrationPerSecond)
+				{
+					bHasActorMigrationCheckFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. Migration=%.8f MinActorMigrationPerSecond=%.8f MigrationExactlyWindowSeconds=%.8f"),
+						*NFRFailureString, Migration, MinActorMigrationPerSecond, MigrationSeconds);
+				}
+				else
+				{
+					// Reset timer for next check after 10s
+					ActorMigrationCheckTimer.SetTimer(10);
+					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.8f MinActorMigrationPerSecond=%.8f MigrationExactlyWindowSeconds=%.8f"),
+						Migration, MinActorMigrationPerSecond, MigrationSeconds);
+				}
+			}
+		}
+		MigrationCountSeconds += DeltaSeconds;
+	}
+}
+
+void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& WorkerID, const float Migration)
+{
+	if (HasAuthority())
+	{
+		MapWorkerActorMigration.Emplace(WorkerID, Migration);
+	}
+}
+#if	STATS
+void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
+{
+	FString StartDelayString, DurationString;
+	if (TimeString.Split(TEXT(","), &StartDelayString, &DurationString))
+	{
+		int32 StartDelay = FCString::Atoi(*StartDelayString);
+		int32 Duration = FCString::Atoi(*DurationString);
+		StatStartFileTimer.SetTimer(StartDelay);
+		StatStopFileTimer.SetTimer(StartDelay + Duration);
+	}
+}
+#endif

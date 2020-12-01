@@ -1,6 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 using UnrealBuildTool;
+using System; 
 using System.Collections.Generic;
 
 public class GDKTestGymsServerTarget : TargetRules
@@ -9,5 +10,10 @@ public class GDKTestGymsServerTarget : TargetRules
 	{
 		Type = TargetType.Server;
 		ExtraModuleNames.Add("GDKTestGyms");
+
+		if (Environment.GetEnvironmentVariable("ImprobableNFRShipping") != null)
+		{
+			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
+		}
 	}
 }

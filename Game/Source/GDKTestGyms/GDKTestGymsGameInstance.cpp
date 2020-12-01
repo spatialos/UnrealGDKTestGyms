@@ -5,7 +5,7 @@
 #include "Interop/Connection/SpatialConnectionManager.h"
 
 #include "NFRConstants.h"
-#include "SpatialNetDriver.h"
+#include "EngineClasses/SpatialNetDriver.h"
 #include "Utils/SpatialMetrics.h"
 
 #include "GeneralProjectSettings.h"

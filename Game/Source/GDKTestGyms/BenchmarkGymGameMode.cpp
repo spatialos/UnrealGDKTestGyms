@@ -25,6 +25,7 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
 } // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -141,16 +142,18 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString PlayerDensityString;
 
 		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(NetDriver != nullptr))
 		{
 			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
-			if (ensure(SpatialWorkerFlags != nullptr) &&
-				SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+			if (ensure(SpatialWorkerFlags != nullptr))
 			{
-				PlayerDensity = FCString::Atoi(*PlayerDensityString);
+				FString PlayerDensityString;
+				if(SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				{
+					PlayerDensity = FCString::Atoi(*PlayerDensityString);
+				}
 			}
 		}
 
@@ -160,9 +163,9 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
 
-void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+void ABenchmarkGymGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
-	Super::OnWorkerFlagUpdated(FlagName, FlagValue);
+	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
 	if (FlagName == PlayerDensityWorkerFlag)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
@@ -211,19 +214,66 @@ void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumP
 void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
 	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
-	int NumRows, NumCols, MinRelativeX, MinRelativeY;
-	GenerateGridSettings(DistBetweenClusterCenters, NumClusters, NumRows, NumCols, MinRelativeX, MinRelativeY);
 
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns"), NumRows, NumCols);
-	for (int i = 0; i < NumClusters; i++)
+	// We use a fixed size 10km
+	const float ZoneWidth = 1000000.0f / GetNumWorkers();
+	const float StartingX = -500000.0f;
+
+	if (GetNumWorkers() > 1)
 	{
-		const int Row = i % NumRows;
-		const int Col = i / NumRows;
+		// For multiworker configuration we will place a percentage of spawn points
+		// on/near the boundary between two zones
+		int ClustersOnBoundaries = FMath::CeilToInt(NumClusters * PercentageSpawnpointsOnWorkerBoundary);
+		int RemainingClusters = NumClusters - ClustersOnBoundaries;
 
-		const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
-		const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+		TArray<float> Boundaries;
+		for (int i = 1; i < GetNumWorkers(); ++i)
+		{
+			Boundaries.Emplace(StartingX + ZoneWidth * i);
+		}
 
-		GenerateSpawnPoints(ClusterCenterX, ClusterCenterY, PlayerDensity);
+		int NumPerBoundary = FMath::CeilToInt(ClustersOnBoundaries / static_cast<float>(Boundaries.Num()));
+		int StartingY = FMath::RoundToInt(-((NumPerBoundary - 1) * DistBetweenClusterCenters) / 2.0f);
+		int BoundaryIndex = 0;
+		while(ClustersOnBoundaries > 0)
+		{
+			int ClusterCenterX = FMath::RoundToInt(Boundaries[BoundaryIndex]);
+			for (int y = 0; y < NumPerBoundary && ClustersOnBoundaries > 0; ++y)
+			{
+				int ClusterCenterY = StartingY + y * DistBetweenClusterCenters;
+				//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+				GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+				UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster near boundary location: %d , %d"), ClusterCenterY, ClusterCenterX);
+				--ClustersOnBoundaries;
+			}
+			++BoundaryIndex;
+		}
+
+		NumClusters = RemainingClusters;
+	}
+
+	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(GetNumWorkers()));
+	for (int w = 0; w < GetNumWorkers(); ++w)
+	{
+		int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
+		NumClusters -= ClusterCount;
+		int NumRows, NumCols, MinRelativeX, MinRelativeY;
+		GenerateGridSettings(DistBetweenClusterCenters, ClusterCount, NumRows, NumCols, MinRelativeX, MinRelativeY);
+
+		//Adjust the lefthand side of the grid to so that the grid is centered in the zone
+		MinRelativeX = FMath::RoundToInt(MinRelativeX + StartingX + (w * ZoneWidth) + (ZoneWidth / 2.0f));
+
+		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
+		for (int i = 0; i < ClusterCount; i++)
+		{
+			const int Row = i % NumRows;
+			const int Col = i / NumRows;
+
+			const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
+			const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+			//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+			GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+		}
 	}
 }
 
@@ -297,27 +347,8 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	}
 }
 
-APlayerController* ABenchmarkGymGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
-{
-	// Workaround for a player spawning issue UNR-3663
-	SetPrioritizedPlayerStart(nullptr);
-	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
-}
-
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	if (!HasAuthority()) // Workaround for a player spawning issue UNR-3663
-	{
-		for (TActorIterator<APlayerStart> It = TActorIterator<APlayerStart>(GetWorld()); It; ++It)
-		{
-			if (It->GetName() == FString(TEXT("DefaultPlayerStart")))
-			{
-				return *It;
-			}
-		}
-		checkf(false, TEXT("Failed to find player start work-around actor"));
-	}
-
 	CheckCmdLineParameters();
 
 	if (SpawnPoints.Num() == 0)
