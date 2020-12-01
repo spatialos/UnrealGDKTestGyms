@@ -82,8 +82,9 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
 
 
-##### Ability locking gym
+##### Ability activation gym
 * Demonstrates that:
+  * Gameplay abilities can be activated across server boundaries.
   * An Actor will be locked from crossing servers while a gameplay ability is running on it.
   * A player ownership hierarchy of Actors (controller, character & state) will not migrate while one Actor in the hierarchy is locked.
 * Contains:
