@@ -159,9 +159,9 @@ void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
 		USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
 		if (ensure(SpatialWorkerFlags != nullptr))
 		{
-			FOnWorkerFlagsUpdatedBP WorkerFlagDelegate;
-			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnWorkerFlagUpdated);
-			SpatialWorkerFlags->BindToOnWorkerFlagsUpdated(WorkerFlagDelegate);
+			FOnAnyWorkerFlagUpdatedBP WorkerFlagDelegate;
+			WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated);
+			SpatialWorkerFlags->RegisterAnyFlagUpdatedCallback(WorkerFlagDelegate);
 		}
 	}
 }
@@ -562,7 +562,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers);
 }
 
-void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	if (FlagName == TotalPlayerWorkerFlag)
 	{
