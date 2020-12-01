@@ -1,7 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 /**
-*	
+*
 */
 
 #include "TestGymsReplicationGraph.h"
@@ -18,10 +18,10 @@
 #include "GameFramework/Pawn.h"
 #include "Engine/LevelScriptActor.h"
 
-DEFINE_LOG_CATEGORY( LogTestGymsReplicationGraph );
+DEFINE_LOG_CATEGORY(LogTestGymsReplicationGraph);
 
 int32 CVar_TestGymsRepGraph_DisableSpatialRebuilds = 1;
-static FAutoConsoleVariableRef CVarTestGymsRepDisableSpatialRebuilds(TEXT("TestGymsRepGraph.DisableSpatialRebuilds"), CVar_TestGymsRepGraph_DisableSpatialRebuilds, TEXT(""), ECVF_Default );
+static FAutoConsoleVariableRef CVarTestGymsRepDisableSpatialRebuilds(TEXT("TestGymsRepGraph.DisableSpatialRebuilds"), CVar_TestGymsRepGraph_DisableSpatialRebuilds, TEXT(""), ECVF_Default);
 
 // ----------------------------------------------------------------------------------------------------------
 
@@ -44,10 +44,10 @@ void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool b
 		UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("Setting cull distance for %s to %f (%f)"), *Class->GetName(), Info.GetCullDistanceSquared(), Info.GetCullDistance());
 	}
 
-	Info.ReplicationPeriodFrame = FMath::Max<uint32>( (uint32)FMath::RoundToFloat(ServerMaxTickRate / CDO->NetUpdateFrequency), 1);
+	Info.ReplicationPeriodFrame = FMath::Max<uint32>((uint32)FMath::RoundToFloat(ServerMaxTickRate / CDO->NetUpdateFrequency), 1);
 
 	UClass* NativeClass = Class;
-	while(!NativeClass->IsNative() && NativeClass->GetSuperClass() && NativeClass->GetSuperClass() != AActor::StaticClass())
+	while (!NativeClass->IsNative() && NativeClass->GetSuperClass() && NativeClass->GetSuperClass() != AActor::StaticClass())
 	{
 		NativeClass = NativeClass->GetSuperClass();
 	}
@@ -93,25 +93,29 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Programatically build the rules.
 	// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	auto AddInfo = [&]( UClass* Class, EClassRepNodeMapping Mapping) { ClassRepNodePolicies.Set(Class, Mapping); };
 
-	AddInfo( APlayerState::StaticClass(),							EClassRepNodeMapping::NotRouted);				// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
-	AddInfo( AReplicationGraphDebugActor::StaticClass(),			EClassRepNodeMapping::NotRouted);				// Not supported
-	AddInfo( AInfo::StaticClass(),									EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
-	AddInfo( ReplicatedBPClass,										EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+	auto AddInfo = [&](UClass* Class, EClassRepNodeMapping Mapping) { ClassRepNodePolicies.Set(Class, Mapping); };
 
- 	if (bUsingSpatial)
- 	{
+	AddInfo(APlayerState::StaticClass(), EClassRepNodeMapping::NotRouted);				// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
+	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
+	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
+	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+
+	if (bUsingSpatial)
+	{
 		// Game mode is replicated in spatial, ensure it is always replicated
-		AddInfo( AGameModeBase::StaticClass(),						EClassRepNodeMapping::RelevantAllConnections);
- 	}
+		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
+	}
 
 	TArray<UClass*> AllReplicatedClasses;
 
 	for (TObjectIterator<UClass> It; It; ++It)
 	{
 		UClass* Class = *It;
+		if (Class->IsChildOf<APlayerController>())
+		{
+			//__debugbreak();
+		}
 		AActor* ActorCDO = Cast<AActor>(Class->GetDefaultObject());
 		if (!ActorCDO || !ActorCDO->GetIsReplicated())
 		{
@@ -133,7 +137,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		// --------------------------------------------------------------------
 		// This is a replicated class. Save this off for the second pass below
 		// --------------------------------------------------------------------
-		
+
 		AllReplicatedClasses.Add(Class);
 
 		// Skip if already in the map (added explicitly)
@@ -141,7 +145,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			continue;
 		}
-		
+
 		auto ShouldSpatialize = [](const AActor* CDO)
 		{
 			return CDO->GetIsReplicated() && (!(CDO->bAlwaysRelevant || CDO->bOnlyRelevantToOwner || CDO->bNetUseOwnerRelevancy));
@@ -156,10 +160,10 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		UClass* SuperClass = Class->GetSuperClass();
 		if (AActor* SuperCDO = Cast<AActor>(SuperClass->GetDefaultObject()))
 		{
-			if (	SuperCDO->GetIsReplicated() == ActorCDO->GetIsReplicated() 
-				&&	SuperCDO->bAlwaysRelevant == ActorCDO->bAlwaysRelevant
-				&&	SuperCDO->bOnlyRelevantToOwner == ActorCDO->bOnlyRelevantToOwner
-				&&	SuperCDO->bNetUseOwnerRelevancy == ActorCDO->bNetUseOwnerRelevancy
+			if (SuperCDO->GetIsReplicated() == ActorCDO->GetIsReplicated()
+				&& SuperCDO->bAlwaysRelevant == ActorCDO->bAlwaysRelevant
+				&& SuperCDO->bOnlyRelevantToOwner == ActorCDO->bOnlyRelevantToOwner
+				&& SuperCDO->bNetUseOwnerRelevancy == ActorCDO->bNetUseOwnerRelevancy
 				)
 			{
 				continue;
@@ -171,7 +175,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 				NonSpatializedChildClasses.Add(Class);
 			}
 		}
-			
+
 		if (ShouldSpatialize(ActorCDO))
 		{
 			AddInfo(Class, EClassRepNodeMapping::Spatialize_Dynamic);
@@ -180,12 +184,16 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			AddInfo(Class, EClassRepNodeMapping::RelevantAllConnections);
 		}
+		else
+		{
+			UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("Not adding info for class %s."), *GetLegacyDebugStr(ActorCDO));
+		}
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Setup FClassReplicationInfo. This is essentially the per class replication settings. Some we set explicitly, the rest we are setting via looking at the legacy settings on AActor.
 	// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
+
 	TArray<UClass*> ExplicitlySetClasses;
 	auto SetClassInfo = [&](UClass* Class, const FClassReplicationInfo& Info) { GlobalActorReplicationInfoMap.SetClassInfo(Class, Info); ExplicitlySetClasses.Add(Class); };
 
@@ -202,8 +210,8 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	FClassReplicationInfo PlayerStateRepInfo;
 	PlayerStateRepInfo.DistancePriorityScale = 0.f;
 	PlayerStateRepInfo.ActorChannelFrameTimeout = 0;
-	SetClassInfo( APlayerState::StaticClass(), PlayerStateRepInfo );
-	
+	SetClassInfo(APlayerState::StaticClass(), PlayerStateRepInfo);
+
 	UReplicationGraphNode_ActorListFrequencyBuckets::DefaultSettings.ListSize = 12;
 
 	// Set FClassReplicationInfo based on legacy settings from all replicated classes
@@ -218,7 +226,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 		FClassReplicationInfo ClassInfo;
 		InitClassReplicationInfo(ClassInfo, ReplicatedClass, bClassIsSpatialized, NetDriver->NetServerMaxTickRate);
-		GlobalActorReplicationInfoMap.SetClassInfo( ReplicatedClass, ClassInfo );
+		GlobalActorReplicationInfoMap.SetClassInfo(ReplicatedClass, ClassInfo);
 	}
 
 
@@ -227,7 +235,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("Class Routing Map: "));
 	UEnum* Enum = StaticEnum<EClassRepNodeMapping>();
 	for (auto ClassMapIt = ClassRepNodePolicies.CreateIterator(); ClassMapIt; ++ClassMapIt)
-	{		
+	{
 		UClass* Class = CastChecked<UClass>(ClassMapIt.Key().ResolveObjectPtr());
 		const EClassRepNodeMapping Mapping = ClassMapIt.Value();
 
@@ -280,7 +288,7 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	{
 		GridNode->AddSpatialRebuildBlacklistClass(AActor::StaticClass()); // Disable All spatial rebuilding
 	}
-	
+
 	GridNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(GridNode);
 
@@ -339,47 +347,47 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 {
 	const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
 	EClassRepNodeMapping Policy = GetMappingPolicy(ActorInfo.Class);
-	switch(Policy)
+	switch (Policy)
 	{
-		case EClassRepNodeMapping::NotRouted:
-		{
-			UE_LOG(LogTestGymsReplicationGraph, Verbose, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
-			break;
-		}
-		
-		case EClassRepNodeMapping::RelevantAllConnections:
-		{
-			// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
-			if (ActorInfo.StreamingLevelName == NAME_None || bUsingSpatial)
-			{
-				AlwaysRelevantNode->NotifyAddNetworkActor(ActorInfo);
-			}
-			else
-			{
-				FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
-				RepList.PrepareForWrite();
-				RepList.ConditionalAdd(ActorInfo.Actor);
-			}
-			break;
-		}
+	case EClassRepNodeMapping::NotRouted:
+	{
+		UE_LOG(LogTestGymsReplicationGraph, Verbose, TEXT("RouteAddNetworkActorToNodes: Not Routed - %s"), *GetNameSafe(ActorInfo.GetActor()));
+		break;
+	}
 
-		case EClassRepNodeMapping::Spatialize_Static:
+	case EClassRepNodeMapping::RelevantAllConnections:
+	{
+		// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
+		if (ActorInfo.StreamingLevelName == NAME_None || bUsingSpatial)
 		{
-			GridNode->AddActor_Static(ActorInfo, GlobalInfo);
-			break;
+			AlwaysRelevantNode->NotifyAddNetworkActor(ActorInfo);
 		}
-		
-		case EClassRepNodeMapping::Spatialize_Dynamic:
+		else
 		{
-			GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
-			break;
+			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
+			RepList.PrepareForWrite();
+			RepList.ConditionalAdd(ActorInfo.Actor);
 		}
-		
-		case EClassRepNodeMapping::Spatialize_Dormancy:
-		{
-			GridNode->AddActor_Dormancy(ActorInfo, GlobalInfo);
-			break;
-		}
+		break;
+	}
+
+	case EClassRepNodeMapping::Spatialize_Static:
+	{
+		GridNode->AddActor_Static(ActorInfo, GlobalInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::Spatialize_Dynamic:
+	{
+		GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::Spatialize_Dormancy:
+	{
+		GridNode->AddActor_Dormancy(ActorInfo, GlobalInfo);
+		break;
+	}
 	};
 }
 
@@ -387,48 +395,48 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 {
 	const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
 	EClassRepNodeMapping Policy = GetMappingPolicy(ActorInfo.Class);
-	switch(Policy)
+	switch (Policy)
 	{
-		case EClassRepNodeMapping::NotRouted:
-		{
-			break;
-		}
-		
-		case EClassRepNodeMapping::RelevantAllConnections:
-		{
-			// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
-			if (ActorInfo.StreamingLevelName == NAME_None || bUsingSpatial)
-			{
-				AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
-			}
-			else
-			{
-				FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindChecked(ActorInfo.StreamingLevelName);
-				if (RepList.Remove(ActorInfo.Actor) == false)
-				{
-					UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("Actor %s was not found in AlwaysRelevantStreamingLevelActors list. LevelName: %s"), *GetActorRepListTypeDebugString(ActorInfo.Actor), *ActorInfo.StreamingLevelName.ToString());
-				}				
-			}
-			break;
-		}
+	case EClassRepNodeMapping::NotRouted:
+	{
+		break;
+	}
 
-		case EClassRepNodeMapping::Spatialize_Static:
+	case EClassRepNodeMapping::RelevantAllConnections:
+	{
+		// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
+		if (ActorInfo.StreamingLevelName == NAME_None || bUsingSpatial)
 		{
-			GridNode->RemoveActor_Static(ActorInfo);
-			break;
+			AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
 		}
-		
-		case EClassRepNodeMapping::Spatialize_Dynamic:
+		else
 		{
-			GridNode->RemoveActor_Dynamic(ActorInfo);
-			break;
+			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindChecked(ActorInfo.StreamingLevelName);
+			if (RepList.Remove(ActorInfo.Actor) == false)
+			{
+				UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("Actor %s was not found in AlwaysRelevantStreamingLevelActors list. LevelName: %s"), *GetActorRepListTypeDebugString(ActorInfo.Actor), *ActorInfo.StreamingLevelName.ToString());
+			}
 		}
-		
-		case EClassRepNodeMapping::Spatialize_Dormancy:
-		{
-			GridNode->RemoveActor_Dormancy(ActorInfo);
-			break;
-		}
+		break;
+	}
+
+	case EClassRepNodeMapping::Spatialize_Static:
+	{
+		GridNode->RemoveActor_Static(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::Spatialize_Dynamic:
+	{
+		GridNode->RemoveActor_Dynamic(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::Spatialize_Dormancy:
+	{
+		GridNode->RemoveActor_Dormancy(ActorInfo);
+		break;
+	}
 	};
 }
 
@@ -441,7 +449,7 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::ResetGameWorldS
 
 void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
 {
-	QUICK_SCOPE_CYCLE_COUNTER( UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection_GatherActorListsForConnection );
+	QUICK_SCOPE_CYCLE_COUNTER(UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection_GatherActorListsForConnection);
 
 	UTestGymsReplicationGraph* TestGymsGraph = CastChecked<UTestGymsReplicationGraph>(GetOuter());
 
@@ -458,7 +466,7 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorList
 			ConnectionActorInfo.SetCullDistanceSquared(0.f);
 		}
 	};
-	
+
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
 		ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
@@ -612,7 +620,7 @@ UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::UTestGymsReplicationG
 
 void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplication()
 {
-	QUICK_SCOPE_CYCLE_COUNTER( UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter_GlobalPrepareForReplication );
+	QUICK_SCOPE_CYCLE_COUNTER(UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter_GlobalPrepareForReplication);
 
 	ReplicationActorLists.Reset();
 	ForceNetUpdateReplicationActorList.Reset();
@@ -635,12 +643,12 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 		if (CurrentList->Num() >= TargetActorsPerFrame)
 		{
 			ReplicationActorLists.AddDefaulted();
-			CurrentList = &ReplicationActorLists.Last(); 
+			CurrentList = &ReplicationActorLists.Last();
 			CurrentList->PrepareForWrite();
 		}
-		
+
 		CurrentList->Add(PS);
-	}	
+	}
 }
 
 void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
@@ -657,9 +665,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GatherActorLists
 void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const
 {
 	DebugInfo.Log(NodeName);
-	DebugInfo.PushIndent();	
+	DebugInfo.PushIndent();
 
-	int32 i=0;
+	int32 i = 0;
 	for (const FActorRepListRefView& List : ReplicationActorLists)
 	{
 		LogActorRepList(DebugInfo, FString::Printf(TEXT("Bucket[%d]"), i++), List);
@@ -724,26 +732,26 @@ void UTestGymsReplicationGraph::PrintRepNodePolicies()
 	for (auto It = ClassRepNodePolicies.CreateIterator(); It; ++It)
 	{
 		FObjectKey ObjKey = It.Key();
-		
+
 		EClassRepNodeMapping Mapping = It.Value();
 
 		GLog->Logf(TEXT("%-40s --> %s"), *GetNameSafe(ObjKey.ResolveObjectPtr()), *Enum->GetNameStringByValue(static_cast<uint32>(Mapping)));
 	}
 }
 
-FAutoConsoleCommandWithWorldAndArgs TestGymsPrintRepNodePoliciesCmd(TEXT("TestGymsRepGraph.PrintRouting"),TEXT("Prints how actor classes are routed to RepGraph nodes"),
+FAutoConsoleCommandWithWorldAndArgs TestGymsPrintRepNodePoliciesCmd(TEXT("TestGymsRepGraph.PrintRouting"), TEXT("Prints how actor classes are routed to RepGraph nodes"),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+{
+	for (TObjectIterator<UTestGymsReplicationGraph> It; It; ++It)
 	{
-		for (TObjectIterator<UTestGymsReplicationGraph> It; It; ++It)
-		{
-			It->PrintRepNodePolicies();
-		}
-	})
+		It->PrintRepNodePolicies();
+	}
+})
 );
 
 // ------------------------------------------------------------------------------
 
-FAutoConsoleCommandWithWorldAndArgs ChangeFrequencyBucketsCmd(TEXT("TestGymsRepGraph.FrequencyBuckets"), TEXT("Resets frequency bucket count."), FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray< FString >& Args, UWorld* World) 
+FAutoConsoleCommandWithWorldAndArgs ChangeFrequencyBucketsCmd(TEXT("TestGymsRepGraph.FrequencyBuckets"), TEXT("Resets frequency bucket count."), FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray< FString >& Args, UWorld* World)
 {
 	int32 Buckets = 1;
 	if (Args.Num() > 0)
