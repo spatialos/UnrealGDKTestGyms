@@ -163,9 +163,9 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
 }
 
-void ABenchmarkGymGameMode::OnWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+void ABenchmarkGymGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
-	Super::OnWorkerFlagUpdated(FlagName, FlagValue);
+	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
 	if (FlagName == PlayerDensityWorkerFlag)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
