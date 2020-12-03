@@ -55,6 +55,16 @@ AGDKTestGymsCharacter::AGDKTestGymsCharacter(const FObjectInitializer& ObjectIni
 void AGDKTestGymsCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	int32 TotalCount = 200;
+	int32 countSim = 0;
+	countSim++;
+
+	if (countSim == TotalCount)
+	{
+		UE_LOG(LogSpatialOSNetDriver, Error, TEXT("[Client] END TIME %s"), *FDateTime::Now().ToString());
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
