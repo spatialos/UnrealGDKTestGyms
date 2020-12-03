@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
-#include "GasCube.generated.h"
+#include "GasActor.generated.h"
 
 /**
-* A GDK Test Gyms Character with an Ability System Component added and set up to correctly initialise.
+* An actor with an Ability System Component added and exposed via IAbilitySystemInterface. 
 */
 UCLASS()
-class GDKTESTGYMS_API AGasCube : public AActor, public IAbilitySystemInterface
+class GDKTESTGYMS_API AGasActor : public AActor, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -22,7 +22,7 @@ class GDKTESTGYMS_API AGasCube : public AActor, public IAbilitySystemInterface
 	}
 
 public:
-	AGasCube();
+	AGasActor();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
 	UAbilitySystemComponent* AbilitySystemComponent;

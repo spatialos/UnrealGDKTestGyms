@@ -95,10 +95,10 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Activate an ability on the player or the cube:
     * Press "Q" to activate the ability on the player.
     * Press "E","C" or "T" to activate the ability on the cube.
-      * "E" activates the ability through SendGameplayEventToActorCrossServer
-      * "C" activates the ability through TryActivateAbilityByClassCrossServer
-      * "T" activates the ability through TryActivateAbilityByTagCrossServer
-  * The printing in the top-right should count from 1 to 5 over 4 seconds (and for the cube this is also visualized in the client).
+      * "E" activates the ability via gameplay event (CrossServerSendGameplayEventToActor).
+      * "C" activates the ability by class (CrossServerTryActivateAbilityByClass).
+      * "T" activates the ability by tag (CrossServerTryActivateAbilityByTag).
+  * The ability should activate, and log messages in the top left should count from 1 to 5 over 4 seconds. If an ability was activated on the cube, the text above the cube should also change to show the count.
   * While the ability is running, the player Actor group or cube should not migrate to another server, even when the relevant Actor is physically in the authority region of another server.
   * Activating an ability on the cube should be possible whether the player and cube are authoritative on the same or different servers.
   * Press "V" to try and activate the ability on the cube without using the CrossServer methods.

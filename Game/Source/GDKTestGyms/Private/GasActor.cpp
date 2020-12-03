@@ -1,8 +1,8 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
-#include "GasCube.h"
+#include "GasActor.h"
 
-AGasCube::AGasCube()
+AGasActor::AGasActor()
 {
 	bReplicates = true;
 
