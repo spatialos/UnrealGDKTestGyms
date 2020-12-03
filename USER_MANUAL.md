@@ -298,5 +298,11 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client. Both clients should print "Executed Gameplay Cue" to the log.
   * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client. Both clients should print "Added Gameplay Cue" to the log.
 
+##### Multiworker World Composition gym
+* Tests server's without authoritive player controllers still replicate relevant actors
+* Validation
+  * Play with 1 client connect.
+  * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+
 -----
 2019-11-15: Page added with editorial review
