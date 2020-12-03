@@ -112,10 +112,6 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	for (TObjectIterator<UClass> It; It; ++It)
 	{
 		UClass* Class = *It;
-		if (Class->IsChildOf<APlayerController>())
-		{
-			//__debugbreak();
-		}
 		AActor* ActorCDO = Cast<AActor>(Class->GetDefaultObject());
 		if (!ActorCDO || !ActorCDO->GetIsReplicated())
 		{
