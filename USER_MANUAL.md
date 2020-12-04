@@ -308,5 +308,13 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client. Both clients should print "Executed Gameplay Cue" to the log.
   * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client. Both clients should print "Added Gameplay Cue" to the log.
 
+##### Client Travel gym
+* Tests the client travel from one cloud deployment to itself.
+* How to test:
+  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
+  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
+  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
+  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
+
 -----
 2019-11-15: Page added with editorial review
