@@ -301,6 +301,8 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 ##### Multiworker World Composition gym
 * Tests server's without authoritive player controllers still replicate relevant actors
 * Validation
+  * Enable the replication graph
+    * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
   * Play with 1 client connect.
   * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
 
