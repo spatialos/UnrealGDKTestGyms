@@ -16,6 +16,7 @@ struct FTestStructItem : public FFastArraySerializerItem
 	GENERATED_USTRUCT_BODY()
 
 	FTestStructItem()
+	: Material(nullptr)
 	{}
   
 	UPROPERTY(BlueprintReadWrite)
@@ -31,6 +32,7 @@ struct FTestStructContainer : public FFastArraySerializer
 	GENERATED_USTRUCT_BODY()
 
 	FTestStructContainer()
+	: Owner(nullptr)
 	{}
 
 	FTestStructContainer(ANetSerializeTestActor* InOwner)
