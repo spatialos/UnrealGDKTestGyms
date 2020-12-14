@@ -9,7 +9,7 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymNPCSpawner);
 
 ABenchmarkGymNPCSpawner::ABenchmarkGymNPCSpawner()
 {
-	SetReplicates(true);
+	bReplicates = true;
 	bAlwaysRelevant = true;
 }
 
