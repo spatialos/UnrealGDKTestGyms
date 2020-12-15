@@ -82,8 +82,9 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
 
 
-##### Ability locking gym
+##### Ability activation gym
 * Demonstrates that:
+  * Gameplay abilities can be activated across server boundaries.
   * An Actor will be locked from crossing servers while a gameplay ability is running on it.
   * A player ownership hierarchy of Actors (controller, character & state) will not migrate while one Actor in the hierarchy is locked.
 * Contains:
@@ -91,10 +92,19 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * a player with a gameplay ability granted to it which takes 4 seconds to complete.
 * To test the gym:
   * If it is working correctly the authority and authority intent of the cube can be seen to change as it moves across the floor, and the text "Uninitialized" hovering over the cube.
-  * Press "Q" to start the ability on the player.
-  * Press "T" to start the ability on the cube.
-  * The printing in the top-right should count from 1 to 5 over 4 seconds (and for the cube this is also visualized in the client).
+  * Activate an ability on the player or the cube:
+    * Press "Q" to activate the ability on the player.
+    * Press "E","C" or "T" to activate the ability on the cube.
+      * "E" activates the ability via gameplay event (CrossServerSendGameplayEventToActor).
+      * "C" activates the ability by class (CrossServerTryActivateAbilityByClass).
+      * "T" activates the ability by tag (CrossServerTryActivateAbilityByTag).
+  * The ability should activate, and log messages in the top left should count from 1 to 5 over 4 seconds. If an ability was activated on the cube, the text above the cube should also change to show the count.
   * While the ability is running, the player Actor group or cube should not migrate to another server, even when the relevant Actor is physically in the authority region of another server.
+  * Activating an ability on the cube should be possible whether the player and cube are authoritative on the same or different servers.
+  * Press "V" to try and activate the ability on the cube without using the CrossServer methods.
+    * The ability should activate when player and cube are on the same server.
+    * The ability should not activate when player and cube are on different servers. A warning should be printed to the log that the ability could not be activated because the cube is a simulated proxy.
+
 
 ##### FASHandover gym
 * Fast Array Serialization handover gym.
@@ -267,10 +277,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
   * Pressing G spawns a GymCube.
     * Spawning the GymCube is currently used for testing hierarchy migration as it does not cause failure.
-  * Pressing C spawns an Actor with a static mesh (cube).
-    * Spawning an Actor is currently used for testing hierarchy migration as it causes failure.
-    * This is a known issue: https://improbableio.atlassian.net/browse/UNR-4417 and this keypress and associated functionality can be removed once the failure is resolved.
-
+ 
 ##### Spatial Debugger Config UI gym
 * Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
 * Gives an example of using that callback to return your game to the correct input mode after closing the debugger config UI, depending on whether your game itself had a UI open.
