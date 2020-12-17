@@ -17,6 +17,10 @@
 		{
 			"Name": "ReplicationGraph",
 			"Enabled": true
+		},
+		{
+			"Name": "SpatialGDK",
+			"Enabled": true
 		}
 	]
 }
