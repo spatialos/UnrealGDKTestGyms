@@ -13,6 +13,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -41,6 +42,11 @@ namespace
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
+#if	STATS
+	const FString StatProfileWorkerFlag = TEXT("stat_profile");
+	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
+#endif
+
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
 } // anonymous namespace
@@ -64,6 +70,10 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, ActivePlayers(0)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
+#if	STATS
+	, StatStartFileTimer(60 * 60 * 24)
+	, StatStopFileTimer(60)
+#endif
 {
 	SetReplicates(true);
 	PrimaryActorTick.bCanEverTick = true;
@@ -205,6 +215,28 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	{
 		PrintMetricsTimer.SetTimer(10);
 	}
+
+#if	STATS
+	if (StatStartFileTimer.HasTimerGoneOff())
+	{
+		FString Cmd(TEXT("stat startfile"));
+		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+		{
+			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+			if (ensure(SpatialDriver != nullptr))
+			{
+				Cmd = FString::Printf(TEXT("stat startfile %s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
+			}
+		}
+		GEngine->Exec(GetWorld(), *Cmd);
+		StatStartFileTimer.SetTimer(999999);
+	}
+	if (StatStopFileTimer.HasTimerGoneOff())
+	{
+		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
+		StatStopFileTimer.SetTimer(999999);
+	}
+#endif
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -428,6 +460,13 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 
 		FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripSeconds);
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaSeconds);
+
+#if	STATS
+		FString StatProfileString;
+		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
+		SetStatTimer(StatProfileString);
+#endif
+
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -470,6 +509,14 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					SetLifetime(FCString::Atoi(*LifetimeString));
 				}
 
+#if	STATS
+				FString StatProfileString;
+				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
+				{
+					SetStatTimer(StatProfileString);
+				}
+#endif
+
 			}
 		}
 	}
@@ -503,7 +550,12 @@ void ABenchmarkGymGameModeBase::OnWorkerFlagUpdated(const FString& FlagName, con
 	{
 		SetLifetime(FCString::Atoi(*FlagValue));
 	}
-
+#if	STATS
+	else if (FlagName == StatProfileWorkerFlag)
+	{
+		SetStatTimer(FlagValue);
+	}
+#endif
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
 
@@ -541,3 +593,17 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Could not set NFR test liftime to %d. Timer was locked."), Lifetime);
 	}
 }
+
+#if	STATS
+void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
+{
+	FString StartDelayString, DurationString;
+	if (TimeString.Split(TEXT(","), &StartDelayString, &DurationString))
+	{
+		int32 StartDelay = FCString::Atoi(*StartDelayString);
+		int32 Duration = FCString::Atoi(*DurationString);
+		StatStartFileTimer.SetTimer(StartDelay);
+		StatStopFileTimer.SetTimer(StartDelay + Duration);
+	}
+}
+#endif

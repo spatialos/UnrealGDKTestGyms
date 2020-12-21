@@ -88,6 +88,11 @@ private:
 	FMetricTimer TestLifetimeTimer;
 
 	TArray<FExpectedActorCount> ExpectedActorCounts;
+#if	STATS
+	// For stat profile
+	FMetricTimer StatStartFileTimer;
+	FMetricTimer StatStopFileTimer;
+#endif
 
 	virtual void BeginPlay() override;
 
@@ -112,7 +117,9 @@ private:
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
-
+#if	STATS
+	void SetStatTimer(const FString& TimeString);
+#endif
 	UFUNCTION()
 	void OnRepTotalNPCs();
 };
