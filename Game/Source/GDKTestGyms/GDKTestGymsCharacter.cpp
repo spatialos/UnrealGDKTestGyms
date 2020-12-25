@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "SpatialNetDriver.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 
 #include "UnrealNetwork.h"
 
@@ -81,6 +82,16 @@ void AGDKTestGymsCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AGDKTestGymsCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AGDKTestGymsCharacter::TouchStopped);
+}
+
+FString AGDKTestGymsCharacter::GetConnectionId()
+{
+	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+	if (ensure(SpatialDriver != nullptr))
+	{
+		return FString::Printf(TEXT("%s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
+	}
+	return FString();
 }
 
 void AGDKTestGymsCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
