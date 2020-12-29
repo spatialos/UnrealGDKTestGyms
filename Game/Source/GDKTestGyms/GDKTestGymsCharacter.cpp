@@ -89,6 +89,7 @@ FString AGDKTestGymsCharacter::GetConnectionId()
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 	if (ensure(SpatialDriver != nullptr))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("xxxx: stat startfile %s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
 		return FString::Printf(TEXT("%s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
 	}
 	return FString();
