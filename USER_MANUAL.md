@@ -39,7 +39,9 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 
 ### Current tests
 
-Tests can be run by following these steps:
+#### Automated test gyms
+
+Some test gyms can be run as automated tests. To discover and run these tests:
   1. In the Unreal Editor, on the GDK Toolbar, select Schema.
   1. Select Snapshot to generate a snapshot.
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
@@ -50,7 +52,7 @@ Tests can be run by following these steps:
 Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
 The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
 
-#### Current gyms
+#### Manual test gyms
 
 ##### Empty gym
 * The template for creating new gyms. Copy this to use as a starting point for your own gym.
@@ -70,12 +72,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* NOTE: This gym can be run both as an automated test and a manual one.
-* Steps to run the automated version of the gym:
-  * In order to run the test, follow the steps:
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, search for SpatialTestHandover1, tick the box corresponding to it and hit Start Tests.
-  3. The Session Frontend will then prompt you with the result of the test.
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * The manual version of the gym contains:
   * A set of cubes that moves back and forth across a floor.
 * Steps to run the manual version of the gym:
