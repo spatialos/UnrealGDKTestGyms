@@ -40,10 +40,12 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 ### Current tests
 
 Tests can be run by following these steps:
+  1. In the Unreal Editor, on the GDK Toolbar, select Schema.
+  1. Select Snapshot to generate a snapshot.
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
-  3. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
-  3. The Session Frontend will then prompt you with the results of the tests.
+  1. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
+  1. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
+  1. The Session Frontend will then prompt you with the results of the tests.
 
 Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
 The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
