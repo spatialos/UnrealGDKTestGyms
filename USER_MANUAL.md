@@ -121,31 +121,25 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * To see results of the tests, go to https://console.cloud.google.com/traces/traces?project=holocentroid-aimful-6523579
 
 ##### Unresolved reference gym
-* Test what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
+* Tests what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
 * It is interesting when working with arrays, because unlike regular fields, we do not hold RepNotify until the reference is resolved (because we might never receive all of them)
-* Validation:
+* Manual Steps:
   1. On play, a replicated array of references to actors is filled with the map's content.
   2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
 ##### Net reference test gym
-* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, search for SpatialTestNetReference1, tick the box corresponding to it and hit Start Tests.
-  3. The Session Frontend will then prompt you with the result of the test.
-* Test that references to replicated actors are stable when actors go in and out of relevance
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* This gym tests that references to replicated actors are stable when actors go in and out of relevance.
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
-* Validation:
+* Manual steps:
   1. Cubes in a grid pattern hold references to their neighbours on replicated properties.
   2. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
   3. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
   4. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
 
 ##### ReplicatedStartupActor gym
-* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
-  3. The Session Frontend will then prompt you with the result of the test.
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
 * Also covers the QA work-flow of checking that "Startup actors correctly replicate arbitrary properties".
 * Validation
@@ -167,12 +161,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 ##### Server to server RPC gym
 * This gym demonstrates that:
   * Actors owned by different servers correctly send server-to-server RPCs.
-* NOTE: This gym can be run both as an automated test and a manual one.
-* Steps to run the automated version of the gym:
-  * In order to run the test, follow the steps:
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, search for SpatialTestCrossServerRPC1, tick the box corresponding to it and hit Start Tests.
-  3. The Session Frontend will then prompt you with the result of the test.
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * The manual gym contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
@@ -184,15 +173,12 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
     * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
-* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, search for SpatialTestWorldComposition1, tick the box corresponding to it and hit Start Tests.
-  3. The Session Frontend will then prompt you with the result of the test.
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
 * Moving away from the marked area will cause the level to be unloaded on the client. When it unloads the actor should disappear.
-* Validation:
+* Manual steps:
   1. Each level can be repeatedly loaded and unloaded on the client with no issue.
 
 ##### ServerTravel gym
@@ -213,12 +199,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 ##### Client Net Ownership gym
 * This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* NOTE: This gym can be run both as an automated test and as a manual one.
-* Steps to run the automated version of the gym:
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  2. On the Automation tab, search for SpatialTestNetOwnership1, tick the box corresponding to it and hit Start Tests.
-  3. The Session Frontend will then prompt you with the result of the test.
-  Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms). Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
 * The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
