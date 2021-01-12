@@ -293,5 +293,10 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
   * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
 
+##### Running Event Tracing Functional Tests
+ * For the Event Tracing functional test to to succeed, you will need to enable event tracing in both the GDK and the runtime. To do this add the following settings:
+   * Add the following string to "Command line flags for local launch": "--event-tracing-enabled=true"
+   * Enable "Event Tracing Enabled".
+
 -----
 2019-11-15: Page added with editorial review
