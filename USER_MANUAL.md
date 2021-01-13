@@ -274,6 +274,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * They ensure that the following settings are added to DefaultSpatialGDKSettings.ini:
   * bEventTracingEnabled=True
   * MaxEventTracingFileSizeBytes=104857600
+
 These tests can only be run automatically. To run them:
    * In the Unreal Editor, navigate to Project Settings > SpatialOS GDK for Unreal - Editor Settings > Launch > Command line flags for local launch.
    * Click the + button.
