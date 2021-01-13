@@ -270,11 +270,20 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
 #### SpatialEventTracingTests
-* Tests whether key trace events have the appropriate cause events.
-* Ensure that the following settings are added to DefaultSpatialGDKSettings.ini :
+* These test whether key trace events have the appropriate cause events.
+* They ensure that the following settings are added to DefaultSpatialGDKSettings.ini:
   * bEventTracingEnabled=True
   * MaxEventTracingFileSizeBytes=104857600
-* You will probably want to remove these setting after you have finished running these tests.
+
+These tests can only be run automatically. To run them:
+   * In the Unreal Editor, navigate to Project Settings > SpatialOS GDK for Unreal - Editor Settings > Launch > Command line flags for local launch.
+   * Click the + button.
+   * Paste "--event-tracing-enabled=true" in the field that appears. Do not include the quote marks.
+   * Navigate to Project Settings > SpatialOS GDK for Unreal - Runtime Settings > Event Tracing.
+   * Check the box labeled "Event Tracing Enabled".
+   * Follow [these steps](#automated-test-gyms) to actually execute the tests.
+   * When you're finished running the tests, turn Event Tracing off and remove the command line flag that you addedby clicking the ▽ icon next to it, and selecting Delete.
+   * If you don't disable Event Tracing and remove the command line flag, some other tests will fail.
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
