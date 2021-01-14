@@ -58,6 +58,9 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * The template for creating new gyms. Copy this to use as a starting point for your own gym.
 
 ##### Dynamic Components gym
+
+Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
+
 * Demonstrates that:
   * Dynamic component are correctly added to and removed from a replicated Actor (with load-balancing enabled).
 * Contains:
