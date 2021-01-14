@@ -85,6 +85,8 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Observe that authority and authority intent stop changing.
   * Press `K` to delete a cube in the scene.
   * Check that you can delete cubes with locking on and with locking off.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Don't forget to check the Output Log to check that there are no errors.
 
 ##### Ability activation gym
 * Demonstrates that:
