@@ -74,16 +74,16 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Entities correctly migrate between area of authority.
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * The manual version of the gym contains:
-  * Four virtual server workers arranged in a 2x2 grid.
+  * Four server workers arranged in a 2x2 grid.
   * Four cubes that moves back and forth across a floor, crossing server boundaries.
 * Steps to run the manual version of the gym:
-  * In the Unreal Editor's Content Browser, locate Content/Maps/HandoverGym and double click to open it.
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
   * In the Unreal Editor Toolbar, click Play to launch one client, one server worker and the SpatialOS runtime.
-  * Note: Authority indicated by the number next to the "A" floating above the cubes. Authority intent is indicated by the number next to the "I".
+  * Note: Authority indicated by the number next to the `A` floating above the cubes. Authority intent is indicated by the number next to the `I`.
   * Observe that these values change when the cubes cross server boundaries.
-  * Press "L" to lock actor migration. This setting is indicated by the padlock floating above the cubes.
+  * Press `L` to lock actor migration. This setting is indicated by the padlock floating above the cubes.
   * Observe that authority and authority intent stop changing.
-  * Press "K" to delete a cube in the scene.
+  * Press `K` to delete a cube in the scene.
   * Check that you can delete cubes with locking on and with locking off.
 
 ##### Ability activation gym
