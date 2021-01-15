@@ -139,7 +139,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   1. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
 
 ##### ReplicatedStartupActor gym
-* KNOWN ISSUE: The automated version of this test does not function.
+* KNOWN ISSUE: The automated version of this test does not function: [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305)
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * This test gym verifies QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
 * Also verifies that startup actors correctly replicate arbitrary properties.
