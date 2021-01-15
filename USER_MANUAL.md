@@ -111,8 +111,8 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * Internally GAS uses Fast Array Serialization.
 * Validation:
   1. A new GameplayEffect is added by the authoritative server on authority gained.
-  2. Additionally a handover value is incremented to monitor how many times this is called.
-  3. The stack count, and the handover counter are then checked they are the same.
+  1. Additionally a handover value is incremented to monitor how many times this is called.
+  1. The stack count, and the handover counter are then checked they are the same.
 
 ##### Latency gym
 * Gym for testing latency timing generations
@@ -125,8 +125,8 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * It is interesting when working with arrays, because unlike regular fields, we do not hold RepNotify until the reference is resolved (because we might never receive all of them)
 * Manual Steps:
   1. On play, a replicated array of references to actors is filled with the map's content.
-  2. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
-  3. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
+  1. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
+  1. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
 ##### Net reference test gym
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
@@ -134,23 +134,28 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
 * Manual steps:
   1. Cubes in a grid pattern hold references to their neighbours on replicated properties.
-  2. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
-  3. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
-  4. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
+  1. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
+  1. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
+  1. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
 
 ##### ReplicatedStartupActor gym
+* KNOWN ISSUE: The automated version of this test does not function.
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
-* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
-* Also covers the QA work-flow of checking that "Startup actors correctly replicate arbitrary properties".
-* Validation
-  1. After two seconds checks that actor is visible to client and reports pass or fail
+* This test gym verifies QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
+* Also verifies that startup actors correctly replicate arbitrary properties.
+* Manual steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/ReplicatedStartupActors` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch one client, one server worker and the SpatialOS runtime.
+  * After two seconds check the Unreal Editor's Output Log for `LogBlueprintUserMessages: [ReplicatedStartupActors_C_1] Client 1: Test passed`.
+  * Also check for the absence of errors.
+  * If the message is present and errors are absent, the test has passed.
 
 ##### DestroyStartupActorGym gym
 * For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor.
 * Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them".
 * Validation:
   1. At 10 seconds all cubes are deleted and success message is shown on all clients.
-  2. Clients connecting after this point cannot see any cubes and, when pressing the `F` keyboard button, see a success or failure messages on screen.
+  1. Clients connecting after this point cannot see any cubes and, when pressing the `F` keyboard button, see a success or failure messages on screen.
 
 ##### WorkerFlagsGym gym
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
