@@ -43,7 +43,6 @@ public:
 	
 	static const UNFRConstants* Get(const UWorld* World);
 
-	FMetricTimer PlayerCheckMetricDelay;
 	FMetricTimer ServerFPSMetricDelay;
 	FMetricTimer ClientFPSMetricDelay;
 	FMetricTimer UXMetricDelay;
