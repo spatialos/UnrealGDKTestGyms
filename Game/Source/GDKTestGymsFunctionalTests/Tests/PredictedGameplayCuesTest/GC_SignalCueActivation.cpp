@@ -2,7 +2,7 @@
 
 #include "GC_SignalCueActivation.h"
 #include "CuesGASTestPawn.h"
-#include "LogSpatialFunctionalTest.h"
+#include "LogGymsSpatialFunctionalTest.h"
 
 UGC_SignalCueActivation::UGC_SignalCueActivation() {}
 
@@ -22,7 +22,7 @@ void UGC_SignalCueActivation::HandleGameplayCue(AActor* MyTarget, EGameplayCueEv
 	}
 	else
 	{
-		UE_LOG(LogSpatialFunctionalTest, Error, TEXT("GC_SignalCueActivation, target actor %s is not an ACuesGASTestPawn."),
+		UE_LOG(LogGymsSpatialFunctionalTest, Error, TEXT("GC_SignalCueActivation, target actor %s is not an ACuesGASTestPawn."),
 			   *GetNameSafe(MyTarget));
 	}
 }

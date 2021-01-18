@@ -2,7 +2,7 @@
 
 #include "GA_IncrementSpyValue.h"
 #include "GameplayTagContainer.h"
-#include "LogSpatialFunctionalTest.h"
+#include "LogGymsSpatialFunctionalTest.h"
 #include "SpyValueGASTestActor.h"
 
 UGA_IncrementSpyValue::UGA_IncrementSpyValue()
@@ -36,7 +36,7 @@ void UGA_IncrementSpyValue::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		}
 		else
 		{
-			UE_LOG(LogSpatialFunctionalTest, Error, TEXT("UGA_IncrementSpyValue was activated with an invalid owner actor %s."),
+			UE_LOG(LogGymsSpatialFunctionalTest, Error, TEXT("UGA_IncrementSpyValue was activated with an invalid owner actor %s."),
 				   *GetNameSafe(TestActor));
 		}
 
