@@ -187,6 +187,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   1. Each level can be repeatedly loaded and unloaded on the client with no issue.
 
 ##### ServerTravel gym
+* Known issue: Server travel is not supported, this gym will not pass until it's implemented by: [UNR-4270](https://improbableio.atlassian.net/browse/UNR-4270)
 * Demonstrates ServerTravel.
 * The server will change the map for clients periodically. This can be verified by observing the change in map name.
 * To test this you will need to change the following settings:
