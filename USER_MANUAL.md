@@ -119,11 +119,10 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * Fast Array Serialization handover gym.
 * Demonstrates that an actor with an ability system component can transition between workers correctly.
 * Internally GAS uses Fast Array Serialization.
-* Manual Steps:
-  1. In the Unreal Editor's Content Browser, locate `Content/Maps/FASHandoverGym` and double click to open it.
-  1. In the Unreal Editor Toolbar, click Play to launch one client.
-  1. As soon as the game launches, a new GameplayEffect is added by the authoritative server on authority gained.
-  1. `Effect Applied Correctly` and `Effect Persisted Correctly` should be printed in the client viewport and in the Output Log. If this happens, and there are no warns or errors, then the test has passed.
+* Validation:
+  1. A new GameplayEffect is added by the authoritative server on authority gained.
+  1. Additionally a handover value is incremented to monitor how many times this is called.
+  1. The stack count, and the handover counter are then checked they are the same.
 
 ##### Latency gym
 * NOTE: This gym runs nightly as an automated test in the [unrealgdk-nfr](https://buildkite.com/improbable/unrealgdk-nfr) pipeline. You should only run the gym manually if you're debugging that pipline. QA are not required to run this gym manually.
@@ -163,13 +162,11 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * If the message is present and errors are absent, the test has passed.
 
 ##### DestroyStartupActorGym gym
-* This gym demonstrates that when a Level Actor is destroyed by server, a late connecting client is unable to see this Actor.
-* Manual steps:
-  1. Open `Content/Maps/DestroyStartupActorsGym`.
-  1. Select `Play` on the Unreal toolbar.
-  1. After 10 seconds, all cubes in the map are deleted.
-  1. Once this deletion has ocurred, locate `UnrealGDKTestGyms/LaunchClient.bat` and double click on it. This will launch a late connecting client.
-  1. When the client has loaded, press the `F` keyboard button. A success message, `No actors found - Test Passed!`, should be printed in the client viewport.
+* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor.
+* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them".
+* Validation:
+  1. At 10 seconds all cubes are deleted and success message is shown on all clients.
+  1. Clients connecting after this point cannot see any cubes and, when pressing the `F` keyboard button, see a success or failure messages on screen.
 
 ##### WorkerFlagsGym gym
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
