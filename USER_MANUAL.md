@@ -58,6 +58,9 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * The template for creating new gyms. Copy this to use as a starting point for your own gym.
 
 ##### Dynamic Components gym
+
+Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
+
 * Demonstrates that:
   * Dynamic component are correctly added to and removed from a replicated Actor (with load-balancing enabled).
 * Contains:
@@ -74,12 +77,19 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   * Entities correctly migrate between area of authority.
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
 * The manual version of the gym contains:
-  * A set of cubes that moves back and forth across a floor.
+  * Four server workers arranged in a 2x2 grid.
+  * Four cubes that moves back and forth across a floor, crossing server boundaries.
 * Steps to run the manual version of the gym:
-  * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
-  * Press "L" to toggle locking actor migration.
-  * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
-
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch one client, one server worker and the SpatialOS runtime.
+  * Note: Authority indicated by the number next to the `A` floating above the cubes. Authority intent is indicated by the number next to the `I`.
+  * Observe that these values change when the cubes cross server boundaries.
+  * Press `L` to lock actor migration. This setting is indicated by the padlock floating above the cubes.
+  * Observe that authority and authority intent stop changing.
+  * Press `K` to delete a cube in the scene.
+  * Check that you can delete cubes with locking on and with locking off.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Don't forget to check the Output Log to check that there are no errors.
 
 ##### Ability activation gym
 * Demonstrates that:
@@ -187,6 +197,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
   1. Each level can be repeatedly loaded and unloaded on the client with no issue.
 
 ##### ServerTravel gym
+* Known issue: Server travel is not supported, this gym will not pass until it's implemented by: [UNR-4270](https://improbableio.atlassian.net/browse/UNR-4270)
 * Demonstrates ServerTravel.
 * The server will change the map for clients periodically. This can be verified by observing the change in map name.
 * To test this you will need to change the following settings:
