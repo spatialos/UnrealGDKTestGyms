@@ -51,7 +51,7 @@ void APredictedGameplayCuesTest::PrepareTest()
 		// (by default it searches the game content folder for assets).
 		// If a cue is not registered with the manager, cue events will never be routed to it.
 		// That means we have to register the cue manually here on each client.
-		FSoftObjectPath CuePath(TEXT("/Script/GDKTestGyms.GC_SignalCueActivation"));
+		FSoftObjectPath CuePath(TEXT("/Script/GDKTestGymsFunctionalTests.GC_SignalCueActivation"));
 		FGameplayCueReferencePair ExecuteCueRef(UGC_SignalCueActivation::GetExecuteTag(), CuePath);
 		FGameplayCueReferencePair AddCueRef(UGC_SignalCueActivation::GetAddTag(), CuePath);
 		UAbilitySystemGlobals::Get().GetGameplayCueManager()->GetRuntimeCueSet()->AddCues({ ExecuteCueRef, AddCueRef });

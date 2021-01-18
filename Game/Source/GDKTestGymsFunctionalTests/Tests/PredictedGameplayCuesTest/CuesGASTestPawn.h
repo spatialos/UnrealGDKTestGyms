@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GDKTestGyms/FunctionalTests/TestActors/GASTestPawnBase.h"
+#include "GDKTestGymsFunctionalTests/Tests/TestActors/GASTestPawnBase.h"
 #include "CuesGASTestPawn.generated.h"
 
 /**
