@@ -225,6 +225,7 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
 
 ##### Multiple Ownership gym
+* Map name: MultipleOwnershipGym
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller.
 * Pressing "enter" will print out information on the client and server regarding the owners of each cube. Logs on the client will inform the user of the ownership state of pawns. Logs on the server will denote the successful attempt to send RPCs on certain pawns.
 * Initially the player controller will not posses any pawn. This will mean that hitting "enter" will result in no server logs and client logs suggesting that no pawn is owned by the player controller.
