@@ -29,7 +29,7 @@ void UGA_ApplyCueEffect::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	{
 		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
+			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, true);
 			return;
 		}
 
@@ -44,6 +44,6 @@ void UGA_ApplyCueEffect::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 									   UGE_ExecuteCue::StaticClass()->GetDefaultObject<UGameplayEffect>(), 0.0f);
 		}
 
-		EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 	}
 }
