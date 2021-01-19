@@ -161,11 +161,13 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * If the message is present and errors are absent, the test has passed.
 
 ##### DestroyStartupActorGym gym
-* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor.
-* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them".
-* Validation:
-  1. At 10 seconds all cubes are deleted and success message is shown on all clients.
-  1. Clients connecting after this point cannot see any cubes and, when pressing the `F` keyboard button, see a success or failure messages on screen.
+* This gym demonstrates that when a Level Actor is destroyed by server, a late connecting client is unable to see this Actor.
+* Manual steps:
+  1. Open `Content/Maps/DestroyStartupActorsGym`.
+  1. Select `Play` on the Unreal toolbar.
+  1. After 10 seconds, all cubes in the map are deleted.
+  1. Once this deletion has ocurred, locate `UnrealGDKTestGyms/LaunchClient.bat` and double click on it. This will launch a late connecting client.
+  1. When the client has loaded, press the `F` keyboard button. A success message, `No actors found - Test Passed!`, should be printed in the client viewport.
 
 ##### WorkerFlagsGym gym
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
