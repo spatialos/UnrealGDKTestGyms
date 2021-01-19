@@ -229,6 +229,25 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * Pressing "enter" will print out information on the client and server regarding the owners of each cube. Logs on the client will inform the user of the ownership state of pawns. Logs on the server will denote the successful attempt to send RPCs on certain pawns.
 * Initially the player controller will not posses any pawn. This will mean that hitting "enter" will result in no server logs and client logs suggesting that no pawn is owned by the player controller.
 * Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
+* To test the scenario follow these steps:
+	1. Open PIE.
+	2. Press enter and check the logs printed. They should say the following:
+	   "MultipleOwnershipCube has no owner"
+	   "MultipleOwnershipCube2 has no owner"
+	3. Press space to possess one of the pawns.
+    4. Press enter and check the logs printed. They should say the following:
+	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
+	   "RPC successfully called on MultipleOwnershipCube"
+	   "MultipleOwnershipCube2 has no owner"
+	5. Press space to possess the other pawn.
+	6. Press enter and check the logs printed. They should say the following:
+	   "MultipleOwnershipCube2 is owned by MultipleOwnershipController"
+	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
+	   "RPC successfully called on MultipleOwnershipCube2"
+	   "RPC successfully called on MultipleOwnershipCube"
+
+	Note: the order of the logs should not matter.
+
 * Ensure multi-worker is turned off.
 
 ##### FASAsyncGym
