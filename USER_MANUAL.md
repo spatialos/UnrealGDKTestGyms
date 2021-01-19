@@ -227,10 +227,6 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 ##### Multiple Ownership gym
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller.
-* Pressing `Enter` will print out information in the client's viewport and server's output log regarding the owners of each cube.
-* Logs on the client will inform the user of the ownership state of pawns. Logs on the server will inform the user of any successful attempts to send RPCs on certain pawns.
-* Initially the player controller will not posses any pawn. This will mean that hitting `Enter` will result in no server logs and client logs suggesting that no pawn is owned by the player controller.
-* Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * To test the scenario follow these steps:
 	1. Select `Play` on the Unreal toolbar.
 	2. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
