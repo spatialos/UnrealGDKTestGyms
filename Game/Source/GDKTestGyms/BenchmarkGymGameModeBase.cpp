@@ -88,7 +88,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, SmoothedTotalAuthPlayers(-1.0f)
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
-	, DeploymentValidTimer(14.5*60) // 16-minute window to check between
+	, DeploymentValidTimer(14.5*60) // 14.5-minute window to check between
 	, NumWorkers(1)
 #if	STATS
 	, StatStartFileTimer(60 * 60 * 24)
