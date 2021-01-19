@@ -248,8 +248,6 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 
 	Note: the order of the logs should not matter.
 
-* Ensure multi-worker is turned off.
-
 ##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
 * Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
