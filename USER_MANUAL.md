@@ -161,11 +161,13 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * If the message is present and errors are absent, the test has passed.
 
 ##### DestroyStartupActorGym gym
-* For QA workflows Test Demonstrates that when a Level Actor is destroyed by server, a late connecting client does not see this Actor.
-* Used to support QA test case "C1945 - Stably named actors can be destroyed at runtime and late-connecting clients don't see them".
-* Validation:
-  1. At 10 seconds all cubes are deleted and success message is shown on all clients.
-  1. Clients connecting after this point cannot see any cubes and, when pressing the `F` keyboard button, see a success or failure messages on screen.
+* This gym demonstrates that when a Level Actor is destroyed by server, a late connecting client is unable to see this Actor.
+* Manual steps:
+  1. Open `Content/Maps/DestroyStartupActorsGym`.
+  1. Select `Play` on the Unreal toolbar.
+  1. After 10 seconds, all cubes in the map are deleted.
+  1. Once this deletion has ocurred, locate `UnrealGDKTestGyms/LaunchClient.bat` and double click on it. This will launch a late connecting client.
+  1. When the client has loaded, press the `F` keyboard button. A success message, `No actors found - Test Passed!`, should be printed in the client viewport.
 
 ##### WorkerFlagsGym gym
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
@@ -241,11 +243,28 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
 
 ##### Multiple Ownership gym
+* Map name: `Content/Maps/MultipleOwnershipGym.umap`
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller.
-* Pressing "enter" will print out information on the client and server regarding the owners of each cube. Logs on the client will inform the user of the ownership state of pawns. Logs on the server will denote the successful attempt to send RPCs on certain pawns.
-* Initially the player controller will not posses any pawn. This will mean that hitting "enter" will result in no server logs and client logs suggesting that no pawn is owned by the player controller.
-* Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
-* Ensure multi-worker is turned off.
+* To test the scenario follow these steps:
+	1. Select `Play` on the Unreal toolbar.
+	2. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
+	   "MultipleOwnershipCube has no owner"
+	   "MultipleOwnershipCube2 has no owner"
+	   At this point in the test the player controller doesn't posses a pawn. This is why hitting `Enter` results in no server logs, and in client logs suggesting that no pawn is owned by the player controller.
+	3. Press `Space` once to possess one of the pawns.
+	4. Press `Enter` and check the logs printed. They should say the following:
+	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
+	   "RPC successfully called on MultipleOwnershipCube"
+	   "MultipleOwnershipCube2 has no owner"
+	   Pressing `Space` switched the possession between the two cubes in the gym.
+	5. Press `Space` a second time to possess the second pawn.
+	6. Press enter and check the logs printed. They should say the following:
+	   "MultipleOwnershipCube2 is owned by MultipleOwnershipController"
+	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
+	   "RPC successfully called on MultipleOwnershipCube2"
+	   "RPC successfully called on MultipleOwnershipCube"
+
+	Note: the order of the logs should not matter.
 
 ##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
