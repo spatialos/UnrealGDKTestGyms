@@ -215,13 +215,13 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
 	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
 
-	int32 NumSpawnZones = GetNumSpawnZones();
+	const int32 SpawnZones = GetNumSpawnZones();
 
 	// We use a fixed size 10km
-	const float ZoneWidth = 1000000.0f / NumSpawnZones;
+	const float ZoneWidth = 1000000.0f / SpawnZones;
 	const float StartingX = -500000.0f;
 
-	if (NumSpawnZones > 1)
+	if (SpawnZones > 1)
 	{
 		// For multiworker configuration we will place a percentage of spawn points
 		// on/near the boundary between two zones
@@ -229,7 +229,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 		int RemainingClusters = NumClusters - ClustersOnBoundaries;
 
 		TArray<float> Boundaries;
-		for (int i = 1; i < NumSpawnZones; ++i)
+		for (int i = 1; i < SpawnZones; ++i)
 		{
 			Boundaries.Emplace(StartingX + ZoneWidth * i);
 		}
@@ -254,8 +254,8 @@ void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 		NumClusters = RemainingClusters;
 	}
 
-	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(NumSpawnZones));
-	for (int w = 0; w < NumSpawnZones; ++w)
+	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(SpawnZones));
+	for (int w = 0; w < SpawnZones; ++w)
 	{
 		int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
 		NumClusters -= ClusterCount;
