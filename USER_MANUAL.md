@@ -153,7 +153,14 @@ The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassia
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
 * Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
 * Validation:
-  1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
+  1. Navigate to: Project Settings->SpatialOS GDK for Unreal->Editor Settings->Launch.
+  2. Ensure "Auto-generate launch configuration file" is disabled.
+  3. Set "Launch configuration file path" to "workerflags_testgym_config.json" (the file exists within the test gyms project).
+  4. Navigate to: Editor Preferences->Level Editor->Play->Multiplayer Options.
+  5. Ensure "Run Under One Process" is enabled.
+  6. Play in editor.
+  7. Check that the server prints out the corresponding flag value (15 by default).
+  8. Check that the client prints out the corresponding flag value (5 by default).
 
 ##### Server to server RPC gym
 * This gym demonstrates that:
