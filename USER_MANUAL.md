@@ -364,6 +364,10 @@ These test whether key trace events have the appropriate cause events. They can 
   * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
   * In the clinet, use the mouse and WASD to move the camera.
   * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
+  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
+  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
+  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
+  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
 
 ##### Multiworker World Composition gym
 * Tests server's without authoritive player controllers still replicate relevant actors
@@ -384,6 +388,16 @@ Manual steps:<br>
   1. Stop the gym and note that the deployment is still running, as indicated by the state of the Stop Deployment button in the GDK Toolbar.
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
+
+##### Cross-Server possession gym
+* Functional tests the Controller remote possess the Pawn
+* How to test:
+  * Set the current map to `PossessionGym`
+  * Set the `GameMode Override` to `CrossServerPossessionGameMode`(World Settings > Game Mode)
+  * Set the `Multi Worker Settings Class` to `BP_Possession_Settings_Zoning2_2`(World Settings > Multi Worker)
+  * Run functional tests such as `CrossServerMultiPossessionTest1`, `CrossServerPossessionLockTest1`, `CrossServerPossessionTest1`, `NoneCrossServerPossessionTest1` (Window > Developer Tools > Session Frontend > Automation > Project > Functional Tests > /Game/Maps/PossessionGym(4))
+  * NOTE: Do not run all tests together
+  * NOTE: Set `Num Required Clients` of `CrossServerMultiPossessionTest1` to 1 Before run `NoneCrossServerPossessionTest1`.
 
 -----
 2019-11-15: Page added with editorial review
