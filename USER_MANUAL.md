@@ -283,16 +283,19 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
 * NOTE : This gym is likely to have random failures, as we are still working on load balancing.
-* Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
 * The gym is separated in 4 load balanced zones, and spawns a character which can teleport around.
-* How to test : 
-  * The character can walk around the center of the map, migrating between zones
-  * Pressing T teleports the character to another zone.
+* How to test :
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/TeleportGym` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch the gym with one client connected.
+  * Press T to teleport the character to another zone. Do this 5 times.
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
-  * Pressing R spawns a new character in a different zone and posesses it.
+  * Press R spawns a new character in a different zone and posesses it. Do this 5 times.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
-  * Pressing G spawns a GymCube.
+  * Pressing G spawns a GymCube. Spam this as much as you'd like.
     * Spawning the GymCube is currently used for testing hierarchy migration as it does not cause failure.
+  * Locate a virtual worker boundary by running around. It's represented in the game world by a semi-transparent wall.
+  * Run along that virtual worker boundary until you find the center of the map, where four virtual workers meet in a 2x2 configuration.
+  * Run around in the center of the map, ensuring that you can cross the virtual worker boundaries seamlessly.
  
 ##### Spatial Debugger Config UI gym
 * Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
