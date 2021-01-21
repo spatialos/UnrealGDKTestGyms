@@ -125,10 +125,11 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   1. The stack count, and the handover counter are then checked they are the same.
 
 ##### Latency gym
-* Gym for testing latency timing generations
-* Requires access to Google's Stackdriver - see instructions in `SpatialLatencyTracer.h`
-* Latency tests are run automatically per connected client
-* To see results of the tests, go to https://console.cloud.google.com/traces/traces?project=holocentroid-aimful-6523579
+* NOTE: This gym runs nightly as an automated test in the [unrealgdk-nfr](https://buildkite.com/improbable/unrealgdk-nfr) pipeline. You should only run the gym manually if you're debugging that pipline. QA are not required to run this gym manually.
+* This gym tests latency timing generation.
+* To run it, you will requires access to Google's Stackdriver - see the instructions at [UnrealGDK/SpatialGDK/Source/SpatialGDK/Public/Utils/SpatialLatencyTracer.h#L52](https://github.com/spatialos/UnrealGDK/blob/master/SpatialGDK/Source/SpatialGDK/Public/Utils/SpatialLatencyTracer.h#L52).
+* Latency tests are run automatically once per connected client.
+* To see results of the tests, go to Google Stackdriver project [holocentroid-aimful-6523579](https://console.cloud.google.com/traces/traces?project=holocentroid-aimful-6523579).
 
 ##### Unresolved reference gym
 * Tests what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
