@@ -1,67 +1,54 @@
 {
-  "template": "w2_r0500_e5",
-  "world": {
-    "dimensions": {
-      "x_meters": 10000,
-      "z_meters": 10000
-    },
-    "chunk_edge_length_meters": 50,
-    "legacy_flags": [
-      {
-        "name": "bridge_qos_max_timeout",
-        "value": "0"
-      },
-      {
-        "name": "bridge_soft_handover_enabled",
-        "value": "false"
-      }
-    ],
-    "snapshots": {
-      "snapshot_write_period_seconds": 0
-    }
-  },
-  "load_balancing": {
-    "layer_configurations": [
-      {
-        "layer": "UnrealWorker",
-        "rectangle_grid": {
-          "cols": 1,
-          "rows": 1
+    "runtime_flags": [],
+    "workers": [
+        {
+            "worker_type": "UnrealWorker",
+            "flags": [
+                {
+                  "name": "test",
+                  "value": "15"
+                }
+            ],
+            "permissions":
+            {
+                "entity_creation": true,
+                "entity_deletion": true,
+                "disconnect_worker": true,
+                "reserve_entity_id": true,
+                "entity_query": true
+            },
+            "load_balancing":
+            {
+                "rectangle_grid":
+                {
+                    "cols": 1,
+                    "rows": 1
+                },
+                "manual_worker_connection_only": true
+            }
         },
-        "options": {
-          "manual_worker_connection_only": true
+        {
+            "worker_type": "UnrealClient",
+            "flags": [
+                {
+                  "name": "test",
+                  "value": "5"
+                }
+            ],
+            "permissions":
+            {
+                "entity_creation": true,
+                "entity_deletion": true,
+                "disconnect_worker": true,
+                "reserve_entity_id": true,
+                "entity_query": true
+            }
         }
-      }
-    ]
-  },
-  "workers": [
+    ],
+    "world_dimensions":
     {
-      "worker_type": "UnrealWorker",
-      "flags": [
-        {
-          "name": "test",
-          "value": "5"
-        }
-      ],
-      "permissions": [
-        {
-          "all": {}
-        }
-      ]
+        "x_size": 10000,
+        "z_size": 10000
     },
-    {
-      "worker_type": "UnrealClient",
-      "flags": [
-        {
-          "name": "test",
-          "value": "15"
-        }
-      ],
-      "permissions": [
-        {
-          "all": {}
-        }
-      ]
-    }
-  ]
+    "max_concurrent_workers": 1000
 }
