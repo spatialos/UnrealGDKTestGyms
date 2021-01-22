@@ -174,7 +174,15 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
 * Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
 * Validation:
-  1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
+  1. Open the WorkerFlagsGym map.
+  1. Navigate to: Project Settings->SpatialOS GDK for Unreal->Editor Settings->Launch.
+  1. Ensure "Auto-generate launch configuration file" is disabled.
+  1. Set "Launch configuration file path" to `workerflags_testgym_config.json` (the file exists within the test gyms project).
+  1. Navigate to: Editor Preferences->Level Editor->Play->Multiplayer Options.
+  1. Ensure "Run Under One Process" is enabled.
+  1. Play in editor with one client.
+  1. Check that the server prints out the corresponding flag value from `workerflags_testgym_config.json` in the "Output Log" (15 by default).
+  1. Check that the client prints out the corresponding flag value from `workerflags_testgym_config.json` in the "Output Log" (5 by default).
 
 ##### Server to server RPC gym
 * This gym demonstrates that:
@@ -283,16 +291,19 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
 * NOTE : This gym is likely to have random failures, as we are still working on load balancing.
-* Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
 * The gym is separated in 4 load balanced zones, and spawns a character which can teleport around.
-* How to test : 
-  * The character can walk around the center of the map, migrating between zones
-  * Pressing T teleports the character to another zone.
+* How to test :
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/TeleportGym` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch the gym with one client connected.
+  * Press T to teleport the character to another zone. Do this 5 times.
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
-  * Pressing R spawns a new character in a different zone and posesses it.
+  * Press R spawns a new character in a different zone and posesses it. Do this 5 times.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
-  * Pressing G spawns a GymCube.
+  * Pressing G spawns a GymCube. Spam this as much as you'd like.
     * Spawning the GymCube is currently used for testing hierarchy migration as it does not cause failure.
+  * Locate a virtual worker boundary by running around. It's represented in the game world by a semi-transparent wall.
+  * Run along that virtual worker boundary until you find the center of the map, where four virtual workers meet in a 2x2 configuration.
+  * Run around in the center of the map, ensuring that you can cross the virtual worker boundaries seamlessly.
  
 ##### Spatial Debugger Config UI gym
 * Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.

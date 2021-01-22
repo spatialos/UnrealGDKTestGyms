@@ -72,6 +72,7 @@ protected:
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	int32 GetNumWorkers() const { return NumWorkers; }
+	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 private:
 	// Test scenarios
 
@@ -117,6 +118,7 @@ private:
 	FMetricTimer DeploymentValidTimer;
 	
 	int32 NumWorkers;
+	int32 NumSpawnZones;
 #if	STATS
 	// For stat profile
 	FMetricTimer StatStartFileTimer;
