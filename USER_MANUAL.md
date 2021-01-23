@@ -422,5 +422,13 @@ Manual steps:
   1. Note that the in-world message now says "Test passed!"
   1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
 
+##### Multiworker World Composition gym
+* Tests server's without authoritive player controllers still replicate relevant actors
+* Validation
+  * Enable the replication graph
+    * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
+  * Play with 1 client connect.
+  * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+
 -----
 2019-11-15: Page added with editorial review
