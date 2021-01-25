@@ -150,6 +150,7 @@ private:
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
+	int32 GetPlayerControllerCount();
 #if	STATS
 	void SetStatTimer(const FString& TimeString);
 #endif
