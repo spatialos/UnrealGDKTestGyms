@@ -307,15 +307,22 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * Run around in the center of the map, ensuring that you can cross the virtual worker boundaries seamlessly.
  
 ##### Spatial Debugger Config UI gym
-* Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
+* Tests that the `OnConfigUIClosed` callback can be set on the spatial debugger using blueprints.
 * Gives an example of using that callback to return your game to the correct input mode after closing the debugger config UI, depending on whether your game itself had a UI open.
-* How to test:
-  * Press U to open the in-game UI. Check that the mouse cursor appears and that you are able to click the button.
-  * Press F9 to open the spatial debugger config UI. Check that you are able to interact with that UI.
-  * Press F9 again to close the debugger config UI. The mouse cursor should stay visible, and you should be able to interact with the in-game UI.
-  * Press U to close the in-game UI. The mouse cursor should now be captured by the game, and moving the mouse should control the character camera again.
-  * Press F9 to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
-  * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
+* Note: You may notice duing this test that, the Spatial Debugger config UI when you select Actor Tag Draw Mode: Local Player, the tag floating above the player's head disappears. This is expected behaviour, as the tag is visible in the top left of the client viewport.
+* Manual Steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/SpatialDebuggerConfigUIGym` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch one client.
+  * Press `U` on your keyboard to open the in-game UI.
+  * Check that the mouse cursor appears and that you are able to click the button that has appeared.
+  * Press `F9` to open the Spatial Debugger config UI.
+  * Check that you are able to interact with that UI.
+  * Press `F9` again to close the debugger config UI.
+  * The mouse cursor should remain visible, and you should be able to click the button from earlier.
+  * Press `U` to close the in-game UI.
+  * The mouse cursor should now be captured by the game, meaning that it is not visible and when you move your mouse the camera in the game moves.
+  * Press `F9` to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
+  * Press `F9` again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
 #### SpatialEventTracingTests
 * These test whether key trace events have the appropriate cause events.
