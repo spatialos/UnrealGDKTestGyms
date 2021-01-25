@@ -342,12 +342,16 @@ These tests can only be run automatically. To run them:
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
-* Includes both a non-instanced gameplay cue that gets executed, and an instanced cue that gets added and removed as a gameplay effect with duration is added and removed.
-* How to test:
-  * Run the map with multiple clients.
-  * Position one client's character in view of the other client.
-  * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client. Both clients should print "Executed Gameplay Cue" to the log.
-  * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client. Both clients should print "Added Gameplay Cue" to the log.
+* It includes a **non-instanced** gameplay cue that triggered by pressing `Q` and is visualised as **sparks** emitted from the controlled character.
+* It also includes an **instanced** gameplay cue that triggered by pressing `T` and is visualised as a **cone** floating above the controlled character.
+* Manual steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch two clients.
+  * Position one client's character in view of the other client and in the same virtual worker boundary.
+  * Press `Q` to trigger the non-instanced gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
+  * Both clients should print "Executed Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Press `T` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
 * Tests the client travel from one cloud deployment to itself.
