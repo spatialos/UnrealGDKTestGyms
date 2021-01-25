@@ -356,5 +356,13 @@ These tests can only be run automatically. To run them:
   * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
   * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
 
+##### Multiworker World Composition gym
+* Tests server's without authoritive player controllers still replicate relevant actors
+* Validation
+  * Enable the replication graph
+    * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
+  * Play with 1 client connect.
+  * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+
 -----
 2019-11-15: Page added with editorial review
