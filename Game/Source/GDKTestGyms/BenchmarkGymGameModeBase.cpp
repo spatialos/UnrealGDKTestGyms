@@ -49,6 +49,9 @@ namespace
 	
 	const FString NumWorkersWorkerFlag = TEXT("num_workers");
 	const FString NumWorkersCommandLineKey = TEXT("-NumWorkers=");
+
+	const FString NumSpawnZonesWorkerFlag = TEXT("num_spawn_zones");
+	const FString NumSpawnZonesCommandLineKey = TEXT("-NumSpawnZones=");
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
@@ -90,6 +93,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, NumWorkers(1)
+	, NumSpawnZones(1)
 #if	STATS
 	, StatStartFileTimer(60 * 60 * 24)
 	, StatStopFileTimer(60)
@@ -491,6 +495,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
 		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
+		FParse::Value(*CommandLine, *NumSpawnZonesCommandLineKey, NumSpawnZones);
 		
 #if	STATS
 		FString StatProfileString;
@@ -501,7 +506,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, MinActorMigrationString, NumWorkersString;
+		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, MinActorMigrationString, NumWorkersString, NumSpawnZonesString;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -548,6 +553,11 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				{
 					NumWorkers = FCString::Atoi(*NumWorkersString);
 				}
+
+				if (SpatialWorkerFlags->GetWorkerFlag(NumSpawnZonesWorkerFlag, NumSpawnZonesString))
+				{
+					NumSpawnZones = FCString::Atoi(*NumSpawnZonesString);
+				}
 #if	STATS
 				FString StatProfileString;
 				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
@@ -559,7 +569,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d"), ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d, NumSpawnZones %d"), 
+		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers, NumSpawnZones);
 }
 
 void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -595,6 +606,10 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 	else if (FlagName == NumWorkersWorkerFlag)
 	{
 		NumWorkers = FCString::Atof(*FlagValue);
+	}
+	else if (FlagName == NumSpawnZonesWorkerFlag)
+	{
+		NumSpawnZones = FCString::Atof(*FlagValue);
 	}
 #if	STATS
 	else if (FlagName == StatProfileWorkerFlag)
