@@ -317,10 +317,11 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
 #### SpatialEventTracingTests
-* These test whether key trace events have the appropriate cause events.
-* They ensure that the following settings are added to DefaultSpatialGDKSettings.ini:
-  * bEventTracingEnabled=True
-  * MaxEventTracingFileSizeBytes=104857600
+* Test whether key trace events have the appropriate cause events.
+* You must add the following settings to DefaultSpatialGDKSettings.ini before running these tests:
+  * `bEventTracingEnabled=True`
+  * `MaxEventTracingFileSizeBytes=104857600`
+* NOTE: This gym can **only** be run as a series of automated tests from the Session Frontend. To run it automatically, use [these steps](#automated-test-gyms).
 
 These tests can only be run automatically. To run them:
    * In the Unreal Editor, navigate to Project Settings > SpatialOS GDK for Unreal - Editor Settings > Launch > Command line flags for local launch.
