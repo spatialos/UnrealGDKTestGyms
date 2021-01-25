@@ -343,7 +343,7 @@ These tests can only be run automatically. To run them:
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
 * It includes a **non-instanced** gameplay cue that is triggered by pressing `Q` and visualised as **sparks** emitted from the controlled character.
-* It also includes an **instanced** gameplay cue that triggered by pressing `T` and is visualised as a **cone** floating above the controlled character.
+* It also includes an **instanced** gameplay cue that is triggered by pressing `T` and visualised as a **cone** floating above the controlled character.
 * Manual steps:
   * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
   * In the Unreal Editor Toolbar, click Play to launch two clients.
