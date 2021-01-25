@@ -119,10 +119,11 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * Fast Array Serialization handover gym.
 * Demonstrates that an actor with an ability system component can transition between workers correctly.
 * Internally GAS uses Fast Array Serialization.
-* Validation:
-  1. A new GameplayEffect is added by the authoritative server on authority gained.
-  1. Additionally a handover value is incremented to monitor how many times this is called.
-  1. The stack count, and the handover counter are then checked they are the same.
+* Manual Steps:
+  1. In the Unreal Editor's Content Browser, locate `Content/Maps/FASHandoverGym` and double click to open it.
+  1. In the Unreal Editor Toolbar, click Play to launch one client.
+  1. As soon as the game launches, a new GameplayEffect is added by the authoritative server on authority gained.
+  1. `Effect Applied Correctly` and `Effect Persisted Correctly` should be printed in the client viewport and in the Output Log. If this happens, and there are no warns or errors, then the test has passed.
 
 ##### Latency gym
 * NOTE: This gym runs nightly as an automated test in the [unrealgdk-nfr](https://buildkite.com/improbable/unrealgdk-nfr) pipeline. You should only run the gym manually if you're debugging that pipline. QA are not required to run this gym manually.
