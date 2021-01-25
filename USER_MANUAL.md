@@ -364,9 +364,10 @@ These tests can only be run automatically. To run them:
 ##### Cross-Server possession gym
 * Functional tests the Controller remote possess the Pawn
 * How to test:
-  * Set the current map to `PossessionGym`
+  * Set the current map to `PossessionGym`(/Game/Content/Maps/FunctionalTests/PossessionGym.umap)  
   * Set the `Multi Worker Settings Class` to `BP_Possession_Settings_Zoning2_2`(World Settings > Multi Worker)
-  * Run functional tests such as `CrossServerMultiPossessionTest1`, `CrossServerPossessionLockTest1`, `CrossServerPossessionTest1`, `NoneCrossServerPossessionTest1` (Window > Developer Tools > Session Frontend > Automation > Project > Functional Tests > /Game/Maps/PossessionGym(4))
+  * Generate schema(Schema toolbar)
+  * Run functional tests such as `CrossServerMultiPossessionTest1`, `CrossServerPossessionLockTest1`, `CrossServerPossessionTest1`, `NoneCrossServerPossessionTest1` (Window > Developer Tools > Session Frontend > Automation > Project > Functional Tests > /Game/Maps/FunctionalTests/PossessionGym(4))
 
 ##### Multiworker World Composition gym
 * Tests server's without authoritive player controllers still replicate relevant actors
