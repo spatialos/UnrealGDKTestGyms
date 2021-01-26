@@ -337,20 +337,33 @@ These test whether key trace events have the appropriate cause events. They can 
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
-* Includes both a non-instanced gameplay cue that gets executed, and an instanced cue that gets added and removed as a gameplay effect with duration is added and removed.
-* How to test:
-  * Run the map with multiple clients.
-  * Position one client's character in view of the other client.
-  * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client. Both clients should print "Executed Gameplay Cue" to the log.
-  * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client. Both clients should print "Added Gameplay Cue" to the log.
+* It includes a **non-instanced** gameplay cue that is triggered by pressing `Q` and visualised as **sparks** emitted from the controlled character.
+* It also includes an **instanced** gameplay cue that is triggered by pressing `T` and visualised as a **cone** floating above the controlled character.
+* Manual steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
+  * In the Unreal Editor Toolbar, click Play to launch two clients.
+  * Position one client's character in view of the other client and in the same virtual worker boundary.
+  * Press `Q` to trigger the non-instanced gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
+  * Both clients should print "Executed Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Press `T` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
-* Tests the client travel from one cloud deployment to itself.
+* Tests that clients can travel from one cloud deployment to the same cloud deployment.
 * How to test:
-  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
-  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
-  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
-  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
+  * Navigate to `Edit > Project Settings > Project > Maps & Modes > Default Maps`.
+  * If you can't see the `Server Default Map`, click `▽` to reveal more options.
+  * Set `Server Default Map` to `ClientTravel_Gym`.
+  * Select Cloud on the GDK toolbar.
+  ** Enter your project name, and make up and enter an assembly name and a deployment name.
+  ** Ensure that Automatically Generate Launch Configuration is checked.
+  ** Ensure that Add simulated players is not checked.
+  ** Ensure that every option in the Assembly Configuration section is checked.
+  * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
+  * Click the Start deployment button.
+  * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
+  * In the clinet, use the mouse and WASD to move the camera.
+  * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
 * Tests server's without authoritive player controllers still replicate relevant actors
