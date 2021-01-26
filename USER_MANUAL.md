@@ -354,12 +354,21 @@ These tests can only be run automatically. To run them:
   * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
-* Tests the client travel from one cloud deployment to itself.
+* Tests that clients can travel from one cloud deployment to the same cloud deployment.
 * How to test:
-  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
-  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
-  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
-  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
+  * Navigate to `Edit > Project Settings > Project > Maps & Modes > Default Maps`.
+  * If you can't see the `Server Default Map`, click `▽` to reveal more options.
+  * Set `Server Default Map` to `ClientTravel_Gym`.
+  * Select Cloud on the GDK toolbar.
+  ** Enter your project name, and make up and enter an assembly name and a deployment name.
+  ** Ensure that Automatically Generate Launch Configuration is checked.
+  ** Ensure that Add simulated players is not checked.
+  ** Ensure that every option in the Assembly Configuration section is checked.
+  * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
+  * Click the Start deployment button.
+  * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
+  * In the clinet, use the mouse and WASD to move the camera.
+  * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
 * Tests server's without authoritive player controllers still replicate relevant actors
