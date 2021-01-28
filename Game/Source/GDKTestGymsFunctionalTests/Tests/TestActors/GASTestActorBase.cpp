@@ -30,7 +30,7 @@ void AGASTestActorBase::GrantInitialAbilitiesIfNeeded()
 	{
 		for (const TSubclassOf<UGameplayAbility>& Ability : GetInitialGrantedAbilities())
 		{
-			FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability));
+			FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(*AbilitySystemComponent, Ability));
 		}
 
 		bHasGrantedAbilities = true;
