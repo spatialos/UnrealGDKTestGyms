@@ -1,13 +1,6 @@
 ---
 steps:
-  # Run the UnrealGDK premerge with this version of the TestGyms repo.
-  # Unfortunately we can't easily detect if we are running for a branch with a PR or not, so we just always run.
-  - label: "unreal-gdk-premerge"
-    trigger: "unrealgdk-premerge"
-    build:
-      branch: "${GDK_BRANCH:-master}"
-      commit: "${GDK_COMMIT:-HEAD}"
-      message: "TestGyms ${BUILDKITE_BRANCH} ${BUILDKITE_MESSAGE}"
-      env:
-        TEST_REPO_BRANCH: "${BUILDKITE_BRANCH}"
-        ENGINE_NET_TEST: "true"
+  - label: "generate-pipeline-steps"
+    commands: 
+      - "chmod -R +rwx ci"
+      - "ci/generate-pipeline-steps.sh"
