@@ -9,17 +9,17 @@
 void ASpecHandleTestCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	
+
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindKey(EKeys::T, EInputEvent::IE_Pressed, this, &ASpecHandleTestCharacter::GiveAbilityAndLogActivatableAbilities);
 }
 
 void ASpecHandleTestCharacter::GiveAbilityAndLogActivatableAbilities_Implementation()
 {
-	AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(*AbilitySystemComponent, UGameplayAbility::StaticClass()));
-	
+	AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UGameplayAbility::StaticClass()));
+
 	const TArray<FGameplayAbilitySpec>& Specs = AbilitySystemComponent->GetActivatableAbilities();
-	
+
 	UE_LOG(LogTemp, Log, TEXT("%s activatable abilities:"), *GetNameSafe(this));
 	for (auto Spec : Specs)
 	{

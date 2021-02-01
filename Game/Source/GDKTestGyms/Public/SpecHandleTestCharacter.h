@@ -7,15 +7,15 @@
 #include "SpecHandleTestCharacter.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class GDKTESTGYMS_API ASpecHandleTestCharacter : public AGasCharacter
 {
 	GENERATED_BODY()
-	
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+
 	UFUNCTION(Server, Reliable)
 	void GiveAbilityAndLogActivatableAbilities();
 };
