@@ -385,5 +385,12 @@ Manual steps:<br>
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
+##### Cross-Server possession gym
+* Functional tests the Controller remote possess the Pawn
+* How to test:
+  * Set the current map to the map which in the folder(/Game/Content/Maps/FunctionalTests/)  
+  * Set the `Multi Worker Settings Class` to `BP_Possession_Settings_Zoning2_2`(World Settings > Multi Worker)
+  * Run functional tests such as (Window > Developer Tools > Session Frontend > Automation > Project > Functional Tests > /Game/Maps/FunctionalTests/)
+  
 -----
 2019-11-15: Page added with editorial review
