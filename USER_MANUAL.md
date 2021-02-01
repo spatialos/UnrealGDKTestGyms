@@ -37,6 +37,17 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 4. Add a description of the new gym level to this `USER_MANUAL.md` document, in the section below;
   * breifly describe what it demonstrates and how to use it.
 
+### Current tests
+
+Tests can be run by following these steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
+  3. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
+  3. The Session Frontend will then prompt you with the results of the tests.
+
+Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
+The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
+
 #### Current gyms
 
 ##### Empty gym
@@ -57,9 +68,15 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* Contains:
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestHandover1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+* The manual version of the gym contains:
   * A set of cubes that moves back and forth across a floor.
-* To test the gym:
+* Steps to run the manual version of the gym:
   * Observe the authority and authority intent of each cube can be seen to change as it moves across the floor.
   * Press "L" to toggle locking actor migration.
   * Press "K" to delete a cube in the scene (used for debugging actors deleted while locked).
@@ -120,8 +137,8 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
   2. On the Automation tab, search for SpatialTestReplicatedStartupActor1, tick the box corresponding to it and hit Start Tests.
   3. The Session Frontend will then prompt you with the result of the test.
-* For QA workflows Test Replicated startup actor are correctly spawned on all clients
-* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients"
+* Used to support QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
+* Also covers the QA work-flow of checking that "Startup actors correctly replicate arbitrary properties".
 * Validation
   1. After two seconds checks that actor is visible to client and reports pass or fail
 
@@ -136,19 +153,40 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 * Tests a fix for UNR-1259: Fix of the WorkerFlags data structure not being per worker. When running through Unreal Editor using single process, different worker types can read other worker type's flags. As a result flags of different worker types with the same name get the wrong value.
 * Demonstrates that ClientWorkers and UnrealWorker read the correct value for the "test" worker flag, when both types have a "test" flag with different value.
 * Validation:
-  1. Use workerflags_testgym_config launch config to run multiplayer through the editor, for every worker running, different values based on their worker type should get printed/logged.
+  1. Open the WorkerFlagsGym map.
+  1. Navigate to: Project Settings->SpatialOS GDK for Unreal->Editor Settings->Launch.
+  1. Ensure "Auto-generate launch configuration file" is disabled.
+  1. Set "Launch configuration file path" to `workerflags_testgym_config.json` (the file exists within the test gyms project).
+  1. Navigate to: Editor Preferences->Level Editor->Play->Multiplayer Options.
+  1. Ensure "Run Under One Process" is enabled.
+  1. Play in editor with one client.
+  1. Check that the server prints out the corresponding flag value from `workerflags_testgym_config.json` in the "Output Log" (15 by default).
+  1. Check that the client prints out the corresponding flag value from `workerflags_testgym_config.json` in the "Output Log" (5 by default).
 
 ##### Server to server RPC gym
-* Demonstrates that:
+* This gym demonstrates that:
   * Actors owned by different servers correctly send server-to-server RPCs.
-* Contains:
+* NOTE: This gym can be run both as an automated test and a manual one.
+* Steps to run the automated version of the gym:
+  * In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestCrossServerRPC1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+* The manual gym contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
     * Change colour to indicate which worker the owning worker just received an RPC from (where colours match the inspector colours used by the spatial debugger).
     * Show a count of how many RPCs have been received which is shown above the cube.
-* If it is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
+* Steps to run the gym manually: 
+    * In the Content Browser, under Content, search for the Maps folder.
+    * Open the ServerToServerRPCGym and hit Play.
+    * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
+* NOTE: This gym also has an equivalent automated test. In order to run the test, follow the steps:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestWorldComposition1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
@@ -172,14 +210,20 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * There should not be logs saying "Error: Simulated task is simulating on the owning client".
 
 ##### Client Net Ownership gym
-* Demonstrates that:
+* This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* Contains:
+* NOTE: This gym can be run both as an automated test and as a manual one.
+* Steps to run the automated version of the gym:
+  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
+  2. On the Automation tab, search for SpatialTestNetOwnership1, tick the box corresponding to it and hit Start Tests.
+  3. The Session Frontend will then prompt you with the result of the test.
+  Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
     * (R) Sending a server RPC from the client on the cube,
     * (T) Removing the client as the net-owner for the cube.
-* To test the gym:
+* Steps to run the gym manually:
     * Press `Q` to make the client net-owner for the cube.
     * Observe that:
       * the `SpatialDebugger` authority icon updates to the virtual worker ID relating to the character.
@@ -205,7 +249,7 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 * Pressing "space" will switch the possession between the two cubes in the gym. This action will also ensure that the unpossessed cube will still be owned by the player controller. If the player controller does not have possession of a pawn, "space" will simply posses one of the pawns.
 * Ensure multi-worker is turned off.
 
-#### FASAsyncGym
+##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
 * Native Unreal prevents async asset loading causing null pointers in FAS (FastArraySerialization) callbacks.
 * This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
@@ -218,7 +262,7 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
   * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
 
-##### Teleporting gym.
+##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
 * NOTE : This gym is likely to have random failures, as we are still working on load balancing.
 * Known issues : UNR-3617, UNR-3790, UNR-3837, UNR-3833, UNR-411
@@ -229,6 +273,43 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
     * This is a sharp transition far away from boundaries, to test when border interest is absent.
   * Pressing R spawns a new character in a different zone and posesses it.
     * This is a complex scenario to test what happens when an actor hierarchy is split over several zones.
+  * Pressing G spawns a GymCube.
+    * Spawning the GymCube is currently used for testing hierarchy migration as it does not cause failure.
+ 
+##### Spatial Debugger Config UI gym
+* Tests that the "OnConfigUIClosed" callback can be set on the spatial debugger from blueprints.
+* Gives an example of using that callback to return your game to the correct input mode after closing the debugger config UI, depending on whether your game itself had a UI open.
+* How to test:
+  * Press U to open the in-game UI. Check that the mouse cursor appears and that you are able to click the button.
+  * Press F9 to open the spatial debugger config UI. Check that you are able to interact with that UI.
+  * Press F9 again to close the debugger config UI. The mouse cursor should stay visible, and you should be able to interact with the in-game UI.
+  * Press U to close the in-game UI. The mouse cursor should now be captured by the game, and moving the mouse should control the character camera again.
+  * Press F9 to open the debugger config UI again, this time without the game UI active. Check that you are able to interact with the config UI.
+  * Press F9 again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
+
+#### SpatialEventTracingTests
+* Tests whether key trace events have the appropriate cause events.
+* Ensure that the following settings are added to DefaultSpatialGDKSettings.ini :
+  * bEventTracingEnabled=True
+  * MaxEventTracingFileSizeBytes=104857600
+* You will probably want to remove these setting after you have finished running these tests.
+
+##### Gameplay Cues gym
+* Tests that gameplay cues get correctly activated on all clients.
+* Includes both a non-instanced gameplay cue that gets executed, and an instanced cue that gets added and removed as a gameplay effect with duration is added and removed.
+* How to test:
+  * Run the map with multiple clients.
+  * Position one client's character in view of the other client.
+  * Press Q to trigger the executed gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client. Both clients should print "Executed Gameplay Cue" to the log.
+  * Press T to trigger the added gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. This should also be visible on that character on the other client. Both clients should print "Added Gameplay Cue" to the log.
+
+##### Client Travel gym
+* Tests the client travel from one cloud deployment to itself.
+* How to test:
+  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
+  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
+  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
+  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
 
 -----
 2019-11-15: Page added with editorial review
