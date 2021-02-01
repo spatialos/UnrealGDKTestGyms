@@ -390,7 +390,7 @@ Manual steps:<br>
 * How to test:
   * Set the current map to the map which in the folder(/Game/Content/Maps/FunctionalTests/)  
   * Set the `Multi Worker Settings Class` to `BP_Possession_Settings_Zoning2_2`(World Settings > Multi Worker)
-  * Run functional tests such as (Window > Developer Tools > Session Frontend > Automation > Project > Functional Tests > /Game/Maps/FunctionalTests/)
+  * Run functional tests in (Window > Developer Tools > Session Frontend > Automation > Project > Functional Tests > /Game/Maps/FunctionalTests/)
   
 -----
 2019-11-15: Page added with editorial review
