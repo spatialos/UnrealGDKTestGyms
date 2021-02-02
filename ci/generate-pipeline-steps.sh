@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEBUG = "on"
+DEBUG="on"
 
 set -e -u -o pipefail
 if [[ -n "${DEBUG-}" ]]; then
