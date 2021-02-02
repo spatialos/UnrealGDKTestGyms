@@ -24,4 +24,4 @@ if [ -z "${GDK_BRANCH_LOCAL}" ]; then
     fi
 fi
 
-sed "s|GDK_BRANCH_PLACEHOLDER|GDK_BRANCH_LOCAL|g" "ci/premerge.template.steps.yaml" | buildkite-agent pipeline upload
+sed "s|GDK_BRANCH_PLACEHOLDER|${GDK_BRANCH_LOCAL}|g" "ci/premerge.template.steps.yaml" | buildkite-agent pipeline upload
