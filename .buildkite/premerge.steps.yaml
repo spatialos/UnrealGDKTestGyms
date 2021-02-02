@@ -1,6 +1,38 @@
 ---
+# This is designed to trap and retry failures because agent lost
+# connection. Agent exits with -1 in this case.
+agent_transients: &agent_transients
+  exit_status: -1
+  limit: 3
+# BK system error
+bk_system_error: &bk_system_error
+  exit_status: 255
+  limit: 3
+# job was interrupted by a signal (e.g. ctrl+c etc)
+bk_interrupted_by_signal: &bk_interrupted_by_signal
+  exit_status: 15
+  limit: 3
+
+script_runner: &script_runner
+  agents:
+    - "agent_count=8"
+    - "capable_of_building=platform"
+    - "environment=production"
+    - "machine_type=quarter"
+    - "permission_set=builder"
+    - "platform=linux"
+    - "queue=${CI_LINUX_BUILDER_QUEUE:-v4-20-08-12-083656-bk14222-38697241}"
+    - "scaler_version=2"
+    - "working_hours_time_zone=london"
+  retry:
+    automatic:
+      - <<: *agent_transients
+      - <<: *bk_system_error
+      - <<: *bk_interrupted_by_signal
+
 steps:
   - label: "generate-pipeline-steps"
     commands: 
       - "chmod -R +rwx ci"
       - "ci/generate-pipeline-steps.sh"
+    <<: *script_runner
