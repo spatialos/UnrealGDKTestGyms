@@ -1,7 +1,5 @@
 #!/bin/bash
 
-DEBUG="on"
-
 set -e -u -o pipefail
 if [[ -n "${DEBUG-}" ]]; then
     set -x
