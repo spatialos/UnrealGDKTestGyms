@@ -766,7 +766,7 @@ void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
 }
 #endif
 
-int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount()
+int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 {
 	int32 Count = 0;
 	for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
