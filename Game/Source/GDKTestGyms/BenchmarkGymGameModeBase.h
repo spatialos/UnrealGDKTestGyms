@@ -116,6 +116,7 @@ private:
 	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
+	FMetricTimer NoneAuthPlayerControllerTimer;
 	
 	int32 NumWorkers;
 	int32 NumSpawnZones;

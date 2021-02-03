@@ -92,6 +92,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
+	, NoneAuthPlayerControllerTimer(60)
 	, NumWorkers(1)
 	, NumSpawnZones(1)
 #if	STATS
@@ -249,6 +250,22 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		PrintMetricsTimer.HasTimerGoneOff())
 	{
 		PrintMetricsTimer.SetTimer(10);
+	}
+	if (NoneAuthPlayerControllerTimer.HasTimerGoneOff())
+	{
+		int32 Count = 0;
+		for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
+		{
+			if (APlayerController* PC = PCIt->Get())
+			{
+				if (false == PC->HasAuthority())
+				{
+					++Count;
+				}
+			}
+		}
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("None authority PlayerController:%d"), Count);
+		NoneAuthPlayerControllerTimer.SetTimer(60);
 	}
 #if	STATS
 	if (StatStartFileTimer.HasTimerGoneOff())
