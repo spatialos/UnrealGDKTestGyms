@@ -4,18 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "GasCharacter.h"
-#include "SpecHandleTestCharacter.generated.h"
+#include "AbilitySpecHandleGymCharacter.generated.h"
 
 /**
  *
  */
 UCLASS()
-class GDKTESTGYMS_API ASpecHandleTestCharacter : public AGasCharacter
+class GDKTESTGYMS_API AAbilitySpecHandleGymCharacter : public AGasCharacter
 {
 	GENERATED_BODY()
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(Server, Reliable)
-	void GiveAbilityAndLogActivatableAbilities();
+	void GiveAbility();
+
+	UFUNCTION(Server, Reliable)
+    void GiveAbilityWhileLocked();
+
+	void LogActivatableAbilities() const;
 };
