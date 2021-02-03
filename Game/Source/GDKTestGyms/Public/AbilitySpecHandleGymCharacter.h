@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Abilities/GameplayAbility.h"
 #include "GasCharacter.h"
 #include "AbilitySpecHandleGymCharacter.generated.h"
 
@@ -16,11 +17,17 @@ class GDKTESTGYMS_API AAbilitySpecHandleGymCharacter : public AGasCharacter
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION(Server, Reliable)
-	void GiveAbility();
+	void GiveAbility() { ServerGiveAbility(false, false); }
+    void GiveAbilityWhileLocked() { ServerGiveAbility(false, true); }
+
+    void GiveAbilityAndActivateOnce() { ServerGiveAbility(true, false); }
+    void GiveAbilityAndActivateOnceWhileLocked() { ServerGiveAbility(true, true); }
 
 	UFUNCTION(Server, Reliable)
-    void GiveAbilityWhileLocked();
+	void ServerGiveAbility(bool bActivate, bool bLock);
 
 	void LogActivatableAbilities() const;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayAbility> AbilityToAdd; // To be set in the blueprint child of this class
 };

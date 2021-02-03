@@ -2,7 +2,6 @@
 
 
 #include "AbilitySpecHandleGymCharacter.h"
-#include "Abilities/GameplayAbility.h"
 #include "GameplayAbilitySpec.h"
 #include "Components/InputComponent.h"
 
@@ -11,28 +10,41 @@ void AAbilitySpecHandleGymCharacter::SetupPlayerInputComponent(class UInputCompo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindKey(EKeys::Q, EInputEvent::IE_Pressed, this, &AAbilitySpecHandleGymCharacter::GiveAbility);
-	PlayerInputComponent->BindKey(EKeys::E, EInputEvent::IE_Pressed, this, &AAbilitySpecHandleGymCharacter::GiveAbilityWhileLocked);
+	PlayerInputComponent->BindKey(EKeys::R, EInputEvent::IE_Pressed, this, &AAbilitySpecHandleGymCharacter::GiveAbility);
+	PlayerInputComponent->BindKey(EKeys::T, EInputEvent::IE_Pressed, this, &AAbilitySpecHandleGymCharacter::GiveAbilityWhileLocked);
+
+	PlayerInputComponent->BindKey(EKeys::F, EInputEvent::IE_Pressed, this, &AAbilitySpecHandleGymCharacter::GiveAbilityAndActivateOnce);
+	PlayerInputComponent->BindKey(EKeys::G, EInputEvent::IE_Pressed, this, &AAbilitySpecHandleGymCharacter::GiveAbilityAndActivateOnceWhileLocked);
 }
 
-void AAbilitySpecHandleGymCharacter::GiveAbility_Implementation()
+static void GiveAbilityUtil(UAbilitySystemComponent* AbilitySystemComponent, TSubclassOf<UGameplayAbility> AbilityToAdd, bool bActivate)
 {
-	const FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UGameplayAbility::StaticClass()));
+	const FGameplayAbilitySpec Spec(AbilityToAdd);
+	FGameplayAbilitySpecHandle Handle;
+	if (bActivate)
+	{
+		Handle = AbilitySystemComponent->GiveAbilityAndActivateOnce(Spec);
+	} else
+	{
+		Handle = AbilitySystemComponent->GiveAbility(Spec);
+	}
 	UE_LOG(LogTemp, Log, TEXT("Got handle %s"), *Handle.ToString()); // TODO log category
-	LogActivatableAbilities();
 }
 
-void AAbilitySpecHandleGymCharacter::GiveAbilityWhileLocked_Implementation()
+void AAbilitySpecHandleGymCharacter::ServerGiveAbility_Implementation(bool bActivate, bool bLock)
 {
+	if (bLock)
 	{
 		// Lock the ASC ability list for this scope
 		// Can't use ABILITYLIST_SCOPE_LOCK since that assumes that `this` is of type UAbilitySystemComponent*
 		FScopedAbilityListLock Lock(*AbilitySystemComponent);
-		const FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UGameplayAbility::StaticClass()));
-		UE_LOG(LogTemp, Log, TEXT("Got handle %s"), *Handle.ToString()); // TODO log category
+		GiveAbilityUtil(AbilitySystemComponent, AbilityToAdd, bActivate);
 	}
-
-	// Log abilities after the scope lock is dropped, since the ability spec won't be added to the activatable abilities array before that.
+	else
+	{
+		GiveAbilityUtil(AbilitySystemComponent, AbilityToAdd, bActivate);
+	}
+	
 	LogActivatableAbilities();
 }
 
