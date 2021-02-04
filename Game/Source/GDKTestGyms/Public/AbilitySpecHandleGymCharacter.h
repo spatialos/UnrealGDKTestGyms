@@ -26,8 +26,6 @@ class GDKTESTGYMS_API AAbilitySpecHandleGymCharacter : public AGasCharacter
 	UFUNCTION(Server, Reliable)
 	void ServerGiveAbility(bool bActivate, bool bLock);
 
-	void LogActivatableAbilities() const;
-
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayAbility> AbilityToAdd; // To be set in the blueprint child of this class
 };
