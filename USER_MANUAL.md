@@ -385,5 +385,25 @@ Manual steps:<br>
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
+##### Ability Giving Gym
+Tests that ability specs given on different servers can be activated correctly via their handle.
+* How to test:
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
+  * Play with one client.
+  * On the server that you spawned on, press Q.
+    In the spatial output log, you should see the following two lines:
+    > Giving and running ability with level 1
+    > 
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 1
+    
+    Importantly, the level number stated in the two lines should match. 
+  * Move the character to the other server, press E.
+    In the spatial output log, you should see the following two lines:
+    > Giving and running ability with level 2
+    >
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 2
+    
+    Again, the two level numbers should match.
+  
 -----
 2019-11-15: Page added with editorial review

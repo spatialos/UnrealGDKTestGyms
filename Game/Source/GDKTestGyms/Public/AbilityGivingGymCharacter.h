@@ -5,26 +5,23 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GasCharacter.h"
-#include "AbilitySpecHandleGymCharacter.generated.h"
+#include "AbilityGivingGymCharacter.generated.h"
 
 /**
  *
  */
 UCLASS()
-class GDKTESTGYMS_API AAbilitySpecHandleGymCharacter : public AGasCharacter
+class GDKTESTGYMS_API AAbilityGivingGymCharacter : public AGasCharacter
 {
 	GENERATED_BODY()
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void GiveAbility() { ServerGiveAbility(false, false); }
-    void GiveAbilityWhileLocked() { ServerGiveAbility(false, true); }
-
-    void GiveAbilityAndActivateOnce() { ServerGiveAbility(true, false); }
-    void GiveAbilityAndActivateOnceWhileLocked() { ServerGiveAbility(true, true); }
+	void GiveAbilityOne() { ServerGiveAbility(1); }
+    void GiveAbilityTwo() { ServerGiveAbility(2); }
 
 	UFUNCTION(Server, Reliable)
-	void ServerGiveAbility(bool bActivate, bool bLock);
+	void ServerGiveAbility(int32 Level);
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayAbility> AbilityToAdd; // To be set in the blueprint child of this class
