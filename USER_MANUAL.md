@@ -385,5 +385,14 @@ Manual steps:<br>
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
+##### Async Package Loading Gym
+Tests that async package loading works when activated.<br>
+  1. Modify `bAsyncLoadNewClassesOnEntityCheckout` to true in DefaultSpatialGDKSettings.ini
+  1. Boot the editor and load the "AsyncPackageLoadingGym"
+  1. Start the gym and note that the in-world message says "Test waiting for success..."
+  1. Launch an additional client via the `LaunchClient.bat`
+  1. Note that the in-world message now says "Test passed!"
+  1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
+
 -----
 2019-11-15: Page added with editorial review
