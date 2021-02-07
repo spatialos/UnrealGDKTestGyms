@@ -13,7 +13,7 @@ void AAsyncActorSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FSoftClassPath SoftClassPath(TEXT("/Game/Actors/AsyncActor.AsyncActor_C"));
+	FSoftClassPath SoftClassPath(TEXT("/Game/AsyncPackageLoadingTest/AsyncActor.AsyncActor_C"));
 	UClass* Class = SoftClassPath.ResolveClass();
 
 	if (HasAuthority())
@@ -31,7 +31,12 @@ void AAsyncActorSpawner::BeginPlay()
 	{
 		if (Class == nullptr)
 		{
-			UE_LOG(LogTemp, Display, TEXT("Async Test: Worker does not have class loaded, test valid"));
+			UE_LOG(LogTemp, Display, TEXT("Async Test: Worker does not have class loaded, test valid for this worker"));
+			bClientTestCorrectSetup = true;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Display, TEXT("Async Test: Worker has class loaded, test not valid for this worker"));
 		}
 	}
 }
