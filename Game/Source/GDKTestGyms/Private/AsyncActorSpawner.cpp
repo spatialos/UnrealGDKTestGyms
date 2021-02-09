@@ -23,7 +23,7 @@ void AAsyncActorSpawner::BeginPlay()
 			Class = SoftClassPath.TryLoadClass<UObject>();
 		}
 
-		UE_LOG(LogTemp, Display, TEXT("Async Test: Auth server spawning async actor"));
+		UE_LOG(LogTemp, Log, TEXT("Async Test: Auth server spawning async actor"));
 
 		GetWorld()->SpawnActor(Class);
 	}
@@ -31,12 +31,12 @@ void AAsyncActorSpawner::BeginPlay()
 	{
 		if (Class == nullptr)
 		{
-			UE_LOG(LogTemp, Display, TEXT("Async Test: Worker does not have class loaded, test valid for this worker"));
+			UE_LOG(LogTemp, Log, TEXT("Async Test: Worker does not have class loaded, test valid for this worker"));
 			bClientTestCorrectSetup = true;
 		}
 		else
 		{
-			UE_LOG(LogTemp, Display, TEXT("Async Test: Worker has class loaded, test not valid for this worker"));
+			UE_LOG(LogTemp, Log, TEXT("Async Test: Worker has class loaded, test not valid for this worker"));
 		}
 	}
 }

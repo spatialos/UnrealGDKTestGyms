@@ -14,16 +14,18 @@ class GDKTESTGYMS_API AAsyncPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-	AAsyncPlayerController();
+		AAsyncPlayerController();
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
+
+	UFUNCTION()
+		void CheckTestPassed();
 
 	UFUNCTION(Server, Reliable)
-	void UpdateTestPassed(bool bInTestPassed);
+		void UpdateTestPassed(bool bInTestPassed);
 
 	UPROPERTY(BlueprintReadWrite)
-	bool bTestPassed = false;
+		bool bTestPassed = false;
 
-	bool bOutputTestFailure = true;
+	FTimerHandle TestCheckTimer;
 };

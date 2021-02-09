@@ -11,54 +11,60 @@
 
 AAsyncPlayerController::AAsyncPlayerController()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = true;
 }
 
 void AAsyncPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void AAsyncPlayerController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
 
 	if (GetWorld()->GetNetMode() == NM_Client)
 	{
-		// Check for three statuses on client before reporting successful test;
+		GetWorld()->GetTimerManager().SetTimer(TestCheckTimer, this, &AAsyncPlayerController::CheckTestPassed, 1.0f, false);
+	}
+}
+
+void AAsyncPlayerController::CheckTestPassed()
+{
+	// Check for three statuses on client before reporting successful test;
 		// 1. AsyncActorSpawner indicates that test setup was correct
 		// 2. SpatialGDKSettings::bAsyncLoadNewClassesOnEntityCheckout is true
 		// 3. An instance of AsyncActor exists in the world
-		bool bAsyncTestCorrectlySetup = false;
-		bool bAsyncLoad = GetDefault<USpatialGDKSettings>()->bAsyncLoadNewClassesOnEntityCheckout;
-		bool bAsyncActorExists = false;
+	bool bAsyncTestCorrectlySetup = false;
+	bool bAsyncLoad = GetDefault<USpatialGDKSettings>()->bAsyncLoadNewClassesOnEntityCheckout;
+	bool bAsyncActorExists = false;
 
-		for (TActorIterator<AAsyncActorSpawner> It(GetWorld()); It; ++It)
+	for (TActorIterator<AAsyncActorSpawner> It(GetWorld()); It; ++It)
+	{
+		AAsyncActorSpawner* AsyncActorSpawner = *It;
+		bAsyncTestCorrectlySetup = AsyncActorSpawner->bClientTestCorrectSetup;
+	}
+
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+		if (Actor->GetName().Contains(TEXT("AsyncActor_C")))
 		{
-			AAsyncActorSpawner* AsyncActorSpawner = *It;
-			bAsyncTestCorrectlySetup = AsyncActorSpawner->bClientTestCorrectSetup;
+			bAsyncActorExists = true;
+			break;
 		}
+	}
 
-		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	if (bAsyncTestCorrectlySetup && bAsyncLoad)
+	{
+		if (bAsyncActorExists)
 		{
-			AActor* Actor = *It;
-			if (Actor->GetName().Contains(TEXT("AsyncActor_C")))
-			{
-				bAsyncActorExists = true;
-				break;
-			}
-		}
-
-		if (bAsyncTestCorrectlySetup && bAsyncLoad && bAsyncActorExists)
-		{
+			UE_LOG(LogTemp, Log, TEXT("Test passed."));
 			UpdateTestPassed(true);
 		}
-		else if (bOutputTestFailure)
+		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Test invalid on this client - client correctly setup %d, async load on: %d, async actor exists: %d"), bAsyncTestCorrectlySetup, bAsyncLoad, bAsyncActorExists);
-			bOutputTestFailure = false;
+			UE_LOG(LogTemp, Log, TEXT("Test valid but actor not spawned yet, checking again in 1 second."));
+			GetWorld()->GetTimerManager().SetTimer(TestCheckTimer, this, &AAsyncPlayerController::CheckTestPassed, 1.0f, false);
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Test invalid on this client - client correctly setup %d, async load on: %d"), bAsyncTestCorrectlySetup, bAsyncLoad);
 	}
 }
 
