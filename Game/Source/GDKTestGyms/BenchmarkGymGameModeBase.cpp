@@ -399,7 +399,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (RequiredPlayerReportTimer.HasTimerGoneOff())
 	{
 		// We don't start reporting until RequiredPlayerReportTimer has gone off
-		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXAuthActorCount);
+		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetPlayerControllerCount());
 		RequiredPlayerReportTimer.SetTimer(1);
 	}
 
@@ -765,3 +765,19 @@ void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
 	}
 }
 #endif
+
+int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
+{
+	int32 Count = 0;
+	for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
+	{
+		if (APlayerController* PC = PCIt->Get())
+		{
+			if (PC->HasAuthority())
+			{
+				++Count;
+			}
+		}
+	}
+	return Count;
+}
