@@ -53,18 +53,18 @@ void AAsyncPlayerController::CheckTestPassed()
 	{
 		if (bAsyncActorExists)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Test passed."));
+			UE_LOG(LogTemp, Log, TEXT("Async Test: Test passed."));
 			UpdateTestPassed(true);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Log, TEXT("Test valid but actor not spawned yet, checking again in 1 second."));
+			UE_LOG(LogTemp, Log, TEXT("Async Test: Test valid but actor not spawned yet, checking again in 1 second."));
 			GetWorld()->GetTimerManager().SetTimer(TestCheckTimer, this, &AAsyncPlayerController::CheckTestPassed, 1.0f, false);
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Test invalid on this client - client correctly setup %d, async load on: %d"), bAsyncTestCorrectlySetup, bAsyncLoad);
+		UE_LOG(LogTemp, Log, TEXT("Async Test: Test invalid on this client - client correctly setup %d, async load on: %d"), bAsyncTestCorrectlySetup, bAsyncLoad);
 	}
 }
 
