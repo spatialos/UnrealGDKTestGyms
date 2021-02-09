@@ -35,7 +35,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	 
 	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(TEXT("/Game/Benchmark/DropCube_BP"));
 	DropCubeClass = DropCubeClassFinder.Class;
 }
