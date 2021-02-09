@@ -325,12 +325,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * Press `F9` again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
 #### SpatialEventTracingTests
-* These test whether key trace events have the appropriate cause events.
-* They ensure that the following settings are added to DefaultSpatialGDKSettings.ini:
-  * bEventTracingEnabled=True
-  * MaxEventTracingFileSizeBytes=104857600
-
-These tests can only be run automatically. To run them:
+These test whether key trace events have the appropriate cause events. They can **only** be run automatically. To run them:
    * In the Unreal Editor, navigate to Project Settings > SpatialOS GDK for Unreal - Editor Settings > Launch > Command line flags for local launch.
    * Click the + button.
    * Paste "--event-tracing-enabled=true" in the field that appears. Do not include the quote marks.
@@ -354,12 +349,21 @@ These tests can only be run automatically. To run them:
   * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
-* Tests the client travel from one cloud deployment to itself.
+* Tests that clients can travel from one cloud deployment to the same cloud deployment.
 * How to test:
-  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
-  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
-  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
-  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
+  * Navigate to `Edit > Project Settings > Project > Maps & Modes > Default Maps`.
+  * If you can't see the `Server Default Map`, click `▽` to reveal more options.
+  * Set `Server Default Map` to `ClientTravel_Gym`.
+  * Select Cloud on the GDK toolbar.
+  ** Enter your project name, and make up and enter an assembly name and a deployment name.
+  ** Ensure that Automatically Generate Launch Configuration is checked.
+  ** Ensure that Add simulated players is not checked.
+  ** Ensure that every option in the Assembly Configuration section is checked.
+  * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
+  * Click the Start deployment button.
+  * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
+  * In the clinet, use the mouse and WASD to move the camera.
+  * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
 * Tests server's without authoritive player controllers still replicate relevant actors
@@ -368,6 +372,18 @@ These tests can only be run automatically. To run them:
     * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
   * Play with 1 client connect.
   * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+  
+##### Snapshot reloading test
+Tests that snapshot reloading functions in local deloyments.<br>
+**Note:** This test uses the `HandoverGym` as it saves.<br>
+Manual steps:<br>
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Play In Editor Settings > Delete dynamically spawned entities`. Uncheck this option.
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Auto-stop local deployment`. Select `Never`.
+  1. In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
+  1. In the Unreal Editor Toolbar, click Play to launch one client.
+  1. Stop the gym and note that the deployment is still running, as indicated by the state of the Stop Deployment button in the GDK Toolbar.
+  1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
+  1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
 -----
 2019-11-15: Page added with editorial review
