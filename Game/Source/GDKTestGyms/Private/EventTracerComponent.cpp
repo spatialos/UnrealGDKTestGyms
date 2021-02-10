@@ -12,7 +12,7 @@ UEventTracerComponent::UEventTracerComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UEventTracerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
+void UEventTracerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
