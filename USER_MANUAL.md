@@ -386,7 +386,7 @@ Manual steps:<br>
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
 ##### Ability Giving Gym
-Tests that ability specs given on different servers can be activated correctly via their handle.
+Tests that ability specs given to an AbilitySystemComponent on two different servers can be activated correctly via their handles.
 * How to test:
   * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * Play with one client.

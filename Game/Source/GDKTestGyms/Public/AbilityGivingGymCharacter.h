@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #pragma once
 
@@ -8,7 +8,7 @@
 #include "AbilityGivingGymCharacter.generated.h"
 
 /**
- *
+ * Character with keybindings on Q and E, which give an ability at level 1 or 2 respectively to the character on the server.
  */
 UCLASS()
 class GDKTESTGYMS_API AAbilityGivingGymCharacter : public AGasCharacter
@@ -18,7 +18,7 @@ class GDKTESTGYMS_API AAbilityGivingGymCharacter : public AGasCharacter
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void GiveAbilityOne() { ServerGiveAbility(1); }
-    void GiveAbilityTwo() { ServerGiveAbility(2); }
+	void GiveAbilityTwo() { ServerGiveAbility(2); }
 
 	UFUNCTION(Server, Reliable)
 	void ServerGiveAbility(int32 Level);
