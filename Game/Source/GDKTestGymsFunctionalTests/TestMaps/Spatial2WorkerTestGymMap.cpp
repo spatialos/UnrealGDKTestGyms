@@ -15,9 +15,10 @@ void USpatial2WorkerTestGymMap::CreateCustomContentForMap()
 {
 	ULevel* CurrentLevel = World->GetCurrentLevel();
 
-	AddActorToLevel<APredictedGameplayCuesTest>(CurrentLevel, FTransform::Identity);
+	//AddActorToLevel<APredictedGameplayCuesTest>(CurrentLevel, FTransform::Identity); //Disabled for now - TODO: UNR-4833
 	AddActorToLevel<ACrossServerAbilityActivationTest>(CurrentLevel, FTransform::Identity);
 
 	ASpatialWorldSettings* WorldSettings = CastChecked<ASpatialWorldSettings>(World->GetWorldSettings());
+	WorldSettings->bEnableDebugInterface = true; // ACrossServerAbilityActivationTest requires the debug interface
 	WorldSettings->SetMultiWorkerSettingsClass(UTest1x2WorkerSettings::StaticClass());
 }
