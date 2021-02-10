@@ -390,20 +390,20 @@ Tests that ability specs given on different servers can be activated correctly v
 * How to test:
   * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * Play with one client.
-  * On the server that you spawned on, press Q.
+  * In the client, with your character still on the server that it spawned on, press `Q` on your keyboard.
     In the spatial output log, you should see the following two lines:
     > Giving and running ability with level 1
     > 
     > Ability activated on AbilityGivingGymCharacter_BP with Level 1
     
     Importantly, the level number stated in the two lines should match. 
-  * Move the character to the other server, press E.
+  * Move the character to the other server and then press `E` on your keyboard.
     In the spatial output log, you should see the following two lines:
     > Giving and running ability with level 2
     >
     > Ability activated on AbilityGivingGymCharacter_BP with Level 2
     
-    Again, the two level numbers should match.
+    Again, the two level numbers should match. If they do, the test has passed.
   
 -----
 2019-11-15: Page added with editorial review
