@@ -7,6 +7,8 @@
 #include "GasCharacter.h"
 #include "AbilityGivingGymCharacter.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogAbilityGivingCharacter, Log, All);
+
 /**
  * Character with keybindings on Q and E, which give an ability at level 1 or 2 respectively to the character on the server.
  */
