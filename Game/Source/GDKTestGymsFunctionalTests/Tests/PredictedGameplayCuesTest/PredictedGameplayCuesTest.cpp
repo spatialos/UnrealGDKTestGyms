@@ -34,7 +34,6 @@ APredictedGameplayCuesTest::APredictedGameplayCuesTest()
 	Author = TEXT("Tilman Schmidt");
 	Description =
 		TEXT("Tests that gameplay cue events correctly trigger on all clients when triggered by a predicted gameplay effect application.");
-	SetNumRequiredClients(2);
 	DuplicateActivationCheckWaitTime = 2.0f;
 
 	TestPawn = nullptr;
