@@ -385,6 +385,26 @@ Manual steps:<br>
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
+##### Ability Giving Gym
+Tests that ability specs given to an AbilitySystemComponent on two different servers can be activated correctly via their handles.
+* How to test:
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
+  * Play with one client.
+  * In the client, with your character still on the server that it spawned on, press `Q` on your keyboard.
+    In the spatial output log, you should see the following two lines:
+    > Giving and running ability with level 1
+    > 
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 1
+    
+    Importantly, the level number stated in the two lines should match. 
+  * Move the character to the other server and then press `E` on your keyboard.
+    In the spatial output log, you should see the following two lines:
+    > Giving and running ability with level 2
+    >
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 2
+    
+    Again, the two level numbers should match. If they do, the test has passed.
+
 ##### Async Package Loading Gym
 Tests that async package loading works when activated. As this relies on not having a specific class loaded in memory when starting the test, it's difficult to validate this entirely within the editor, so we rely on an launching an external client for this test. The externally launched client will validate local state before sending a "passed" message to the server. This check is done on `AAsyncPlayerController` and validates;
   1. Async loading config is enabled
