@@ -385,5 +385,38 @@ Manual steps:<br>
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
   1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
 
+##### Ability Giving Gym
+Tests that ability specs given to an AbilitySystemComponent on two different servers can be activated correctly via their handles.
+* How to test:
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
+  * Play with one client.
+  * In the client, with your character still on the server that it spawned on, press `Q` on your keyboard.
+    In the spatial output log, you should see the following two lines:
+    > Giving and running ability with level 1
+    > 
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 1
+    
+    Importantly, the level number stated in the two lines should match. 
+  * Move the character to the other server and then press `E` on your keyboard.
+    In the spatial output log, you should see the following two lines:
+    > Giving and running ability with level 2
+    >
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 2
+    
+    Again, the two level numbers should match. If they do, the test has passed.
+
+##### Async Package Loading Gym
+Tests that async package loading works when activated. As this relies on not having a specific class loaded in memory when starting the test, it's difficult to validate this entirely within the editor, so we rely on an launching an external client for this test. The externally launched client will validate local state before sending a "passed" message to the server. This check is done on `AAsyncPlayerController` and validates;
+  1. Async loading config is enabled
+  1. That the client doesn't have loaded into memory the class we intend to async load
+  1. That the client eventually loads an actor instance of said class
+Manual steps:
+  1. Modify `bAsyncLoadNewClassesOnEntityCheckout` to true in DefaultSpatialGDKSettings.ini
+  1. Boot the editor and load the "AsyncPackageLoadingGym"
+  1. Start the gym and note that the in-world message says "Test waiting for success..."
+  1. Launch an additional client via the `LaunchClient.bat`
+  1. Note that the in-world message now says "Test passed!"
+  1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
+
 -----
 2019-11-15: Page added with editorial review
