@@ -24,6 +24,7 @@ ACrossServerAbilityActivationTest::ACrossServerAbilityActivationTest()
 {
 	Author = TEXT("Tilman Schmidt");
 	Description = TEXT("Tests that gameplay abilities can be activated across server boundaries.");
+	SetNumRequiredClients(1);
 	DuplicateActivationCheckWaitTime = 2.0f;
 
 	TargetActor = nullptr;
