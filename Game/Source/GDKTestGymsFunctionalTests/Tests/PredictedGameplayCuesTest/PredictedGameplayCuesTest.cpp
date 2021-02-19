@@ -11,6 +11,12 @@
 
 /**
  * Tests that gameplay cue events correctly trigger on all clients when triggered by a predicted gameplay effect application.
+ * - Hosting project requirements:
+ *	- GameplayCue.Test.Add and GameplayCue.Test.Execute need to exist in the list of gameplay tags in DefaultGameplayTags.ini,
+ *	  otherwise the FGameplayTag::RequestGameplayTag calls in GC_SignalCueActivation fail when the test is loaded.
+ *	- "/Game" needs to be added to GameplayCueNotifyPaths via DefaultGame.ini.
+ *	  This avoids a warning being emitted from UAbilitySystemGlobals::GetGameplayCueManager the first time this test is run in a new editor instance.
+ *	  This test does not require this path itself, however it matches the engine-provided default, and silences the warning.
  * - Setup:
  *	- One server, two clients.
  *	- The server spawns the test pawn, which has an Ability System Component (ASC) and the ability to be activated already granted to it.
@@ -46,14 +52,19 @@ void APredictedGameplayCuesTest::PrepareTest()
 {
 	Super::PrepareTest();
 
-	AddStep(TEXT("Register gameplay cue"), FWorkerDefinition::AllClients, nullptr, [this]() {
-		// A code-only gameplay cue will not get automatically picked up by the gameplay cue manager
-		// (by default it searches the game content folder for assets).
+	AddStep(TEXT("Register gameplay cue"), FWorkerDefinition::Client(1), nullptr, [this]() {
+		// A code-only gameplay cue appears to not get automatically picked up by the gameplay cue manager,
+		// even if the path to the cue is supplied via GameplayCueNotifyPaths.
 		// If a cue is not registered with the manager, cue events will never be routed to it.
 		// That means we have to register the cue manually here on each client.
-		FSoftObjectPath CuePath(TEXT("/Script/GDKTestGymsFunctionalTests.GC_SignalCueActivation"));
-		FGameplayCueReferencePair ExecuteCueRef(UGC_SignalCueActivation::GetExecuteTag(), CuePath);
-		FGameplayCueReferencePair AddCueRef(UGC_SignalCueActivation::GetAddTag(), CuePath);
+
+		// To be correct, this step should really be run on all clients. However, when run in-editor with single process,
+		// the GameplayCueManager singleton access the same instance in memory from both clients, and you can get warnings
+		// about duplicate registrations. Since it's accessing the global singleton, running this on only one client is fine,
+		// but this will break if the test ever runs with single-process turned off.
+		const FSoftObjectPath CuePath(TEXT("/Script/GDKTestGymsFunctionalTests.GC_SignalCueActivation"));
+		const FGameplayCueReferencePair ExecuteCueRef(UGC_SignalCueActivation::GetExecuteTag(), CuePath);
+		const FGameplayCueReferencePair AddCueRef(UGC_SignalCueActivation::GetAddTag(), CuePath);
 		UAbilitySystemGlobals::Get().GetGameplayCueManager()->GetRuntimeCueSet()->AddCues({ ExecuteCueRef, AddCueRef });
 
 		FinishStep();
