@@ -326,14 +326,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 
 #### SpatialEventTracingTests
 These test whether key trace events have the appropriate cause events. They can **only** be run automatically. To run them:
-   * In the Unreal Editor, navigate to Project Settings > SpatialOS GDK for Unreal - Editor Settings > Launch > Command line flags for local launch.
-   * Click the + button.
-   * Paste "--event-tracing-enabled=true" in the field that appears. Do not include the quote marks.
-   * Navigate to Project Settings > SpatialOS GDK for Unreal - Runtime Settings > Event Tracing.
-   * Check the box labeled "Event Tracing Enabled".
-   * Follow [these steps](#automated-test-gyms) to actually execute the tests.
-   * When you're finished running the tests, turn Event Tracing off and remove the command line flag that you addedby clicking the ▽ icon next to it, and selecting Delete.
-   * If you don't disable Event Tracing and remove the command line flag, some other tests will fail.
+* Follow [these steps](#automated-test-gyms) to actually execute the tests.
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
