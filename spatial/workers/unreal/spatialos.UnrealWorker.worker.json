@@ -68,8 +68,6 @@
         "-traceMetadata",
         "${IMPROBABLE_DEPLOYMENT_NAME}",
         "-linkProtocol",
-        "-LLM",
-        "-LLMCSV",
         "Tcp",
         "-NoVerifyGC"
       ]
