@@ -22,6 +22,6 @@ public:
 
 	virtual void HandleGameplayCue(AActor* MyTarget, EGameplayCueEvent::Type EventType, const FGameplayCueParameters& Parameters) override;
 
-	static FGameplayTag GetAddTag() { return FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Add")); }
-	static FGameplayTag GetExecuteTag() { return FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Execute")); }
+	static FGameplayTag GetAddTag() { return FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Test.Add")); }
+	static FGameplayTag GetExecuteTag() { return FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Test.Execute")); }
 };
