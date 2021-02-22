@@ -15,7 +15,6 @@ void USpatial2WorkerTestGymMap::CreateCustomContentForMap()
 {
 	ULevel* CurrentLevel = World->GetCurrentLevel();
 
-	//AddActorToLevel<APredictedGameplayCuesTest>(CurrentLevel, FTransform::Identity); //Disabled for now - TODO: UNR-4833
 	AddActorToLevel<ACrossServerAbilityActivationTest>(CurrentLevel, FTransform::Identity);
 
 	ASpatialWorldSettings* WorldSettings = CastChecked<ASpatialWorldSettings>(World->GetWorldSettings());
