@@ -2,6 +2,7 @@
 
 #include "Spatial2WorkerTestGymMap.h"
 #include "SpatialGDK/Public/EngineClasses/SpatialWorldSettings.h"
+#include "SpatialGDKFunctionalTests/Public/TestWorkerSettings.h"
 #include "GDKTestGymsFunctionalTests/Tests/PredictedGameplayCuesTest/PredictedGameplayCuesTest.h"
 #include "GDKTestGymsFunctionalTests/Tests/CrossServerAbilityActivationTest/CrossServerAbilityActivationTest.h"
 #include "TestWorkerSettings.h"
