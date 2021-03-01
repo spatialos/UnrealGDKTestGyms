@@ -31,7 +31,8 @@ void AGASTestPawnBase::GrantInitialAbilitiesIfNeeded()
 	{
 		for (const TSubclassOf<UGameplayAbility>& Ability : GetInitialGrantedAbilities())
 		{
-			FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability));
+			FGameplayAbilitySpec Spec = FGameplayAbilitySpec(Ability);
+			FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(Spec);
 		}
 
 		bHasGrantedAbilities = true;
