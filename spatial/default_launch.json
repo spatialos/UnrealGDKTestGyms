@@ -48,7 +48,21 @@
       "worker_type": "UnrealClient",
       "permissions": [
         {
-          "all": {}
+          "entity_creation": {
+            "allow": false
+          },
+          "entity_deletion": {
+            "allow": false
+          },
+          "entity_query": {
+            "allow": true,
+            "components": [
+              "*"
+            ]
+          },
+          "system_entity_command": {
+            "allow": false
+          }
         }
       ]
     }
