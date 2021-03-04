@@ -326,7 +326,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 
 #### SpatialEventTracingTests
 These test whether key trace events have the appropriate cause events. They can **only** be run automatically. To run them:
-   * Follow [these steps](#automated-test-gyms) to actually execute the tests.
+* Follow [these steps](#automated-test-gyms) to actually execute the tests.
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
@@ -397,7 +397,7 @@ Tests that ability specs given to an AbilitySystemComponent on two different ser
     > Ability activated on AbilityGivingGymCharacter_BP with Level 2
     
     Again, the two level numbers should match. If they do, the test has passed.
-	
+
 ##### Async Package Loading Gym
 Tests that async package loading works when activated. As this relies on not having a specific class loaded in memory when starting the test, it's difficult to validate this entirely within the editor, so we rely on an launching an external client for this test. The externally launched client will validate local state before sending a "passed" message to the server. This check is done on `AAsyncPlayerController` and validates;
   1. Async loading config is enabled
@@ -410,6 +410,6 @@ Manual steps:
   1. Launch an additional client via the `LaunchClient.bat`
   1. Note that the in-world message now says "Test passed!"
   1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
-  
+
 -----
 2019-11-15: Page added with editorial review
