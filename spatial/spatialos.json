@@ -1,11 +1,11 @@
 {
-  "name": "unreal_gdk_starter_project",
-  "project_version": "0.0.1",
-  "sdk_version": "15.0.0",
-  "dependencies": [
-    {
-      "name": "standard_library",
-      "version": "15.0.0"
-    }
-  ]
+	"name": "china_product_test",
+	"project_version": "0.0.1",
+	"sdk_version": "15.0.0",
+	"dependencies": [
+		{
+			"name": "standard_library",
+			"version": "15.0.0"
+		}
+	]
 }
