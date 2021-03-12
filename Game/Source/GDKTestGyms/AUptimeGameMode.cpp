@@ -19,6 +19,7 @@
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
@@ -26,10 +27,18 @@ namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
 	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
+	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
+	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
+	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
+	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
 	: bInitializedCustomSpawnParameters(false)
+	, SpawnCols(0)
+	, SpawnRows(0)
+	, ZoneWidth(0.0f)
+	, ZoneHeight(0.0f)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -57,7 +66,7 @@ void AUptimeGameMode::GenerateTestScenarioLocations()
 	{
 		FRandomStream NPCStream;
 		NPCStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
-		for (int i = 0; i < TotalNPCs; i++)
+		for (int i = 0; i < TotalNPCs; ++i)
 		{
 			FVector PointA = NPCStream.VRand() * RoamRadius;
 			FVector PointB = NPCStream.VRand() * RoamRadius;
@@ -170,6 +179,22 @@ void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FStr
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
 	}
+	else if (FlagName == UptimeSpawnColsWorkerFlag)
+	{
+		SpawnCols = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeSpawnRowsWorkerFlag)
+	{
+		SpawnRows = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeWorldWidthWorkerFlag)
+	{
+		ZoneWidth = FCString::Atof(*FlagValue);
+	}
+	else if (FlagName == UptimeWorldHeightWorkerFlag)
+	{
+		ZoneHeight = FCString::Atof(*FlagValue);
+	}
 }
 
 void AUptimeGameMode::BuildExpectedActorCounts()
@@ -220,57 +245,61 @@ void AUptimeGameMode::GenerateCenterBoundaries(float FixedPos, TArray<FVector2D>
 	Boundaries[BoundariesIndex++] = FVector2D(ContraryFixedPos, FixedPos);
 }
 
-void AUptimeGameMode::GenerateAllCenterBoundaries(int32 SpawnZones, float Starting, float DistBetweenZones, TArray<FVector2D>& Boundaries, int32& BoundariesIndex)
+void AUptimeGameMode::GenerateAllCenterBoundaries(float StartingX, float StartingY, float DistBetweenRows, float DistBetweenCols, TArray<FVector2D>& Boundaries)
 {
-	auto TempStartingX = Starting;
-	for (auto i = 0; i < SpawnZones; ++i)
+	for (auto i = 0; i < SpawnCols; ++i)
 	{
-		auto TempStartingY = Starting;
-		for (auto j = 0; j < SpawnZones; ++j)
+		auto TempStartingY = StartingY;
+		for (auto j = 0; j < SpawnRows; ++j)
 		{
-			Boundaries.Add(FVector2D(TempStartingX, TempStartingY));
-			++BoundariesIndex;
-			TempStartingY += DistBetweenZones;
+			Boundaries.Add(FVector2D(StartingX, TempStartingY));
+			TempStartingY += DistBetweenRows;
 		}
-		TempStartingX += DistBetweenZones;
+		StartingX += DistBetweenCols;
 	}
 }
 
 void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
-	//spawn zones are fixed as 9,so the row and col changed to 3*3 
-	const int32 SpawnZones = 3;
-	// We use a fixed size 2km
-	const float ZoneWidthAndLength = 200000.0f / SpawnZones;
+	const int DistBetweenClusterCenters = 400; // 400 meters, in Unreal units.
+
+	//spawn zones are flexible as rows*cols now
+	const float DistBetweenRows = ZoneHeight / SpawnRows;
+	const float DistBetweenCols = ZoneWidth / SpawnCols;
 
 	TArray<FVector2D> Boundaries;
-	int32 BoudariesIndex = 0;
-	const float Starting = -200000.0f / 3;
-	GenerateAllCenterBoundaries(SpawnZones, Starting, ZoneWidthAndLength, Boundaries, BoudariesIndex);
-	
-	const float Z = 300.0f;
+	int32 BoundariesNum = SpawnCols * SpawnRows;
+	const float StartingX = -((SpawnCols - 1) * ZoneWidth / SpawnCols / 2);
+	const float StartingY = -((SpawnRows - 1) * ZoneHeight / SpawnRows / 2);
+	GenerateAllCenterBoundaries(StartingX, StartingY, DistBetweenRows, DistBetweenCols, Boundaries);
 
-	UWorld* World = GetWorld();
-	if (World == nullptr)
+	//int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(BoundariesNum));
+	//for (int w = 0; w < BoundariesNum; ++w)
+	//{
+	//	int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
+	//	NumClusters -= ClusterCount;
+	//	int NumRows, NumCols, MinRelativeX, MinRelativeY;
+	//	GenerateGridSettings(DistBetweenClusterCenters, ClusterCount, NumRows, NumCols, MinRelativeX, MinRelativeY);
+
+	//	//Adjust the lefthand side of the grid to so that the grid is centered in the zone
+	//	MinRelativeX = FMath::RoundToInt(MinRelativeX + Boundaries[w].X + (w * ZoneWidth) + (ZoneWidth / 2.0f));
+	//	MinRelativeY = FMath::RoundToInt(MinRelativeY + Boundaries[w].Y + (w * ZoneHeight) + (ZoneHeight / 2.0f));
+
+	//	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
+	//	for (int i = 0; i < ClusterCount; i++)
+	//	{
+	//		const int Row = i % NumRows;
+	//		const int Col = i / NumRows;
+
+	//		const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
+	//		const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+	//		//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+	//		GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+	//	}
+	//}
+	while (--BoundariesNum >= 0)
 	{
-		UE_LOG(LogUptimeGymGameMode, Error, TEXT("Cannot spawn spawnpoints, world is null"));
-		return; 
-	}
-
-	while (--BoudariesIndex >= 0)
-	{
-		float X = Boundaries[BoudariesIndex].X;
-		float Y = Boundaries[BoudariesIndex].Y;
-
-		FActorSpawnParameters SpawnInfo{};
-		SpawnInfo.Owner = this;
-		SpawnInfo.Instigator = NULL;
-		SpawnInfo.bDeferConstruction = false;
-		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-		const FVector SpawnLocation = FVector(X, Y, Z);
-		UE_LOG(LogUptimeGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
-		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
+		GenerateSpawnPoints(Boundaries[BoundariesNum].Y, Boundaries[BoundariesNum].X, PlayerDensity);
 	}
 }
 
@@ -399,4 +428,26 @@ AActor* AUptimeGameMode::FindPlayerStart_Implementation(AController* Player, con
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+TArray<int32> AUptimeGameMode::MakeArrayData(int32 TestSize)
+{
+	TArray<int32> TestData;
+	while (--TestSize >= 0)
+	{
+		srand(static_cast<unsigned int>(TestSize));
+		TestData.Add(rand());
+	}
+	return TestData;
+}
+
+bool AUptimeGameMode::GenerateWorld(UWorld*& World)
+{
+	World = GetWorld();
+	if (World == nullptr)
+	{
+		UE_LOG(LogUptimeGymGameMode, Error, TEXT("Cannot spawn spawnpoints, world is null"));
+		return false;
+	}
+	return true;
 }
