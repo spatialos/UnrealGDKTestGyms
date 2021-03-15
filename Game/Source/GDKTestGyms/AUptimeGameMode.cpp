@@ -19,7 +19,6 @@
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
-#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
@@ -273,30 +272,6 @@ void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 	const float StartingY = -((SpawnRows - 1) * ZoneHeight / SpawnRows / 2);
 	GenerateAllCenterBoundaries(StartingX, StartingY, DistBetweenRows, DistBetweenCols, Boundaries);
 
-	//int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(BoundariesNum));
-	//for (int w = 0; w < BoundariesNum; ++w)
-	//{
-	//	int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
-	//	NumClusters -= ClusterCount;
-	//	int NumRows, NumCols, MinRelativeX, MinRelativeY;
-	//	GenerateGridSettings(DistBetweenClusterCenters, ClusterCount, NumRows, NumCols, MinRelativeX, MinRelativeY);
-
-	//	//Adjust the lefthand side of the grid to so that the grid is centered in the zone
-	//	MinRelativeX = FMath::RoundToInt(MinRelativeX + Boundaries[w].X + (w * ZoneWidth) + (ZoneWidth / 2.0f));
-	//	MinRelativeY = FMath::RoundToInt(MinRelativeY + Boundaries[w].Y + (w * ZoneHeight) + (ZoneHeight / 2.0f));
-
-	//	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
-	//	for (int i = 0; i < ClusterCount; i++)
-	//	{
-	//		const int Row = i % NumRows;
-	//		const int Col = i / NumRows;
-
-	//		const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
-	//		const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
-	//		//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
-	//		GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
-	//	}
-	//}
 	while (--BoundariesNum >= 0)
 	{
 		GenerateSpawnPoints(Boundaries[BoundariesNum].Y, Boundaries[BoundariesNum].X, PlayerDensity);
@@ -428,26 +403,4 @@ AActor* AUptimeGameMode::FindPlayerStart_Implementation(AController* Player, con
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
-}
-
-TArray<int32> AUptimeGameMode::MakeArrayData(int32 TestSize)
-{
-	TArray<int32> TestData;
-	while (--TestSize >= 0)
-	{
-		srand(static_cast<unsigned int>(TestSize));
-		TestData.Add(rand());
-	}
-	return TestData;
-}
-
-bool AUptimeGameMode::GenerateWorld(UWorld*& World)
-{
-	World = GetWorld();
-	if (World == nullptr)
-	{
-		UE_LOG(LogUptimeGymGameMode, Error, TEXT("Cannot spawn spawnpoints, world is null"));
-		return false;
-	}
-	return true;
 }

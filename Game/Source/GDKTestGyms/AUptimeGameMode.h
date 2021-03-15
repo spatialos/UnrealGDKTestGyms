@@ -23,9 +23,7 @@ public:
 	AUptimeGameMode();
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 
-
 protected:
-
 	virtual void BuildExpectedActorCounts() override;
 	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
 
@@ -38,12 +36,6 @@ private:
 
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ParsePassedValues() override;
-
-	bool GenerateWorld(UWorld*& World);
-
-	// Test RPCs
-	UFUNCTION(BlueprintCallable)
-    TArray<int32> MakeArrayData(int32 TestSize);
 
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
