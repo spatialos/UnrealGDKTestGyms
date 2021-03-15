@@ -24,7 +24,6 @@ public:
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 
 protected:
-
 	virtual void BuildExpectedActorCounts() override;
 	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
 
@@ -42,6 +41,12 @@ private:
 	bool bInitializedCustomSpawnParameters;
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
+	int32 SpawnCols;
+	int32 SpawnRows;
+
+	float ZoneWidth;
+	float ZoneHeight;
+
 	int32 PlayerDensity;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
@@ -67,5 +72,5 @@ private:
 	void GenerateRowBoundaries(float StartingX, float StartingY, float HalfDistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoudariesIndex);
 	void GenerateColBoundaries(float StartingX, float StartingY, float DistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoundariesIndex);
 	void GenerateCenterBoundaries(float FixedPos, TArray<FVector2D>& Boundaries, int& BoundariesIndex);
-	void GenerateAllCenterBoundaries(int32 SpawnZones, float Starting, float DistBetweenZones, TArray<FVector2D>& Boundaries, int32& BoundariesIndex);
+	void GenerateAllCenterBoundaries(float StartingX, float StartingY, float DistBetweenRows, float DistBetweenCols, TArray<FVector2D>& Boundaries);
 };
