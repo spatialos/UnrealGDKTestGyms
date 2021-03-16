@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "",
+	"EngineAssociation": "{4923688C-4415-A3D8-2EB1-88BF4BC444C9}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -30,6 +30,10 @@
 		{
 			"Name": "SteamVR",
 			"Enabled": false
+		},
+		{
+			"Name": "SpatialGDK",
+			"Enabled": true
 		}
 	]
 }
