@@ -15,6 +15,7 @@
 #include "UserExperienceComponent.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
