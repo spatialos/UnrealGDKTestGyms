@@ -39,14 +39,17 @@ private:
 
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
-	// Number of players per cluster. Players only see other players in the same cluster.
-	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
+
+	// Number of Spawn Cols and Row need to configuration through worker flags
 	int32 SpawnCols;
 	int32 SpawnRows;
 
+	// Width and Height of Spawn Zones
 	float ZoneWidth;
 	float ZoneHeight;
 
+	// Number of players per cluster. Players only see other players in the same cluster.
+	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;

@@ -9,23 +9,18 @@
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "EngineUtils.h"
-#include "GDKTestGymsGameInstance.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
-#include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
-#include "NFRConstants.h"
-#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
-	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
@@ -34,10 +29,10 @@ namespace
 
 AUptimeGameMode::AUptimeGameMode()
 	: bInitializedCustomSpawnParameters(false)
-	, SpawnCols(0)
-	, SpawnRows(0)
-	, ZoneWidth(0.0f)
-	, ZoneHeight(0.0f)
+	, SpawnCols(3)
+	, SpawnRows(3)
+	, ZoneWidth(200000.0f)
+	, ZoneHeight(200000.0f)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -260,8 +255,6 @@ void AUptimeGameMode::GenerateAllCenterBoundaries(float StartingX, float Startin
 
 void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
-	const int DistBetweenClusterCenters = 400; // 400 meters, in Unreal units.
-
 	//spawn zones are flexible as rows*cols now
 	const float DistBetweenRows = ZoneHeight / SpawnRows;
 	const float DistBetweenCols = ZoneWidth / SpawnCols;
