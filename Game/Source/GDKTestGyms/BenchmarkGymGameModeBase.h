@@ -73,6 +73,9 @@ protected:
 
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
+
+	UFUNCTION(Exec)
+	void MemReportOnServer();
 private:
 	// Test scenarios
 
@@ -125,6 +128,10 @@ private:
 	FMetricTimer StatStopFileTimer;
 #endif
 
+	//For MemReport profile
+	FString MemReportIntervalString;
+	FMetricTimer MemReportIntervalTimer;
+
 	virtual void BeginPlay() override;
 
 	void TryInitialiseExpectedActorCounts();
@@ -154,6 +161,7 @@ private:
 #if	STATS
 	void SetStatTimer(const FString& TimeString);
 #endif
+	void SetMemReportIntervalTimer(const FString& TimeString);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

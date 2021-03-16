@@ -56,6 +56,9 @@ namespace
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
 #endif
+	const FString MemReportFlag = TEXT("mem_report");
+	const FString MemRemportIntervalKey = TEXT("-Interval=");
+
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
 } // anonymous namespace
@@ -98,6 +101,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, StatStartFileTimer(60 * 60 * 24)
 	, StatStopFileTimer(60)
 #endif
+	,MemReportIntervalTimer(60 * 60 * 24)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -113,6 +117,15 @@ void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 
 	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalNPCs);
 }
+
+void ABenchmarkGymGameModeBase::MemReportOnServer()
+{
+	if (HasAuthority())
+	{
+		GEngine->Exec(nullptr, TEXT("memreport"));
+	}
+}
+
 
 void ABenchmarkGymGameModeBase::BeginPlay()
 {
@@ -263,14 +276,22 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 			}
 		}
 		GEngine->Exec(GetWorld(), *Cmd);
+		//GEngine->Exec(GetWorld(), TEXT("memreport"));
+		//GEngine->Exec(GetWorld(), TEXT("memreport -full"));
 		StatStartFileTimer.SetTimer(999999);
 	}
 	if (StatStopFileTimer.HasTimerGoneOff())
 	{
 		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
 		StatStopFileTimer.SetTimer(999999);
+		//GEngine->Exec(GetWorld(), TEXT("memreport"));
 	}
 #endif
+	if (HasAuthority() && MemReportIntervalTimer.HasTimerGoneOff())
+	{
+		GEngine->Exec(nullptr, TEXT("memreport -full"));
+		SetMemReportIntervalTimer(MemReportIntervalString);
+	}
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -502,6 +523,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
 		SetStatTimer(StatProfileString);
 #endif
+		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
+		SetMemReportIntervalTimer(MemReportIntervalString);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -565,6 +588,10 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					SetStatTimer(StatProfileString);
 				}
 #endif
+				if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag,MemReportIntervalString))
+				{
+					SetMemReportIntervalTimer(MemReportIntervalString);
+				}
 			}
 		}
 	}
@@ -617,6 +644,10 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 		SetStatTimer(FlagValue);
 	}
 #endif
+	else if (FlagName == MemReportFlag)
+	{
+		SetMemReportIntervalTimer(FlagValue);
+	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
@@ -765,6 +796,12 @@ void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
 	}
 }
 #endif
+
+void ABenchmarkGymGameModeBase::SetMemReportIntervalTimer(const FString& TimeString)
+{
+	MemReportIntervalTimer.SetTimer(FCString::Atoi(*TimeString));
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %s seconds"), *TimeString);
+}
 
 int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 {
