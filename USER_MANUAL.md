@@ -411,5 +411,17 @@ Manual steps:
   1. Note that the in-world message now says "Test passed!"
   1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
 
+##### Soft references Test Gym
+* Demonstrates that:
+  * Soft references are correctly replicated.
+  * Soft references that are serialized to an asset, and which reference assets that have not yet loaded on the client are correctly resolved using ther `CVar` `net.AllowAsyncLoading`.
+* Steps to run the manual version of the gym:
+ 1. Open `SoftReferenceTestGym.umap`
+ 1. Generate schema & snapshot.
+ 1. Navigate to: Editor Preferences->Level Editor->Play->Multiplayer Options.
+ Ensure `Run Under One Process` is not checked.
+ 1. Select `Play` on the Unreal toolbar.
+ 1. Watch as the cubes turn green in under 8 seconds.
+
 -----
 2019-11-15: Page added with editorial review
