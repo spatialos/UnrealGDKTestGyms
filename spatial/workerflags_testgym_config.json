@@ -37,10 +37,10 @@
             ],
             "permissions":
             {
-                "entity_creation": true,
-                "entity_deletion": true,
-                "disconnect_worker": true,
-                "reserve_entity_id": true,
+                "entity_creation": false,
+                "entity_deletion": false,
+                "disconnect_worker": false,
+                "reserve_entity_id": false,
                 "entity_query": true
             }
         }
