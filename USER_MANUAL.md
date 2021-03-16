@@ -414,7 +414,7 @@ Manual steps:
 ##### Soft references Test Gym
 * Demonstrates that:
   * Soft references are correctly replicated.
-  * Soft references that are serialized to an asset, and which reference assets that have not yet loaded on the client are correctly resolved using ther `CVar` `net.AllowAsyncLoading`.
+  * Soft references that are serialized to an asset, and which reference assets that have not yet loaded on the client are correctly resolved using the CVar `net.AllowAsyncLoading`.
 * Steps to run the manual version of the gym:
  1. Open `SoftReferenceTestGym.umap`
  1. Generate schema & snapshot.
