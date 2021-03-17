@@ -22,6 +22,9 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
+	void FillSchemaData(Schema_Object& ComponentObject) const;
+	
 	UPROPERTY(ReplicatedUsing=OnRep_bDepleted, BlueprintReadWrite)
 	bool bDepleted;
 
