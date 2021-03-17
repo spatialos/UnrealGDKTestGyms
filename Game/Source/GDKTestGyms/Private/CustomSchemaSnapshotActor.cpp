@@ -91,6 +91,11 @@ void ACustomSchemaSnapshotActor::PreReplication(IRepChangedPropertyTracker& Chan
 
 void ACustomSchemaSnapshotActor::OnPersistenceDataAvailable()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	const uint64 EntityID = USpatialStatics::GetActorEntityId(this);
 	if (EntityID == 0)
 	{
