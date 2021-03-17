@@ -2,13 +2,14 @@
 
 
 #include "CustomSchemaSnapshotActor.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ACustomSchemaSnapshotActor::ACustomSchemaSnapshotActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	bDepleted = false;
 }
 
 // Called when the game starts or when spawned
@@ -32,3 +33,9 @@ void ACustomSchemaSnapshotActor::PostInitializeComponents()
 
 	OnPostInitComponentsSetupBlueprintFromSnapshot();
 }
+
+void ACustomSchemaSnapshotActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	DOREPLIFETIME(ACustomSchemaSnapshotActor, bDepleted);
+}
+

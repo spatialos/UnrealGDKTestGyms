@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Schema/CustomPersistence.h"
 #include "CustomSchemaSnapshotActor.generated.h"
 
 UCLASS()
@@ -19,8 +20,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-public:	
+	UPROPERTY(ReplicatedUsing=OnRep_bDepleted, BlueprintReadWrite)
+	bool bDepleted;
+
+public:
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_bDepleted();
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
