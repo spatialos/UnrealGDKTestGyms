@@ -88,19 +88,19 @@
 				},
 				{
 					"name": "zone_width",
-					"value": "200000.0"
+					"value": "1000000.0"
 				},
 				{
 					"name": "zone_height",
-					"value": "200000.0"
+					"value": "1000000.0"
 				},
 				{
 					"name": "egress_test_size",
-					"value": "100"
+					"value": "15"
 				},
 				{
 					"name": "egress_test_frequency",
-					"value": "100"
+					"value": "1"
 				}
 			],
 			"permissions": [

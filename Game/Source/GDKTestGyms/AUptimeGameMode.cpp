@@ -30,14 +30,18 @@ namespace
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
 	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
+	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
+	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
 	: bInitializedCustomSpawnParameters(false)
 	, SpawnCols(0)
 	, SpawnRows(0)
-	, ZoneWidth(0.0f)
-	, ZoneHeight(0.0f)
+	, ZoneWidth(200000.0f)
+	, ZoneHeight(200000.0f)
+	, TestDataSize(0)
+	, TestDataFrequency(0)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -194,6 +198,14 @@ void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FStr
 	{
 		ZoneHeight = FCString::Atof(*FlagValue);
 	}
+	else if (FlagName == UptimeEgressSizeWorkerFlag)
+	{
+		TestDataSize = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeEgressFrequencyWorkerFlag)
+	{
+		TestDataFrequency = FCString::Atoi(*FlagValue);
+	}
 }
 
 void AUptimeGameMode::BuildExpectedActorCounts()
@@ -260,18 +272,17 @@ void AUptimeGameMode::GenerateAllCenterBoundaries(float StartingX, float Startin
 
 void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
-	const int DistBetweenClusterCenters = 400; // 400 meters, in Unreal units.
-
 	//spawn zones are flexible as rows*cols now
 	const float DistBetweenRows = ZoneHeight / SpawnRows;
 	const float DistBetweenCols = ZoneWidth / SpawnCols;
-
-	TArray<FVector2D> Boundaries;
+	
 	int32 BoundariesNum = SpawnCols * SpawnRows;
 	const float StartingX = -((SpawnCols - 1) * ZoneWidth / SpawnCols / 2);
 	const float StartingY = -((SpawnRows - 1) * ZoneHeight / SpawnRows / 2);
+	int32 PlayersOnCenter = BoundariesNum * PlayerDensity;
+	int32 PlayersRemain = ExpectedPlayers;
+	TArray<FVector2D> Boundaries;
 	GenerateAllCenterBoundaries(StartingX, StartingY, DistBetweenRows, DistBetweenCols, Boundaries);
-
 	while (--BoundariesNum >= 0)
 	{
 		GenerateSpawnPoints(Boundaries[BoundariesNum].Y, Boundaries[BoundariesNum].X, PlayerDensity);
