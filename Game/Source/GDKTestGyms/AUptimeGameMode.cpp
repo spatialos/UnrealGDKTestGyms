@@ -22,7 +22,7 @@
 
 DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
-namespace
+namespace UptimeGym
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
 	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
@@ -150,7 +150,7 @@ void AUptimeGameMode::ParsePassedValues()
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
 				FString PlayerDensityString;
-				if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				if (SpatialWorkerFlags->GetWorkerFlag(UptimeGym::PlayerDensityWorkerFlag, PlayerDensityString))
 				{
 					PlayerDensity = FCString::Atoi(*PlayerDensityString);
 				}
@@ -166,7 +166,7 @@ void AUptimeGameMode::ParsePassedValues()
 void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
-	if (FlagName == PlayerDensityWorkerFlag)
+	if (FlagName == UptimeGym::PlayerDensityWorkerFlag)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
 	}

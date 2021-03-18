@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "ResourceNodePersistenceComponent.h"
 #include "GameFramework/Actor.h"
-#include "Schema/CustomPersistence.h"
 #include "CustomSchemaSnapshotActor.generated.h"
 
 UCLASS()
@@ -16,19 +17,14 @@ public:
 	// Sets default values for this actor's properties
 	ACustomSchemaSnapshotActor();
 
+	UPROPERTY(BlueprintReadWrite)
+	UResourceNodePersistenceComponent* PersistenceComponent;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
-	
-	UFUNCTION()
-	virtual void OnPersistenceDataAvailable();
-	
-	void FillSchemaData(Schema_Object& ComponentObject) const;
-	void ReadSchemaData(Schema_Object& ComponentObject);
 	
 	UPROPERTY(ReplicatedUsing=OnRep_bDepleted, BlueprintReadWrite)
 	bool bDepleted;
@@ -39,9 +35,4 @@ public:
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	virtual void PostInitializeComponents() override;
-
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnLoadedFromSnapshot"))
-	void OnPostInitComponentsSetupBlueprintFromSnapshot();
 };
