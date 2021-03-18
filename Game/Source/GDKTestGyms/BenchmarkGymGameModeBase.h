@@ -74,8 +74,6 @@ protected:
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 
-	UFUNCTION(Exec)
-	void MemReportOnServer();
 private:
 	// Test scenarios
 

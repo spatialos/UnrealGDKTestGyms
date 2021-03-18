@@ -119,15 +119,6 @@ void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalNPCs);
 }
 
-void ABenchmarkGymGameModeBase::MemReportOnServer()
-{
-	if (HasAuthority())
-	{
-		GEngine->Exec(nullptr, TEXT("memreport"));
-	}
-}
-
-
 void ABenchmarkGymGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -277,20 +268,26 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 			}
 		}
 		GEngine->Exec(GetWorld(), *Cmd);
-		//GEngine->Exec(GetWorld(), TEXT("memreport"));
-		//GEngine->Exec(GetWorld(), TEXT("memreport -full"));
 		StatStartFileTimer.SetTimer(999999);
 	}
 	if (StatStopFileTimer.HasTimerGoneOff())
 	{
 		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
 		StatStopFileTimer.SetTimer(999999);
-		//GEngine->Exec(GetWorld(), TEXT("memreport"));
 	}
 #endif
-	if (HasAuthority() && MemReportIntervalTimer.HasTimerGoneOff())
+	if (MemReportIntervalTimer.HasTimerGoneOff())
 	{
-		GEngine->Exec(nullptr, TEXT("memreport -full"));
+		FString Cmd = TEXT("memreport -full");
+		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+		{
+			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+			if (ensure(SpatialDriver != nullptr))
+			{
+				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
+			}
+		}
+		GEngine->Exec(nullptr, *Cmd);
 		SetMemReportIntervalTimer(MemReportIntervalString);
 	}
 }
