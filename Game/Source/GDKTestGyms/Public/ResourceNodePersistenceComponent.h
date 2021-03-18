@@ -17,6 +17,7 @@ public:
 	UResourceNodePersistenceComponent();
 
 	virtual Worker_ComponentId GetComponentId() const override { return (Worker_ComponentId)9950; }
+	virtual void GetAddComponentData(SpatialGDK::ComponentData& Data) override;
 	virtual void GetComponentUpdate(SpatialGDK::ComponentUpdate& Update) override;
 	virtual void OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data) override;
 
