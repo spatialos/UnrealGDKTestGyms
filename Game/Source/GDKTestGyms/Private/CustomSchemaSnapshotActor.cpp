@@ -11,9 +11,6 @@
 #include "SpatialView/ViewCoordinator.h"
 #include "Utils/SpatialStatics.h"
 
-const Worker_ComponentId PERSISTENCE_COMPONENT_ID = 9950;
-const Schema_FieldId DEPLETED_FIELD_ID = 1;
-
 // Sets default values
 ACustomSchemaSnapshotActor::ACustomSchemaSnapshotActor()
 {
