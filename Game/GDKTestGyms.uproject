@@ -34,6 +34,10 @@
 		{
 			"Name": "SpatialGDK",
 			"Enabled": true
+		},
+		{
+			"Name": "SnapshotMigrator",
+			"Enabled": true
 		}
 	]
 }

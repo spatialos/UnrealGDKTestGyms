@@ -1,0 +1,5 @@
+[*.uplugin]
+indent_style = tab
+
+[*.Build.cs]
+indent_style = tab
