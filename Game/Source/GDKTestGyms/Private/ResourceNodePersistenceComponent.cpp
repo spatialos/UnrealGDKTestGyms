@@ -41,3 +41,8 @@ void UResourceNodePersistenceComponent::OnPersistenceDataAvailable(const Spatial
 	bDepleted = Schema_GetBool(Fields, DEPLETED_FIELD_ID) != 0;
 	UE_LOG(LogTemp, Log, TEXT("depleted after persistence: %d"), bDepleted);
 }
+
+void UResourceNodePersistenceComponent::ForceUpdate()
+{
+	UpdateDeepCopy();
+}
