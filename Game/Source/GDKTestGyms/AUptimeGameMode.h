@@ -72,8 +72,4 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-	void GenerateRowBoundaries(float StartingX, float StartingY, float HalfDistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoudariesIndex);
-	void GenerateColBoundaries(float StartingX, float StartingY, float DistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoundariesIndex);
-	void GenerateCenterBoundaries(float FixedPos, TArray<FVector2D>& Boundaries, int& BoundariesIndex);
-	void GenerateAllCenterBoundaries(float StartingX, float StartingY, float DistBetweenRows, float DistBetweenCols, TArray<FVector2D>& Boundaries);
 };
