@@ -36,13 +36,13 @@ void UResourceNodePersistenceComponent::GetComponentUpdate(SpatialGDK::Component
 
 void UResourceNodePersistenceComponent::OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data)
 {
+	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, OnPersistenceDataAvailable. Server: %d, NetDriver: %s"), GIsServer, *GetWorld()->GetNetDriver()->GetName());
 	Schema_Object* Fields = Data.GetFields();
-	UE_LOG(LogTemp, Log, TEXT("depleted before persistence: %d"), bDepleted);
+	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, depleted before persistence: %d"), bDepleted);
 	bDepleted = Schema_GetBool(Fields, DEPLETED_FIELD_ID) != 0;
-	UE_LOG(LogTemp, Log, TEXT("depleted after persistence: %d"), bDepleted);
+	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, depleted after persistence: %d"), bDepleted);
 }
 
 void UResourceNodePersistenceComponent::ForceUpdate()
 {
-	UpdateDeepCopy();
 }
