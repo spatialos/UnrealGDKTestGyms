@@ -36,12 +36,10 @@ namespace
 
 AUptimeGameMode::AUptimeGameMode()
 	: bInitializedCustomSpawnParameters(false)
-	, SpawnCols(0)
-	, SpawnRows(0)
+	, SpawnCols(3)
+	, SpawnRows(3)
 	, ZoneWidth(200000.0f)
 	, ZoneHeight(200000.0f)
-	, TestDataSize(0)
-	, TestDataFrequency(0)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -227,35 +225,6 @@ void AUptimeGameMode::ClearExistingSpawnPoints()
 	PlayerIdToSpawnPointMap.Reset();
 }
 
-void AUptimeGameMode::GenerateRowBoundaries(float StartingX, float StartingY, float HalfDistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoudariesIndex)
-{
-	auto PointsNum = BoudariesIndex + 5;
-	for (; BoudariesIndex < PointsNum; ++BoudariesIndex)
-	{
-		Boundaries[BoudariesIndex] = FVector2D(StartingX, StartingY);
-		StartingX += HalfDistBetweenPoints;
-	}
-}
-
-void AUptimeGameMode::GenerateColBoundaries(float StartingX, float StartingY, float DistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoundariesIndex)
-{
-	auto PointsNum = BoundariesIndex + 3;
-	for (; BoundariesIndex < PointsNum; ++BoundariesIndex)
-	{
-		Boundaries[BoundariesIndex] = FVector2D(StartingX, StartingY);
-		StartingY += DistBetweenPoints;
-	}
-}
-
-void AUptimeGameMode::GenerateCenterBoundaries(float FixedPos, TArray<FVector2D>& Boundaries, int& BoundariesIndex)
-{
-	auto ContraryFixedPos = -FixedPos;
-	Boundaries[BoundariesIndex++] = FVector2D(FixedPos, FixedPos);
-	Boundaries[BoundariesIndex++] = FVector2D(FixedPos, ContraryFixedPos);
-	Boundaries[BoundariesIndex++] = FVector2D(ContraryFixedPos, ContraryFixedPos);
-	Boundaries[BoundariesIndex++] = FVector2D(ContraryFixedPos, FixedPos);
-}
-
 void AUptimeGameMode::GenerateAllCenterBoundaries(float StartingX, float StartingY, float DistBetweenRows, float DistBetweenCols, TArray<FVector2D>& Boundaries)
 {
 	for (auto i = 0; i < SpawnCols; ++i)
@@ -272,20 +241,49 @@ void AUptimeGameMode::GenerateAllCenterBoundaries(float StartingX, float Startin
 
 void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
+	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
 	//spawn zones are flexible as rows*cols now
 	const float DistBetweenRows = ZoneHeight / SpawnRows;
 	const float DistBetweenCols = ZoneWidth / SpawnCols;
-	
-	int32 BoundariesNum = SpawnCols * SpawnRows;
-	const float StartingX = -((SpawnCols - 1) * ZoneWidth / SpawnCols / 2);
-	const float StartingY = -((SpawnRows - 1) * ZoneHeight / SpawnRows / 2);
-	int32 PlayersOnCenter = BoundariesNum * PlayerDensity;
-	int32 PlayersRemain = ExpectedPlayers;
-	TArray<FVector2D> Boundaries;
-	GenerateAllCenterBoundaries(StartingX, StartingY, DistBetweenRows, DistBetweenCols, Boundaries);
-	while (--BoundariesNum >= 0)
+	//const float StartingX = -((SpawnCols - 1) * ZoneWidth / SpawnCols / 2);
+	//const float StartingY = (SpawnRows - 1) * ZoneHeight / SpawnRows / 2;
+	const float StartingX = -ZoneWidth / 2;
+	const float StartingY = -ZoneHeight / 2;
+	//TArray<FVector2D> Boundaries;
+	//GenerateAllCenterBoundaries(StartingX, StartingY, DistBetweenRows, DistBetweenCols, Boundaries);
+	const int32 SpawnZones = SpawnCols * SpawnRows;
+
+	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(SpawnZones));
+	auto CurRows = 0;
+	auto CurCols = 0;
+	for (auto i = 0; i < SpawnZones; ++i)
 	{
-		GenerateSpawnPoints(Boundaries[BoundariesNum].Y, Boundaries[BoundariesNum].X, PlayerDensity);
+		int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
+		NumClusters -= ClusterCount;
+		int NumRows, NumCols, MinRelativeX, MinRelativeY;
+		GenerateGridSettings(DistBetweenClusterCenters, ClusterCount, NumRows, NumCols, MinRelativeX, MinRelativeY);
+
+		//Adjust the lefthand side of the grid to so that the grid is centered in the zone
+		MinRelativeX = FMath::RoundToInt(MinRelativeX + StartingX + (CurCols * DistBetweenCols) + (DistBetweenCols / 2.0f));
+		MinRelativeY = FMath::RoundToInt(MinRelativeY + StartingY + (CurRows * DistBetweenRows) + (DistBetweenRows / 2.0f));
+		++CurCols;
+	
+		UE_LOG(LogUptimeGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
+		for (int j = 0; j < ClusterCount; ++j)
+		{
+			const int Row = j % NumRows;
+			const int Col = j / NumRows;
+
+			const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
+			const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+			//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+			GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+		}
+		if (CurCols % SpawnCols == 0)
+		{
+			CurCols = 0;
+			++CurRows;
+		}
 	}
 }
 
