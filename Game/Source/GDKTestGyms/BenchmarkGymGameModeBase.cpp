@@ -526,9 +526,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 #endif
 		FString MemReportIntervalString;
 		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-		MemReportInterval = FCString::Atoi(*MemReportIntervalString);
-		MemReportIntervalTimer.SetTimer(MemReportInterval);
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
+		InitMemReportTimer(MemReportIntervalString);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -595,9 +593,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				FString MemReportIntervalString;
 				if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag,MemReportIntervalString))
 				{
-					MemReportInterval = FCString::Atoi(*MemReportIntervalString);
-					MemReportIntervalTimer.SetTimer(MemReportInterval);
-					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
+					InitMemReportTimer(MemReportIntervalString);
 				}
 			}
 		}
@@ -804,6 +800,13 @@ void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
 	}
 }
 #endif
+
+void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportIntervalString)
+{
+	MemReportInterval = FCString::Atoi(*MemReportIntervalString);
+	MemReportIntervalTimer.SetTimer(MemReportInterval);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
+}
 
 int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 {
