@@ -127,7 +127,7 @@ private:
 #endif
 
 	//For MemReport profile
-	FString MemReportIntervalString;
+	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
 
 	virtual void BeginPlay() override;
@@ -159,7 +159,6 @@ private:
 #if	STATS
 	void SetStatTimer(const FString& TimeString);
 #endif
-	void SetMemReportIntervalTimer(const FString& TimeString);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();

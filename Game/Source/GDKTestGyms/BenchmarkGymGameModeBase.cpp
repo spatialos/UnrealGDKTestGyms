@@ -288,7 +288,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 			}
 		}
 		GEngine->Exec(nullptr, *Cmd);
-		SetMemReportIntervalTimer(MemReportIntervalString);
+		MemReportIntervalTimer.SetTimer(MemReportInterval);
 	}
 }
 
@@ -521,8 +521,11 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
 		SetStatTimer(StatProfileString);
 #endif
+		FString MemReportIntervalString;
 		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-		SetMemReportIntervalTimer(MemReportIntervalString);
+		MemReportInterval = FCString::Atoi(*MemReportIntervalString);
+		MemReportIntervalTimer.SetTimer(MemReportInterval);
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -586,9 +589,12 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					SetStatTimer(StatProfileString);
 				}
 #endif
+				FString MemReportIntervalString;
 				if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag,MemReportIntervalString))
 				{
-					SetMemReportIntervalTimer(MemReportIntervalString);
+					MemReportInterval = FCString::Atoi(*MemReportIntervalString);
+					MemReportIntervalTimer.SetTimer(MemReportInterval);
+					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
 				}
 			}
 		}
@@ -644,7 +650,7 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 #endif
 	else if (FlagName == MemReportFlag)
 	{
-		SetMemReportIntervalTimer(FlagValue);
+		MemReportIntervalTimer.SetTimer(FCString::Atoi(*FlagValue));
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
@@ -794,12 +800,6 @@ void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
 	}
 }
 #endif
-
-void ABenchmarkGymGameModeBase::SetMemReportIntervalTimer(const FString& TimeString)
-{
-	MemReportIntervalTimer.SetTimer(FCString::Atoi(*TimeString));
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %s seconds"), *TimeString);
-}
 
 int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 {
