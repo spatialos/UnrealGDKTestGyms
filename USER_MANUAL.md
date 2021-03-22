@@ -223,7 +223,8 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Client Net Ownership gym
 * This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms). Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
+* NOTE: If the automated test is successful, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
 * The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
