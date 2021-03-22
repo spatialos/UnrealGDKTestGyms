@@ -158,6 +158,7 @@ private:
 	int32 GetPlayerControllerCount() const;
 #if	STATS
 	void SetStatTimer(const FString& TimeString);
+	void InitMemReportTimer(const FString& MemReportIntervalString);
 #endif
 
 	UFUNCTION()
