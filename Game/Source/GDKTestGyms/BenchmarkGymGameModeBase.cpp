@@ -649,8 +649,7 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 #endif
 	else if (FlagName == MemReportFlag)
 	{
-		MemReportIntervalTimer.SetTimer(FCString::Atoi(*FlagValue));
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Flag Value is set to %d"), MemReportInterval);
+		InitMemReportTimer(FlagValue);
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
