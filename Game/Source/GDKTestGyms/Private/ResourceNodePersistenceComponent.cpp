@@ -8,6 +8,8 @@
 #include <WorkerSDK/improbable/c_worker.h>
 
 #include "CustomSchemaSnapshotActor.h"
+#include "EngineClasses/SpatialNetDriver.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 
 const Worker_ComponentId PERSISTENCE_COMPONENT_ID = 9950;
 const Schema_FieldId DEPLETED_FIELD_ID = 1;
@@ -23,7 +25,6 @@ void UResourceNodePersistenceComponent::GetAddComponentData(SpatialGDK::Componen
 	Schema_AddBool(Fields, DEPLETED_FIELD_ID, bDepleted);
 }
 
-
 void UResourceNodePersistenceComponent::GetComponentUpdate(SpatialGDK::ComponentUpdate& Update)
 {
 	AActor* Owner = GetOwner();
@@ -36,13 +37,9 @@ void UResourceNodePersistenceComponent::GetComponentUpdate(SpatialGDK::Component
 
 void UResourceNodePersistenceComponent::OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data)
 {
-	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, OnPersistenceDataAvailable. Server: %d, NetDriver: %s"), GIsServer, *GetWorld()->GetNetDriver()->GetName());
+	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, OnPersistenceDataAvailable. Worker: %s"), *Cast<USpatialNetDriver>(GetWorld()->GetNetDriver())->Connection->GetWorkerId());
 	Schema_Object* Fields = Data.GetFields();
 	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, depleted before persistence: %d"), bDepleted);
 	bDepleted = Schema_GetBool(Fields, DEPLETED_FIELD_ID) != 0;
 	UE_LOG(LogTemp, Log, TEXT("UResourceNodePersistenceComponent, depleted after persistence: %d"), bDepleted);
-}
-
-void UResourceNodePersistenceComponent::ForceUpdate()
-{
 }

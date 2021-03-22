@@ -21,9 +21,6 @@ public:
 	virtual void GetComponentUpdate(SpatialGDK::ComponentUpdate& Update) override;
 	virtual void OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data) override;
 	
-	UFUNCTION(BlueprintCallable)
-	void ForceUpdate();
-	
 	UPROPERTY(BlueprintReadWrite)
 	bool bDepleted;
 };
