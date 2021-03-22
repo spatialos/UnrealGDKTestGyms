@@ -46,7 +46,7 @@ The ReplicatedStartupActorTest is failing, pending [UNR-4305](https://improbable
 
 #### How to run the automated test gyms
 
-Some test gyms can be run as automated tests. To discover and run these tests, follow [these steps](https://improbableio.atlassian.net/l/c/AkGfbNx1).
+Some test gyms can be run as automated tests. To discover and run these tests, follow [these steps](https://improbableio.atlassian.net/wiki/spaces/GBU/pages/1782644741/How+to+write+a+spatial+functional+test#How-to-run-the-test).
 
 #### How to run the manual test gyms
 
