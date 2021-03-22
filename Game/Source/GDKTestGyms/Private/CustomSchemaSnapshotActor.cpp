@@ -17,8 +17,6 @@ ACustomSchemaSnapshotActor::ACustomSchemaSnapshotActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bDepleted = false;
-
-	PersistenceComponent = CreateDefaultSubobject<UResourceNodePersistenceComponent>(TEXT("PersistenceComponent"));
 }
 
 // Called when the game starts or when spawned

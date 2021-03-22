@@ -17,9 +17,6 @@ public:
 	// Sets default values for this actor's properties
 	ACustomSchemaSnapshotActor();
 
-	UPROPERTY(BlueprintReadWrite)
-	UResourceNodePersistenceComponent* PersistenceComponent;
-
 public:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

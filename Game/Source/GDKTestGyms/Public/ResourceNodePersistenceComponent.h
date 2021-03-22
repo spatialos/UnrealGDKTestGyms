@@ -6,8 +6,16 @@
 #include "EngineClasses/Components/CustomPersistenceComponent.h"
 #include "ResourceNodePersistenceComponent.generated.h"
 
+USTRUCT(BlueprintType)
+struct GDKTESTGYMS_API FResourceNodePersistenceData
+{
+	GENERATED_BODY()
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+	UPROPERTY(BlueprintReadWrite)
+	bool bDepleted = false;
+};
+
+UCLASS( ClassGroup=(Custom), Blueprintable, meta=(BlueprintSpawnableComponent) )
 class GDKTESTGYMS_API UResourceNodePersistenceComponent : public UCustomPersistenceComponent
 {
 	GENERATED_BODY()
@@ -20,9 +28,10 @@ public:
 	virtual void GetAddComponentData(SpatialGDK::ComponentData& Data) override;
 	virtual void GetComponentUpdate(SpatialGDK::ComponentUpdate& Update) override;
 	virtual void OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data) override;
-	
-	UPROPERTY(BlueprintReadWrite)
-	bool bDepleted;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void GetBlueprintUpdateData(FResourceNodePersistenceData& Data);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ApplyBlueprintPersistenceData(const FResourceNodePersistenceData& Data);
 };
-
-
