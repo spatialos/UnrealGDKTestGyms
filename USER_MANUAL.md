@@ -344,10 +344,10 @@ These test whether key trace events have the appropriate cause events. They can 
   * If you can't see the `Server Default Map`, click `▽` to reveal more options.
   * Set `Server Default Map` to `ClientTravel_Gym`.
   * Select Cloud on the GDK toolbar.
-  ** Enter your project name, and make up and enter an assembly name and a deployment name.
-  ** Ensure that Automatically Generate Launch Configuration is checked.
-  ** Ensure that Add simulated players is not checked.
-  ** Ensure that every option in the Assembly Configuration section is checked.
+  	* Enter your project name, and make up and enter an assembly name and a deployment name.
+  	* Ensure that Automatically Generate Launch Configuration is checked.
+  	* Ensure that Add simulated players is not checked.
+  	* Ensure that every option in the Assembly Configuration section is checked.
   * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
   * Click the Start deployment button.
   * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
