@@ -1,48 +1,65 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #pragma once
 
+#include "BlackboardValues.h"
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "BenchmarkGymGameModeBase.h"
+#include "BenchmarkGymNPCSpawner.h"
 #include "BenchmarkGymGameMode.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGym, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameMode, Log, All);
+
+typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
 
 /**
  *
  */
 UCLASS()
-class GDKTESTGYMS_API ABenchmarkGymGameMode : public AGameModeBase
+class GDKTESTGYMS_API ABenchmarkGymGameMode : public ABenchmarkGymGameModeBase
 {
 	GENERATED_BODY()
 public:
 	ABenchmarkGymGameMode();
+	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 
-	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
-	virtual void StartPlay() override;
+protected:
+
+	virtual void BuildExpectedActorCounts() override;
+	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
+
 private:
-	bool bHasUpdatedMaxActorsToReplicate;
+	TArray<FBlackboardValues> PlayerRunPoints;
+	TArray<FBlackboardValues> NPCRunPoints;
+	void GenerateTestScenarioLocations();
+
+	TArray<ControllerIntegerPair> AIControlledPlayers;
+
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void ParsePassedValues() override;
+
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
-	// Total number of players that will connect. Used to determine number of clusters and spawn points to create.
-	int32 TotalPlayers;
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
-	// NPCs will be spread out evenly over the created player clusters.
-	int32 TotalNPCs;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
+	UPROPERTY()
 	TArray<AActor*> SpawnPoints;
-	TSubclassOf<APawn> NPCPawnClass;
+	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
-	FRandomStream RNG;
-	bool ShouldUseCustomSpawning();
-	void CheckInitCustomSpawning();
-	void ParsePassedValues();
+	TSubclassOf<AActor> DropCubeClass;
+	int32 NPCSToSpawn;
+
+	UPROPERTY()
+	ABenchmarkGymNPCSpawner* NPCSpawner;
+
+	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
+	void StartCustomNPCSpawning();
 	void SpawnNPCs(int NumNPCs);
-	void SpawnNPC(const FVector& SpawnLocation);
+	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 	// Generates a grid of points centered at (0, 0), as square-like as possible. A row has a fixed y-value, and a column a fixed x-value.
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& NumRows, int& NumCols, int& MinRelativeX, int& MinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);

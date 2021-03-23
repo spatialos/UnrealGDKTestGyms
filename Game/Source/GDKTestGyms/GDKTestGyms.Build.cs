@@ -6,6 +6,7 @@ public class GDKTestGyms : ModuleRules
 {
 	public GDKTestGyms(ReadOnlyTargetRules Target) : base(Target)
 	{
+		bLegacyPublicIncludePaths = false;
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(
@@ -14,11 +15,18 @@ public class GDKTestGyms : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"EngineSettings",
+				"GameplayAbilities",
+				"GameplayTasks",
 				"InputCore",
 				"Sockets",
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
-				"SpatialGDK"
+				"Slate",
+				"SpatialGDK",
+				"ReplicationGraph",
+				"AIModule",
+				"NavigationSystem"
 			});
 	}
 }

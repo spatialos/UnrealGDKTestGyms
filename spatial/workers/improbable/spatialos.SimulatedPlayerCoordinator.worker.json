@@ -4,30 +4,19 @@
       {
         "name": "codegen",
         "description": "required by spatial worker build build-config.",
-        "steps": [{"name": "No-op", "command": "echo", "arguments": ["No-op."]}]
+        "steps": [{"name": "No-op", "command": "cmd", "arguments": ["/k echo No-op."]}]
       },
       {
         "name": "build",
         "description": "required by spatial worker build build-config.",
-        "steps": [{"name": "No-op", "command": "echo", "arguments": ["No-op."]}]
+        "steps": [{"name": "No-op", "command": "cmd", "arguments": ["/k echo No-op."]}]
       },
       {
         "name": "clean",
         "description": "required by spatial worker build build-config.",
-        "steps": [{"name": "No-op", "command": "echo", "arguments": ["No-op."]}]
+        "steps": [{"name": "No-op", "command": "cmd", "arguments": ["/k echo No-op."]}]
       }
     ]
-  },
-  "bridge": {
-    "worker_attribute_set": {
-      "attributes": [
-        "SimulatedPlayerCoordinator"
-      ]
-    },
-    "component_delivery": {
-      "default": "RELIABLE_ORDERED",
-      "checkout_all_initially": true
-    }
   },
   "managed": {
     "linux": {
@@ -40,12 +29,13 @@
         "${IMPROBABLE_WORKER_ID}",
         "coordinator_start_delay_millis=10000",
         
+        "127.0.0.1",
         "+workerType",
         "UnrealClient",
-        "+loginToken",
-        "<LOGIN_TOKEN>",
-        "+playerIdentityToken",
-        "<PLAYER_IDENTITY_TOKEN>",
+        "+deployment",
+        "<TARGET_DEPLOYMENT>",
+        "+devAuthToken",
+        "<DEV_AUTH_TOKEN>",
         "+workerId",
         "<IMPROBABLE_SIM_PLAYER_WORKER_ID>",
         "+useExternalIpForBridge",

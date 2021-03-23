@@ -1,142 +1,201 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #include "BenchmarkGymGameMode.h"
-#include "EngineClasses/SpatialNetDriver.h"
-#include "Interop/SpatialWorkerFlags.h"
-#include "Misc/CommandLine.h"
-#include "GameFramework/PlayerStart.h"
-#include "GameFramework/Character.h"
-#include "Engine/World.h"
-#include "Kismet/GameplayStatics.h"
 
-DEFINE_LOG_CATEGORY(LogBenchmarkGym);
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BenchmarkGymNPCSpawner.h"
+#include "DeterministicBlackboardValues.h"
+#include "Engine/World.h"
+#include "EngineClasses/SpatialNetDriver.h"
+#include "EngineUtils.h"
+#include "GDKTestGymsGameInstance.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PlayerStart.h"
+#include "GeneralProjectSettings.h"
+#include "Interop/SpatialWorkerFlags.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Crc.h"
+#include "NFRConstants.h"
+#include "Utils/SpatialMetrics.h"
+
+DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
+
+namespace
+{
+	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
+} // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
+	: bInitializedCustomSpawnParameters(false)
+	, NumPlayerClusters(1)
+	, PlayersSpawned(0)
+	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FClassFinder<APawn> PawnClass(TEXT("/Game/Characters/PlayerCharacter_BP"));
-	DefaultPawnClass = PawnClass.Class;
-	PlayerControllerClass = APlayerController::StaticClass();
-
-	static ConstructorHelpers::FClassFinder<APawn> NPCBPClass(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkSimulatedPlayer_BP"));
-	if (NPCBPClass.Class != NULL) 
-	{
-		NPCPawnClass = SimulatedPawnClass = NPCBPClass.Class;
-	}
-
-	bHasUpdatedMaxActorsToReplicate = false;
-	bInitializedCustomSpawnParameters = false;
-
-	TotalPlayers = 1;
-	TotalNPCs = 0;
-	NumPlayerClusters = 4;
-	PlayersSpawned = 0;
-
-	// Seamless Travel is not currently supported in SpatialOS [UNR-897]
-	bUseSeamlessTravel = false;
-
-	RNG.Initialize(123456); // Ensure we can do deterministic runs
+	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(TEXT("/Game/Benchmark/DropCube_BP"));
+	DropCubeClass = DropCubeClassFinder.Class;
 }
 
-void ABenchmarkGymGameMode::CheckInitCustomSpawning()
+void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
+{
+	constexpr float RoamRadius = 7500.0f; // Set to half the NetCullDistance
+	{
+		FRandomStream PlayerStream;
+		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
+		for (int i = 0; i < ExpectedPlayers; i++)
+		{
+			FVector PointA = PlayerStream.VRand()*RoamRadius;
+			FVector PointB = PlayerStream.VRand()*RoamRadius;
+			PointA.Z = PointB.Z = 0.0f;
+			PlayerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
+		}
+	}
+	{
+		FRandomStream NPCStream;
+		NPCStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
+		for (int i = 0; i < TotalNPCs; i++)
+		{
+			FVector PointA = NPCStream.VRand()*RoamRadius;
+			FVector PointB = NPCStream.VRand()*RoamRadius;
+			PointA.Z = PointB.Z = 0.0f;
+			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
+		}
+	}
+}
+
+void ABenchmarkGymGameMode::CheckCmdLineParameters()
 {
 	if (bInitializedCustomSpawnParameters)
 	{
 		return;
 	}
 
-	if (ShouldUseCustomSpawning())
-	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Enabling custom density spawning."));
-		ParsePassedValues();
-		ClearExistingSpawnPoints();
-
-		SpawnPoints.Reset();
-		GenerateSpawnPointClusters(NumPlayerClusters);
-
-		if (SpawnPoints.Num() != TotalPlayers) 
-		{
-			UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
-		}
-
-		SpawnNPCs(TotalNPCs);
-	}
-	else
-	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Custom density spawning disabled."));
-	}
+	ParsePassedValues();
+	StartCustomNPCSpawning();
 
 	bInitializedCustomSpawnParameters = true;
 }
 
-bool ABenchmarkGymGameMode::ShouldUseCustomSpawning()
+void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
-	FString WorkerValue;
-	if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+	ClearExistingSpawnPoints();
+	GenerateSpawnPointClusters(NumPlayerClusters);
+
+	if (SpawnPoints.Num() < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
 	{
-		NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("override_spawning"), WorkerValue);
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), ExpectedPlayers);
 	}
-	return (WorkerValue.Equals(TEXT("true"), ESearchCase::IgnoreCase) || FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")));
+
+	GenerateTestScenarioLocations();
+
+	SpawnNPCs(TotalNPCs);
+}
+
+void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (HasAuthority())
+	{
+		if (NPCSToSpawn > 0)
+		{
+			int32 NPCIndex = --NPCSToSpawn;
+			int32 Cluster = NPCIndex % NumPlayerClusters;
+			int32 SpawnPointIndex = Cluster * PlayerDensity;
+			const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
+			SpawnNPC(SpawnPoint->GetActorLocation(), NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
+		}
+
+		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+		{
+			AController* Controller = AIControlledPlayers[i].Key.Get();
+			int InfoIndex = AIControlledPlayers[i].Value;
+
+			checkf(Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = Controller->GetCharacter();
+			checkf(Character, TEXT("Simplayer character does not exist."));
+			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
+
+			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+			Blackboard->ClientSetBlackboardAILocations(Points);
+		}
+		AIControlledPlayers.Empty();
+	}
 }
 
 void ABenchmarkGymGameMode::ParsePassedValues()
 {
-	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+	Super::ParsePassedValues();
 
-	if (FParse::Param(FCommandLine::Get(), TEXT("OverrideSpawning")))
+	PlayerDensity = ExpectedPlayers;
+
+	const FString& CommandLine = FCommandLine::Get();
+	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Found OverrideSpawning in command line args, worker flags for custom spawning will be ignored."));
-		FParse::Value(FCommandLine::Get(), TEXT("TotalPlayers="), TotalPlayers);
-
-		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
-		PlayerDensity = TotalPlayers;
-
-		FParse::Value(FCommandLine::Get(), TEXT("PlayerDensity="), PlayerDensity);
-
-		FParse::Value(FCommandLine::Get(), TEXT("TotalNPCs="), TotalNPCs);
+		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
 	}
-	else
+	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString TotalPlayersString, PlayerDensityString, TotalNPCsString;
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_players"), TotalPlayersString))
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
+
+		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
+		if (ensure(NetDriver != nullptr))
 		{
-			TotalPlayers = FCString::Atoi(*TotalPlayersString);
+			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
+			if (ensure(SpatialWorkerFlags != nullptr))
+			{
+				FString PlayerDensityString;
+				if(SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				{
+					PlayerDensity = FCString::Atoi(*PlayerDensityString);
+				}
+			}
 		}
 
-		// Set default value of PlayerDensity equal to TotalPlayers. Will be overwritten if PlayerDensity option is specified.
-		PlayerDensity = TotalPlayers;
-
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("player_density"), PlayerDensityString))
-		{
-			PlayerDensity = FCString::Atoi(*PlayerDensityString);
-		}
-
-		if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("total_npcs"), TotalNPCsString))
-		{
-			TotalNPCs = FCString::Atoi(*TotalNPCsString);
-		}
 	}
+	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
-	NumPlayerClusters = FMath::CeilToInt(TotalPlayers / static_cast<float>(PlayerDensity));
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+}
+
+void ABenchmarkGymGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
+{
+	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
+	if (FlagName == PlayerDensityWorkerFlag)
+	{
+		PlayerDensity = FCString::Atoi(*FlagValue);
+	}
+}
+
+void ABenchmarkGymGameMode::BuildExpectedActorCounts()
+{
+	Super::BuildExpectedActorCounts();
+
+	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
+	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f) + 2;
+	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 {
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), SpawnPoints);
 	for (AActor* SpawnPoint : SpawnPoints)
 	{
 		SpawnPoint->Destroy();
 	}
+	SpawnPoints.Reset();
+	PlayerIdToSpawnPointMap.Reset();
 }
 
 void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY)
 {
 	if (NumPoints <= 0)
 	{
-		UE_LOG(LogBenchmarkGym, Warning, TEXT("Generating grid settings with non-postive number of points (%d)"), NumPoints);
+		UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Generating grid settings with non-postive number of points (%d)"), NumPoints);
 		OutNumRows = 0;
 		OutNumCols = 0;
 		OutMinRelativeX = 0;
@@ -155,19 +214,68 @@ void ABenchmarkGymGameMode::GenerateGridSettings(int DistBetweenPoints, int NumP
 void ABenchmarkGymGameMode::GenerateSpawnPointClusters(int NumClusters)
 {
 	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
-	int NumRows, NumCols, MinRelativeX, MinRelativeY;
-	GenerateGridSettings(DistBetweenClusterCenters, NumClusters, NumRows, NumCols, MinRelativeX, MinRelativeY);
 
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Creating player cluster grid of %d rows by %d columns"), NumRows, NumCols);
-	for (int i = 0; i < NumClusters; i++)
+	const int32 SpawnZones = GetNumSpawnZones();
+
+	// We use a fixed size 10km
+	const float ZoneWidth = 1000000.0f / SpawnZones;
+	const float StartingX = -500000.0f;
+
+	if (SpawnZones > 1)
 	{
-		const int Row = i % NumRows;
-		const int Col = i / NumRows;
+		// For multiworker configuration we will place a percentage of spawn points
+		// on/near the boundary between two zones
+		int ClustersOnBoundaries = FMath::CeilToInt(NumClusters * PercentageSpawnpointsOnWorkerBoundary);
+		int RemainingClusters = NumClusters - ClustersOnBoundaries;
 
-		const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
-		const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+		TArray<float> Boundaries;
+		for (int i = 1; i < SpawnZones; ++i)
+		{
+			Boundaries.Emplace(StartingX + ZoneWidth * i);
+		}
 
-		GenerateSpawnPoints(ClusterCenterX, ClusterCenterY, PlayerDensity);
+		int NumPerBoundary = FMath::CeilToInt(ClustersOnBoundaries / static_cast<float>(Boundaries.Num()));
+		int StartingY = FMath::RoundToInt(-((NumPerBoundary - 1) * DistBetweenClusterCenters) / 2.0f);
+		int BoundaryIndex = 0;
+		while(ClustersOnBoundaries > 0)
+		{
+			int ClusterCenterX = FMath::RoundToInt(Boundaries[BoundaryIndex]);
+			for (int y = 0; y < NumPerBoundary && ClustersOnBoundaries > 0; ++y)
+			{
+				int ClusterCenterY = StartingY + y * DistBetweenClusterCenters;
+				//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+				GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+				UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster near boundary location: %d , %d"), ClusterCenterY, ClusterCenterX);
+				--ClustersOnBoundaries;
+			}
+			++BoundaryIndex;
+		}
+
+		NumClusters = RemainingClusters;
+	}
+
+	int ClustersPerWorker = FMath::CeilToInt(NumClusters / static_cast<float>(SpawnZones));
+	for (int w = 0; w < SpawnZones; ++w)
+	{
+		int ClusterCount = FMath::Min(ClustersPerWorker, NumClusters);
+		NumClusters -= ClusterCount;
+		int NumRows, NumCols, MinRelativeX, MinRelativeY;
+		GenerateGridSettings(DistBetweenClusterCenters, ClusterCount, NumRows, NumCols, MinRelativeX, MinRelativeY);
+
+		//Adjust the lefthand side of the grid to so that the grid is centered in the zone
+		MinRelativeX = FMath::RoundToInt(MinRelativeX + StartingX + (w * ZoneWidth) + (ZoneWidth / 2.0f));
+
+		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
+		for (int i = 0; i < ClusterCount; i++)
+		{
+			const int Row = i % NumRows;
+			const int Col = i / NumRows;
+
+			const int ClusterCenterX = MinRelativeX + Col * DistBetweenClusterCenters;
+			const int ClusterCenterY = MinRelativeY + Row * DistBetweenClusterCenters;
+			//Because GridBaseLBStrategy swaps X and Y, we will swap them here so that we're aligned
+			GenerateSpawnPoints(ClusterCenterY, ClusterCenterX, PlayerDensity);
+		}
 	}
 }
 
@@ -183,7 +291,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 	UWorld* World = GetWorld();
 	if (World == nullptr)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Cannot spawn spawnpoints, world is null"));
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Cannot spawn spawnpoints, world is null"));
 		return;
 	}
 
@@ -202,82 +310,63 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints(int CenterX, int CenterY, int Sp
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		const FVector SpawnLocation = FVector(X, Y, Z);
-		UE_LOG(LogBenchmarkGym, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
+		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *SpawnLocation.ToString());
 		SpawnPoints.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnInfo));
 	}
 }
 
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 {
-	for (int32 i = 0; i < NumNPCs; i++)
-	{
-		int32 Cluster = i % NumPlayerClusters;
-		int32 SpawnPointIndex = Cluster * PlayerDensity;
-		const AActor* SpawnPoint = SpawnPoints[SpawnPointIndex];
-		SpawnNPC(SpawnPoint->GetActorLocation());
-	}
+	NPCSToSpawn = NumNPCs;
 }
 
-void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation)
+void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error spawning NPC, World is null"));
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error spawning NPC, World is null"));
 		return;
 	}
 
-	if (NPCPawnClass == nullptr)
+	if (NPCSpawner == nullptr)
 	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error spawning NPC, NPCPawnClass is not set."));
-		return;
+		ABenchmarkGymNPCSpawner* Spawner = nullptr;
+		for (TActorIterator<ABenchmarkGymNPCSpawner> It(GetWorld()); It; ++It)
+		{
+			Spawner = *It;
+			break;
+		}
+		NPCSpawner = Spawner;
 	}
-
-	const float RandomSpawnOffset = 600.0f;
-	FVector RandomOffset = RNG.GetUnitVector()*RandomSpawnOffset;
-	if (RandomOffset.Z < 0.0f)
+	if (NPCSpawner != nullptr)
 	{
-		RandomOffset.Z = -RandomOffset.Z;
+		NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
 	}
-	FVector RandomSpawn = SpawnLocation + RandomOffset;
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning NPC at %s"), *SpawnLocation.ToString());
-	FActorSpawnParameters SpawnInfo{};
-	//SpawnInfo.Owner = this;
-	//SpawnInfo.Instigator = NULL;
-	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	World->SpawnActor<APawn>(NPCPawnClass->GetDefaultObject()->GetClass(), RandomSpawn, FRotator::ZeroRotator, SpawnInfo);
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Failed to find NPCSpawner."));
+	}
 }
 
-void ABenchmarkGymGameMode::StartPlay()
-{
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Enabling custom density spawning."));
-	ParsePassedValues();
-	ClearExistingSpawnPoints();
-
-	SpawnPoints.Reset();
-	GenerateSpawnPointClusters(NumPlayerClusters);
-
-	if (SpawnPoints.Num() != TotalPlayers) 
-	{
-		UE_LOG(LogBenchmarkGym, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), SpawnPoints.Num(), TotalPlayers);
-	}
-
-	SpawnNPCs(TotalNPCs);
-	return Super::StartPlay();
-}
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	CheckInitCustomSpawning();
+	CheckCmdLineParameters();
 
-	if (SpawnPoints.Num() == 0 || !ShouldUseCustomSpawning())
+	if (SpawnPoints.Num() == 0)
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
+	}
+
+	if (Player == nullptr) // Work around for load balancing passing nullptr Player
+	{
+		return SpawnPoints[PlayersSpawned % SpawnPoints.Num()];
 	}
 
 	// Use custom spawning with density controls
 	const int32 PlayerUniqueID = Player->GetUniqueID();
 	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
-	if (SpawnPoint)
+	if (SpawnPoint != nullptr)
 	{
 		return *SpawnPoint;
 	}
@@ -285,7 +374,12 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	AActor* ChosenSpawnPoint = SpawnPoints[PlayersSpawned % SpawnPoints.Num()];
 	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
-	UE_LOG(LogBenchmarkGym, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	
+	if (Player->GetIsSimulated())
+	{
+		AIControlledPlayers.Emplace(ControllerIntegerPair{ Player, PlayersSpawned });
+	}
 
 	PlayersSpawned++;
 
