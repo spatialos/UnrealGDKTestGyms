@@ -275,24 +275,25 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	if (StatStopFileTimer.HasTimerGoneOff() && CPUProfileInterval > 0)
 	{
 		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
-		StatStopFileTimer.SetTimer(CPUProfileInterval);
-
+		StatStopFileTimer.SetTimer(999999);
 	}
 #endif
 	if (MemReportIntervalTimer.HasTimerGoneOff())
 	{
-		FString Cmd = TEXT("memreport -full");
-		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+		if (MemReportInterval>0) //Avoid execute memreport each tick before the worker flag take effect
 		{
-			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (ensure(SpatialDriver != nullptr))
+			FString Cmd = TEXT("memreport -full");
+			if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 			{
-				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
+				USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+				if (ensure(SpatialDriver != nullptr))
+				{
+					Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
+				}
 			}
+			GEngine->Exec(nullptr, *Cmd);
+			MemReportIntervalTimer.SetTimer(MemReportInterval);			
 		}
-		GEngine->Exec(nullptr, *Cmd);
-		MemReportIntervalTimer.SetTimer(MemReportInterval);
-
 	}
 }
 
@@ -650,7 +651,7 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 #endif
 	else if (FlagName == MemReportFlag)
 	{
-		MemReportIntervalTimer.SetTimer(FCString::Atoi(*FlagValue));
+		InitMemReportTimer(FlagValue);
 	}
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
