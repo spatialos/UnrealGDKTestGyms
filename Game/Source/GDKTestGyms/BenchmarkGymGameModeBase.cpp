@@ -256,13 +256,13 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		PrintMetricsTimer.SetTimer(10);
 	}
 #if	STATS
-	if (StatStartFileTimer.HasTimerGoneOff() && CPUProfileInterval>0)
+	if (CPUProfileInterval > 0 && StatStartFileTimer.HasTimerGoneOff())
 	{
 		FString Cmd(TEXT("stat startfile"));
 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 		{
 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (ensure(SpatialDriver != nullptr))
+			if (SpatialDriver != nullptr)
 			{
 				FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
 				const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
@@ -272,10 +272,10 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		GEngine->Exec(GetWorld(), *Cmd);
 		StatStartFileTimer.SetTimer(CPUProfileInterval);
 	}
-	if (StatStopFileTimer.HasTimerGoneOff() && CPUProfileInterval > 0)
+	if (CPUProfileInterval > 0 && StatStopFileTimer.HasTimerGoneOff())
 	{
 		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
-		StatStopFileTimer.SetTimer(999999);
+		StatStopFileTimer.SetTimer(CPUProfileInterval);
 	}
 #endif
 	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())

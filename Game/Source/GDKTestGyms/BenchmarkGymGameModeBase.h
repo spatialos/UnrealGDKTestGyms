@@ -159,8 +159,8 @@ private:
 	int32 GetPlayerControllerCount() const;
 #if	STATS
 	void InitStatTimer(const FString& CPUProfileString);
-	void InitMemReportTimer(const FString& MemReportIntervalString);
 #endif
+	void InitMemReportTimer(const FString& MemReportIntervalString);
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
