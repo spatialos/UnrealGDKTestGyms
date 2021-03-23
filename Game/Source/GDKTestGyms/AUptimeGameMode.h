@@ -24,7 +24,6 @@ public:
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 
 protected:
-
 	virtual void BuildExpectedActorCounts() override;
 	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
 
@@ -40,6 +39,15 @@ private:
 
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;
+
+	// Number of Spawn Cols and Row need to configuration through worker flags
+	int32 SpawnCols;
+	int32 SpawnRows;
+
+	// Width and Height of Spawn Zones
+	float ZoneWidth;
+	float ZoneHeight;
+
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
@@ -64,8 +72,4 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-	void GenerateRowBoundaries(float StartingX, float StartingY, float HalfDistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoudariesIndex);
-	void GenerateColBoundaries(float StartingX, float StartingY, float DistBetweenPoints, TArray<FVector2D>& Boundaries, int& BoundariesIndex);
-	void GenerateCenterBoundaries(float FixedPos, TArray<FVector2D>& Boundaries, int& BoundariesIndex);
-	void GenerateAllCenterBoundaries(int32 SpawnZones, float Starting, float DistBetweenZones, TArray<FVector2D>& Boundaries, int32& BoundariesIndex);
 };
