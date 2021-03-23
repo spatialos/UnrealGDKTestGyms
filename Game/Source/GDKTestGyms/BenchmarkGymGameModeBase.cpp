@@ -256,7 +256,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		PrintMetricsTimer.SetTimer(10);
 	}
 #if	STATS
-	if (StatStartFileTimer.HasTimerGoneOff())
+	if (StatStartFileTimer.HasTimerGoneOff() && CPUProfileInterval>0)
 	{
 		FString Cmd(TEXT("stat startfile"));
 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
@@ -264,16 +264,18 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 			if (ensure(SpatialDriver != nullptr))
 			{
-				Cmd = FString::Printf(TEXT("stat startfile %s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
+				FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
+				const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
+				Cmd.Append(FString::Printf(TEXT(" %s"), *Filename));
 			}
 		}
 		GEngine->Exec(GetWorld(), *Cmd);
-		StatStartFileTimer.SetTimer(999999);
+		StatStartFileTimer.SetTimer(CPUProfileInterval);
 	}
-	if (StatStopFileTimer.HasTimerGoneOff())
+	if (StatStopFileTimer.HasTimerGoneOff() && CPUProfileInterval > 0)
 	{
 		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
-		StatStopFileTimer.SetTimer(999999);
+		StatStopFileTimer.SetTimer(CPUProfileInterval);
 
 	}
 #endif
@@ -519,9 +521,9 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *NumSpawnZonesCommandLineKey, NumSpawnZones);
 		
 #if	STATS
-		FString StatProfileString;
-		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
-		SetStatTimer(StatProfileString);
+		FString CPUProfileString;
+		FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
+		InitStatTimer(CPUProfileString);
 #endif
 		FString MemReportIntervalString;
 		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
@@ -583,10 +585,10 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					NumSpawnZones = FCString::Atoi(*NumSpawnZonesString);
 				}
 #if	STATS
-				FString StatProfileString;
-				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
+				FString CPUProfileString;
+				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
 				{
-					SetStatTimer(StatProfileString);
+					InitStatTimer(CPUProfileString);
 				}
 #endif
 				FString MemReportIntervalString;
@@ -643,7 +645,7 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 #if	STATS
 	else if (FlagName == StatProfileWorkerFlag)
 	{
-		SetStatTimer(FlagValue);
+		InitStatTimer(FlagValue);
 	}
 #endif
 	else if (FlagName == MemReportFlag)
@@ -786,15 +788,16 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 	}
 }
 #if	STATS
-void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
+void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 {
-	FString StartDelayString, DurationString;
-	if (TimeString.Split(TEXT(","), &StartDelayString, &DurationString))
+	FString CPUProfileIntervalString, CPUProfileDurationString;
+	if (CPUProfileString.Split(TEXT(","), &CPUProfileIntervalString, &CPUProfileDurationString))
 	{
-		int32 StartDelay = FCString::Atoi(*StartDelayString);
-		int32 Duration = FCString::Atoi(*DurationString);
-		StatStartFileTimer.SetTimer(StartDelay);
-		StatStopFileTimer.SetTimer(StartDelay + Duration);
+		int32 FirstStartCPUProfile = FCString::Atoi(*CPUProfileIntervalString);
+		int32 CPUProfileDuration = FCString::Atoi(*CPUProfileDurationString);
+		StatStartFileTimer.SetTimer(FirstStartCPUProfile);
+		StatStopFileTimer.SetTimer(FirstStartCPUProfile + CPUProfileDuration);
+		CPUProfileInterval = FirstStartCPUProfile + CPUProfileDuration;
 	}
 }
 #endif

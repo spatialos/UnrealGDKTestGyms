@@ -122,6 +122,7 @@ private:
 	int32 NumSpawnZones;
 #if	STATS
 	// For stat profile
+	int32 CPUProfileInterval;
 	FMetricTimer StatStartFileTimer;
 	FMetricTimer StatStopFileTimer;
 #endif
@@ -157,7 +158,7 @@ private:
 	void SetLifetime(int32 Lifetime);
 	int32 GetPlayerControllerCount() const;
 #if	STATS
-	void SetStatTimer(const FString& TimeString);
+	void InitStatTimer(const FString& CPUProfileString);
 	void InitMemReportTimer(const FString& MemReportIntervalString);
 #endif
 
