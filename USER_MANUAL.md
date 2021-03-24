@@ -39,20 +39,16 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 
 ### Current tests
 
-#### Automated test gyms
-
-Some test gyms can be run as automated tests. To discover and run these tests:
-  1. In the Unreal Editor, on the GDK Toolbar, select Schema.
-  1. Select Snapshot to generate a snapshot.
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  1. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
-  1. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
-  1. The Session Frontend will then prompt you with the results of the tests.
+#### Known issues
 
 Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
-The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
+The ReplicatedStartupActorTest is failing, pending [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305).
 
-#### Manual test gyms
+#### How to run the automated test gyms
+
+Some test gyms can be run as automated tests. To discover and run these tests, follow [these steps](https://improbableio.atlassian.net/wiki/spaces/GBU/pages/1782644741/How+to+write+a+spatial+functional+test#How-to-run-the-test).
+
+#### How to run the manual test gyms
 
 ##### Empty gym
 * The template for creating new gyms. Copy this to use as a starting point for your own gym.
@@ -75,7 +71,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * The manual version of the gym contains:
   * Four server workers arranged in a 2x2 grid.
   * Four cubes that moves back and forth across a floor, crossing server boundaries.
@@ -141,7 +137,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   1. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
 ##### Net reference test gym
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * This gym tests that references to replicated actors are stable when actors go in and out of relevance.
 * Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
 * Manual steps:
@@ -152,7 +148,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 
 ##### ReplicatedStartupActor gym
 * KNOWN ISSUE: The automated version of this test does not function: [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305)
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * This test gym verifies QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
 * Also verifies that startup actors correctly replicate arbitrary properties.
 * Manual steps:
@@ -188,7 +184,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Server to server RPC gym
 * This gym demonstrates that:
   * Actors owned by different servers correctly send server-to-server RPCs.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * The manual gym contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
@@ -200,7 +196,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
     * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
@@ -227,7 +223,8 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Client Net Ownership gym
 * This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms). Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
+* NOTE: If the automated test is successful, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
 * The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
@@ -326,7 +323,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 
 #### SpatialEventTracingTests
 These test whether key trace events have the appropriate cause events. They can **only** be run automatically. To run them:
-* Follow [these steps](#automated-test-gyms) to actually execute the tests.
+* Follow [these steps](#how-to-run-the-automated-test-gyms) to actually execute the tests.
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
@@ -348,10 +345,10 @@ These test whether key trace events have the appropriate cause events. They can 
   * If you can't see the `Server Default Map`, click `▽` to reveal more options.
   * Set `Server Default Map` to `ClientTravel_Gym`.
   * Select Cloud on the GDK toolbar.
-  ** Enter your project name, and make up and enter an assembly name and a deployment name.
-  ** Ensure that Automatically Generate Launch Configuration is checked.
-  ** Ensure that Add simulated players is not checked.
-  ** Ensure that every option in the Assembly Configuration section is checked.
+  	* Enter your project name, and make up and enter an assembly name and a deployment name.
+  	* Ensure that Automatically Generate Launch Configuration is checked.
+  	* Ensure that Add simulated players is not checked.
+  	* Ensure that every option in the Assembly Configuration section is checked.
   * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
   * Click the Start deployment button.
   * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
