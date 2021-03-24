@@ -1,11 +1,11 @@
 {
 	"name": "china_product_test",
 	"project_version": "0.0.1",
-	"sdk_version": "15.0.0",
+	"sdk_version": "15.0.2",
 	"dependencies": [
 		{
 			"name": "standard_library",
-			"version": "15.0.0"
+			"version": "15.0.2"
 		}
 	]
 }
