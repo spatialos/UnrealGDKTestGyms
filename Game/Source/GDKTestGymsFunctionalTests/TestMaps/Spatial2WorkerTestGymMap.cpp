@@ -2,9 +2,9 @@
 
 #include "Spatial2WorkerTestGymMap.h"
 #include "SpatialGDK/Public/EngineClasses/SpatialWorldSettings.h"
-#include "SpatialGDKFunctionalTests/Public/Test1x2WorkerSettings.h"
 #include "GDKTestGymsFunctionalTests/Tests/PredictedGameplayCuesTest/PredictedGameplayCuesTest.h"
 #include "GDKTestGymsFunctionalTests/Tests/CrossServerAbilityActivationTest/CrossServerAbilityActivationTest.h"
+#include "TestWorkerSettings.h"
 
 USpatial2WorkerTestGymMap::USpatial2WorkerTestGymMap()
 	: UGeneratedTestMap(EMapCategory::CI_PREMERGE_SPATIAL_ONLY, TEXT("Spatial2WorkerTestGymMap"))
@@ -19,5 +19,5 @@ void USpatial2WorkerTestGymMap::CreateCustomContentForMap()
 
 	ASpatialWorldSettings* WorldSettings = CastChecked<ASpatialWorldSettings>(World->GetWorldSettings());
 	WorldSettings->bEnableDebugInterface = true; // ACrossServerAbilityActivationTest requires the debug interface
-	WorldSettings->SetMultiWorkerSettingsClass(UTest1x2WorkerSettings::StaticClass());
+	WorldSettings->SetMultiWorkerSettingsClass(UTest1x2FullInterestWorkerSettings::StaticClass());
 }
