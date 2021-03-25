@@ -58,7 +58,7 @@ namespace
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
 #endif
 	const FString MemReportFlag = TEXT("mem_report");
-	const FString MemRemportIntervalKey = TEXT("-Interval=");
+	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
