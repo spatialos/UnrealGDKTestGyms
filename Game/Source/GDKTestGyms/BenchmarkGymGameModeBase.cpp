@@ -789,13 +789,14 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 {
 	FString CPUProfileIntervalString, CPUProfileDurationString;
-	if (CPUProfileString.Split(TEXT(","), &CPUProfileIntervalString, &CPUProfileDurationString))
+	if (CPUProfileString.Split(TEXT("&"), &CPUProfileIntervalString, &CPUProfileDurationString))
 	{
 		int32 FirstStartCPUProfile = FCString::Atoi(*CPUProfileIntervalString);
 		int32 CPUProfileDuration = FCString::Atoi(*CPUProfileDurationString);
 		StatStartFileTimer.SetTimer(FirstStartCPUProfile);
 		StatStopFileTimer.SetTimer(FirstStartCPUProfile + CPUProfileDuration);
 		CPUProfileInterval = FirstStartCPUProfile + CPUProfileDuration;
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("CPU profile interval is set to %ds, duration is set to %ds"), FirstStartCPUProfile, CPUProfileDuration);
 	}
 }
 #endif
