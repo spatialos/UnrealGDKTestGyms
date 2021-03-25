@@ -798,6 +798,10 @@ void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 		CPUProfileInterval = FirstStartCPUProfile + CPUProfileDuration;
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("CPU profile interval is set to %ds, duration is set to %ds"), FirstStartCPUProfile, CPUProfileDuration);
 	}
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Please ensure both CPU profile interval and duration are set properly"));
+	}
 }
 #endif
 
