@@ -124,11 +124,10 @@ private:
 	// For stat profile
 	FMetricTimer StatStartFileTimer;
 	FMetricTimer StatStopFileTimer;
-#endif
-
 	//For MemReport profile
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
+#endif
 
 	virtual void BeginPlay() override;
 
