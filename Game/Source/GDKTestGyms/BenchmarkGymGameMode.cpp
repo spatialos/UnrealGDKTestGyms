@@ -98,7 +98,6 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
 	if (HasAuthority())
 	{
 		if (NPCSToSpawn > 0)
@@ -178,7 +177,7 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f) + 2;
-	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
+	AddExpectedActorCount(ExpectedDropCubeCount, DropCubeClass, TotalDropCubes, DropCubeCountVariance);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
