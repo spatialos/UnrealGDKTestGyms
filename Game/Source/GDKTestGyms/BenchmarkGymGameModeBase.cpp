@@ -56,10 +56,10 @@ namespace
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
-#endif
+
 	const FString MemReportFlag = TEXT("mem_report");
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
-
+#endif
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
 } // anonymous namespace
@@ -101,8 +101,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 #if	STATS
 	, StatStartFileTimer(60 * 60 * 24)
 	, StatStopFileTimer(60)
+	, MemReportIntervalTimer(60 * 60 * 24)
 #endif
-	,MemReportIntervalTimer(60 * 60 * 24)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -277,7 +277,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
 		StatStopFileTimer.SetTimer(CPUProfileInterval);
 	}
-#endif
+
 	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
 	{
 		FString Cmd = TEXT("memreport -full");
@@ -292,6 +292,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		GEngine->Exec(nullptr, *Cmd);
 		MemReportIntervalTimer.SetTimer(MemReportInterval);
 	}
+#endif
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -522,10 +523,11 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FString CPUProfileString;
 		FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
 		InitStatTimer(CPUProfileString);
-#endif
+
 		FString MemReportIntervalString;
 		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
 		InitMemReportTimer(MemReportIntervalString);
+#endif
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -588,12 +590,13 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				{
 					InitStatTimer(CPUProfileString);
 				}
-#endif
+
 				FString MemReportIntervalString;
 				if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag,MemReportIntervalString))
 				{
 					InitMemReportTimer(MemReportIntervalString);
 				}
+#endif
 			}
 		}
 	}
@@ -645,12 +648,11 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 	{
 		InitStatTimer(FlagValue);
 	}
-#endif
 	else if (FlagName == MemReportFlag)
 	{
 		InitMemReportTimer(FlagValue);
 	}
-
+#endif
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
 
@@ -803,7 +805,6 @@ void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Please ensure both CPU profile interval and duration are set properly"));
 	}
 }
-#endif
 
 void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportIntervalString)
 {
@@ -811,6 +812,7 @@ void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportInter
 	MemReportIntervalTimer.SetTimer(MemReportInterval);
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
 }
+#endif
 
 int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 {
