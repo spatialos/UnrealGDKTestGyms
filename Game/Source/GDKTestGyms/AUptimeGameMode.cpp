@@ -27,6 +27,8 @@ namespace
 	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
 	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
 	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
+	const FString UptimeCrossServerSizeWorkerFlag = TEXT("cross_server_size");
+	const FString UptimeCrossServerFrequencyWorkerFlag = TEXT("cross_server_frequency");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
@@ -37,6 +39,8 @@ AUptimeGameMode::AUptimeGameMode()
 	, ZoneHeight(1000000.0f)
 	, TestDataSize(0)
 	, TestDataFrequency(0)
+	, CrossServerSize(0)
+	, CrossServerFrequency(0)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -72,6 +76,18 @@ void AUptimeGameMode::GenerateTestScenarioLocations()
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
+	{
+		auto NumOfWokers = GetNumWorkers();
+		FRandomStream CrossServerStream;
+		CrossServerStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
+		for (int i = 0; i < NumOfWokers; ++i)
+		{
+			FVector PointA = CrossServerStream.VRand() * RoamRadius;
+			FVector PointB = CrossServerStream.VRand() * RoamRadius;
+			PointA.Z = PointB.Z = 0.0f;
+			CrossServerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
+		}
+	}
 }
 
 void AUptimeGameMode::CheckCmdLineParameters()
@@ -100,6 +116,7 @@ void AUptimeGameMode::StartCustomNPCSpawning()
 	GenerateTestScenarioLocations();
 
 	SpawnNPCs(TotalNPCs);
+	SpawnCrossServerActors(GetNumWorkers());
 }
 
 void AUptimeGameMode::Tick(float DeltaSeconds)
@@ -201,6 +218,14 @@ void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FStr
 	{
 		TestDataFrequency = FCString::Atoi(*FlagValue);
 	}
+	else if (FlagName == UptimeCrossServerSizeWorkerFlag)
+	{
+		CrossServerSize = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeCrossServerFrequencyWorkerFlag)
+	{
+		CrossServerFrequency = FCString::Atoi(*FlagValue);
+	}
 }
 
 void AUptimeGameMode::BuildExpectedActorCounts()
@@ -209,8 +234,8 @@ void AUptimeGameMode::BuildExpectedActorCounts()
 
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f) + 2;
-	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
-}
+	AddExpectedActorCount(ExpectedDropCubeCount, DropCubeClass, TotalDropCubes, DropCubeCountVariance);
+} 
 
 void AUptimeGameMode::ClearExistingSpawnPoints()
 {
@@ -391,4 +416,59 @@ AActor* AUptimeGameMode::FindPlayerStart_Implementation(AController* Player, con
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
+{
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		UE_LOG(LogUptimeGymGameMode, Error, TEXT("Error spawning, World is null"));
+		return;
+	}
+
+	TArray<FVector> Locations = GenerateCrossServerLoaction();
+	auto SizeOfLocations = Locations.Num();
+	for (auto i = 0; i < SizeOfLocations; ++i)
+	{
+		AUptimeCrossServerBeacon* Beacon = World->SpawnActor<AUptimeCrossServerBeacon>(CrossServerClass, Locations[i], FRotator::ZeroRotator, FActorSpawnParameters());
+		checkf(Beacon, TEXT("Beacon failed to spawn at %s"), *Locations[i].ToString());
+
+		UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Beacon->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+		checkf(Comp, TEXT("Beacon must have a UDeterministicBlackboardValues component."));
+		Comp->ClientSetBlackboardAILocations(CrossServerRunPoints[i]);
+
+		SetCrossServerWorkerFlags(Beacon);
+	}
+}
+
+TArray<FVector> AUptimeGameMode::GenerateCrossServerLoaction()
+{
+	const float DistBetweenRows = ZoneHeight / SpawnRows;
+	const float DistBetweenCols = ZoneWidth / SpawnCols;
+	float StartingX = -(SpawnCols - 1) * ZoneWidth / 2 / SpawnCols;
+	float StartingY = -(SpawnRows - 1) * ZoneHeight / 2 / SpawnRows;
+	TArray<FVector> Locations;
+	const int Z = 300;
+	for (auto i = 0; i < SpawnCols; ++i)
+	{
+		auto TempStartingY = StartingY;
+		for (auto j = 0; j < SpawnRows; ++j)
+		{
+			const int Y = TempStartingY;
+			const int X = StartingX;
+			TempStartingY += DistBetweenRows;
+			FVector Location = FVector(X, Y, Z);
+			Locations.Add(Location);
+		}
+		StartingX += DistBetweenCols;
+	}
+	return Locations;
+}
+
+void AUptimeGameMode::SetCrossServerWorkerFlags(AUptimeCrossServerBeacon* Beacon) const
+{
+	Beacon->SetCrossServerSize(CrossServerSize);
+	Beacon->SetCrossServerFrequency(CrossServerFrequency);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("cross server size:%d,cross server frequency:%d"), CrossServerSize, CrossServerFrequency);
 }
