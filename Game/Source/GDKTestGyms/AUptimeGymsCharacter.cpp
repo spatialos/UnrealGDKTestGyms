@@ -51,11 +51,6 @@ void AUptimeGymsCharacter::EgressTestForRPC()
 	{
 		RPCsForAuthority();
 	}
-	else
-	{
-		RPCsForNonAuthority();
-	}
-
 }
 
 void AUptimeGymsCharacter::RPCsForAuthority()
@@ -69,18 +64,6 @@ bool AUptimeGymsCharacter::GetCurrentWorld(UWorld*& world)
 	return world != nullptr;
 }
 
-void AUptimeGymsCharacter::RPCsForNonAuthority()
-{
-	UWorld* world = nullptr;
-	if (GetCurrentWorld(world))
-	{
-		if (!world->IsServer())
-		{
-			ClientToServerRPCs();
-		}
-	}
-}
-
 void AUptimeGymsCharacter::ServerToClientRPCs()
 {
 	for (auto i = 1; i <= TestDataFrequency; ++i)
@@ -92,23 +75,7 @@ void AUptimeGymsCharacter::ServerToClientRPCs()
 	}
 }
 
-void AUptimeGymsCharacter::ClientToServerRPCs()
-{
-	for (auto i = 1; i <= TestDataFrequency; ++i)
-	{
-		for (auto j = 0; j < TestDataSize; ++j)
-		{
-			ReportAuthoritativeClients(RPCsEgressTest[j]);
-		}
-	}
-}
-
 void AUptimeGymsCharacter::ReportAuthoritativeServers_Implementation(int32 TestData)
-{
-	auto copyTestData = TestData;
-}
-
-void AUptimeGymsCharacter::ReportAuthoritativeClients_Implementation(int32 TestData)
 {
 	auto copyTestData = TestData;
 }
