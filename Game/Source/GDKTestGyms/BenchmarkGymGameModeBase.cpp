@@ -519,15 +519,6 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
 		FParse::Value(*CommandLine, *NumSpawnZonesCommandLineKey, NumSpawnZones);
 		
-#if	STATS
-		FString CPUProfileString;
-		FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
-		InitStatTimer(CPUProfileString);
-
-		FString MemReportIntervalString;
-		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-		InitMemReportTimer(MemReportIntervalString);
-#endif
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -601,6 +592,16 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
+	//Move profile configuration outside to avoid conflict with worker flag
+#if	STATS
+	FString CPUProfileString;
+	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
+	InitStatTimer(CPUProfileString);
+
+	FString MemReportIntervalString;
+	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
+	InitMemReportTimer(MemReportIntervalString);
+#endif
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d, NumSpawnZones %d"), 
 		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers, NumSpawnZones);
 }
