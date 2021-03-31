@@ -19,18 +19,13 @@ protected:
 	UFUNCTION(Client,Reliable)
 	virtual void ReportAuthoritativeServers(int32 TestData);
 
-	UFUNCTION(Server,Reliable)
-	virtual void ReportAuthoritativeClients(int32 TestData);
-
 private:
 	void GenerateWorkerFlag();
 	void GenerateTestData(TArray<int32>& TestData, int32 DataSize);
 	void EgressTestForRPC();
 	void RPCsForAuthority();
-	void RPCsForNonAuthority();
 	bool GetCurrentWorld(UWorld*& world);
 	void ServerToClientRPCs();
-	void ClientToServerRPCs();
 	int32 TestDataSize;
 	int32 TestDataFrequency;
 	TArray<int32> RPCsEgressTest;
