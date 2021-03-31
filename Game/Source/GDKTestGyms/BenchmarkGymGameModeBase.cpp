@@ -262,7 +262,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 		{
 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (SpatialDriver != nullptr)
+			if (ensure(SpatialDriver != nullptr))
 			{
 				FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
 				const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
@@ -284,7 +284,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 		{
 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (SpatialDriver != nullptr)
+			if (ensure(SpatialDriver != nullptr))
 			{
 				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
 			}
