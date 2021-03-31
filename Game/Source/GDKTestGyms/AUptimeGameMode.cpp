@@ -25,6 +25,8 @@ namespace
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
 	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
+	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
+	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
@@ -33,6 +35,8 @@ AUptimeGameMode::AUptimeGameMode()
 	, SpawnRows(1)
 	, ZoneWidth(1000000.0f)
 	, ZoneHeight(1000000.0f)
+	, TestDataSize(0)
+	, TestDataFrequency(0)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -189,6 +193,14 @@ void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FStr
 	{
 		ZoneHeight = FCString::Atof(*FlagValue);
 	}
+	else if (FlagName == UptimeEgressSizeWorkerFlag)
+	{
+		TestDataSize = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeEgressFrequencyWorkerFlag)
+	{
+		TestDataFrequency = FCString::Atoi(*FlagValue);
+	}
 }
 
 void AUptimeGameMode::BuildExpectedActorCounts()
@@ -234,7 +246,7 @@ void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 		MinRelativeX = FMath::RoundToInt(MinRelativeX + StartingX + (CurCols * DistBetweenCols) + (DistBetweenCols / 2.0f));
 		MinRelativeY = FMath::RoundToInt(MinRelativeY + StartingY + (CurRows * DistBetweenRows) + (DistBetweenRows / 2.0f));
 		++CurCols;
-	
+
 		UE_LOG(LogUptimeGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
 		for (int j = 0; j < ClusterCount; ++j)
 		{
