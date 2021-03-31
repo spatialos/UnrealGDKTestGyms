@@ -172,8 +172,6 @@ private:
 	UFUNCTION()
 	void OnRepTotalNPCs();
 
-	void CheckForExpectedCount(const UWorld* world);
-
 	void GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World,
 		const FExpectedActorCount& ExpectedCount, TMap<FString, int>& MapAuthoritative,
 		float& TotalCount, int32 ActualCount, bool IsNPCs);
