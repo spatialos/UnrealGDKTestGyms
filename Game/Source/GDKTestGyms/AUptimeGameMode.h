@@ -23,6 +23,9 @@ public:
 	AUptimeGameMode();
 	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName) override;
 
+	int32 GetEgressTestSize()const { return TestDataSize; }
+	int32 GetEgressTestNum() const { return TestDataFrequency; }
+
 protected:
 	virtual void BuildExpectedActorCounts() override;
 	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
@@ -47,6 +50,9 @@ private:
 	// Width and Height of Spawn Zones
 	float ZoneWidth;
 	float ZoneHeight;
+
+	int32 TestDataSize;
+	int32 TestDataFrequency;
 
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
