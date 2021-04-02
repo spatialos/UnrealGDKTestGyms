@@ -28,7 +28,7 @@ protected:
 			, ExpectedCount(InExpectedCount)
 			, Variance(InVariance)
 		{}
-		explicit FExpectedActorCount() {}
+		explicit FExpectedActorCount() :ExpectedCount(0), Variance(0) {}
 
 		TSubclassOf<AActor> ActorClass;
 		int32 ExpectedCount;

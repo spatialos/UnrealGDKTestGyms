@@ -98,6 +98,7 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
 	if (HasAuthority())
 	{
 		if (NPCSToSpawn > 0)

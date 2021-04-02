@@ -467,9 +467,9 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 		
 		const UWorld* World = GetWorld();
 		const FString WorkerID = FPlatformProcess::ComputerName();
-		const int32 ActualCountSimlate = GetActorClassCount(ExpectedSimPlayersCount.ActorClass);
+		const int32 ActualCountSimulate = GetActorClassCount(ExpectedSimPlayersCount.ActorClass);
 		const int32 ActualCountNPCs = GetActorClassCount(ExpectedNPCsCount.ActorClass);
-		GenerateTotalNumsForActors(WorkerID, World, ExpectedSimPlayersCount, MapAuthoritativeSimPlayers, SmoothedTotalAuthSimPlayers, ActualCountSimlate, false);
+		GenerateTotalNumsForActors(WorkerID, World, ExpectedSimPlayersCount, MapAuthoritativeSimPlayers, SmoothedTotalAuthSimPlayers, ActualCountSimulate, false);
 		ReportAuthoritativeNPCs(WorkerID, World, ActualCountNPCs);
 		TempActorCheckDelay.SetTimer(1);
 	}

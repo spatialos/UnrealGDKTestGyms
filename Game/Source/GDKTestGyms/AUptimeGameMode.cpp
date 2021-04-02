@@ -105,6 +105,7 @@ void AUptimeGameMode::StartCustomNPCSpawning()
 void AUptimeGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
 	if (HasAuthority())
 	{
 		if (NPCSToSpawn > 0)
