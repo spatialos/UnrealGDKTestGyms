@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{4923688C-4415-A3D8-2EB1-88BF4BC444C9}",
+	"EngineAssociation": "{CFFA8163-4B62-359E-6CBA-2D8A200A68CC}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -33,10 +33,6 @@
 		},
 		{
 			"Name": "SpatialGDK",
-			"Enabled": true
-		},
-		{
-			"Name": "SnapshotMigrator",
 			"Enabled": true
 		}
 	]
