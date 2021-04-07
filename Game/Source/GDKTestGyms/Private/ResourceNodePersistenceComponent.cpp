@@ -5,15 +5,12 @@
 
 
 #include <WorkerSDK/improbable/c_schema.h>
-#include <WorkerSDK/improbable/c_worker.h>
 
 #include "CustomSchemaSnapshotActor.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "Interop/Connection/SpatialWorkerConnection.h"
 
-const Worker_ComponentId PERSISTENCE_COMPONENT_ID = 9950;
 const Schema_FieldId DEPLETED_FIELD_ID = 1;
-
 
 UResourceNodePersistenceComponent::UResourceNodePersistenceComponent()
 {
