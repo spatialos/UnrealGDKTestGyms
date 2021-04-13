@@ -58,7 +58,7 @@ namespace
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
 
 	const FString MemReportFlag = TEXT("mem_report");
-	const FString MemRemportIntervalKey = TEXT("-Interval=");
+	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
@@ -256,24 +256,29 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		PrintMetricsTimer.SetTimer(10);
 	}
 #if	STATS
-	if (StatStartFileTimer.HasTimerGoneOff())
+	if (CPUProfileInterval > 0)
 	{
-		FString Cmd(TEXT("stat startfile"));
-		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+		if (StatStartFileTimer.HasTimerGoneOff())
 		{
-			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (ensure(SpatialDriver != nullptr))
+			FString Cmd(TEXT("stat startfile"));
+			if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 			{
-				Cmd = FString::Printf(TEXT("stat startfile %s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
+				USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+				if (ensure(SpatialDriver != nullptr))
+				{
+					FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
+					const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
+					Cmd.Append(FString::Printf(TEXT(" %s"), *Filename));
+				}
 			}
+			GEngine->Exec(GetWorld(), *Cmd);
+			StatStartFileTimer.SetTimer(CPUProfileInterval);
 		}
-		GEngine->Exec(GetWorld(), *Cmd);
-		StatStartFileTimer.SetTimer(999999);
-	}
-	if (StatStopFileTimer.HasTimerGoneOff())
-	{
-		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
-		StatStopFileTimer.SetTimer(999999);
+		if (StatStopFileTimer.HasTimerGoneOff())
+		{
+			GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
+			StatStopFileTimer.SetTimer(CPUProfileInterval);
+		}
 	}
 
 	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
@@ -282,7 +287,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 		{
 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (SpatialDriver != nullptr)
+			if (ensure(SpatialDriver != nullptr))
 			{
 				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
 			}
@@ -517,15 +522,6 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
 		FParse::Value(*CommandLine, *NumSpawnZonesCommandLineKey, NumSpawnZones);
 		
-#if	STATS
-		FString StatProfileString;
-		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
-		SetStatTimer(StatProfileString);
-
-		FString MemReportIntervalString;
-		FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-		InitMemReportTimer(MemReportIntervalString);
-#endif
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -583,10 +579,10 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					NumSpawnZones = FCString::Atoi(*NumSpawnZonesString);
 				}
 #if	STATS
-				FString StatProfileString;
-				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
+				FString CPUProfileString;
+				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
 				{
-					SetStatTimer(StatProfileString);
+					InitStatTimer(CPUProfileString);
 				}
 
 				FString MemReportIntervalString;
@@ -599,6 +595,16 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		}
 	}
 
+	//Move profile configuration outside to avoid conflict with worker flag
+#if	STATS
+	FString CPUProfileString;
+	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
+	InitStatTimer(CPUProfileString);
+
+	FString MemReportIntervalString;
+	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
+	InitMemReportTimer(MemReportIntervalString);
+#endif
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d, NumSpawnZones %d"), 
 		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers, NumSpawnZones);
 }
@@ -644,7 +650,7 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 #if	STATS
 	else if (FlagName == StatProfileWorkerFlag)
 	{
-		SetStatTimer(FlagValue);
+		InitStatTimer(FlagValue);
 	}
 	else if (FlagName == MemReportFlag)
 	{
@@ -786,15 +792,21 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 	}
 }
 #if	STATS
-void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
+void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 {
-	FString StartDelayString, DurationString;
-	if (TimeString.Split(TEXT(","), &StartDelayString, &DurationString))
+	FString CPUProfileIntervalString, CPUProfileDurationString;
+	if (CPUProfileString.Split(TEXT("&"), &CPUProfileIntervalString, &CPUProfileDurationString))
 	{
-		int32 StartDelay = FCString::Atoi(*StartDelayString);
-		int32 Duration = FCString::Atoi(*DurationString);
-		StatStartFileTimer.SetTimer(StartDelay);
-		StatStopFileTimer.SetTimer(StartDelay + Duration);
+		int32 FirstStartCPUProfile = FCString::Atoi(*CPUProfileIntervalString);
+		int32 CPUProfileDuration = FCString::Atoi(*CPUProfileDurationString);
+		StatStartFileTimer.SetTimer(FirstStartCPUProfile);
+		StatStopFileTimer.SetTimer(FirstStartCPUProfile + CPUProfileDuration);
+		CPUProfileInterval = FirstStartCPUProfile + CPUProfileDuration;
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("CPU profile interval is set to %ds, duration is set to %ds"), FirstStartCPUProfile, CPUProfileDuration);
+	}
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Please ensure both CPU profile interval and duration are set properly"));
 	}
 }
 
