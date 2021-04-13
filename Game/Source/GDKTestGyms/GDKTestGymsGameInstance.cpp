@@ -92,6 +92,11 @@ float UGDKTestGymsGameInstance::AddAndCalcFps(int64 NowReal, float DeltaS)
 	return 60.0f; // If there are no samples return the ideal
 }
 
+void UGDKTestGymsGameInstance::ReturnToMainMenu()
+{
+	Super::ReturnToMainMenu();
+}
+
 void UGDKTestGymsGameInstance::NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Network Failure (%s)"), *ErrorString);

@@ -30,6 +30,8 @@ public:
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
 	float GetAveragedFPS() const { return AverageFPS; }
+	UFUNCTION(BlueprintCallable)
+	virtual void ReturnToMainMenu() override;
 	void NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
 	const UNFRConstants* GetNFRConstants() const { return NFRConstants; }
