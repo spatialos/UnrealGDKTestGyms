@@ -10,7 +10,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogUptimeCrossServerBeacon, Log, All);
 
 UCLASS()
 class AUptimeCrossServerBeacon :
-	public ACharacter
+	public AActor
 {
 	GENERATED_BODY()
 
@@ -24,6 +24,8 @@ public:
 	UFUNCTION(CrossServer, Reliable)
 	void SendCrossServer(int32 TestData);
 
+	virtual void Tick(float DeltaSeconds) override;
+
 private:
 	int32 CrossServerSize;
 	int32 CrossServerFrequency;
@@ -32,8 +34,6 @@ private:
 	bool bHasReceivedFrequency;
 	bool bHasGenerateData;
 	FMetricTimer FrequencyTimer;
-
-	virtual void Tick(float DeltaSeconds) override;
 
 	void GenerateTestData(TArray<int32>& TestData, int32 DataSize);
 	void RPCsForNonAuthority();

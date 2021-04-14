@@ -37,7 +37,6 @@ protected:
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
 	TArray<FBlackboardValues> NPCRunPoints;
-	TArray<FBlackboardValues> CrossServerRunPoints;
 	void GenerateTestScenarioLocations();
 
 	TArray<ControllerIntegerPair> AIControlledPlayers;

@@ -20,7 +20,7 @@ DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
 namespace
 {
-	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const FString PlayerDensityWorkerFlagUptime = TEXT("player_density");
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
@@ -74,18 +74,6 @@ void AUptimeGameMode::GenerateTestScenarioLocations()
 			FVector PointB = NPCStream.VRand() * RoamRadius;
 			PointA.Z = PointB.Z = 0.0f;
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
-		}
-	}
-	{
-		auto NumOfWokers = GetNumWorkers();
-		FRandomStream CrossServerStream;
-		CrossServerStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
-		for (int i = 0; i < NumOfWokers; ++i)
-		{
-			FVector PointA = CrossServerStream.VRand() * RoamRadius;
-			FVector PointB = CrossServerStream.VRand() * RoamRadius;
-			PointA.Z = PointB.Z = 0.0f;
-			CrossServerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
 }
@@ -174,7 +162,7 @@ void AUptimeGameMode::ParsePassedValues()
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
 				FString PlayerDensityString;
-				if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlagUptime, PlayerDensityString))
 				{
 					PlayerDensity = FCString::Atoi(*PlayerDensityString);
 				}
@@ -190,7 +178,7 @@ void AUptimeGameMode::ParsePassedValues()
 void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
-	if (FlagName == PlayerDensityWorkerFlag)
+	if (FlagName == PlayerDensityWorkerFlagUptime)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
 	}
@@ -436,7 +424,6 @@ void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
 
 		UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Beacon->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
 		checkf(Comp, TEXT("Beacon must have a UDeterministicBlackboardValues component."));
-		Comp->ClientSetBlackboardAILocations(CrossServerRunPoints[i]);
 
 		SetCrossServerWorkerFlags(Beacon);
 	}
