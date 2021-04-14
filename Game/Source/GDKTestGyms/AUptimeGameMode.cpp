@@ -209,7 +209,7 @@ void AUptimeGameMode::BuildExpectedActorCounts()
 
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f) + 2;
-	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
+	AddExpectedActorCount(ExpectedDropCubeCount, DropCubeClass, TotalDropCubes, DropCubeCountVariance);
 }
 
 void AUptimeGameMode::ClearExistingSpawnPoints()
