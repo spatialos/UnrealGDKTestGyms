@@ -32,7 +32,7 @@ protected:
 	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
 
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
-		TSubclassOf<AUptimeCrossServerBeacon> CrossServerClass;
+	TSubclassOf<AUptimeCrossServerBeacon> CrossServerClass;
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
@@ -67,14 +67,14 @@ private:
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
 	UPROPERTY()
-		TArray<AActor*> SpawnPoints;
+	TArray<AActor*> SpawnPoints;
 	UPROPERTY()
-		TMap<int32, AActor*> PlayerIdToSpawnPointMap;
+	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	TSubclassOf<AActor> DropCubeClass;
 	int32 NPCSToSpawn;
 
 	UPROPERTY()
-		ABenchmarkGymNPCSpawner* NPCSpawner;
+	ABenchmarkGymNPCSpawner* NPCSpawner;
 
 	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
