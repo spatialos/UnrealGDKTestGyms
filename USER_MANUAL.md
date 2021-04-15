@@ -420,5 +420,32 @@ Manual steps:
  1. Select `Play` on the Unreal toolbar.
  1. Watch as the cubes turn green in under 8 seconds.
 
+##### Player disconnect gym
+* Demonstrates that:
+  * Players are cleaned up correctly when they disconnect.
+* NOTE: This gym can only be run manually. (Note: this can be automated once the test frameworks supports client disconnects https://improbableio.atlassian.net/browse/UNR-529)
+* Pre-test steps:
+  * Navigate to: Project Settings-> Project - Maps & Modes -> Game Instance and set the Game Instance Class to `PlayerDisconnectGameInstance`
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/PlayerDisconnectGym` and double click to open it.
+* Client disconnect test:
+  * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
+  * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
+  * Press 'M' key for one client, to travel this player to the empty map.
+  * Verify in the Inspector, one client worker, one player controller and one player character.
+* Server disconnects all clients test:
+  * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
+  * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
+  * Open a command window and go to the spatial directory of the GDKTestGyms, use the following command: curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown
+  * Verify in the Inspector, zero client workers, zero player controllers and zero player characters.
+* Close client window test:
+  * In the Unreal Editor's Toolbar, on the play dropdown menu select one player and then click `Play` button
+  * Use LaunchClient.bat script to launch a second client
+  * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
+  * Close the window of the second client.
+  * Verify in the Inspector, one client worker, one player controller and one player character.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+* Post-test steps:
+  * Navigate to: Project Settings-> Project - Maps & Modes -> Game Instance and set the Game Instance Class to GDKTestGymsGameInstance
+* These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
 -----
 2019-11-15: Page added with editorial review
