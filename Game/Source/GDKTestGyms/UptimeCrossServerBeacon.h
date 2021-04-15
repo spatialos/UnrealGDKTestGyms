@@ -9,8 +9,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogUptimeCrossServerBeacon, Log, All);
 
 UCLASS()
-class AUptimeCrossServerBeacon :
-	public AActor
+class AUptimeCrossServerBeacon : public AActor
 {
 	GENERATED_BODY()
 
