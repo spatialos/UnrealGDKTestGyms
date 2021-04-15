@@ -61,7 +61,7 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 		return;
 	}
 
-	if (Reporter != nullptr && !Reporter->IsPendingKill())
+	if (Reporter.IsValid())
 	{
 		float DeltaTime = FTimespan(ClientTimeTicks - OldTicks).GetTotalMilliseconds();
 		float DistanceSq = Reporter->GetOwner()->GetSquaredDistanceTo(GetOwner());
