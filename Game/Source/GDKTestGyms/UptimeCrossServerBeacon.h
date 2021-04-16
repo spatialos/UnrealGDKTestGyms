@@ -3,6 +3,7 @@
 #pragma once
 
 #include "NFRConstants.h"
+#include "GameFramework/Actor.h"
 #include "UptimeCrossServerBeacon.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUptimeCrossServerBeacon, Log, All);
