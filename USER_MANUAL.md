@@ -438,7 +438,7 @@ Manual steps:
   * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
   * Open a command window and go to the spatial directory of the GDKTestGyms, use the following command: curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown
   * Verify in the Inspector, zero client workers, zero player controllers and zero player characters.
-* Close client window test:
+* Test for a client disconnecting by closing their window:
   * In the Unreal Editor's Toolbar, on the play dropdown menu select one player and then click `Play` button
   * Use LaunchClient.bat script to launch a second client
   * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
