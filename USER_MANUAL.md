@@ -427,7 +427,7 @@ Manual steps:
 * Pre-test steps:
   * Navigate to: Project Settings-> Project - Maps & Modes -> Game Instance and set the Game Instance Class to `PlayerDisconnectGameInstance`
   * In the Unreal Editor's Content Browser, locate `Content/Maps/PlayerDisconnectGym` and double click to open it.
-* Client disconnect test:
+* Test for a client disconnecting by returning to the main menu:
   * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
   * Verify in Inspector that two client worker entities, two player controller entities (PlayerDisconnectController) and two player character entities exist.
   * Press 'M' in one of the clients, to make that client leave the deployment by traveling to the empty map.
