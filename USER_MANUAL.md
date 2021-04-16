@@ -430,7 +430,7 @@ Manual steps:
 * Client disconnect test:
   * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
   * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
-  * Press 'M' key for one client, to travel this player to the empty map.
+  * Press 'M' in one of the clients, to make that client leave the deployment by traveling to the empty map.
   * Verify in the Inspector, one client worker, one player controller and one player character.
 * Server disconnects all clients test:
   * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
