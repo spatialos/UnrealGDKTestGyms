@@ -1,42 +1,36 @@
 ---
+ci_version: &ci_version "1.0"
+
 # This is designed to trap and retry failures because agent lost
 # connection. Agent exits with -1 in this case.
 agent_transients: &agent_transients
   exit_status: -1
   limit: 3
+
 # BK system error
 bk_system_error: &bk_system_error
   exit_status: 255
   limit: 3
+
 # job was interrupted by a signal (e.g. ctrl+c etc)
 bk_interrupted_by_signal: &bk_interrupted_by_signal
   exit_status: 15
   limit: 3
 
-script_runner: &script_runner
-  agents:
-    - "agent_count=8"
-    - "capable_of_building=platform"
-    - "environment=production"
-    - "machine_type=quarter"
-    - "permission_set=builder"
-    - "platform=linux"
-    - "queue=${CI_LINUX_BUILDER_QUEUE:-v4-20-08-12-083656-bk14222-38697241}"
-    - "scaler_version=2"
-    - "working_hours_time_zone=london"
-  retry:
-    automatic:
-      - <<: *agent_transients
-      - <<: *bk_system_error
-      - <<: *bk_interrupted_by_signal
+# Hook failure
+bk_hook_failure: &bk_hook_failure
+  exit_status: 127
+  limit: 3
 
 steps:
   # New build pipeline
   # Trigger a 4.26 build
   - trigger: "unrealgdkbuild-ci"
-    label: "testgyms-ci-426 ${BUILDKITE_MESSAGE}"
-    async: true
-    build: 
+    label: "testgyms-ci-4.26"
+    async: false
+    build:
+      branch: *ci_version
+      message: "testgyms-4.26 ${BUILDKITE_MESSAGE}"
       env: 
         BUILD_TYPE: "GDK"
         GDK_BRANCH: "master" # TODO: Do we want auto-branch name detection?
@@ -51,9 +45,11 @@ steps:
 
   # Trigger a 4.25 build
   - trigger: "unrealgdkbuild-ci"
-    label: "testgyms-ci-425 ${BUILDKITE_MESSAGE}"
-    async: true
+    label: "testgyms-ci-4.25"
+    async: false
     build: 
+      branch: *ci_version
+      message: "testgyms-4.25 ${BUILDKITE_MESSAGE}"
       env: 
         BUILD_TYPE: "GDK"
         GDK_BRANCH: "master" # TODO: Do we want auto-branch name detection?
@@ -65,10 +61,3 @@ steps:
         BUILD_ANDROID: "False"
         SKIP_TESTS: "False"
         CLEAN_BUILD: "False"
-
-  # Old build pipeline
-  - label: "generate-pipeline-steps"
-    commands: 
-      - "chmod -R +rwx ci"
-      - "ci/generate-pipeline-steps.sh"
-    <<: *script_runner
