@@ -20,7 +20,7 @@ DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
 namespace
 {
-	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const FString PlayerDensityWorkerFlag1 = TEXT("player_density");
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
@@ -157,7 +157,7 @@ void AUptimeGameMode::ParsePassedValues()
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
 				FString PlayerDensityString;
-				if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag1, PlayerDensityString))
 				{
 					PlayerDensity = FCString::Atoi(*PlayerDensityString);
 				}
@@ -173,7 +173,7 @@ void AUptimeGameMode::ParsePassedValues()
 void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
-	if (FlagName == PlayerDensityWorkerFlag)
+	if (FlagName == PlayerDensityWorkerFlag1)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
 	}
