@@ -3,11 +3,11 @@
 #pragma once
 
 #include "NFRConstants.h"
-#include "GameFramework/Character.h"
 #include "UptimeCrossServerBeacon.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUptimeCrossServerBeacon, Log, All);
 
+// This class is used to generate the cross server RPCs
 UCLASS()
 class AUptimeCrossServerBeacon : public AActor
 {

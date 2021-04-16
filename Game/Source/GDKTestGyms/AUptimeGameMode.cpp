@@ -422,9 +422,6 @@ void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
 		AUptimeCrossServerBeacon* Beacon = World->SpawnActor<AUptimeCrossServerBeacon>(CrossServerClass, Locations[i], FRotator::ZeroRotator, FActorSpawnParameters());
 		checkf(Beacon, TEXT("Beacon failed to spawn at %s"), *Locations[i].ToString());
 
-		UDeterministicBlackboardValues* Comp = Cast<UDeterministicBlackboardValues>(Beacon->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-		checkf(Comp, TEXT("Beacon must have a UDeterministicBlackboardValues component."));
-
 		SetCrossServerWorkerFlags(Beacon);
 	}
 }
