@@ -18,7 +18,7 @@
 
 DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
-namespace Uptime
+namespace
 {
 	const FString UptimePlayerDensityWorkerFlag = TEXT("player_density");
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
@@ -27,9 +27,7 @@ namespace Uptime
 	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
 	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
 	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
-}
-
-using namespace Uptime;
+} // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
 	: bInitializedCustomSpawnParameters(false)
