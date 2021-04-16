@@ -420,5 +420,41 @@ Manual steps:
  1. Select `Play` on the Unreal toolbar.
  1. Watch as the cubes turn green in under 8 seconds.
 
+##### Player disconnect gym
+* Demonstrates that:
+  * Players are cleaned up correctly when they disconnect.
+* NOTE: This gym can only be run manually (This can be automated once the test frameworks supports client disconnects [UNR-529](https://improbableio.atlassian.net/browse/UNR-529)).
+* Pre-test steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/PlayerDisconnectGym` and double click to open it.
+* How to test for a client disconnecting by returning to its main menu:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
+  * Select Play.
+  * From the UnrealGDK toolbar, open the Inspector.
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Press `M` in one of the clients, to make that client leave the deployment by traveling to the empty map.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* How to test for the server disconnecting all clients:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
+  * Select Play.
+  * From the UnrealGDK toolbar, open the Inspector.
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Open a terminal window and `cd` `UnrealGDKTestGyms\spatial`.
+  * Run `curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown`.
+  * Verify in the Inspector that zero client worker entities, zero player controllers entities and zero player character entities exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* How to test for a player disconnecting by exiting the client window:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 1.
+  * Select Play.
+  * Use `UnrealGDKTestGyms\LaunchClient.bat` script to launch a second client.
+  * From the UnrealGDK toolbar, open the Inspector
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Close the window of the second client.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
 -----
 2019-11-15: Page added with editorial review
