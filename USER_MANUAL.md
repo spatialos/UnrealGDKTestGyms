@@ -431,7 +431,7 @@ Manual steps:
   * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
   * Verify in Inspector that two client worker entities, two player controller entities (PlayerDisconnectController) and two player character entities exist.
   * Press 'M' in one of the clients, to make that client leave the deployment by traveling to the empty map.
-  * Verify in the Inspector, one client worker, one player controller and one player character.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
 * Server disconnects all clients test:
   * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
   * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
