@@ -13,6 +13,6 @@ void APlayerDisconnectController::SetupInputComponent()
 
 void APlayerDisconnectController::MPressed()
 {
-	// Test a client disconnecting by returning to the main menu, in this case will travel to an empty map
+	// Test a client disconnecting by returning to the main menu, in this case will travel to the default map
 	GetGameInstance()->ReturnToMainMenu();
 }
