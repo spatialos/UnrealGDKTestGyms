@@ -433,6 +433,7 @@ Manual steps:
   * Press 'M' in one of the clients, to make that client leave the deployment by traveling to the empty map.
   * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
 * Test for the server disconnecting all clients:
+  * Shut down the previous deployment
   * In the Unreal Editor's Toolbar, on the play dropdown menu select two players and then click `Play` button
   * Verify in Inspector, two client workers, two player controllers (PlayerDisconnectController) and two player characters.
   * Open a command window and go to the spatial directory of the GDKTestGyms, use the following command: curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown
