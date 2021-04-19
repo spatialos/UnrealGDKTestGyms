@@ -15,7 +15,6 @@ class AUptimeCrossServerBeacon : public AActor
 	GENERATED_BODY()
 
 public:
-
 	AUptimeCrossServerBeacon();
 
 	void SetCrossServerSize(int32 Size) { CrossServerSize = Size; bHasReceivedSize = true; }
