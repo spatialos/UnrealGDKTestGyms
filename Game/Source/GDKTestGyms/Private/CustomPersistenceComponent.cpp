@@ -5,14 +5,14 @@
 #include "EngineClasses/SpatialGameInstance.h"
 #include "Interop/Connection/SpatialWorkerConnection.h"
 #include "Utils/SpatialStatics.h"
+#include "SpatialConstants.h"
+#include <WorkerSDK/improbable/c_schema.h>
 
 // Sets default values for this component's properties
 UCustomPersistenceComponent::UCustomPersistenceComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
-
-	bHasProvidedPersistenceData = false;
 }
 
 void UCustomPersistenceComponent::PostReplication()
@@ -63,19 +63,6 @@ void UCustomPersistenceComponent::PostReplication()
 // fresh deployment, or spawned dynamically.
 void UCustomPersistenceComponent::OnAuthorityGained()
 {
-	UE_LOG(LogTemp, Log, TEXT("UCustomPersistenceComponent, %s, OnAuthorityGained, bHasProvidedPersistenceData %d"), *GetName(),
-		   bHasProvidedPersistenceData);
-
-	// This doesn't work upon snapshot reload until this flag gets scrubbed from the snapshot
-	// Commenting it out means that we'll re-apply persistence data on every server migration, but for testing purposes that should be okay.
-	// if (bHasProvidedPersistenceData)
-	// {
-	// 	UE_LOG(LogTemp, Log, TEXT("UCustomPersistenceComponent, OnAuthorityGained, but already provided persistence data previously"));
-	// 	return;
-	// }
-
-	bHasProvidedPersistenceData = true;
-
 	AActor* Owner = GetOwner();
 	if (Owner == nullptr)
 	{
@@ -114,22 +101,58 @@ void UCustomPersistenceComponent::OnAuthorityGained()
 		return;
 	}
 
-	bool bFoundComponent = false;
+	const SpatialGDK::ComponentData* CustomPersistenceData = nullptr;
+	const SpatialGDK::ComponentData* UserData = nullptr;
+
 	for (const auto& ComponentData : ViewData->Components)
 	{
+		if (ComponentData.GetComponentId() == SpatialConstants::CUSTOM_PERSISTENCE_COMPONENT_ID)
+		{
+			CustomPersistenceData = &ComponentData;
+		}
+		
 		if (ComponentData.GetComponentId() == GetComponentId())
 		{
-			OnPersistenceDataAvailable(ComponentData);
-			bFoundComponent = true;
-			break;
+			UserData = &ComponentData;
 		}
 	}
 
-	if (!bFoundComponent)
+	if (CustomPersistenceData != nullptr && UserData != nullptr)
 	{
-		SpatialGDK::ComponentData Data(GetComponentId());
-		GetAddComponentData(Data);
-		Coordinator.SendAddComponent(EntityID, MoveTemp(Data), {});
+		Schema_Object* CustomPersistenceFields = CustomPersistenceData->GetFields();
+		const bool bSuppliedData = Schema_GetBool(CustomPersistenceFields, SpatialConstants::CUSTOM_PERSISTENCE_DATA_SUPPLIED_ID) != 0;
+		if (!bSuppliedData)
+		{
+			OnPersistenceDataAvailable(*UserData);
+
+				// Set the flag that we've supplied the persistence data
+			SpatialGDK::ComponentUpdate CustomPersistenceUpdate(SpatialConstants::CUSTOM_PERSISTENCE_COMPONENT_ID);
+			Schema_Object* UserDataFields = CustomPersistenceUpdate.GetFields();
+			Schema_AddBool(UserDataFields, SpatialConstants::CUSTOM_PERSISTENCE_DATA_SUPPLIED_ID, true);
+			Coordinator.SendComponentUpdate(EntityID, MoveTemp(CustomPersistenceUpdate), {});
+		}
+	}
+	else
+	{
+		if (!(CustomPersistenceData == nullptr && UserData == nullptr))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UCustomPersistenceComponent, OnAuthorityGained, either the custom persistence or user data component were missing from the entity. This is inconsistent state. Will add the missing component to recover."));
+		}
+
+		if (CustomPersistenceData == nullptr)
+		{
+			SpatialGDK::ComponentData NewCustomPersistenceData(SpatialConstants::CUSTOM_PERSISTENCE_COMPONENT_ID);
+			Schema_Object* Fields = NewCustomPersistenceData.GetFields();
+			Schema_AddBool(Fields, SpatialConstants::CUSTOM_PERSISTENCE_DATA_SUPPLIED_ID, true);
+			Coordinator.SendAddComponent(EntityID, MoveTemp(NewCustomPersistenceData), {});
+		}
+
+		if (UserData == nullptr)
+		{
+			SpatialGDK::ComponentData NewUserData(GetComponentId());
+			GetAddComponentData(NewUserData);
+			Coordinator.SendAddComponent(EntityID, MoveTemp(NewUserData), {});
+		}
 	}
 }
 

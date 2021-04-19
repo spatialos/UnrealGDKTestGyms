@@ -29,9 +29,4 @@ protected:
 	virtual void GetAddComponentData(SpatialGDK::ComponentData& Data);
 	virtual void GetComponentUpdate(SpatialGDK::ComponentUpdate& Update);
 	virtual void OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data);
-
-private:
-	// This exists so that during OnAuthorityGained, we can know if we gained authority for the first time in this deployment
-	UPROPERTY(Handover)
-	bool bHasProvidedPersistenceData;
 };

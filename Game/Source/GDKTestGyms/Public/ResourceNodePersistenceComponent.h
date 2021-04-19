@@ -7,7 +7,7 @@
 #include <WorkerSDK/improbable/c_worker.h>
 #include "ResourceNodePersistenceComponent.generated.h"
 
-const Worker_ComponentId CUSTOM_PERSISTENCE_COMPONENT_ID = 9950;
+const Worker_ComponentId USER_PERSISTENCE_COMPONENT_ID = 9940;
 
 USTRUCT(BlueprintType)
 struct GDKTESTGYMS_API FResourceNodePersistenceData
@@ -27,7 +27,7 @@ public:
 	// Sets default values for this component's properties
 	UResourceNodePersistenceComponent();
 
-	virtual Worker_ComponentId GetComponentId() const override { return CUSTOM_PERSISTENCE_COMPONENT_ID; }
+	virtual Worker_ComponentId GetComponentId() const override { return USER_PERSISTENCE_COMPONENT_ID; }
 	virtual void GetAddComponentData(SpatialGDK::ComponentData& Data) override;
 	virtual void GetComponentUpdate(SpatialGDK::ComponentUpdate& Update) override;
 	virtual void OnPersistenceDataAvailable(const SpatialGDK::ComponentData& Data) override;
