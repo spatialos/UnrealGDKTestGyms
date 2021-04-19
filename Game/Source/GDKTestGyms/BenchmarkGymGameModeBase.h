@@ -138,7 +138,6 @@ private:
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
 #endif
-
 	virtual void BeginPlay() override;
 
 	void TryInitialiseExpectedActorCounts();
