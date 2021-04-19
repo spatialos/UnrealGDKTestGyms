@@ -23,7 +23,6 @@ public:
 
 	UFUNCTION(CrossServer, Reliable)
 	void SendCrossServer(int32 TestData);
-
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
