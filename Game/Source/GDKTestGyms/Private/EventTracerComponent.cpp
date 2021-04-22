@@ -31,7 +31,7 @@ void UEventTracerComponent::BeginPlay()
 void UEventTracerComponent::TimerFunction()
 {
 	// Create a user trace event for sending a property update
-	FUserSpanId SpanId;// = USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
+	FUserSpanId SpanId = USpatialEventTracerUserInterface::TraceEvent(this, TEXT("user.send_component_property"), TEXT(""));
 	USpatialEventTracerUserInterface::TraceProperty(this, this, SpanId);
 
 	TestInt++;
