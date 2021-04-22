@@ -37,7 +37,12 @@ void UEventTracerComponent::TimerFunction()
 	TestInt++;
 
 	// Create a user trace event for sending an RPC
-	SpanId;//= USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent());
+	FEventTracerAddDataDelegate AddDataDelegate;
+	AddDataDelegate.BindLambda([](SpatialGDK::FSpatialTraceEventDataBuilder& Builder) {
+		Builder.AddKeyValue("Message", "Look mum, I'm adding data to a trace event using a delegate!");
+	});
+
+	SpanId = USpatialEventTracerUserInterface::TraceEvent(this, TEXT("user.send_rpc"), TEXT(""), AddDataDelegate);
 
 	FEventTracerRPCDelegate Delegate;
 	Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UEventTracerComponent, RunOnClient));
@@ -51,7 +56,7 @@ void UEventTracerComponent::OnRepTestInt()
 		FUserSpanId CauseSpanId;
 		if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 		{
-			;//USpatialEventTracerUserInterface::TraceEventWithCauses(this, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent(), { CauseSpanId });
+			USpatialEventTracerUserInterface::TraceEventWithCauses(this, TEXT("user.receive_component_property"), TEXT(""), { CauseSpanId });
 		}
 	}
 }
@@ -63,7 +68,7 @@ void UEventTracerComponent::RunOnClient_Implementation()
 	FUserSpanId CauseSpanId;
 	if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 	{
-		;//USpatialEventTracerUserInterface::TraceEventWithCauses(this, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent(), { CauseSpanId });
+		USpatialEventTracerUserInterface::TraceEventWithCauses(this, TEXT("user.process_rpc"), TEXT(""), { CauseSpanId });
 	}
 }
 
