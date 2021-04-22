@@ -1,7 +1,6 @@
 #include "EventTracerComponent.h"
 
 #include "Interop/Connection/SpatialEventTracerUserInterface.h"
-#include "Interop/Connection/SpatialTraceEventBuilder.h"
 #include "Interop/Connection/UserSpanId.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -32,13 +31,13 @@ void UEventTracerComponent::BeginPlay()
 void UEventTracerComponent::TimerFunction()
 {
 	// Create a user trace event for sending a property update
-	FUserSpanId SpanId = USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
+	FUserSpanId SpanId;// = USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_component_property").GetEvent());
 	USpatialEventTracerUserInterface::TraceProperty(this, this, SpanId);
 
 	TestInt++;
 
 	// Create a user trace event for sending an RPC
-	SpanId = USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent());
+	SpanId;//= USpatialEventTracerUserInterface::TraceEvent(this, SpatialGDK::FSpatialTraceEventBuilder("user.send_rpc").GetEvent());
 
 	FEventTracerRPCDelegate Delegate;
 	Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UEventTracerComponent, RunOnClient));
@@ -52,7 +51,7 @@ void UEventTracerComponent::OnRepTestInt()
 		FUserSpanId CauseSpanId;
 		if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 		{
-			USpatialEventTracerUserInterface::TraceEventWithCauses(this, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent(), { CauseSpanId });
+			;//USpatialEventTracerUserInterface::TraceEventWithCauses(this, SpatialGDK::FSpatialTraceEventBuilder("user.receive_component_property").GetEvent(), { CauseSpanId });
 		}
 	}
 }
@@ -64,7 +63,7 @@ void UEventTracerComponent::RunOnClient_Implementation()
 	FUserSpanId CauseSpanId;
 	if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 	{
-		USpatialEventTracerUserInterface::TraceEventWithCauses(this, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent(), { CauseSpanId });
+		;//USpatialEventTracerUserInterface::TraceEventWithCauses(this, SpatialGDK::FSpatialTraceEventBuilder("user.process_rpc").GetEvent(), { CauseSpanId });
 	}
 }
 
