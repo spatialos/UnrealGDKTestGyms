@@ -32,7 +32,7 @@ void UResourceNodePersistenceComponent::GetComponentUpdate(SpatialGDK::Component
 	// Old code (stores mirrors of the persistence data on the actor component)
 	// ACustomSchemaSnapshotActor* SnapshotActor = Cast<ACustomSchemaSnapshotActor>(Owner);
 	// bDepleted = SnapshotActor->bDepleted; // Copy over our data. This is very prone to just forgetting to set the field on this component :/
-	
+
 	Schema_Object* Fields = Update.GetFields();
 	Schema_AddBool(Fields, DEPLETED_FIELD_ID, Data.bDepleted);
 }

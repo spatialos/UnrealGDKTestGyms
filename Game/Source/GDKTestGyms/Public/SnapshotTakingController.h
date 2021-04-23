@@ -7,7 +7,7 @@
 #include "SnapshotTakingController.generated.h"
 
 /**
- * 
+ * A controller with a keybinding to take snapshots at runtime (only works in-editor)
  */
 UCLASS()
 class GDKTESTGYMS_API ASnapshotTakingController : public APlayerController

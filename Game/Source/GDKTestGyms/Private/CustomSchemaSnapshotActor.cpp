@@ -14,7 +14,7 @@
 // Sets default values
 ACustomSchemaSnapshotActor::ACustomSchemaSnapshotActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bDepleted = false;
 }
@@ -23,7 +23,6 @@ ACustomSchemaSnapshotActor::ACustomSchemaSnapshotActor()
 void ACustomSchemaSnapshotActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame

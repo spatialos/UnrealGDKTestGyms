@@ -112,7 +112,7 @@ void UCustomPersistenceComponent::OnAuthorityGained()
 		{
 			CustomPersistenceData = &ComponentData;
 		}
-		
+
 		if (ComponentData.GetComponentId() == GetComponentId())
 		{
 			UserData = &ComponentData;

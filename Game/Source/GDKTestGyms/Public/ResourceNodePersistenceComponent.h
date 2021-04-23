@@ -23,7 +23,7 @@ class GDKTESTGYMS_API UResourceNodePersistenceComponent : public UCustomPersiste
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	UResourceNodePersistenceComponent();
 

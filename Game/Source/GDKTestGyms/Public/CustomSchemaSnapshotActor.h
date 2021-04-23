@@ -12,8 +12,8 @@ UCLASS()
 class GDKTESTGYMS_API ACustomSchemaSnapshotActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ACustomSchemaSnapshotActor();
 
@@ -22,14 +22,14 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	UPROPERTY(ReplicatedUsing=OnRep_bDepleted, BlueprintReadWrite)
 	bool bDepleted;
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnRep_bDepleted();
-	
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 };
