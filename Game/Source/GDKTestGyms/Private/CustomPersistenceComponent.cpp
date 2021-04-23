@@ -8,6 +8,8 @@
 #include "SpatialConstants.h"
 #include <WorkerSDK/improbable/c_schema.h>
 
+DEFINE_LOG_CATEGORY(LogCustomPersistence);
+
 // Sets default values for this component's properties
 UCustomPersistenceComponent::UCustomPersistenceComponent()
 {
@@ -21,36 +23,28 @@ void UCustomPersistenceComponent::BeginPlay()
 
 	if (!USpatialStatics::IsSpatialNetworkingEnabled())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UCustomPersistenceComponent, not using spatial networking."));
 		return;
 	}
 
 	AActor* Owner = GetOwner();
-	if (Owner == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, didn't have an owner actor during BeginPlay."));
-		return;
-	}
-
 	if (!IsValid(Owner))
 	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, Owner is not yet valid."));
+		UE_LOG(LogCustomPersistence, Error, TEXT("Owner invalid in BeginPlay."));
 		return;
 	}
 
 	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver());
 	if (NetDriver == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, running with spatial but can't find a spatial net driver."));
+		UE_LOG(LogCustomPersistence, Error, TEXT("No SpatialNetDriver found in BeginPlay."));
 		return;
 	}
 
+	// This assumes that BeginPlay will be called before the entity for the actor gets created
 	if (GetOwnerRole() == ROLE_Authority)
 	{
-		NetDriver->OnActorEntityCreation(Owner).AddUObject(this, &UCustomPersistenceComponent::OnActorEntityCreated);		
+		NetDriver->OnActorEntityCreation(Owner).AddUObject(this, &UCustomPersistenceComponent::OnActorEntityCreated);
 	}
-
-	NetDriver->OnActorReplication(Owner).AddUObject(this, &UCustomPersistenceComponent::OnActorReplication);
 }
 
 void UCustomPersistenceComponent::OnActorEntityCreated(TArray<SpatialGDK::ComponentData>& OutComponentDatas)
@@ -65,47 +59,39 @@ void UCustomPersistenceComponent::OnActorEntityCreated(TArray<SpatialGDK::Compon
 	OutComponentDatas.Emplace(MoveTemp(UserData));
 }
 
-void UCustomPersistenceComponent::OnActorReplication(TArray<SpatialGDK::ComponentUpdate>& OutComponentUpdates)
-{
-	// Will have to see if the ComponentUpdate type makes sense to be user-facing.
-	SpatialGDK::ComponentUpdate Update(GetComponentId());
-	GetComponentUpdate(Update);
-	OutComponentUpdates.Emplace(MoveTemp(Update));
-}
-
 // Once we gain authority, we know we have all the data for an entity, and authority to modify it.
-// If we can find data for the actor's persistence spatial component, pass it to the user implementation via OnPersistenceDataAvailable
-// If we don't have any data for the component, add it to the entity. This usually happens when the actor is loaded for the first time in a
-// fresh deployment, or spawned dynamically.
+// Check the CustomPersistence component for whether we've supplied the persistence data previously in this deployment or not.
+// If not, grab the user data, hand it to the user code callback, and update the CustomPersistence component flag that we've supplied the data,
+// so that we don't do so again when the actor migrates servers.
+// Also register for the NetDriver callback for when the owner actor is getting replicated, so that we can add the component update provided by user code as well.
 void UCustomPersistenceComponent::OnAuthorityGained()
 {
 	AActor* Owner = GetOwner();
-	if (Owner == nullptr)
+	if (!IsValid(Owner))
 	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, didn't have an owner actor during InternalOnPersistenceDataAvailable"));
+		UE_LOG(LogCustomPersistence, Error, TEXT("Owner actor invalid, can't apply persistence data."));
 		return;
 	}
 
 	const uint64 EntityID = USpatialStatics::GetActorEntityId(Owner);
 	if (EntityID == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UCustomPersistenceComponent, Don't have an entity ID in persistence callback."));
+		UE_LOG(LogCustomPersistence, Error, TEXT("Owner actor has no entity ID, can't apply persistence data."));
 		return;
 	}
 
-	const USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver());
+	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver());
 	if (NetDriver == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, Got persistence data callback but can't find a spatial net driver."));
+		UE_LOG(LogCustomPersistence, Error, TEXT("No SpatialNetDriver found, can't apply persistence data."));
 		return;
 	}
 
 	SpatialGDK::ViewCoordinator& Coordinator = NetDriver->Connection->GetCoordinator();
-
 	if (!Coordinator.HasEntity(EntityID))
 	{
-		UE_LOG(LogTemp, Warning,
-			   TEXT("UCustomPersistenceComponent, View coordinator doesn't have entity %llu during persistence callback."), EntityID);
+		UE_LOG(LogCustomPersistence, Error,
+			   TEXT("View coordinator doesn't have entity %llu, can't apply persistence data."), EntityID);
 		return;
 	}
 
@@ -113,7 +99,7 @@ void UCustomPersistenceComponent::OnAuthorityGained()
 	const SpatialGDK::EntityViewElement* ViewData = View.Find(EntityID);
 	if (ViewData == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, Found no persistence data for entity %llu"), EntityID);
+		UE_LOG(LogCustomPersistence, Error, TEXT("Found no persistence data for entity %llu, can't apply persistence data."), EntityID);
 		return;
 	}
 
@@ -135,7 +121,7 @@ void UCustomPersistenceComponent::OnAuthorityGained()
 
 	if (CustomPersistenceData == nullptr || UserData == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UCustomPersistenceComponent, OnAuthorityGained, either the custom persistence or user data component were missing from the entity."));
+		UE_LOG(LogCustomPersistence, Error, TEXT("Didn't find the custom persistence and/or user data component, can't apply persistence data."));
 		return;
 	}
 
@@ -145,7 +131,7 @@ void UCustomPersistenceComponent::OnAuthorityGained()
 	{
 		if (!CVarPersistenceEnabled.GetValueOnGameThread())
 		{
-			UE_LOG(LogTemp, Log, TEXT("UCustomPersistenceComponent, Persistence disabled, not applying persistence data"));
+			UE_LOG(LogCustomPersistence, VeryVerbose, TEXT("Persistence disabled, not applying persistence data."));
 		}
 		else
 		{
@@ -158,6 +144,35 @@ void UCustomPersistenceComponent::OnAuthorityGained()
 		Schema_AddBool(UserDataFields, SpatialConstants::CUSTOM_PERSISTENCE_DATA_SUPPLIED_ID, true);
 		Coordinator.SendComponentUpdate(EntityID, MoveTemp(CustomPersistenceUpdate), {});
 	}
+
+	OnActorReplicationDelegateHandle = NetDriver->OnActorReplication(Owner).AddUObject(this, &UCustomPersistenceComponent::OnActorReplication);
+}
+
+void UCustomPersistenceComponent::OnAuthorityLost()
+{
+	AActor* Owner = GetOwner();
+	if (Owner == nullptr)
+	{
+		UE_LOG(LogCustomPersistence, Error, TEXT("Owner invalid in OnAuthorityLost."));
+		return;
+	}
+
+	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver());
+	if (NetDriver == nullptr)
+	{
+		UE_LOG(LogCustomPersistence, Error, TEXT("No SpatialNetDriver found in OnAuthorityLost."));
+		return;
+	}
+
+	NetDriver->OnActorReplication(Owner).Remove(OnActorReplicationDelegateHandle);
+}
+
+void UCustomPersistenceComponent::OnActorReplication(TArray<SpatialGDK::ComponentUpdate>& OutComponentUpdates)
+{
+	// Will have to see if the ComponentUpdate type makes sense to be user-facing.
+	SpatialGDK::ComponentUpdate Update(GetComponentId());
+	GetComponentUpdate(Update);
+	OutComponentUpdates.Emplace(MoveTemp(Update));
 }
 
 void UCustomPersistenceComponent::GetAddComponentData(SpatialGDK::ComponentData& Data) {}
