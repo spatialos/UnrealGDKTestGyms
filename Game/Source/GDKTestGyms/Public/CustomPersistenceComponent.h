@@ -9,6 +9,13 @@
 
 #include "CustomPersistenceComponent.generated.h"
 
+static TAutoConsoleVariable<bool> CVarPersistenceEnabled(
+    TEXT("spatial.PersistenceEnabled"),
+    true,
+    TEXT("Determines if persistence data should be applied.\n"),
+    ECVF_Cheat
+);
+
 UCLASS(meta = (BlueprintSpawnableComponent))
 class GDKTESTGYMS_API UCustomPersistenceComponent : public UActorComponent
 {
@@ -21,7 +28,9 @@ public:
 	virtual Worker_ComponentId GetComponentId() const { return (Worker_ComponentId)0; } // todo use invalid component id constant
 
 	// Internal handling of adding/updating/applying the persistence component data
-	virtual void PostReplication() override;
+	virtual void BeginPlay() override;
+	void OnActorEntityCreated(TArray<SpatialGDK::ComponentData>& OutComponentDatas);
+	void OnActorReplication(TArray<SpatialGDK::ComponentUpdate>& OutComponentUpdates);
 	virtual void OnAuthorityGained() override;
 
 protected:

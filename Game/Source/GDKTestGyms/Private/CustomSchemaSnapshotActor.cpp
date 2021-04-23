@@ -35,5 +35,6 @@ void ACustomSchemaSnapshotActor::Tick(float DeltaTime)
 
 void ACustomSchemaSnapshotActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ACustomSchemaSnapshotActor, bDepleted);
 }
