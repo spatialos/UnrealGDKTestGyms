@@ -31,7 +31,7 @@ void UEventTracerComponent::BeginPlay()
 void UEventTracerComponent::TimerFunction()
 {
 	// Create a user trace event for sending a property update
-	FUserSpanId SpanId = USpatialEventTracerUserInterface::TraceEvent(this, TEXT("user.send_component_property"), TEXT(""));
+	FUserSpanId SpanId = USpatialEventTracerUserInterface::TraceEvent(this, "user.send_component_property", "");
 	USpatialEventTracerUserInterface::TraceProperty(this, this, SpanId);
 
 	TestInt++;
@@ -42,7 +42,7 @@ void UEventTracerComponent::TimerFunction()
 		Builder.AddKeyValue("Message", "Look mum, I'm adding data to a trace event using a delegate!");
 	});
 
-	SpanId = USpatialEventTracerUserInterface::TraceEvent(this, TEXT("user.send_rpc"), TEXT(""), AddDataDelegate);
+	SpanId = USpatialEventTracerUserInterface::TraceEvent(this, "user.send_rpc", "", AddDataDelegate);
 
 	FEventTracerRPCDelegate Delegate;
 	Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UEventTracerComponent, RunOnClient));
@@ -56,7 +56,7 @@ void UEventTracerComponent::OnRepTestInt()
 		FUserSpanId CauseSpanId;
 		if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 		{
-			USpatialEventTracerUserInterface::TraceEventWithCauses(this, TEXT("user.receive_component_property"), TEXT(""), { CauseSpanId });
+			USpatialEventTracerUserInterface::TraceEventWithCauses(this, "user.receive_component_property", "", { CauseSpanId });
 		}
 	}
 }
@@ -68,7 +68,7 @@ void UEventTracerComponent::RunOnClient_Implementation()
 	FUserSpanId CauseSpanId;
 	if (USpatialEventTracerUserInterface::GetActiveSpanId(this, CauseSpanId))
 	{
-		USpatialEventTracerUserInterface::TraceEventWithCauses(this, TEXT("user.process_rpc"), TEXT(""), { CauseSpanId });
+		USpatialEventTracerUserInterface::TraceEventWithCauses(this, "user.process_rpc", "", { CauseSpanId });
 	}
 }
 
