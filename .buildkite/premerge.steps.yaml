@@ -33,7 +33,7 @@ steps:
       message: "testgyms-4.26 ${BUILDKITE_MESSAGE}"
       env: 
         BUILD_TYPE: "GDK"
-        GDK_BRANCH: "master" # TODO: Do we want auto-branch name detection?
+        GDK_BRANCH: "feature/UNR-5290" # TODO: Do we want auto-branch name detection?
         ENGINE_BRANCH: "4.26-SpatialOSUnrealGDK"
         ENGINE_MAJOR: "4.26"
         PROJECT_BRANCH: "${BUILDKITE_BRANCH}"
@@ -52,7 +52,7 @@ steps:
       message: "testgyms-4.25 ${BUILDKITE_MESSAGE}"
       env: 
         BUILD_TYPE: "GDK"
-        GDK_BRANCH: "master" # TODO: Do we want auto-branch name detection?
+        GDK_BRANCH: "feature/UNR-5290" # TODO: Do we want auto-branch name detection?
         ENGINE_BRANCH: "4.25-SpatialOSUnrealGDK"
         ENGINE_MAJOR: "4.25"
         PROJECT_BRANCH: "${BUILDKITE_BRANCH}"
