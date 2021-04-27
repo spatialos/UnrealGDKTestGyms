@@ -197,7 +197,7 @@ void AUptimeGameMode::ParsePassedValues()
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
-	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Density %d, Clusters %d, SpawnCols %d, SpawnRows %d, ZoneHeight %d, ZoneWidth %d, TestDataSize %d, TestDataFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), PlayerDensity, NumPlayerClusters, SpawnCols, SpawnRows, ZoneHeight, ZoneWidth, TestDataSize, TestDataFrequency, CrossServerSize, CrossServerFrequency);
 }
 
 void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
