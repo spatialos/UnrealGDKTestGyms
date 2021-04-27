@@ -244,10 +244,19 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
       * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
 
 ##### Server to server Take Damage RPC gym
-* Tests AActor::TakeDamage.
-* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon receiving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+* This gym demonstrates that:
+  * `AActor::TakeDamage` functions.
+* The manual gym contains:
+  * A set of four cubes placed in the quadrants of the level.
+* Steps to run the gym manually:
+  * Adjust the setting `SpatialOS Settings -> Debug -> Spatial Debugger Class Path` to `BP_VerboseSpatialDebugger`.
+  * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
+  * Press Play.
+  * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
+* If you'd like to know more: 
+  * `AActor::TakeDamage` is called twice on random cubes, once with a `FPointDamageEvent` input and once with a `FRadialDamageEvent` input.
+  * If the cube is not authoritative on the server a cross server RPCs will be called from `AActor::TakeDamage`. Upon receiving the RPCs the cube will display the `HitLocation` member of `FPointDamageEvent` and the `Origin` member of the `FRadialDamageEvent`.
+  * "10 10 10" and "20 20 20" appearing over the top of each cube intermittently represents the `HitLocation` data being sent using a cross server RPC inside a `PointDamageEvent` object and the `Origin` of the `RadialPointDamage` event.
 
 ##### Multiple Ownership gym
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
