@@ -244,10 +244,19 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
       * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
 
 ##### Server to server Take Damage RPC gym
-* Tests AActor::TakeDamage.
-* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon receiving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+* This gym demonstrates that:
+  * `AActor::TakeDamage` functions.
+* The manual gym contains:
+  * A set of four cubes placed in the quadrants of the level.
+* Steps to run the gym manually:
+  * Adjust the setting `SpatialOS Settings -> Debug -> Spatial Debugger Class Path` to `BP_VerboseSpatialDebugger`.
+  * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
+  * Press Play.
+  * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
+* If you'd like to know more: 
+  * `AActor::TakeDamage` is called twice on random cubes, once with a `FPointDamageEvent` input and once with a `FRadialDamageEvent` input.
+  * If the cube is not authoritative on the server a cross server RPCs will be called from `AActor::TakeDamage`. Upon receiving the RPCs the cube will display the `HitLocation` member of `FPointDamageEvent` and the `Origin` member of the `FRadialDamageEvent`.
+  * "10 10 10" and "20 20 20" appearing over the top of each cube intermittently represents the `HitLocation` data being sent using a cross server RPC inside a `PointDamageEvent` object and the `Origin` of the `RadialPointDamage` event.
 
 ##### Multiple Ownership gym
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
@@ -328,14 +337,14 @@ These test whether key trace events have the appropriate cause events. They can 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
 * It includes a **non-instanced** gameplay cue that is triggered by pressing `Q` and visualised as **sparks** emitted from the controlled character.
-* It also includes an **instanced** gameplay cue that is triggered by pressing `T` and visualised as a **cone** floating above the controlled character.
+* It also includes an **instanced** gameplay cue that is triggered by pressing `E` and visualised as a **cone** floating above the controlled character.
 * Manual steps:
   * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
   * In the Unreal Editor Toolbar, click Play to launch two clients.
   * Position one client's character in view of the other client and in the same virtual worker boundary.
   * Press `Q` to trigger the non-instanced gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
   * Both clients should print "Executed Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
-  * Press `T` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Press `E` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
   * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
@@ -420,5 +429,41 @@ Manual steps:
  1. Select `Play` on the Unreal toolbar.
  1. Watch as the cubes turn green in under 8 seconds.
 
+##### Player disconnect gym
+* Demonstrates that:
+  * Players are cleaned up correctly when they disconnect.
+* NOTE: This gym can only be run manually (This can be automated once the test frameworks supports client disconnects [UNR-529](https://improbableio.atlassian.net/browse/UNR-529)).
+* Pre-test steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/PlayerDisconnectGym` and double click to open it.
+* How to test for a client disconnecting by returning to its main menu:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
+  * Select Play.
+  * From the UnrealGDK toolbar, open the Inspector.
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Press `M` in one of the clients, to make that client leave the deployment by traveling to the empty map.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* How to test for the server disconnecting all clients:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
+  * Select Play.
+  * From the UnrealGDK toolbar, open the Inspector.
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Open a terminal window and `cd` `UnrealGDKTestGyms\spatial`.
+  * Run `curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown`.
+  * Verify in the Inspector that zero client worker entities, zero player controllers entities and zero player character entities exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* How to test for a player disconnecting by exiting the client window:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 1.
+  * Select Play.
+  * Use `UnrealGDKTestGyms\LaunchClient.bat` script to launch a second client.
+  * From the UnrealGDK toolbar, open the Inspector
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Close the window of the second client.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
 -----
 2019-11-15: Page added with editorial review
