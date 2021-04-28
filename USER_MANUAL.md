@@ -365,12 +365,15 @@ These test whether key trace events have the appropriate cause events. They can 
   * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
-* Tests server's without authoritive player controllers still replicate relevant actors
-* Validation
-  * Enable the replication graph
-    * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
-  * Play with 1 client connect.
-  * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+* Tests that servers without authoritive player controllers are still able to replicate relevant actors.
+* Manual steps:
+  * Before booting the Unreal Editor, open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and uncomment the `ReplicationDriverClassName` option by deleing the `;`.
+  * Boot the Unreal Editor.
+  * Open `Content/Maps/MultiworkerWorldComposition/MultiworkerWorldComposition.umap`.
+  * Generate schema.
+  * Play with 1 client.
+  * In the clinet you should see two cubes moving back and forth over a worker boundary.
+    * On each cross, the authority of the cube should switch to the appropriate server. If this happens, the test has passed.
   
 ##### Snapshot reloading test
 Tests that snapshot reloading functions in local deloyments.<br>
