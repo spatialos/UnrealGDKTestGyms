@@ -380,13 +380,14 @@ These test whether key trace events have the appropriate cause events. They can 
 Tests that snapshot reloading functions in local deloyments.<br>
 **Note:** This test uses the `HandoverGym` as it saves.<br>
 Manual steps:<br>
-  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Play In Editor Settings > Delete dynamically spawned entities`. Uncheck this option.
   1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Auto-stop local deployment`. Select `Never`.
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Play In Editor Settings > Delete dynamically spawned entities`. Uncheck this option.
   1. In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
   1. In the Unreal Editor Toolbar, click Play to launch one client.
   1. Stop the gym and note that the deployment is still running, as indicated by the state of the Stop Deployment button in the GDK Toolbar.
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
-  1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
+  1. The test has now passed.
+  1. Don’t forget to revert the two settings changes you made before you run another test.
 
 ##### Ability Giving Gym
 Tests that ability specs given to an AbilitySystemComponent on two different servers can be activated correctly via their handles.
