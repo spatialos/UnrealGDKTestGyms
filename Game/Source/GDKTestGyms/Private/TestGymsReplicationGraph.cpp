@@ -103,12 +103,14 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
-	AddInfo(AReplicatedTestActorBase_RepGraph::StaticClass(), EClassRepNodeMapping::AlwaysReplicate);
 
 	if (bUsingSpatial)
 	{
 		// Game mode is replicated in spatial, ensure it is always replicated
 		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
+#if WITH_EDTIOR // These test actors sometimes don't require clients viewing them
+		AddInfo(AReplicatedTestActorBase_RepGraph::StaticClass(), EClassRepNodeMapping::AlwaysReplicate);
+#endif
 	}
 
 	TArray<UClass*> AllReplicatedClasses;
