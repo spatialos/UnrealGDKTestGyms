@@ -93,6 +93,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, TestLifetimeTimer(0)
 	, bHasRequiredPlayersCheckFailed(false)
 	, SmoothedTotalAuthPlayers(-1.0f)
+	, SmoothedTotalAuthNPCs(-1.0f)
+	, SmoothedTotalAuthSimPlayers(-1.0f)
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
@@ -139,14 +141,14 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
-	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
-	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
+	AddExpectedActorCount(ExpectedNPCsCount, NPCClass, TotalNPCs, 1);
+	AddExpectedActorCount(ExpectedSimPlayersCount, SimulatedPawnClass, ExpectedPlayers, 1);
 }
 
-void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
+void ABenchmarkGymGameModeBase::AddExpectedActorCount(FExpectedActorCount& Actor, TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
-	ExpectedActorCounts.Add(FExpectedActorCount(ActorClass, ExpectedCount, Variance));
+	Actor = FExpectedActorCount(ActorClass, ExpectedCount, Variance);
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -461,40 +463,20 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
-
+	FMetricTimer TempActorCheckDelay = Constants->ActorCheckDelay;
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
+	if (TempActorCheckDelay.HasTimerGoneOff() &&
 		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
-
+		
 		const UWorld* World = GetWorld();
-		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
-		{
-			if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
-			{
-				continue;
-			}
-
-			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
-			const int32 Variance = ExpectedActorCount.Variance;
-			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
-			bActorCountFailureState = abs(ActualCount - ExpectedCount) > Variance;
-
-			if (bActorCountFailureState)
-			{
-				if (!bHasActorCountFailed)
-				{
-					bHasActorCountFailed = true;
-					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
-						*NFRFailureString,
-						*ExpectedActorCount.ActorClass->GetName(),
-						ExpectedCount,
-						ActualCount);
-				}
-				break;
-			}
-		}
+		const FString WorkerID = FPlatformProcess::ComputerName();
+		const int32 ActualCountSimulate = GetActorClassCount(ExpectedSimPlayersCount.ActorClass);
+		const int32 ActualCountNPCs = GetActorClassCount(ExpectedNPCsCount.ActorClass);
+		GenerateTotalNumsForActors(WorkerID, World, ExpectedSimPlayersCount, MapAuthoritativeSimPlayers, SmoothedTotalAuthSimPlayers, ActualCountSimulate, false);
+		ReportAuthoritativeNPCs(WorkerID, World, ActualCountNPCs);
+		TempActorCheckDelay.SetTimer(1);
 	}
 }
 
@@ -832,4 +814,53 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 		}
 	}
 	return Count;
+}
+
+void ABenchmarkGymGameModeBase::ReportAuthoritativeNPCs_Implementation(const FString& WorkerID, const UWorld* World, int32 ActualCount)
+{
+	GenerateTotalNumsForActors(WorkerID, World, ExpectedNPCsCount, MapAuthoritatuvaNPCs, SmoothedTotalAuthNPCs, ActualCount, true);
+}
+
+void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World, 
+	const FExpectedActorCount& ExpectedActorCount, TMap<FString, int>& MapAuthoritative,
+	float& TotalCount, int32 ActualCount, bool IsNPCs)
+{
+	if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
+	{
+		return;
+	}
+	if (HasAuthority())
+	{
+		MapAuthoritative.Emplace(WorkerID, ActualCount);
+		int32 CurNums = 0;
+		for (const auto& KeyValue : MapAuthoritative)
+		{
+			CurNums += KeyValue.Value;
+		}
+		if (MapAuthoritative.Num() == NumWorkers)
+		{
+			TotalCount = CurNums;
+			bActorCountFailureState = abs(TotalCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
+			if (bActorCountFailureState)
+			{
+				if (!bHasActorCountFailed)
+				{
+					bHasActorCountFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
+						*NFRFailureString,
+						*ExpectedActorCount.ActorClass->GetName(),
+						ExpectedActorCount.ExpectedCount,
+						TotalCount);
+				}
+			}
+			else
+			{
+				if (IsNPCs)
+				{
+					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativeNPCs(%s, %d) Total:%.1f"),
+						*WorkerID, ActualCount, TotalCount);
+				}
+			}
+		}
+	}
 }

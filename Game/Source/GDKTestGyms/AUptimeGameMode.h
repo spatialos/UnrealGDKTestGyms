@@ -6,6 +6,7 @@
 #include "CoreMinimal.h"
 #include "BenchmarkGymGameModeBase.h"
 #include "BenchmarkGymNPCSpawner.h"
+#include "UptimeCrossServerBeacon.h"
 #include "AUptimeGameMode.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogUptimeGymGameMode, Log, All);
@@ -29,6 +30,9 @@ public:
 protected:
 	virtual void BuildExpectedActorCounts() override;
 	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
+
+	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
+	TSubclassOf<AUptimeCrossServerBeacon> CrossServerClass;
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
@@ -54,20 +58,23 @@ private:
 	int32 TestDataSize;
 	int32 TestDataFrequency;
 
+	int32 CrossServerSize;
+	int32 CrossServerFrequency;
+
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
 	int32 NumPlayerClusters;
 	int32 PlayersSpawned;
 	UPROPERTY()
-		TArray<AActor*> SpawnPoints;
+	TArray<AActor*> SpawnPoints;
 	UPROPERTY()
-		TMap<int32, AActor*> PlayerIdToSpawnPointMap;
+	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 	TSubclassOf<AActor> DropCubeClass;
 	int32 NPCSToSpawn;
 
 	UPROPERTY()
-		ABenchmarkGymNPCSpawner* NPCSpawner;
+	ABenchmarkGymNPCSpawner* NPCSpawner;
 
 	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
@@ -78,4 +85,10 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
+
+	FExpectedActorCount ExpectedDropCubeCount;
+	
+	void SpawnCrossServerActors(int32 CrossServerPoint);
+	TArray<FVector> GenerateCrossServerLoaction();
+	void SetCrossServerWorkerFlags(AUptimeCrossServerBeacon* Beacon) const;
 };
