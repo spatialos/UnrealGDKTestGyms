@@ -374,6 +374,7 @@ These test whether key trace events have the appropriate cause events. They can 
   * Play with 1 client.
   * In the clinet you should see two cubes moving back and forth over a worker boundary.
     * On each cross, the authority of the cube should switch to the appropriate server. If this happens, the test has passed.
+  * Don't forget to open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and re-comment the `ReplicationDriverClassName` line.
   
 ##### Snapshot reloading test
 Tests that snapshot reloading functions in local deloyments.<br>
