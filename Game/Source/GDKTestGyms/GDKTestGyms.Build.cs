@@ -24,6 +24,7 @@ public class GDKTestGyms : ModuleRules
 				"PhysXVehicles",
 				"Slate",
 				"SpatialGDK",
+				"SpatialGDKFunctionalTests",
 				"ReplicationGraph",
 				"AIModule",
 				"NavigationSystem"
