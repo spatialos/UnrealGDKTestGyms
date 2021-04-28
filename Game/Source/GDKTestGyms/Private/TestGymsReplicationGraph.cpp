@@ -6,6 +6,8 @@
 
 #include "TestGymsReplicationGraph.h"
 
+#include "SpatialGDKFunctionalTests/SpatialGDK/TestActors/ReplicatedTestActorBase_RepGraph.h"
+
 #include "CoreGlobals.h"
 #include "Engine/LevelStreaming.h"
 #include "EngineUtils.h"
@@ -101,6 +103,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+	AddInfo(AReplicatedTestActorBase_RepGraph::StaticClass(), EClassRepNodeMapping::AlwaysReplicate);
 
 	if (bUsingSpatial)
 	{
@@ -352,6 +355,12 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		break;
 	}
 
+	case EClassRepNodeMapping::AlwaysReplicate:
+	{
+		AlwaysRelevantNode->NotifyAddNetworkActor(ActorInfo);
+		break;
+	}
+
 	case EClassRepNodeMapping::RelevantAllConnections:
 	{
 		// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
@@ -396,6 +405,12 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 	{
 	case EClassRepNodeMapping::NotRouted:
 	{
+		break;
+	}
+
+	case EClassRepNodeMapping::AlwaysReplicate:
+	{
+		AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
 		break;
 	}
 
