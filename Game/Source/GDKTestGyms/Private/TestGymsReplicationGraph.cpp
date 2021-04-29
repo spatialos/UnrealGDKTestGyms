@@ -6,8 +6,6 @@
 
 #include "TestGymsReplicationGraph.h"
 
-#include "SpatialGDKFunctionalTests/SpatialGDK/TestActors/ReplicatedTestActorBase_RepGraph.h"
-
 #include "CoreGlobals.h"
 #include "Engine/LevelStreaming.h"
 #include "EngineUtils.h"
@@ -108,9 +106,12 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	{
 		// Game mode is replicated in spatial, ensure it is always replicated
 		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
-#if WITH_EDTIOR // These test actors sometimes don't require clients viewing them
-		AddInfo(AReplicatedTestActorBase_RepGraph::StaticClass(), EClassRepNodeMapping::AlwaysReplicate);
-#endif
+		// Add always replicated test actor
+		FSoftClassPath SoftClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestActorBase_RepGraph'"));
+		if (UClass* Class = SoftClassPath.ResolveClass())
+		{
+			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
+		}
 	}
 
 	TArray<UClass*> AllReplicatedClasses;

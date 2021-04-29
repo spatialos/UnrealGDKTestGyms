@@ -63,7 +63,7 @@ public:
 	TSubclassOf<AActor> ReplicatedBPClass;
 
 	UPROPERTY()
-	TSubclassOf<AActor> ReplicatedTestActorBaseClass;
+	TSubclassOf<AActor> ReplicatedTestActorRepGraphClass;
 
 	UPROPERTY()
 	UReplicationGraphNode_ActorList* AlwaysRelevantNode;

@@ -28,9 +28,5 @@ public class GDKTestGyms : ModuleRules
 				"AIModule",
 				"NavigationSystem"
 			});
-		if(Target.bBuildEditor)
-        {
-			PublicDependencyModuleNames.Add("SpatialGDKFunctionalTests");
-        }
 	}
 }
