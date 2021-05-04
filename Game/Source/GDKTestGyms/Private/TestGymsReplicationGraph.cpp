@@ -120,7 +120,6 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		}
 	}
 
-
 	TArray<UClass*> AllReplicatedClasses;
 
 	for (TObjectIterator<UClass> It; It; ++It)
