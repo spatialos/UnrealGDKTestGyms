@@ -107,12 +107,19 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		// Game mode is replicated in spatial, ensure it is always replicated
 		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
 		// Add always replicated test actor. Use soft class path to work around module dependencies.
-		FSoftClassPath SoftClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestActorBase_RepGraphAlwaysReplicate'"));
-		if (UClass* Class = SoftClassPath.ResolveClass())
+		FSoftClassPath SoftActorClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestActorBase_RepGraphAlwaysReplicate'"));
+		if (UClass* Class = SoftActorClassPath.ResolveClass())
+		{
+			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
+		}
+		// Add always replicated test pawn. Use soft class path to work around module dependencies.
+		FSoftClassPath SoftPawnClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestPawnBase_RepGraphAlwaysReplicate'"));
+		if (UClass* Class = SoftPawnClassPath.ResolveClass())
 		{
 			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
 		}
 	}
+
 
 	TArray<UClass*> AllReplicatedClasses;
 
