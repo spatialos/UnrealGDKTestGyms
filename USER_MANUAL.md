@@ -249,7 +249,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * The manual gym contains:
   * A set of four cubes placed in the quadrants of the level.
 * Steps to run the gym manually:
-  * Adjust the setting `SpatialOS Settings -> Debug -> Spatial Debugger Class Path` to `BP_VerboseSpatialDebugger`.
+  * Adjust the setting `Project Settings -> Runtime Settings -> Debug -> Spatial Debugger` to `BP_VerboseSpatialDebugger`.
   * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
   * Press Play.
   * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
