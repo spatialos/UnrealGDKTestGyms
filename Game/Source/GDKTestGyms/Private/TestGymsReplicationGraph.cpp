@@ -113,7 +113,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
 		}
 		// Add always replicated test pawn. Use soft class path to work around module dependencies.
-		FSoftClassPath SoftPawnClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestPawnBase_RepGraphAlwaysReplicate'"));
+		FSoftClassPath SoftPawnClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.TestPawnBase_RepGraphAlwaysReplicate'"));
 		if (UClass* Class = SoftPawnClassPath.ResolveClass())
 		{
 			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
