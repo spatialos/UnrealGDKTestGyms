@@ -244,10 +244,19 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
       * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
 
 ##### Server to server Take Damage RPC gym
-* Tests AActor::TakeDamage.
-* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon receiving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+* This gym demonstrates that:
+  * `AActor::TakeDamage` functions.
+* The manual gym contains:
+  * A set of four cubes placed in the quadrants of the level.
+* Steps to run the gym manually:
+  * Adjust the setting `SpatialOS Settings -> Debug -> Spatial Debugger Class Path` to `BP_VerboseSpatialDebugger`.
+  * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
+  * Press Play.
+  * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
+* If you'd like to know more: 
+  * `AActor::TakeDamage` is called twice on random cubes, once with a `FPointDamageEvent` input and once with a `FRadialDamageEvent` input.
+  * If the cube is not authoritative on the server a cross server RPCs will be called from `AActor::TakeDamage`. Upon receiving the RPCs the cube will display the `HitLocation` member of `FPointDamageEvent` and the `Origin` member of the `FRadialDamageEvent`.
+  * "10 10 10" and "20 20 20" appearing over the top of each cube intermittently represents the `HitLocation` data being sent using a cross server RPC inside a `PointDamageEvent` object and the `Origin` of the `RadialPointDamage` event.
 
 ##### Multiple Ownership gym
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
@@ -279,11 +288,10 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
 * When async loading completes the FAS callbacks will be called with valid pointers.
 * How to test : 
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * Play the level.
   * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
   * Otherwise, a red text will be displayed, or other error messages.
-* NOTE : This test should be ran with "Single Process" disabled in play settings to be valid.
-  * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
 
 ##### Teleporting gym
@@ -328,14 +336,14 @@ These test whether key trace events have the appropriate cause events. They can 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
 * It includes a **non-instanced** gameplay cue that is triggered by pressing `Q` and visualised as **sparks** emitted from the controlled character.
-* It also includes an **instanced** gameplay cue that is triggered by pressing `T` and visualised as a **cone** floating above the controlled character.
+* It also includes an **instanced** gameplay cue that is triggered by pressing `E` and visualised as a **cone** floating above the controlled character.
 * Manual steps:
   * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
   * In the Unreal Editor Toolbar, click Play to launch two clients.
   * Position one client's character in view of the other client and in the same virtual worker boundary.
   * Press `Q` to trigger the non-instanced gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
   * Both clients should print "Executed Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
-  * Press `T` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Press `E` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
   * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
@@ -348,7 +356,12 @@ These test whether key trace events have the appropriate cause events. They can 
   	* Enter your project name, and make up and enter an assembly name and a deployment name.
   	* Ensure that Automatically Generate Launch Configuration is checked.
   	* Ensure that Add simulated players is not checked.
-  	* Ensure that every option in the Assembly Configuration section is checked.
+  	* Ensure that the following options in the Assembly Configuration section are checked.
+  	  * Build and Upload Assembly
+  	  * Generate Schema
+  	  * Generate Snapshot
+  	  * Build Client Worker
+  	  * Force Overwrite on Upload
   * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
   * Click the Start deployment button.
   * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
