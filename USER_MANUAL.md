@@ -288,11 +288,10 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
 * When async loading completes the FAS callbacks will be called with valid pointers.
 * How to test : 
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * Play the level.
   * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
   * Otherwise, a red text will be displayed, or other error messages.
-* NOTE : This test should be ran with "Single Process" disabled in play settings to be valid.
-  * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
 
 ##### Teleporting gym
