@@ -181,7 +181,14 @@ void USchemaPersistenceComponent::RemoveActorReplicationDelegate()
 		return;
 	}
 
-	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver());
+	UWorld* World = Owner->GetWorld();
+	if (World == nullptr)
+	{
+		UE_LOG(LogSchemaPersistence, Error, TEXT("Owner didn't have a world in RemoveActorReplicationDelegate"));
+		return;
+	}
+
+	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
 	if (NetDriver == nullptr)
 	{
 		UE_LOG(LogSchemaPersistence, Error, TEXT("No SpatialNetDriver found in RemoveActorReplicationDelegate."));
