@@ -25,7 +25,7 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
-	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("-PlayerDensity=");
+	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
 	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
 } // anonymous namespace
 

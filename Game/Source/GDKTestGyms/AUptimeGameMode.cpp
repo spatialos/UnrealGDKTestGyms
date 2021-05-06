@@ -21,7 +21,7 @@ DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 namespace
 {
 	const FString UptimePlayerDensityWorkerFlag = TEXT("player_density");
-	const FString UptimePlayerDensityCommandLineKey = TEXT("-PlayerDensity=");
+	const FString UptimePlayerDensityCommandLineKey = TEXT("PlayerDensity=");
 
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
 	const FString UptimeSpawnColsCommandLineKey = TEXT("-SpawnCols=");
