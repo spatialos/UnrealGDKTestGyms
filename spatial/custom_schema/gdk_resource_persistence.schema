@@ -1,0 +1,8 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+package gyms;
+
+component GymsResourcePersistence {
+     id = 1002;
+     
+     bool depleted = 1;
+}
