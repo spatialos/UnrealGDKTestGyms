@@ -1,0 +1,8 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+package unreal;
+
+component SchemaPersistence {
+     id = 1000;
+
+     bool supplied_data = 1;
+}
