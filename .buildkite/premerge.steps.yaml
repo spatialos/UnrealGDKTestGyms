@@ -1,5 +1,5 @@
 ---
-ci_version: &ci_version "${CI_VERSION:-1.1}"
+ci_version: &ci_version "${CI_VERSION:-1.2}"
 common_env_vars: &common_env_vars
   BUILD_TYPE: "GDK"
   GDK_BRANCH: "${GDK_BRANCH:-match_branch_name_pref::master}"
@@ -12,7 +12,6 @@ common_env_vars: &common_env_vars
   SLOW_TESTS: "${SLOW_TESTS}"
 
 steps:
-  # New build pipeline
   # Trigger a 4.26 build
   - trigger: "unrealgdkbuild-ci"
     label: "testgyms-ci-4.26"
