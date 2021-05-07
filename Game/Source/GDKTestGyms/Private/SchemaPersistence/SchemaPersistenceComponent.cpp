@@ -58,6 +58,8 @@ void USchemaPersistenceComponent::BeginPlay()
 
 void USchemaPersistenceComponent::OnActorEntityCreated(TArray<SpatialGDK::ComponentData>& OutComponentDatas)
 {
+	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / OnActorEntityCreated"), *GetOwner()->GetName());
+	
 	SpatialGDK::ComponentData CustomPersistenceData(SCHEMA_PERSISTENCE_ID);
 	Schema_Object* Fields = CustomPersistenceData.GetFields();
 	Schema_AddBool(Fields, SCHEMA_PERSISTENCE_DATA_SUPPLIED, true);

@@ -23,7 +23,29 @@ ACustomSchemaSnapshotActor::ACustomSchemaSnapshotActor()
 void ACustomSchemaSnapshotActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / BeginPlay, auth: %d"), *GetName(), HasAuthority());
+}
+
+void ACustomSchemaSnapshotActor::OnAuthorityGained()
+{
+	Super::OnAuthorityGained();
+
+	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / OnAuthorityGained"), *GetName());
+}
+
+void ACustomSchemaSnapshotActor::OnAuthorityLost()
+{
+	Super::OnAuthorityLost();
+
+	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / OnAuthorityLost"), *GetName());
+}
+
+void ACustomSchemaSnapshotActor::OnActorReady()
+{
+	Super::OnActorReady();
+
+	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / OnActorReady"), *GetName())
 }
 
 // Called every frame
