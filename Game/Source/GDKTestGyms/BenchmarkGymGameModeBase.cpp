@@ -700,6 +700,13 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%.1f"),
 				*WorkerID, AuthoritativePlayers, SmoothedTotalAuthPlayers);
 		}
+		else
+		{
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%d, not enough workers: want=%d, have=%d"),
+				*WorkerID, AuthoritativePlayers, TotalPlayers, NumWorkers, MapAuthoritativePlayers.Num());
+		}
+
+		
 	}
 }
 
