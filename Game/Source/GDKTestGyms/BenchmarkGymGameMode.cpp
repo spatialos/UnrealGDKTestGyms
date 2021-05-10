@@ -25,6 +25,7 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
 	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
 } // anonymous namespace
 
@@ -137,7 +138,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, *BenchmarkPlayerDensityCommandLineKey, PlayerDensity);
 	}
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
