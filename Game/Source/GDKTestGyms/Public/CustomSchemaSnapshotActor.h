@@ -22,7 +22,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void OnAuthorityGained() override;
 	virtual void OnAuthorityLost() override;
-	virtual void OnActorReady() override;
+	virtual void OnActorReady(bool bHasAuthority) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	

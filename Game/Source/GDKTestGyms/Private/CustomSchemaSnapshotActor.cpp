@@ -41,9 +41,9 @@ void ACustomSchemaSnapshotActor::OnAuthorityLost()
 	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / OnAuthorityLost"), *GetName());
 }
 
-void ACustomSchemaSnapshotActor::OnActorReady()
+void ACustomSchemaSnapshotActor::OnActorReady(bool bHasAuthority)
 {
-	Super::OnActorReady();
+	Super::OnActorReady(bHasAuthority);
 
 	UE_LOG(LogTemp, Log, TEXT("entity recreation / %s / OnActorReady"), *GetName())
 }
