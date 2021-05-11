@@ -91,11 +91,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, ActorMigrationCheckDelay(5*60)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
+	, TickActorCountTimer(0)
 	, bHasRequiredPlayersCheckFailed(false)
-	, SmoothedTotalAuthPlayers(-1.0f)
-	, SmoothedTotalAuthNPCs(-1.0f)
-	, SmoothedTotalAuthSimPlayers(-1.0f)
-	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, NumWorkers(1)
@@ -141,14 +138,14 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
-	AddExpectedActorCount(ExpectedNPCsCount, NPCClass, TotalNPCs, 1);
-	AddExpectedActorCount(ExpectedSimPlayersCount, SimulatedPawnClass, ExpectedPlayers, 1);
+	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
+	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
 }
 
-void ABenchmarkGymGameModeBase::AddExpectedActorCount(FExpectedActorCount& Actor, TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
+void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
-	Actor = FExpectedActorCount(ActorClass, ExpectedCount, Variance);
+	ExpectedActorCounts.Add(ActorClass, FExpectedActorCountConfig(ExpectedCount, Variance));
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -315,6 +312,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
+		int SmoothedTotalAuthPlayers = TotalActorCounts[SimulatedPawnClass].GetSmoothedTotal();
 		if (SmoothedTotalAuthPlayers < RequiredPlayers)
 		{
 			bHasRequiredPlayersCheckFailed = true;
@@ -423,13 +421,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		}
 	}	
 
-	if (RequiredPlayerReportTimer.HasTimerGoneOff())
-	{
-		// We don't start reporting until RequiredPlayerReportTimer has gone off
-		ReportAuthoritativePlayers(GetGameInstance()->GetSpatialWorkerId(), GetPlayerControllerCount());
-		RequiredPlayerReportTimer.SetTimer(1);
-	}
-
 	if (!HasAuthority())
 	{
 		return;
@@ -463,20 +454,35 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
-	FMetricTimer TempActorCheckDelay = Constants->ActorCheckDelay;
 	// This test respects the initial delay timer in both native and GDK
-	if (TempActorCheckDelay.HasTimerGoneOff() &&
+	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
+		TickActorCountTimer.HasTimerGoneOff() &&
 		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
-		
+
 		const UWorld* World = GetWorld();
 		const FString WorkerID = GetGameInstance()->GetSpatialWorkerId();
-		const int32 ActualCountSimulate = GetActorClassCount(ExpectedSimPlayersCount.ActorClass);
-		const int32 ActualCountNPCs = GetActorClassCount(ExpectedNPCsCount.ActorClass);
-		GenerateTotalNumsForActors(WorkerID, World, ExpectedSimPlayersCount, MapAuthoritativeSimPlayers, SmoothedTotalAuthSimPlayers, ActualCountSimulate, false);
-		ReportAuthoritativeNPCs(WorkerID, World, ActualCountNPCs);
-		TempActorCheckDelay.SetTimer(1);
+
+		for (auto const& Pair : ExpectedActorCounts)
+		{
+			TSubclassOf<AActor> ActorClass = Pair.Key;
+			if (!USpatialStatics::IsActorGroupOwnerForClass(World, ActorClass))
+			{
+				continue;
+			}
+
+			const int32 ActorCount = GetActorClassCount(ActorClass);
+			ReportAuthoritativeActorCount(WorkerID, ActorClass, ActorCount);
+		}
+
+		if (HasAuthority())
+		{
+			GenerateTotalNumsForActors();
+		}
+
+		const int32 TickActorCountFrequency = 1; /*seconds*/
+		TickActorCountTimer.SetTimer(TickActorCountFrequency);
 	}
 }
 
@@ -677,39 +683,6 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 }
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const FString& WorkerID, const int AuthoritativePlayers)
-{
-	if (HasAuthority())
-	{
-		MapAuthoritativePlayers.Emplace(WorkerID, AuthoritativePlayers);
-		int32 TotalPlayers = 0;
-		for (const auto& KeyValue : MapAuthoritativePlayers)
-		{
-			TotalPlayers += KeyValue.Value;
-		}
-		if (MapAuthoritativePlayers.Num() == NumWorkers)
-		{
-			if (SmoothedTotalAuthPlayers < 0.0f)
-			{
-				SmoothedTotalAuthPlayers = TotalPlayers;
-			}
-			else
-			{
-				SmoothedTotalAuthPlayers = SmoothedTotalAuthPlayers * 0.9f + TotalPlayers * 0.1;
-			}
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%.1f"),
-				*WorkerID, AuthoritativePlayers, SmoothedTotalAuthPlayers);
-		}
-		else
-		{
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%d, not enough workers: want=%d, have=%d"),
-				*WorkerID, AuthoritativePlayers, TotalPlayers, NumWorkers, MapAuthoritativePlayers.Num());
-		}
-
-		
-	}
-}
-
 void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 {
 	if (bHasActorMigrationCheckFailed)
@@ -823,50 +796,92 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 	return Count;
 }
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativeNPCs_Implementation(const FString& WorkerID, const UWorld* World, int32 ActualCount)
+void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActualCount)
 {
-	GenerateTotalNumsForActors(WorkerID, World, ExpectedNPCsCount, MapAuthoritatuvaNPCs, SmoothedTotalAuthNPCs, ActualCount, true);
+	TMap<TSubclassOf<AActor>, FActorCountInfo>* WorkerActorCounts = AllWorkerActorCounts.Find(WorkerID);
+	if (WorkerActorCounts == nullptr)
+	{
+		WorkerActorCounts = &AllWorkerActorCounts.Add(WorkerID);
+	}
+
+	FActorCountInfo* ActorCountInfo = WorkerActorCounts->Find(ActorClass);
+	if (ActorCountInfo == nullptr)
+	{
+		WorkerActorCounts->Add(ActorClass, FActorCountInfo(ActualCount));
+	}
+	else
+	{
+		ActorCountInfo->SetTotal(ActualCount);
+	}
 }
 
-void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World, 
-	const FExpectedActorCount& ExpectedActorCount, TMap<FString, int>& MapAuthoritative,
-	float& TotalCount, int32 ActualCount, bool IsNPCs)
+void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 {
-	if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
+	TMap<TSubclassOf<AActor>, int32> TempTotalActorCounts;
+	for (const auto& WorkerPair : AllWorkerActorCounts)
 	{
-		return;
-	}
-	if (HasAuthority())
-	{
-		MapAuthoritative.Emplace(WorkerID, ActualCount);
-		int32 CurNums = 0;
-		for (const auto& KeyValue : MapAuthoritative)
+		const FString WorkerId = WorkerPair.Key;
+		const TMap<TSubclassOf<AActor>, FActorCountInfo>& WorkerActorCounts = WorkerPair.Value;
+
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor Count for Worker %s:"), *WorkerId);
+
+		for (const auto& ActorCountPair : WorkerActorCounts)
 		{
-			CurNums += KeyValue.Value;
-		}
-		if (MapAuthoritative.Num() == NumWorkers)
-		{
-			TotalCount = CurNums;
-			bActorCountFailureState = abs(TotalCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
-			if (bActorCountFailureState)
+			TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
+			FActorCountInfo ActorCount = ActorCountPair.Value;
+			FString ActorClassName = *ActorClass->GetName();
+
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d, Smoothed: %d"), *ActorClassName, ActorCount.GetTotal(), ActorCount.GetSmoothedTotal());
+
+			int32* TotalActorCount = TempTotalActorCounts.Find(ActorClass);
+			if (TotalActorCount == nullptr)
 			{
-				if (!bHasActorCountFailed)
-				{
-					bHasActorCountFailed = true;
-					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
-						*NFRFailureString,
-						*ExpectedActorCount.ActorClass->GetName(),
-						ExpectedActorCount.ExpectedCount,
-						TotalCount);
-				}
+				TempTotalActorCounts.Add(ActorClass, ActorCount.GetTotal());
 			}
 			else
 			{
-				if (IsNPCs)
-				{
-					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativeNPCs(%s, %d) Total:%.1f"),
-						*WorkerID, ActualCount, TotalCount);
-				}
+				TotalActorCount += ActorCount.GetTotal();
+			}
+		}
+	}
+
+	bool bIsReadyToConsiderActorCount = AllWorkerActorCounts.Num() == NumWorkers;
+	if (!bIsReadyToConsiderActorCount)
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Not ready to consider actor count metric"));
+	}
+
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor Count Totals:"));
+	for (const auto& ActorCountPair : TempTotalActorCounts)
+	{
+		TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
+		int32 TotalActorCount = ActorCountPair.Value;
+		FString ActorClassName = *ActorClass->GetName();
+
+		FActorCountInfo* TotalActorCountInfo = TotalActorCounts.Find(ActorClass);
+		if (TotalActorCountInfo == nullptr)
+		{
+			TotalActorCounts.Add(ActorClass, FActorCountInfo(TotalActorCount));
+		}
+		else
+		{
+			TotalActorCountInfo->SetTotal(TotalActorCount);
+		}
+
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d, Smoothed: %d"), *ActorClassName, TotalActorCount, TotalActorCountInfo->GetSmoothedTotal());
+
+		if (bIsReadyToConsiderActorCount)
+		{
+			FExpectedActorCountConfig  ExpectedActorCount = ExpectedActorCounts[ActorClass];
+			bActorCountFailureState = abs(TotalActorCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
+			if (bActorCountFailureState && !bHasActorCountFailed)
+			{
+				bHasActorCountFailed = true;
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
+					*NFRFailureString,
+					*ExpectedActorCount.ActorClass->GetName(),
+					ExpectedActorCount.ExpectedCount,
+					TotalCount);
 			}
 		}
 	}

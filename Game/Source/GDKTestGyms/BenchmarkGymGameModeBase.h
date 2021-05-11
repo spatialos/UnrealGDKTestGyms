@@ -21,16 +21,37 @@ protected:
 
 	static FString ReadFromCommandLineKey;
 
-	struct FExpectedActorCount
+	class FActorCountInfo
 	{
-		explicit FExpectedActorCount(TSubclassOf<AActor> InActorClass, int32 InExpectedCount, int32 InVariance)
-			: ActorClass(InActorClass)
-			, ExpectedCount(InExpectedCount)
+	public:
+		explicit FActorCountInfo(int32 InTotal)
+			: Total(InTotal)
+			, SmoothedTotal(InTotal)
+		{}
+		explicit FActorCountInfo() : Total(0), SmoothedTotal(0) {}
+
+		void SetTotal(int InTotal)
+		{
+			Total = Total;
+			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1;
+		}
+
+		int GetTotal() const { return Total; }
+		int GetSmoothedTotal() const { return SmoothedTotal; }
+
+	private:
+		int32 Total;
+		int32 SmoothedTotal;
+	};
+
+	struct FExpectedActorCountConfig
+	{
+		explicit FExpectedActorCountConfig(int32 InExpectedCount, int32 InVariance)
+			: ExpectedCount(InExpectedCount)
 			, Variance(InVariance)
 		{}
-		explicit FExpectedActorCount() :ExpectedCount(0), Variance(0) {}
+		explicit FExpectedActorCountConfig() :ExpectedCount(0), Variance(0) {}
 
-		TSubclassOf<AActor> ActorClass;
 		int32 ExpectedCount;
 		int32 Variance;
 	};
@@ -50,7 +71,7 @@ protected:
 	TSubclassOf<APawn> NPCClass;
 
 	virtual void BuildExpectedActorCounts();
-	void AddExpectedActorCount(FExpectedActorCount& Actor, TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
+	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
 
 	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
@@ -67,13 +88,10 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativePlayers(const FString& WorkerID, const int AuthoritativePlayers);
-
-	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativeNPCs(const FString& WorkerID, const UWorld* World, int32 ActualCount);
+	virtual void ReportAuthoritativeActorCount(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActualCount);
 
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
@@ -111,19 +129,14 @@ private:
 	
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
+	FMetricTimer TickActorCountTimer;
 
-	FExpectedActorCount ExpectedSimPlayersCount;
-	TMap<FString, int>	MapAuthoritativePlayers;
-	TMap<FString, int>  MapAuthoritativeSimPlayers;
-	FExpectedActorCount ExpectedNPCsCount;
-	TMap<FString, int> MapAuthoritatuvaNPCs;
+	TMap<TSubclassOf<AActor>, FActorCountInfo> TotalActorCounts;
+	TMap<FString, TMap<TSubclassOf<AActor>, FActorCountInfo>> AllWorkerActorCounts;
+	TMap<TSubclassOf<AActor>, FExpectedActorCountConfig> ExpectedActorCounts;
 
 	// For total player
 	bool bHasRequiredPlayersCheckFailed;
-	float SmoothedTotalAuthPlayers;
-	float SmoothedTotalAuthNPCs;
-	float SmoothedTotalAuthSimPlayers;
-	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
 	
@@ -173,7 +186,5 @@ private:
 	UFUNCTION()
 	void OnRepTotalNPCs();
 
-	void GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World,
-		const FExpectedActorCount& ExpectedCount, TMap<FString, int>& MapAuthoritative,
-		float& TotalCount, int32 ActualCount, bool IsNPCs);
+	void GenerateTotalNumsForActors();
 };
