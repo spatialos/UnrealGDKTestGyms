@@ -49,11 +49,12 @@ void USchemaPersistenceComponent::BeginPlay()
 		return;
 	}
 
-	// This assumes that BeginPlay will be called before the entity for the actor gets created
-	if (GetOwnerRole() == ROLE_Authority)
-	{
-		NetDriver->OnActorEntityCreation(Owner).AddUObject(this, &USchemaPersistenceComponent::OnActorEntityCreated);
-	}
+	// Register our callback for when the entity for our owner gets created or recreated.
+	// For actors getting their entity created for them for the first time, this assumes that BeginPlay gets called before entity creation for the actor.
+	// We don't check for authority here (which would filter for only those actors having their entity created for them for the first time)
+	// because we also need to listen for entity recreation, which happens for actors getting loaded from snapshots.
+	// BeginPlay is only ever called with authority once (on first actor creation), so we need to also register the callback when we don't have authority here.
+	NetDriver->OnActorEntityCreation(Owner).AddUObject(this, &USchemaPersistenceComponent::OnActorEntityCreated);
 }
 
 void USchemaPersistenceComponent::OnActorEntityCreated(TArray<SpatialGDK::ComponentData>& OutComponentDatas)
