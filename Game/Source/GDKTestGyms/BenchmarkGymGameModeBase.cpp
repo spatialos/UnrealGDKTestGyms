@@ -426,7 +426,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (RequiredPlayerReportTimer.HasTimerGoneOff())
 	{
 		// We don't start reporting until RequiredPlayerReportTimer has gone off
-		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetPlayerControllerCount());
+		ReportAuthoritativePlayers(GetGameInstance()->GetSpatialWorkerId(), GetPlayerControllerCount());
 		RequiredPlayerReportTimer.SetTimer(1);
 	}
 
@@ -471,7 +471,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 		TryInitialiseExpectedActorCounts();
 		
 		const UWorld* World = GetWorld();
-		const FString WorkerID = FPlatformProcess::ComputerName();
+		const FString WorkerID = GetGameInstance()->GetSpatialWorkerId();
 		const int32 ActualCountSimulate = GetActorClassCount(ExpectedSimPlayersCount.ActorClass);
 		const int32 ActualCountNPCs = GetActorClassCount(ExpectedNPCsCount.ActorClass);
 		GenerateTotalNumsForActors(WorkerID, World, ExpectedSimPlayersCount, MapAuthoritativeSimPlayers, SmoothedTotalAuthSimPlayers, ActualCountSimulate, false);
@@ -700,6 +700,13 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%.1f"),
 				*WorkerID, AuthoritativePlayers, SmoothedTotalAuthPlayers);
 		}
+		else
+		{
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativePlayers(%s, %d) Total:%d, not enough workers: want=%d, have=%d"),
+				*WorkerID, AuthoritativePlayers, TotalPlayers, NumWorkers, MapAuthoritativePlayers.Num());
+		}
+
+		
 	}
 }
 
@@ -736,7 +743,7 @@ void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 			{
 				// Only report AverageMigrationOfCurrentWorkerPerSecond to the worker which has authority
 				float AverageMigrationOfCurrentWorkerPerSecond = MigrationOfCurrentWorker / MigrationSeconds;
-				ReportMigration(FPlatformProcess::ComputerName(), AverageMigrationOfCurrentWorkerPerSecond);
+				ReportMigration(GetGameInstance()->GetSpatialWorkerId(), AverageMigrationOfCurrentWorkerPerSecond);
 				ActorMigrationReportTimer.SetTimer(1);
 			}
 
