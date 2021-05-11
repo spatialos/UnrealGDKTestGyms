@@ -369,39 +369,44 @@ These test whether key trace events have the appropriate cause events. They can 
   * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
-* Tests server's without authoritive player controllers still replicate relevant actors
-* Validation
-  * Enable the replication graph
-    * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
-  * Play with 1 client connect.
-  * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+* Tests that servers without authoritive player controllers are still able to replicate relevant actors.
+* Manual steps:
+  * Before booting the Unreal Editor, open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and uncomment the `ReplicationDriverClassName` option by deleing the `;`.
+  * Boot the Unreal Editor.
+  * Open `Content/Maps/MultiworkerWorldComposition/MultiworkerWorldComposition.umap`.
+  * Generate schema.
+  * Play with 1 client.
+  * In the clinet you should see two cubes moving back and forth over a worker boundary.
+    * On each cross, the authority of the cube should switch to the appropriate server. If this happens, the test has passed.
+  * Don't forget to open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and re-comment the `ReplicationDriverClassName` line.
   
 ##### Snapshot reloading test
 Tests that snapshot reloading functions in local deloyments.<br>
 **Note:** This test uses the `HandoverGym` as it saves.<br>
 Manual steps:<br>
-  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Play In Editor Settings > Delete dynamically spawned entities`. Uncheck this option.
   1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Auto-stop local deployment`. Select `Never`.
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Play In Editor Settings > Delete dynamically spawned entities`. Uncheck this option.
   1. In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
   1. In the Unreal Editor Toolbar, click Play to launch one client.
   1. Stop the gym and note that the deployment is still running, as indicated by the state of the Stop Deployment button in the GDK Toolbar.
   1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
-  1. The test has now passed. Don’t forget to revert the two settings changes you made before you run another test.
+  1. The test has now passed.
+  1. Don’t forget to revert the two settings changes you made before you run another test.
 
 ##### Ability Giving Gym
-Tests that ability specs given to an AbilitySystemComponent on two different servers can be activated correctly via their handles.
+Tests that ability specs given to an `AbilitySystemComponent` on two different servers can be activated correctly via their handles.
 * How to test:
   * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * Play with one client.
   * In the client, with your character still on the server that it spawned on, press `Q` on your keyboard.
-    In the spatial output log, you should see the following two lines:
+    In the Command Prompt window that contains the server log output of the server that your player charachter is currently on, you should see the following two lines:
     > Giving and running ability with level 1
     > 
     > Ability activated on AbilityGivingGymCharacter_BP with Level 1
     
     Importantly, the level number stated in the two lines should match. 
   * Move the character to the other server and then press `E` on your keyboard.
-    In the spatial output log, you should see the following two lines:
+    In the Command Prompt window that contains the server log output of the server that your player charachter is currently on, you should see the following two lines:
     > Giving and running ability with level 2
     >
     > Ability activated on AbilityGivingGymCharacter_BP with Level 2
@@ -409,17 +414,25 @@ Tests that ability specs given to an AbilitySystemComponent on two different ser
     Again, the two level numbers should match. If they do, the test has passed.
 
 ##### Async Package Loading Gym
-Tests that async package loading works when activated. As this relies on not having a specific class loaded in memory when starting the test, it's difficult to validate this entirely within the editor, so we rely on an launching an external client for this test. The externally launched client will validate local state before sending a "passed" message to the server. This check is done on `AAsyncPlayerController` and validates;
-  1. Async loading config is enabled
-  1. That the client doesn't have loaded into memory the class we intend to async load
-  1. That the client eventually loads an actor instance of said class
+Tests that async package loading works when activated.
+
 Manual steps:
-  1. Modify `bAsyncLoadNewClassesOnEntityCheckout` to true in DefaultSpatialGDKSettings.ini
-  1. Boot the editor and load the "AsyncPackageLoadingGym"
-  1. Start the gym and note that the in-world message says "Test waiting for success..."
-  1. Launch an additional client via the `LaunchClient.bat`
+  1. Open `UnrealGDKTestGyms\Game\Config\DefaultSpatialGDKSettings.ini`.
+  1. Modify `bAsyncLoadNewClassesOnEntityCheckout` to `True`.
+  1. Save and close `DefaultSpatialGDKSettings.ini`.
+  1. Open the Unreal Editor.
+  1. Open `Content/Maps/AsyncPackageLoadingGym.umap`.
+  1. Play with one client and note that the in-world message saysL "Test waiting for success..."
+  1. Launch an additional client by running the `UnrealGDKTestGyms\LaunchClient.bat` script.
   1. Note that the in-world message now says "Test passed!"
   1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
+
+What did I just validate?<br>
+The late connecing client has validated the local state before sending the "Passed" message to the server. This check was done on `AAsyncPlayerController` and validated:
+  1. Async loading config is enabled.
+  1. That the client doesn't have loaded into memory the class we intend to async load.
+  1. That the client eventually loads an actor instance of said class.
+
 
 ##### Soft references Test Gym
 * Demonstrates that:
