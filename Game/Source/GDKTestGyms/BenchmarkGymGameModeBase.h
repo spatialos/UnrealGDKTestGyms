@@ -97,6 +97,9 @@ private:
 	bool bActorCountFailureState;
 	bool bExpectedActorCountsInitialised;
 
+	// For player movement check
+	bool bHasPlayerMovementFailed;
+
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
@@ -176,6 +179,7 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
+	double GetPlayerMovementVaild() const { return !bHasPlayerMovementFailed ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
 	int32 GetPlayerControllerCount() const;
@@ -190,4 +194,8 @@ private:
 	void GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World,
 		const FExpectedActorCount& ExpectedCount, TMap<FString, int>& MapAuthoritative,
 		float& TotalCount, int32 ActualCount, bool IsNPCs);
+
+	void GetVelocityForMovementReport();
+	void GetPlayersVelocitySum(FVector2D& Velocity);
+	void CheckVelocityForPlayerMovement();
 };

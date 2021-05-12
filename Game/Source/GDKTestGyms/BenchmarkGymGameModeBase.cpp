@@ -30,6 +30,7 @@ namespace
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
+	const FString PlayerMovementVaildMetricName = TEXT("UnrealPlayerMovementVaild");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
@@ -106,6 +107,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, StatStopFileTimer(60)
 	, MemReportIntervalTimer(60 * 60 * 24)
 #endif
+	, bHasPlayerMovementFailed(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -235,6 +237,12 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetTotalMigrationValid);
 					SpatialMetrics->SetCustomMetric(ActorMigrationValidMetricName, Delegate);
 				}
+
+				{
+					UserSuppliedMetric Delegate;
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovementVaild);
+					SpatialMetrics->SetCustomMetric(PlayerMovementVaildMetricName, Delegate);
+				}
 			}
 		}
 	}
@@ -334,73 +342,11 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickPlayersMovementCheck(float DeltaSeconds)
 {
-	// Report logic
-	if (RequiredPlayerReportTimer.HasTimerGoneOff())
-	{
-		FVector2D AvgVelocity = FVector2D(0.0f, 0.000001f);
-		// Loop each players
-		for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
-		{
-			if (APlayerController* PC = PCIt->Get())
-			{
-				if (PC->HasAuthority())
-				{
-					if (PC->GetPawn() != nullptr)
-					{
-						if (PC->GetPawn()->GetMovementComponent() != nullptr)
-						{
-							UCharacterMovementComponent* Component = Cast<UCharacterMovementComponent>(PC->GetPawn()->GetMovementComponent());
-							if (Component != nullptr)
-							{
-								AvgVelocity.X += Component->Velocity.Size();
-								AvgVelocity.Y += 1;
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		// Avg
-		AvgVelocity.X = AvgVelocity.X / AvgVelocity.Y;
-
-		// Report
-		ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
-
-		RequiredPlayerReportTimer.SetTimer(19);
-	}
+	// Get velocity and report 
+	GetVelocityForMovementReport();
 	
-	// Check logic
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	if (RequiredPlayerCheckTimer.HasTimerGoneOff())
-	{
-		AvgVelocityHistory.Add(CurAvgVelocity);
-		if (AvgVelocityHistory.Num() >= 30)
-		{
-			AvgVelocityHistory.RemoveAt(0);
-		}
-		float AvgVelocity = 0.0f;
-		for(auto Velocity : AvgVelocityHistory)
-		{
-			AvgVelocity += Velocity;
-		}
-		AvgVelocity = AvgVelocity / (AvgVelocityHistory.Num() + 0.0f);
-
-		if (AvgVelocity > 0.01f)
-		{
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
-		}
-		else
-		{
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
-		}
-
-		RequiredPlayerCheckTimer.SetTimer(60);
-	}
+	// Check velocity
+	CheckVelocityForPlayerMovement();
 }
 
 
@@ -965,4 +911,71 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors(const FString& Worker
 			}
 		}
 	}
+}
+
+void ABenchmarkGymGameModeBase::GetVelocityForMovementReport()
+{
+	// Report logic
+	if (RequiredPlayerReportTimer.HasTimerGoneOff())
+	{
+		FVector2D AvgVelocity = FVector2D(0.0f, 0.000001f);
+		// Loop each players
+		GetPlayersVelocitySum(AvgVelocity);
+
+		// Avg
+		AvgVelocity.X /= AvgVelocity.Y;
+
+		// Report
+		ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
+
+		RequiredPlayerReportTimer.SetTimer(1);
+	}
+}
+
+void ABenchmarkGymGameModeBase::GetPlayersVelocitySum(FVector2D& Velocity)
+{
+	for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
+	{
+		APlayerController* PC = PCIt->Get();
+		if (!PC || !PC->HasAuthority())
+			return;
+		auto PlayerPwan = PC->GetPawn();
+		if (!PlayerPwan)
+			return;
+		UCharacterMovementComponent* Component = Cast<UCharacterMovementComponent>(PlayerPwan->GetMovementComponent());
+		if (Component != nullptr)
+		{
+			Velocity.X += Component->Velocity.Size();
+			Velocity.Y += 1;
+		}
+	}
+}
+
+void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
+{
+	if (!HasAuthority() || !RequiredPlayerCheckTimer.HasTimerGoneOff())
+		return;
+
+	AvgVelocityHistory.Add(CurAvgVelocity);
+	if (AvgVelocityHistory.Num() > 30)
+	{
+		AvgVelocityHistory.RemoveAt(0);
+	}
+	float AvgVelocity = 0.0f;
+	for (auto Velocity : AvgVelocityHistory)
+	{
+		AvgVelocity += Velocity;
+	}
+	AvgVelocity /= (AvgVelocityHistory.Num() + 0.0f);
+
+	if (AvgVelocity > 0.01f)
+	{
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
+	}
+	else
+	{
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, AvgVelocity);
+	}
+
+	RequiredPlayerCheckTimer.SetTimer(1);
 }
