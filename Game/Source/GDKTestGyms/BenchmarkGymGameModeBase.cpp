@@ -81,7 +81,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
 	, bExpectedActorCountsInitialised(false)
-	, bHasPlayerMovementFailed(false)
 	, bHasActorMigrationCheckFailed(false)
 	, PreviousTickMigration(0)
 	, UXAuthActorCount(0)
@@ -102,7 +101,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, ExpectedAvgVelocity(0.0f)
-	, CurAvgVelocity(0.0f)
+	, CurrentPlayerAvgVelocity(0.0f)
+	, RecentPlayerAvgVelocity(0.0f)
 	, RequiredPlayerMovementReportTimer(5 * 60)
 	, RequiredPlayerMovementCheckTimer(6 * 60)
 	, NumWorkers(1)
@@ -750,7 +750,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement_Implementation
 		TotalPlayers += KeyValue.Value.Y;
 	}
 
-	CurAvgVelocity = TotalVelocity / TotalPlayers;
+	CurrentPlayerAvgVelocity = TotalVelocity / TotalPlayers;
 }
 
 void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
@@ -958,26 +958,25 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 	if (!HasAuthority() || !RequiredPlayerMovementCheckTimer.HasTimerGoneOff())
 		return;
 
-	AvgVelocityHistory.Add(CurAvgVelocity);
+	AvgVelocityHistory.Add(CurrentPlayerAvgVelocity);
 	if (AvgVelocityHistory.Num() > 30)
 	{
 		AvgVelocityHistory.RemoveAt(0);
 	}
-	float AvgVelocity = 0.0f;
+	RecentPlayerAvgVelocity = 0.0f;
 	for (auto Velocity : AvgVelocityHistory)
 	{
-		AvgVelocity += Velocity;
+		RecentPlayerAvgVelocity += Velocity;
 	}
-	AvgVelocity /= (AvgVelocityHistory.Num() + 0.0f);
+	RecentPlayerAvgVelocity /= (AvgVelocityHistory.Num() + 0.01f);
 
-	if (AvgVelocity > 100.0f)
+	if (RecentPlayerAvgVelocity > 100.0f)
 	{
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), RecentPlayerAvgVelocity);
 	}
 	else
 	{
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, AvgVelocity);
-		bHasPlayerMovementFailed = true;
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, RecentPlayerAvgVelocity);
 	}
 
 	RequiredPlayerMovementCheckTimer.SetTimer(30);

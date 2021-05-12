@@ -97,9 +97,6 @@ private:
 	bool bActorCountFailureState;
 	bool bExpectedActorCountsInitialised;
 
-	// For player movement check
-	bool bHasPlayerMovementFailed;
-
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
@@ -137,7 +134,8 @@ private:
 	// For sim player movement metrics
 	float ExpectedAvgVelocity;
 	TMap<FString, FVector2D> LatestAvgVelocityMap;	// <worker id, <avg, count>>
-	float CurAvgVelocity;	// Each report will update this value.
+	float CurrentPlayerAvgVelocity;	// Each report will update this value.
+	float RecentPlayerAvgVelocity; // Recent 30 Avg for metrics check
 	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
@@ -178,7 +176,7 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
-	double GetPlayerMovementVaild() const { return !bHasPlayerMovementFailed ? 1.0 : 0.0; }
+	double GetPlayerMovementVaild() const { return RecentPlayerAvgVelocity; }
 
 	void SetLifetime(int32 Lifetime);
 	int32 GetPlayerControllerCount() const;
