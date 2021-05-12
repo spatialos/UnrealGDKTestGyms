@@ -930,7 +930,7 @@ void ABenchmarkGymGameModeBase::GetVelocityForMovementReport()
 		// Report
 		ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
 
-		RequiredPlayerMovementReportTimer.SetTimer(1);
+		RequiredPlayerMovementReportTimer.SetTimer(29);
 	}
 }
 
@@ -980,5 +980,5 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 		bHasPlayerMovementFailed = true;
 	}
 
-	RequiredPlayerMovementCheckTimer.SetTimer(1);
+	RequiredPlayerMovementCheckTimer.SetTimer(30);
 }
