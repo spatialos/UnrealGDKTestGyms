@@ -103,8 +103,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
 	, ExpectedAvgVelocity(0.0f)
 	, CurAvgVelocity(0.0f)
-	, RequiredPlayerMovementReportTimer(1)
-	, RequiredPlayerMovementCheckTimer(2)
+	, RequiredPlayerMovementReportTimer(5 * 60)
+	, RequiredPlayerMovementCheckTimer(6 * 60)
 	, NumWorkers(1)
 	, NumSpawnZones(1)
 #if	STATS
