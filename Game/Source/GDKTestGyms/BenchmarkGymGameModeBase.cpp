@@ -940,10 +940,10 @@ void ABenchmarkGymGameModeBase::GetPlayersVelocitySum(FVector2D& Velocity)
 	{
 		APlayerController* PC = PCIt->Get();
 		if (!PC || !PC->HasAuthority())
-			return;
+			continue;
 		auto PlayerPwan = PC->GetPawn();
 		if (!PlayerPwan)
-			return;
+			continue;
 		UCharacterMovementComponent* Component = Cast<UCharacterMovementComponent>(PlayerPwan->GetMovementComponent());
 		if (Component != nullptr)
 		{
