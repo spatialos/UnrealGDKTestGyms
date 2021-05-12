@@ -353,7 +353,6 @@ void ABenchmarkGymGameModeBase::TickPlayersMovementCheck(float DeltaSeconds)
 	CheckVelocityForPlayerMovement();
 }
 
-
 void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 {
 	// We have already failed so no need to keep checking
@@ -754,7 +753,6 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement_Implementation
 	CurAvgVelocity = TotalVelocity / TotalPlayers;
 }
 
-
 void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 {
 	if (bHasActorMigrationCheckFailed)
@@ -972,13 +970,14 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 	}
 	AvgVelocity /= (AvgVelocityHistory.Num() + 0.0f);
 
-	if (AvgVelocity > 0.01f)
+	if (AvgVelocity > 100.0f)
 	{
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
 	}
 	else
 	{
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, AvgVelocity);
+		bHasPlayerMovementFailed = true;
 	}
 
 	RequiredPlayerMovementCheckTimer.SetTimer(1);
