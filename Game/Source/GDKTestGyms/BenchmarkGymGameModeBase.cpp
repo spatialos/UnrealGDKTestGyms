@@ -879,9 +879,9 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 				bHasActorCountFailed = true;
 				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
 					*NFRFailureString,
-					*ExpectedActorCount.ActorClass->GetName(),
+					*ActorClass->GetName(),
 					ExpectedActorCount.ExpectedCount,
-					TotalCount);
+					TotalActorCount);
 			}
 		}
 	}
