@@ -798,8 +798,8 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 
 void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActorCount)
 {
-	TMap<TSubclassOf<AActor>, FActorCountInfo>& WorkerActorCounts = AllWorkerActorCounts.FindOrAdd(WorkerID);
-	FActorCountInfo& ActorCountInfo = WorkerActorCounts.FindOrAdd(ActorClass);
+	TMap<TSubclassOf<AActor>, FActorCountInfo>& SpecificWorkerActorCounts = WorkerActorCounts.FindOrAdd(WorkerID);
+	FActorCountInfo& ActorCountInfo = SpecificWorkerActorCounts.FindOrAdd(ActorClass);
 	ActorCountInfo.SetTotal(ActorCount);
 }
 
@@ -808,7 +808,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
 	const bool bLogActorCountDetails = PrintMetricsTimer.HasTimerGoneOff();
 
 	TMap<TSubclassOf<AActor>, int32> TempTotalActorCounts;
-	for (const auto& WorkerPair : AllWorkerActorCounts)
+	for (const auto& WorkerPair : WorkerActorCounts)
 	{
 		const FString WorkerId = WorkerPair.Key;
 		const TMap<TSubclassOf<AActor>, FActorCountInfo>& WorkerActorCounts = WorkerPair.Value;
@@ -826,7 +826,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
 
 			if (bLogActorCountDetails)
 			{
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d, Smoothed: %d"), *ActorClassName, ActorCount.GetTotal(), ActorCount.GetSmoothedTotal());
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d,d: %d"), *ActorClassName, ActorCount.GetTotal(), ActorCount.GetSmoothedTotal());
 			}
 
 			int32& TotalActorCount = TempTotalActorCounts.FindOrAdd(ActorClass);
@@ -834,7 +834,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
 		}
 	}
 
-	bool bIsReadyToConsiderActorCount = AllWorkerActorCounts.Num() == NumWorkers;
+	bool bIsReadyToConsiderActorCount = WorkerActorCounts.Num() == NumWorkers;
 	if (!bIsReadyToConsiderActorCount && bLogActorCountDetails)
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Not ready to consider actor count metric"));
