@@ -21,7 +21,7 @@ void UCounterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	if (Timer <= 0.0f)
 	{
 		Timer = ReportFrequency;
-		UpdateCachedActorCounts();
+		UpdateCachedAuthActorCounts();
 	}
 }
 
@@ -37,16 +37,24 @@ int32 UCounterComponent::GetActorClassCount(TSubclassOf<AActor> ActorClass) cons
 	return *CachedCount;
 }
 
-void UCounterComponent::UpdateCachedActorCounts()
+void UCounterComponent::UpdateCachedAuthActorCounts()
 {
 	const UWorld* World = GetWorld();
 	for (TSubclassOf<AActor> ActorClass : ClassesToCount)
 	{
 		TArray<AActor*> Actors;
 		UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
-		int32& CachedCount = CachedClassCounts.FindOrAdd(ActorClass);
-		CachedCount = Actors.Num();
 
-		UE_LOG(LogCounterComponent, Log, TEXT("%s : %d"), *ActorClass->GetName(), CachedCount);
+		int32 AuthCount = 0;
+		for (AActor* Actor : Actors)
+		{
+			if (Actor->HasAuthority())
+			{
+				AuthCount++;
+			}
+		}
+
+		int32& CachedCount = CachedClassCounts.FindOrAdd(ActorClass);
+		CachedCount = AuthCount;
 	}
 }

@@ -36,12 +36,12 @@ protected:
 			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1;
 		}
 
-		int GetTotal() const { return Total; }
-		int GetSmoothedTotal() const { return SmoothedTotal; }
+		int32 GetTotal() const { return Total; }
+		int32 GetSmoothedTotal() const { return FMath::RoundToInt(SmoothedTotal); }
 
 	private:
 		int32 Total;
-		int32 SmoothedTotal;
+		float SmoothedTotal;
 	};
 
 	struct FExpectedActorCountConfig
