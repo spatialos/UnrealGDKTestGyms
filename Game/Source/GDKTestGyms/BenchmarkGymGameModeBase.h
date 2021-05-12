@@ -32,7 +32,7 @@ protected:
 
 		void SetTotal(int InTotal)
 		{
-			Total = Total;
+			Total = InTotal;
 			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1;
 		}
 
