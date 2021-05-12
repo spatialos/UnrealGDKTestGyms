@@ -455,7 +455,9 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 	// This test respects the initial delay timer in both native and GDK
-	if (true)
+	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
+		TickActorCountTimer.HasTimerGoneOff() &&
+		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
 
