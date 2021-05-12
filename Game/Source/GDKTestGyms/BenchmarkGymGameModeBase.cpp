@@ -81,6 +81,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
 	, bExpectedActorCountsInitialised(false)
+	, bHasPlayerMovementFailed(false)
 	, bHasActorMigrationCheckFailed(false)
 	, PreviousTickMigration(0)
 	, UXAuthActorCount(0)
@@ -100,6 +101,10 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
+	, ExpectedAvgVelocity(0.0f)
+	, CurAvgVelocity(0.0f)
+	, RequiredPlayerMovementReportTimer(1)
+	, RequiredPlayerMovementCheckTimer(2)
 	, NumWorkers(1)
 	, NumSpawnZones(1)
 #if	STATS
@@ -107,11 +112,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, StatStopFileTimer(60)
 	, MemReportIntervalTimer(60 * 60 * 24)
 #endif
-	, ExpectedAvgVelocity(0.0f)
-	, CurAvgVelocity(0.0f)
-	, RequiredPlayerMovementReportTimer(1)
-	, RequiredPlayerMovementCheckTimer(2)
-	, bHasPlayerMovementFailed(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
