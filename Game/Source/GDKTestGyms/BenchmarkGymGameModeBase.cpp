@@ -478,7 +478,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 		if (HasAuthority())
 		{
-			GenerateTotalNumsForActors();
+			GenerateTotalCountsForActors();
 		}
 
 		const int32 TickActorCountFrequency = 1; /*seconds*/
@@ -796,28 +796,16 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 	return Count;
 }
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActualCount)
+void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActorCount)
 {
-	TMap<TSubclassOf<AActor>, FActorCountInfo>* WorkerActorCounts = AllWorkerActorCounts.Find(WorkerID);
-	if (WorkerActorCounts == nullptr)
-	{
-		WorkerActorCounts = &AllWorkerActorCounts.Add(WorkerID);
-	}
-
-	FActorCountInfo* ActorCountInfo = WorkerActorCounts->Find(ActorClass);
-	if (ActorCountInfo == nullptr)
-	{
-		WorkerActorCounts->Add(ActorClass, FActorCountInfo(ActualCount));
-	}
-	else
-	{
-		ActorCountInfo->SetTotal(ActualCount);
-	}
+	TMap<TSubclassOf<AActor>, FActorCountInfo>& WorkerActorCounts = AllWorkerActorCounts.FindOrAdd(WorkerID);
+	FActorCountInfo& ActorCountInfo = WorkerActorCounts.FindOrAdd(ActorClass);
+	ActorCountInfo.SetTotal(ActorCount);
 }
 
-void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
+void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
 {
-	bool bLogActorCountDetails = PrintMetricsTimer.HasTimerGoneOff();
+	const bool bLogActorCountDetails = PrintMetricsTimer.HasTimerGoneOff();
 
 	TMap<TSubclassOf<AActor>, int32> TempTotalActorCounts;
 	for (const auto& WorkerPair : AllWorkerActorCounts)
@@ -832,9 +820,9 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 
 		for (const auto& ActorCountPair : WorkerActorCounts)
 		{
-			TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
-			FActorCountInfo ActorCount = ActorCountPair.Value;
-			FString ActorClassName = *ActorClass->GetName();
+			const TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
+			const FActorCountInfo ActorCount = ActorCountPair.Value;
+			const FString ActorClassName = *ActorClass->GetName();
 
 			if (bLogActorCountDetails)
 			{
@@ -859,9 +847,9 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 
 	for (const auto& ActorCountPair : TempTotalActorCounts)
 	{
-		TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
-		int32 TotalActorCount = ActorCountPair.Value;
-		FString ActorClassName = *ActorClass->GetName();
+		const TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
+		const int32 TotalActorCount = ActorCountPair.Value;
+		const FString ActorClassName = *ActorClass->GetName();
 
 		FActorCountInfo& TotalActorCountInfo = TotalActorCounts.FindOrAdd(ActorClass);
 		TotalActorCountInfo.SetTotal(TotalActorCount);
@@ -873,14 +861,14 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 
 		if (bIsReadyToConsiderActorCount)
 		{
-			FExpectedActorCountConfig  ExpectedActorCount = ExpectedActorCounts[ActorClass];
+			const FExpectedActorCountConfig& ExpectedActorCount = ExpectedActorCounts[ActorClass];
 			bActorCountFailureState = abs(TotalActorCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
 			if (bActorCountFailureState && !bHasActorCountFailed)
 			{
 				bHasActorCountFailed = true;
 				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
 					*NFRFailureString,
-					*ActorClass->GetName(),
+					*ActorClassName,
 					ExpectedActorCount.ExpectedCount,
 					TotalActorCount);
 			}
