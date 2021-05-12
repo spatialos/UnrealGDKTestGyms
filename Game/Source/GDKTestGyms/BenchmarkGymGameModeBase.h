@@ -78,6 +78,10 @@ protected:
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 
+	// For sim player movement metrics
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
+
 private:
 	// Test scenarios
 
@@ -126,6 +130,15 @@ private:
 	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
+
+	// For sim player movement metrics
+	float ExpectedAvgVelocity;
+	TMap<FString, FVector2D> LatestAvgVelocityMap;	// <worker id, <avg, count>>
+	float CurAvgVelocity;	// Each report will update this value.
+	int AvgVelocityHistoryLength;
+	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
+	FMetricTimer RequiredPlayerMovementReportTimer;
+	FMetricTimer RequiredPlayerMovementCheckTimer;
 	
 	int32 NumWorkers;
 	int32 NumSpawnZones;
@@ -147,6 +160,7 @@ private:
 	void TryAddSpatialMetrics();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
+	void TickPlayersMovementCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);

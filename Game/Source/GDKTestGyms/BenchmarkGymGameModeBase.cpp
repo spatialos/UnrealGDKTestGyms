@@ -14,6 +14,7 @@
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
 #include "UserExperienceComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
 
@@ -246,6 +247,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickServerFPSCheck(DeltaSeconds);
 	TickClientFPSCheck(DeltaSeconds);
 	TickPlayersConnectedCheck(DeltaSeconds);
+	TickPlayersMovementCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
 	TickActorCountCheck(DeltaSeconds);
 	TickActorMigration(DeltaSeconds);
@@ -329,6 +331,78 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 		}
 	}
 }
+
+void ABenchmarkGymGameModeBase::TickPlayersMovementCheck(float DeltaSeconds)
+{
+	// Report logic
+	if (RequiredPlayerReportTimer.HasTimerGoneOff())
+	{
+		FVector2D AvgVelocity = FVector2D(0.0f, 0.000001f);
+		// Loop each players
+		for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
+		{
+			if (APlayerController* PC = PCIt->Get())
+			{
+				if (PC->HasAuthority())
+				{
+					if (PC->GetPawn() != nullptr)
+					{
+						if (PC->GetPawn()->GetMovementComponent() != nullptr)
+						{
+							UCharacterMovementComponent* Component = Cast<UCharacterMovementComponent>(PC->GetPawn()->GetMovementComponent());
+							if (Component != nullptr)
+							{
+								AvgVelocity.X += Component->Velocity.Size();
+								AvgVelocity.Y += 1;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		// Avg
+		AvgVelocity.X = AvgVelocity.X / AvgVelocity.Y;
+
+		// Report
+		ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
+
+		RequiredPlayerReportTimer.SetTimer(19);
+	}
+	
+	// Check logic
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (RequiredPlayerCheckTimer.HasTimerGoneOff())
+	{
+		AvgVelocityHistory.Add(CurAvgVelocity);
+		if (AvgVelocityHistory.Num() >= 30)
+		{
+			AvgVelocityHistory.RemoveAt(0);
+		}
+		float AvgVelocity = 0.0f;
+		for(auto Velocity : AvgVelocityHistory)
+		{
+			AvgVelocity += Velocity;
+		}
+		AvgVelocity = AvgVelocity / (AvgVelocityHistory.Num() + 0.0f);
+
+		if (AvgVelocity > 0.01f)
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
+		}
+		else
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Check players' average velocity. Current velocity=%.1f"), AvgVelocity);
+		}
+
+		RequiredPlayerCheckTimer.SetTimer(60);
+	}
+}
+
 
 void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 {
@@ -709,6 +783,27 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayers_Implementation(const 
 		
 	}
 }
+
+void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement_Implementation(const FString& WorkerID, const FVector2D& AverageData)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	LatestAvgVelocityMap.Emplace(WorkerID, AverageData);
+
+	float TotalPlayers = 0.000001f;	// Avoid divide zero.
+	float TotalVelocity = 0.0f;
+	for (const auto& KeyValue : LatestAvgVelocityMap)
+	{
+		TotalVelocity += KeyValue.Value.X;
+		TotalPlayers += KeyValue.Value.Y;
+	}
+
+	CurAvgVelocity = TotalVelocity / TotalPlayers;
+}
+
 
 void ABenchmarkGymGameModeBase::TickActorMigration(float DeltaSeconds)
 {
