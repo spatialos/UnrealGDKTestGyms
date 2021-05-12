@@ -132,7 +132,7 @@ private:
 	FMetricTimer TickActorCountTimer;
 
 	TMap<TSubclassOf<AActor>, FActorCountInfo> TotalActorCounts;
-	TMap<FString, TMap<TSubclassOf<AActor>, FActorCountInfo>> AllWorkerActorCounts;
+	TMap<FString, TMap<TSubclassOf<AActor>, FActorCountInfo>> WorkerActorCounts;
 	TMap<TSubclassOf<AActor>, FExpectedActorCountConfig> ExpectedActorCounts;
 
 	// For total player
