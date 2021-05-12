@@ -107,6 +107,10 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, StatStopFileTimer(60)
 	, MemReportIntervalTimer(60 * 60 * 24)
 #endif
+	, ExpectedAvgVelocity(0.0f)
+	, CurAvgVelocity(0.0f)
+	, RequiredPlayerMovementReportTimer(1)
+	, RequiredPlayerMovementCheckTimer(2)
 	, bHasPlayerMovementFailed(false)
 {
 	PrimaryActorTick.bCanEverTick = true;

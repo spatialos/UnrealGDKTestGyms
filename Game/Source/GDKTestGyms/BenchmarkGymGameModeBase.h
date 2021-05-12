@@ -138,7 +138,6 @@ private:
 	float ExpectedAvgVelocity;
 	TMap<FString, FVector2D> LatestAvgVelocityMap;	// <worker id, <avg, count>>
 	float CurAvgVelocity;	// Each report will update this value.
-	int AvgVelocityHistoryLength;
 	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
