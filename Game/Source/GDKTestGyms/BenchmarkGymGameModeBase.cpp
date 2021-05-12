@@ -472,7 +472,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 				continue;
 			}
 
-			const int32 ActorCount = GetActorClassCount(ActorClass);
+			const int32 ActorCount = GetActorAuthCount(ActorClass);
 			ReportAuthoritativeActorCount(WorkerID, ActorClass, ActorCount);
 		}
 
@@ -662,12 +662,11 @@ void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 	OnTotalNPCsUpdated(TotalNPCs);
 }
 
-int32 ABenchmarkGymGameModeBase::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
+int32 ABenchmarkGymGameModeBase::GetActorAuthCount(TSubclassOf<AActor> ActorClass) const
 {
 	const UCounterComponent* CounterComponent = Cast<UCounterComponent>(GameState->GetComponentByClass(UCounterComponent::StaticClass()));
 	check(CounterComponent != nullptr)
-
-	return CounterComponent->GetActorClassCount(ActorClass);
+	return CounterComponent->GetActorAuthCount(ActorClass);
 }
 
 void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
@@ -817,14 +816,14 @@ void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
 	for (const auto& WorkerPair : WorkerActorCounts)
 	{
 		const FString WorkerId = WorkerPair.Key;
-		const TMap<TSubclassOf<AActor>, FActorCountInfo>& WorkerActorCounts = WorkerPair.Value;
+		const TMap<TSubclassOf<AActor>, FActorCountInfo>& SpecificWorkerActorCounts = WorkerPair.Value;
 
 		if (bLogActorCountDetails)
 		{
 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor Count for Worker - %s:"), *WorkerId);
 		}
 
-		for (const auto& ActorCountPair : WorkerActorCounts)
+		for (const auto& ActorCountPair : SpecificWorkerActorCounts)
 		{
 			const TSubclassOf<AActor> ActorClass = ActorCountPair.Key;
 			const FActorCountInfo ActorCountInfo = ActorCountPair.Value;
@@ -835,7 +834,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
 
 			if (bLogActorCountDetails)
 			{
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d,d: %d"), *ActorClass->GetName(), WorkerActorCount, ActorCountInfo.GetSmoothedTotal());
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d, Smoothed: %d"), *ActorClass->GetName(), WorkerActorCount, ActorCountInfo.GetSmoothedTotal());
 			}
 		}
 	}

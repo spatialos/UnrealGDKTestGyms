@@ -82,8 +82,6 @@ protected:
 	virtual void BuildExpectedActorCounts();
 	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
 
-	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
-
 	virtual void ParsePassedValues();
 
 	UFUNCTION()
@@ -184,6 +182,8 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
+
+	int32 GetActorAuthCount(TSubclassOf<AActor> ActorClass) const;
 
 	void SetLifetime(int32 Lifetime);
 	int32 GetPlayerControllerCount() const;

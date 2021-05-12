@@ -14,6 +14,12 @@ class GDKTESTGYMS_API UCounterComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+	struct FActorCountInfo
+	{
+		int32 TotalCount;
+		int32 AuthCount;
+	};
+
 public:	
 	UCounterComponent();
 
@@ -23,7 +29,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<AActor>> ClassesToCount;
 
-	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
+	int32 GetActorTotalCount(TSubclassOf<AActor> ActorClass) const;
+	int32 GetActorAuthCount(TSubclassOf<AActor> ActorClass) const;
 
 protected:
 
@@ -32,7 +39,7 @@ protected:
 private:	
 
 	float Timer;
-	TMap<TSubclassOf<AActor>, int32> CachedClassCounts;
+	TMap<TSubclassOf<AActor>, FActorCountInfo> CachedClassCounts;
 
 	void UpdateCachedAuthActorCounts();
 };

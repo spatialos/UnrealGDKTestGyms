@@ -25,16 +25,28 @@ void UCounterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-int32 UCounterComponent::GetActorClassCount(TSubclassOf<AActor> ActorClass) const
+int32 UCounterComponent::GetActorTotalCount(TSubclassOf<AActor> ActorClass) const
 {
-	const int32* CachedCount = CachedClassCounts.Find(ActorClass);
+	const FActorCountInfo* CachedCount = CachedClassCounts.Find(ActorClass);
+	if (CachedCount == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not get actor count for class %s"), *ActorClass->GetName());
+		return -1;
+	}
+
+	return CachedCount->TotalCount;
+}
+
+int32 UCounterComponent::GetActorAuthCount(TSubclassOf<AActor> ActorClass) const
+{
+	const FActorCountInfo* CachedCount = CachedClassCounts.Find(ActorClass);
 	if (CachedCount == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Could not get actor class count for class %s"), *ActorClass->GetName());
 		return -1;
 	}
 
-	return *CachedCount;
+	return CachedCount->AuthCount;
 }
 
 void UCounterComponent::UpdateCachedAuthActorCounts()
@@ -54,7 +66,8 @@ void UCounterComponent::UpdateCachedAuthActorCounts()
 			}
 		}
 
-		int32& CachedCount = CachedClassCounts.FindOrAdd(ActorClass);
-		CachedCount = AuthCount;
+		FActorCountInfo& ActorCountInfo = CachedClassCounts.FindOrAdd(ActorClass);
+		ActorCountInfo.TotalCount = Actors.Num();
+		ActorCountInfo.AuthCount = AuthCount;
 	}
 }
