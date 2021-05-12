@@ -825,7 +825,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 
 		if (bLogActorCountDetails)
 		{
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor Count for Worker %s:"), *WorkerId);
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor Count for Worker - %s:"), *WorkerId);
 		}
 
 		for (const auto& ActorCountPair : WorkerActorCounts)
