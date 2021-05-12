@@ -920,7 +920,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors(const FString& Worker
 void ABenchmarkGymGameModeBase::GetVelocityForMovementReport()
 {
 	// Report logic
-	if (RequiredPlayerReportTimer.HasTimerGoneOff())
+	if (RequiredPlayerMovementReportTimer.HasTimerGoneOff())
 	{
 		FVector2D AvgVelocity = FVector2D(0.0f, 0.000001f);
 		// Loop each players
@@ -932,7 +932,7 @@ void ABenchmarkGymGameModeBase::GetVelocityForMovementReport()
 		// Report
 		ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
 
-		RequiredPlayerReportTimer.SetTimer(1);
+		RequiredPlayerMovementReportTimer.SetTimer(1);
 	}
 }
 
@@ -957,7 +957,7 @@ void ABenchmarkGymGameModeBase::GetPlayersVelocitySum(FVector2D& Velocity)
 
 void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 {
-	if (!HasAuthority() || !RequiredPlayerCheckTimer.HasTimerGoneOff())
+	if (!HasAuthority() || !RequiredPlayerMovementCheckTimer.HasTimerGoneOff())
 		return;
 
 	AvgVelocityHistory.Add(CurAvgVelocity);
@@ -981,5 +981,5 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, AvgVelocity);
 	}
 
-	RequiredPlayerCheckTimer.SetTimer(1);
+	RequiredPlayerMovementCheckTimer.SetTimer(1);
 }
