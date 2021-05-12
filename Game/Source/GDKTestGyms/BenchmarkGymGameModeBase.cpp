@@ -861,7 +861,7 @@ void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors()
 		FActorCountInfo* TotalActorCountInfo = TotalActorCounts.Find(ActorClass);
 		if (TotalActorCountInfo == nullptr)
 		{
-			TotalActorCounts.Add(ActorClass, FActorCountInfo(TotalActorCount));
+			TotalActorCountInfo = &TotalActorCounts.Add(ActorClass, FActorCountInfo(TotalActorCount));
 		}
 		else
 		{
