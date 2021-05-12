@@ -24,16 +24,21 @@ protected:
 	class FActorCountInfo
 	{
 	public:
+
 		explicit FActorCountInfo(int32 InTotal)
 			: Total(InTotal)
 			, SmoothedTotal(InTotal)
 		{}
-		explicit FActorCountInfo() : Total(0), SmoothedTotal(0) {}
+
+		explicit FActorCountInfo()
+			: Total(0),
+			SmoothedTotal(0.0f)
+		{}
 
 		void SetTotal(int InTotal)
 		{
 			Total = InTotal;
-			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1;
+			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1f;
 		}
 
 		int32 GetTotal() const { return Total; }
@@ -50,7 +55,11 @@ protected:
 			: ExpectedCount(InExpectedCount)
 			, Variance(InVariance)
 		{}
-		explicit FExpectedActorCountConfig() :ExpectedCount(0), Variance(0) {}
+
+		explicit FExpectedActorCountConfig()
+			: ExpectedCount(0)
+			, Variance(0)
+		{}
 
 		int32 ExpectedCount;
 		int32 Variance;
