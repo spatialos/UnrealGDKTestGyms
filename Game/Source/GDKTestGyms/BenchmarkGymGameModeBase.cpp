@@ -820,6 +820,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 	TMap<TSubclassOf<AActor>, FActorCountInfo>& SpecificWorkerActorCounts = WorkerActorCounts.FindOrAdd(WorkerID);
 	FActorCountInfo& ActorCountInfo = SpecificWorkerActorCounts.FindOrAdd(ActorClass);
 	ActorCountInfo.SetTotal(ActorCount);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Received actor count update from %s:"), *WorkerID);
 }
 
 void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
