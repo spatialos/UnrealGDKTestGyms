@@ -91,7 +91,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, ActorMigrationCheckDelay(5*60)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
-	, TickActorCountTimer(0)
+	, TickActorCountTimer(60 * 5) // 5-minutes to allow workers to get setup
 	, bHasRequiredPlayersCheckFailed(false)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
@@ -455,8 +455,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
-		TickActorCountTimer.HasTimerGoneOff() &&
+	if (TickActorCountTimer.HasTimerGoneOff() &&
 		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
@@ -497,7 +496,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			}
 		}
 
-		if (HasAuthority())
+		if (HasAuthority() && Constants->ActorCheckDelay.HasTimerGoneOff())
 		{
 			GenerateTotalCountsForActors();
 		}
