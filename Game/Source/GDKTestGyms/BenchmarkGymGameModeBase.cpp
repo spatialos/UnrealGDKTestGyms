@@ -463,6 +463,11 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 		const UWorld* World = GetWorld();
 		const FString WorkerID = GetGameInstance()->GetSpatialWorkerId();
+		if (WorkerID.IsEmpty())
+		{
+			return;
+		}
+		TMap<TSubclassOf<AActor>, FActorCountInfo>& ThisWorkerActorCounts = WorkerActorCounts.FindOrAdd(WorkerID);
 
 		for (auto const& Pair : ExpectedActorCounts)
 		{
@@ -472,8 +477,24 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 				continue;
 			}
 
-			const int32 ActorCount = GetActorAuthCount(ActorClass);
-			ReportAuthoritativeActorCount(WorkerID, ActorClass, ActorCount);
+			const FExpectedActorCountConfig& Config = Pair.Value;
+			if (Config.ExpectedCount > 0)
+			{
+				const int32 ActorCount = GetActorAuthCount(ActorClass);
+
+				FActorCountInfo* ActorCountInfo = ThisWorkerActorCounts.Find(ActorClass);
+				bool bActorCountInfoMissing = ActorCountInfo == nullptr;
+				if (bActorCountInfoMissing)
+				{
+					ActorCountInfo = &ThisWorkerActorCounts.Add(ActorClass);
+				}
+
+				if (bActorCountInfoMissing || ActorCountInfo->GetTotal() != ActorCount)
+				{
+					ReportAuthoritativeActorCount(WorkerID, ActorClass, ActorCount);
+					ActorCountInfo->SetTotal(ActorCount);
+				}
+			}
 		}
 
 		if (HasAuthority())
