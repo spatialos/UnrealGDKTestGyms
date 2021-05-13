@@ -452,8 +452,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
-	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
-	check(Constants);
 	// This test respects the initial delay timer in both native and GDK
 	if (TickActorCountTimer.HasTimerGoneOff())
 	{
@@ -499,9 +497,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 		TickActorCountTimer.SetTimer(TickActorCountFrequency);
 	}
 
-	if (HasAuthority() &&
-		Constants->ActorCheckDelay.HasTimerGoneOff() &&
-		!TestLifetimeTimer.HasTimerGoneOff())
+	if (HasAuthority())
 	{
 		CheckTotalCountsForActors();
 	}
@@ -826,8 +822,13 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 
 void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 {
+	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
+	check(Constants);
+
 	const bool bLogActorCountDetails = PrintMetricsTimer.HasTimerGoneOff();
-	const bool bIsReadyToConsiderActorCount = WorkerActorCounts.Num() == NumWorkers;
+	const bool bIsReadyToConsiderActorCount = WorkerActorCounts.Num() == NumWorkers &&
+		Constants->ActorCheckDelay.HasTimerGoneOff() &&
+		!TestLifetimeTimer.HasTimerGoneOff();
 
 	if (!bIsReadyToConsiderActorCount && bLogActorCountDetails)
 	{
