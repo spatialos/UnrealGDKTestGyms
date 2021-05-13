@@ -30,7 +30,7 @@ namespace
 	const FString AverageFPSValid = TEXT("UnrealServerFPSValid");
 	const FString AverageClientFPSValid = TEXT("UnrealClientFPSValid");
 	const FString ActorCountValidMetricName = TEXT("UnrealActorCountValid");
-	const FString PlayerMovementVaildMetricName = TEXT("UnrealPlayerMovementVaild");
+	const FString PlayerMovementMetricName = TEXT("UnrealPlayerMovement");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
 	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
@@ -244,8 +244,8 @@ void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 
 				{
 					UserSuppliedMetric Delegate;
-					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovementVaild);
-					SpatialMetrics->SetCustomMetric(PlayerMovementVaildMetricName, Delegate);
+					Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovement);
+					SpatialMetrics->SetCustomMetric(PlayerMovementMetricName, Delegate);
 				}
 			}
 		}
