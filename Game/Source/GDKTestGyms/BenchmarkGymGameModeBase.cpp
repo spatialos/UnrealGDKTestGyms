@@ -970,14 +970,22 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 	}
 	RecentPlayerAvgVelocity /= (AvgVelocityHistory.Num() + 0.01f);
 
-	if (RecentPlayerAvgVelocity > 100.0f)
-	{
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), RecentPlayerAvgVelocity);
-	}
-	else
-	{
-		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, RecentPlayerAvgVelocity);
-	}
-
 	RequiredPlayerMovementCheckTimer.SetTimer(30);
+	
+	// Extra step for native scenario.
+	const UWorld* World = GetWorld();
+	if (World != nullptr)
+	{
+		const UNFRConstants* Constants = UNFRConstants::Get(World);
+		check(Constants);
+
+		if (RecentPlayerAvgVelocity > Constants->GetMinPlayerAvgVelocity())
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Check players' average velocity. Current velocity=%.1f"), RecentPlayerAvgVelocity);
+		}
+		else
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, RecentPlayerAvgVelocity);
+		}
+	}
 }
