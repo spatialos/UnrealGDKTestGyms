@@ -455,8 +455,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 	// This test respects the initial delay timer in both native and GDK
-	if (TickActorCountTimer.HasTimerGoneOff() &&
-		!TestLifetimeTimer.HasTimerGoneOff())
+	if (TickActorCountTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
 
@@ -496,13 +495,15 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			}
 		}
 
-		if (HasAuthority() && Constants->ActorCheckDelay.HasTimerGoneOff())
-		{
-			GenerateTotalCountsForActors();
-		}
-
 		const int32 TickActorCountFrequency = 1; /*seconds*/
 		TickActorCountTimer.SetTimer(TickActorCountFrequency);
+	}
+
+	if (HasAuthority() &&
+		Constants->ActorCheckDelay.HasTimerGoneOff() &&
+		!TestLifetimeTimer.HasTimerGoneOff())
+	{
+		CheckTotalCountsForActors();
 	}
 }
 
@@ -823,7 +824,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Received actor count update from %s:"), *WorkerID);
 }
 
-void ABenchmarkGymGameModeBase::GenerateTotalCountsForActors()
+void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 {
 	const bool bLogActorCountDetails = PrintMetricsTimer.HasTimerGoneOff();
 	const bool bIsReadyToConsiderActorCount = WorkerActorCounts.Num() == NumWorkers;

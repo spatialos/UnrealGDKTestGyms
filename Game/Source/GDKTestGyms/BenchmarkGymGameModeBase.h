@@ -195,5 +195,5 @@ private:
 	UFUNCTION()
 	void OnRepTotalNPCs();
 
-	void GenerateTotalCountsForActors();
+	void CheckTotalCountsForActors();
 };
