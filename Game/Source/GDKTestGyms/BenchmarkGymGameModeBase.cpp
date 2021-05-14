@@ -895,7 +895,7 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 					{
 						const TSubclassOf<AActor> ActorClass2 = ActorCountPair2.Key;
 						const FActorCountInfo ActorCountInfo = ActorCountPair2.Value;
-						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s - %d"), ActorClass2->GetName(), ActorCountInfo.GetTotal());
+						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s - %d"), *ActorClass2->GetName(), ActorCountInfo.GetTotal());
 					}
 
 				}
@@ -903,7 +903,7 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Temp"));
 				for (const auto& ActorCountPair2 : TempTotalActorCounts)
 				{
-					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s - %d"), ActorCountPair2.Key->GetName(), ActorCountPair2.Value);
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s - %d"), *ActorCountPair2.Key->GetName(), ActorCountPair2.Value);
 				}
 
 				bHasActorCountFailed = true;
