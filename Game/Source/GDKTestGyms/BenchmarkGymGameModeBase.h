@@ -132,7 +132,6 @@ private:
 	FMetricTimer DeploymentValidTimer;
 
 	// For sim player movement metrics
-	float ExpectedAvgVelocity;
 	TMap<FString, FVector2D> LatestAvgVelocityMap;	// <worker id, <avg, count>>
 	float CurrentPlayerAvgVelocity;	// Each report will update this value.
 	float RecentPlayerAvgVelocity; // Recent 30 Avg for metrics check
