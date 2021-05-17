@@ -139,7 +139,7 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
 	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
-	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
+	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, 1);
 }
 
 void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
@@ -907,7 +907,7 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 				}
 
 				bHasActorCountFailed = true;
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
 					*NFRFailureString,
 					*ActorClass->GetName(),
 					ExpectedActorCount.ExpectedCount,
