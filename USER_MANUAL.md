@@ -483,5 +483,21 @@ The late connecing client has validated the local state before sending the "Pass
   * In the Unreal Editor Toolbar, click Stop when you're done.
   * Shut down the deployment if this doesn't happen automatically.
 * These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
+
+####RPCTimeoutTestGym
+* Demonstrate that:
+  * RPC parameters holding references to loadable assets are able to be resolved without timing out.
+* NOTE: This gym can only be run manually (It requires tweaking settings and running in separate processes).
+* Pre-test steps:
+  * In the Unreal Editor's SpatialGDK runtime settings, set Replication->"Wait Time Before Processing Received RPC With Unresolved Refs" to 0
+  * In Unreal's advanced play settings, set "Run Under One Process" to false
+  * Set the number of players to 2
+* Testing : 
+  * Press play.
+  * Two clients should connect, at least one outside of the editor process.
+  * Controlled character should turn green after 2 sec.
+  * If characters turn red, the test has failed.
+  * If there is a red text reading : "ERROR : Material already loaded on client, test is invalid", check that this only happens on the client launched from within the editor
+  * Clients connected from a separate process, or running the test from a fresh editor instance should not display this error message.
 -----
 2019-11-15: Page added with editorial review
