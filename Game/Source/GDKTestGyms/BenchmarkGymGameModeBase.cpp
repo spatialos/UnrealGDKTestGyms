@@ -887,25 +887,6 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 			bActorCountFailureState = abs(TotalActorCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
 			if (bActorCountFailureState && !bHasActorCountFailed)
 			{
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Worker"));
-				for (const auto& WorkerPair : WorkerActorCounts)
-				{
-					const TMap<TSubclassOf<AActor>, FActorCountInfo>& SpecificWorkerActorCounts = WorkerPair.Value;
-					for (const auto& ActorCountPair2 : SpecificWorkerActorCounts)
-					{
-						const TSubclassOf<AActor> ActorClass2 = ActorCountPair2.Key;
-						const FActorCountInfo ActorCountInfo = ActorCountPair2.Value;
-						NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s - %d"), *ActorClass2->GetName(), ActorCountInfo.GetTotal());
-					}
-
-				}
-
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Temp"));
-				for (const auto& ActorCountPair2 : TempTotalActorCounts)
-				{
-					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s - %d"), *ActorCountPair2.Key->GetName(), ActorCountPair2.Value);
-				}
-
 				bHasActorCountFailed = true;
 				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
 					*NFRFailureString,
