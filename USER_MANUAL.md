@@ -249,7 +249,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * The manual gym contains:
   * A set of four cubes placed in the quadrants of the level.
 * Steps to run the gym manually:
-  * Adjust the setting `SpatialOS Settings -> Debug -> Spatial Debugger Class Path` to `BP_VerboseSpatialDebugger`.
+  * Adjust the setting `Project Settings -> SpatialOS GDK for Unreal - Runtime Settings -> Debug -> Spatial Debugger` to `BP_VerboseSpatialDebugger`.
   * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
   * Press Play.
   * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
@@ -370,6 +370,7 @@ These test whether key trace events have the appropriate cause events. They can 
 
 ##### Multiworker World Composition gym
 * Tests that servers without authoritive player controllers are still able to replicate relevant actors.
+* Please note that when you run this test gym, you man notice the cubes moving discontinuously (that is, juddering or stuttering rather than moving smoothly). This is expected and should not be considered a defect. This occurs because, by default, with Replication Graph turned on, actors are only updated every third tick.
 * Manual steps:
   * Before booting the Unreal Editor, open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and uncomment the `ReplicationDriverClassName` option by deleing the `;`.
   * Boot the Unreal Editor.
