@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 
 #include "UserExperienceComponent.h"
@@ -61,7 +61,7 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 		return;
 	}
 
-	if (Reporter != nullptr && !Reporter->IsPendingKill())
+	if (Reporter.IsValid())
 	{
 		float DeltaTime = FTimespan(ClientTimeTicks - OldTicks).GetTotalMilliseconds();
 		float DistanceSq = Reporter->GetOwner()->GetSquaredDistanceTo(GetOwner());

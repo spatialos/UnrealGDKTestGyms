@@ -12,7 +12,7 @@ UEventTracerComponent::UEventTracerComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UEventTracerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
+void UEventTracerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
@@ -25,7 +25,7 @@ void UEventTracerComponent::BeginPlay()
 
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UEventTracerComponent::TimerFunction, 5.0f, true);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UEventTracerComponent::TimerFunction, 1.0f, true);
 	}
 }
 

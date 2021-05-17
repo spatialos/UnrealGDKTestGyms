@@ -28,6 +28,7 @@ protected:
 			, ExpectedCount(InExpectedCount)
 			, Variance(InVariance)
 		{}
+		explicit FExpectedActorCount() :ExpectedCount(0), Variance(0) {}
 
 		TSubclassOf<AActor> ActorClass;
 		int32 ExpectedCount;
@@ -49,7 +50,7 @@ protected:
 	TSubclassOf<APawn> NPCClass;
 
 	virtual void BuildExpectedActorCounts();
-	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
+	void AddExpectedActorCount(FExpectedActorCount& Actor, TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
 
 	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
 
@@ -71,8 +72,12 @@ protected:
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportAuthoritativeNPCs(const FString& WorkerID, const UWorld* World, int32 ActualCount);
+
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
+
 private:
 	// Test scenarios
 
@@ -107,12 +112,17 @@ private:
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 
-	TArray<FExpectedActorCount> ExpectedActorCounts;
+	FExpectedActorCount ExpectedSimPlayersCount;
 	TMap<FString, int>	MapAuthoritativePlayers;
+	TMap<FString, int>  MapAuthoritativeSimPlayers;
+	FExpectedActorCount ExpectedNPCsCount;
+	TMap<FString, int> MapAuthoritatuvaNPCs;
 
 	// For total player
 	bool bHasRequiredPlayersCheckFailed;
 	float SmoothedTotalAuthPlayers;
+	float SmoothedTotalAuthNPCs;
+	float SmoothedTotalAuthSimPlayers;
 	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
@@ -121,8 +131,12 @@ private:
 	int32 NumSpawnZones;
 #if	STATS
 	// For stat profile
+	int32 CPUProfileInterval;
 	FMetricTimer StatStartFileTimer;
 	FMetricTimer StatStopFileTimer;
+	//For MemReport profile
+	int32 MemReportInterval;
+	FMetricTimer MemReportIntervalTimer;
 #endif
 
 	virtual void BeginPlay() override;
@@ -150,10 +164,16 @@ private:
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
+	int32 GetPlayerControllerCount() const;
 #if	STATS
-	void SetStatTimer(const FString& TimeString);
+	void InitStatTimer(const FString& CPUProfileString);
+	void InitMemReportTimer(const FString& MemReportIntervalString);
 #endif
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
+
+	void GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World,
+		const FExpectedActorCount& ExpectedCount, TMap<FString, int>& MapAuthoritative,
+		float& TotalCount, int32 ActualCount, bool IsNPCs);
 };

@@ -9,6 +9,7 @@
 #include "GameFramework/MovementComponent.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GeneralProjectSettings.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
@@ -55,6 +56,9 @@ namespace
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
+
+	const FString MemReportFlag = TEXT("mem_report");
+	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
 	const FString NFRFailureString = TEXT("NFR scenario failed");
 
@@ -89,6 +93,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, TestLifetimeTimer(0)
 	, bHasRequiredPlayersCheckFailed(false)
 	, SmoothedTotalAuthPlayers(-1.0f)
+	, SmoothedTotalAuthNPCs(-1.0f)
+	, SmoothedTotalAuthSimPlayers(-1.0f)
 	, RequiredPlayerReportTimer(10 * 60)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
@@ -97,6 +103,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 #if	STATS
 	, StatStartFileTimer(60 * 60 * 24)
 	, StatStopFileTimer(60)
+	, MemReportIntervalTimer(60 * 60 * 24)
 #endif
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -134,14 +141,14 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
-	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
-	AddExpectedActorCount(SimulatedPawnClass, ExpectedPlayers, 1);
+	AddExpectedActorCount(ExpectedNPCsCount, NPCClass, TotalNPCs, 1);
+	AddExpectedActorCount(ExpectedSimPlayersCount, SimulatedPawnClass, ExpectedPlayers, 1);
 }
 
-void ABenchmarkGymGameModeBase::AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
+void ABenchmarkGymGameModeBase::AddExpectedActorCount(FExpectedActorCount& Actor, TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
-	ExpectedActorCounts.Add(FExpectedActorCount(ActorClass, ExpectedCount, Variance));
+	Actor = FExpectedActorCount(ActorClass, ExpectedCount, Variance);
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -251,24 +258,44 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 		PrintMetricsTimer.SetTimer(10);
 	}
 #if	STATS
-	if (StatStartFileTimer.HasTimerGoneOff())
+	if (CPUProfileInterval > 0)
 	{
-		FString Cmd(TEXT("stat startfile"));
+		if (StatStartFileTimer.HasTimerGoneOff())
+		{
+			FString Cmd(TEXT("stat startfile"));
+			if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+			{
+				USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+				if (ensure(SpatialDriver != nullptr))
+				{
+					FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
+					const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
+					Cmd.Append(FString::Printf(TEXT(" %s"), *Filename));
+				}
+			}
+			GEngine->Exec(GetWorld(), *Cmd);
+			StatStartFileTimer.SetTimer(CPUProfileInterval);
+		}
+		if (StatStopFileTimer.HasTimerGoneOff())
+		{
+			GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
+			StatStopFileTimer.SetTimer(CPUProfileInterval);
+		}
+	}
+
+	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
+	{
+		FString Cmd = TEXT("memreport -full");
 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 		{
 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 			if (ensure(SpatialDriver != nullptr))
 			{
-				Cmd = FString::Printf(TEXT("stat startfile %s.ue4stats"), *SpatialDriver->Connection->GetWorkerId());
+				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
 			}
 		}
-		GEngine->Exec(GetWorld(), *Cmd);
-		StatStartFileTimer.SetTimer(999999);
-	}
-	if (StatStopFileTimer.HasTimerGoneOff())
-	{
-		GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
-		StatStopFileTimer.SetTimer(999999);
+		GEngine->Exec(nullptr, *Cmd);
+		MemReportIntervalTimer.SetTimer(MemReportInterval);
 	}
 #endif
 }
@@ -399,7 +426,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (RequiredPlayerReportTimer.HasTimerGoneOff())
 	{
 		// We don't start reporting until RequiredPlayerReportTimer has gone off
-		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), UXAuthActorCount);
+		ReportAuthoritativePlayers(FPlatformProcess::ComputerName(), GetPlayerControllerCount());
 		RequiredPlayerReportTimer.SetTimer(1);
 	}
 
@@ -436,40 +463,20 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
-
+	FMetricTimer TempActorCheckDelay = Constants->ActorCheckDelay;
 	// This test respects the initial delay timer in both native and GDK
-	if (Constants->ActorCheckDelay.HasTimerGoneOff() &&
+	if (TempActorCheckDelay.HasTimerGoneOff() &&
 		!TestLifetimeTimer.HasTimerGoneOff())
 	{
 		TryInitialiseExpectedActorCounts();
-
+		
 		const UWorld* World = GetWorld();
-		for (const FExpectedActorCount& ExpectedActorCount : ExpectedActorCounts)
-		{
-			if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
-			{
-				continue;
-			}
-
-			const int32 ExpectedCount = ExpectedActorCount.ExpectedCount;
-			const int32 Variance = ExpectedActorCount.Variance;
-			const int32 ActualCount = GetActorClassCount(ExpectedActorCount.ActorClass);
-			bActorCountFailureState = abs(ActualCount - ExpectedCount) > Variance;
-
-			if (bActorCountFailureState)
-			{
-				if (!bHasActorCountFailed)
-				{
-					bHasActorCountFailed = true;
-					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %d"),
-						*NFRFailureString,
-						*ExpectedActorCount.ActorClass->GetName(),
-						ExpectedCount,
-						ActualCount);
-				}
-				break;
-			}
-		}
+		const FString WorkerID = FPlatformProcess::ComputerName();
+		const int32 ActualCountSimulate = GetActorClassCount(ExpectedSimPlayersCount.ActorClass);
+		const int32 ActualCountNPCs = GetActorClassCount(ExpectedNPCsCount.ActorClass);
+		GenerateTotalNumsForActors(WorkerID, World, ExpectedSimPlayersCount, MapAuthoritativeSimPlayers, SmoothedTotalAuthSimPlayers, ActualCountSimulate, false);
+		ReportAuthoritativeNPCs(WorkerID, World, ActualCountNPCs);
+		TempActorCheckDelay.SetTimer(1);
 	}
 }
 
@@ -497,11 +504,6 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
 		FParse::Value(*CommandLine, *NumSpawnZonesCommandLineKey, NumSpawnZones);
 		
-#if	STATS
-		FString StatProfileString;
-		FParse::Value(*CommandLine, *StatProfileCommandLineKey, StatProfileString);
-		SetStatTimer(StatProfileString);
-#endif
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -559,16 +561,32 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 					NumSpawnZones = FCString::Atoi(*NumSpawnZonesString);
 				}
 #if	STATS
-				FString StatProfileString;
-				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, StatProfileString))
+				FString CPUProfileString;
+				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
 				{
-					SetStatTimer(StatProfileString);
+					InitStatTimer(CPUProfileString);
+				}
+
+				FString MemReportIntervalString;
+				if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag,MemReportIntervalString))
+				{
+					InitMemReportTimer(MemReportIntervalString);
 				}
 #endif
 			}
 		}
 	}
 
+	//Move profile configuration outside to avoid conflict with worker flag
+#if	STATS
+	FString CPUProfileString;
+	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
+	InitStatTimer(CPUProfileString);
+
+	FString MemReportIntervalString;
+	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
+	InitMemReportTimer(MemReportIntervalString);
+#endif
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d, NumSpawnZones %d"), 
 		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers, NumSpawnZones);
 }
@@ -614,10 +632,13 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 #if	STATS
 	else if (FlagName == StatProfileWorkerFlag)
 	{
-		SetStatTimer(FlagValue);
+		InitStatTimer(FlagValue);
+	}
+	else if (FlagName == MemReportFlag)
+	{
+		InitMemReportTimer(FlagValue);
 	}
 #endif
-
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Worker flag updated - Flag %s, Value %s"), *FlagName, *FlagValue);
 }
 
@@ -753,15 +774,93 @@ void ABenchmarkGymGameModeBase::ReportMigration_Implementation(const FString& Wo
 	}
 }
 #if	STATS
-void ABenchmarkGymGameModeBase::SetStatTimer(const FString& TimeString)
+void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 {
-	FString StartDelayString, DurationString;
-	if (TimeString.Split(TEXT(","), &StartDelayString, &DurationString))
+	FString CPUProfileIntervalString, CPUProfileDurationString;
+	if (CPUProfileString.Split(TEXT("&"), &CPUProfileIntervalString, &CPUProfileDurationString))
 	{
-		int32 StartDelay = FCString::Atoi(*StartDelayString);
-		int32 Duration = FCString::Atoi(*DurationString);
-		StatStartFileTimer.SetTimer(StartDelay);
-		StatStopFileTimer.SetTimer(StartDelay + Duration);
+		int32 FirstStartCPUProfile = FCString::Atoi(*CPUProfileIntervalString);
+		int32 CPUProfileDuration = FCString::Atoi(*CPUProfileDurationString);
+		StatStartFileTimer.SetTimer(FirstStartCPUProfile);
+		StatStopFileTimer.SetTimer(FirstStartCPUProfile + CPUProfileDuration);
+		CPUProfileInterval = FirstStartCPUProfile + CPUProfileDuration;
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("CPU profile interval is set to %ds, duration is set to %ds"), FirstStartCPUProfile, CPUProfileDuration);
+	}
+	else
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Please ensure both CPU profile interval and duration are set properly"));
 	}
 }
+
+void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportIntervalString)
+{
+	MemReportInterval = FCString::Atoi(*MemReportIntervalString);
+	MemReportIntervalTimer.SetTimer(MemReportInterval);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MemReport Interval is set to %d seconds"), MemReportInterval);
+}
 #endif
+
+int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
+{
+	int32 Count = 0;
+	for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
+	{
+		if (APlayerController* PC = PCIt->Get())
+		{
+			if (PC->HasAuthority())
+			{
+				++Count;
+			}
+		}
+	}
+	return Count;
+}
+
+void ABenchmarkGymGameModeBase::ReportAuthoritativeNPCs_Implementation(const FString& WorkerID, const UWorld* World, int32 ActualCount)
+{
+	GenerateTotalNumsForActors(WorkerID, World, ExpectedNPCsCount, MapAuthoritatuvaNPCs, SmoothedTotalAuthNPCs, ActualCount, true);
+}
+
+void ABenchmarkGymGameModeBase::GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World, 
+	const FExpectedActorCount& ExpectedActorCount, TMap<FString, int>& MapAuthoritative,
+	float& TotalCount, int32 ActualCount, bool IsNPCs)
+{
+	if (!USpatialStatics::IsActorGroupOwnerForClass(World, ExpectedActorCount.ActorClass))
+	{
+		return;
+	}
+	if (HasAuthority())
+	{
+		MapAuthoritative.Emplace(WorkerID, ActualCount);
+		int32 CurNums = 0;
+		for (const auto& KeyValue : MapAuthoritative)
+		{
+			CurNums += KeyValue.Value;
+		}
+		if (MapAuthoritative.Num() == NumWorkers)
+		{
+			TotalCount = CurNums;
+			bActorCountFailureState = abs(TotalCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
+			if (bActorCountFailureState)
+			{
+				if (!bHasActorCountFailed)
+				{
+					bHasActorCountFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, ExpectedCount %d, ActualCount %.1f"),
+						*NFRFailureString,
+						*ExpectedActorCount.ActorClass->GetName(),
+						ExpectedActorCount.ExpectedCount,
+						TotalCount);
+				}
+			}
+			else
+			{
+				if (IsNPCs)
+				{
+					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ReportAuthoritativeNPCs(%s, %d) Total:%.1f"),
+						*WorkerID, ActualCount, TotalCount);
+				}
+			}
+		}
+	}
+}
