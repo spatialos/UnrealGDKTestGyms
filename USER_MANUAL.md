@@ -244,10 +244,19 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
       * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
 
 ##### Server to server Take Damage RPC gym
-* Tests AActor::TakeDamage.
-* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon receiving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+* This gym demonstrates that:
+  * `AActor::TakeDamage` functions.
+* The manual gym contains:
+  * A set of four cubes placed in the quadrants of the level.
+* Steps to run the gym manually:
+  * Adjust the setting `SpatialOS Settings -> Debug -> Spatial Debugger Class Path` to `BP_VerboseSpatialDebugger`.
+  * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
+  * Press Play.
+  * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
+* If you'd like to know more: 
+  * `AActor::TakeDamage` is called twice on random cubes, once with a `FPointDamageEvent` input and once with a `FRadialDamageEvent` input.
+  * If the cube is not authoritative on the server a cross server RPCs will be called from `AActor::TakeDamage`. Upon receiving the RPCs the cube will display the `HitLocation` member of `FPointDamageEvent` and the `Origin` member of the `FRadialDamageEvent`.
+  * "10 10 10" and "20 20 20" appearing over the top of each cube intermittently represents the `HitLocation` data being sent using a cross server RPC inside a `PointDamageEvent` object and the `Origin` of the `RadialPointDamage` event.
 
 ##### Multiple Ownership gym
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
@@ -328,14 +337,14 @@ These test whether key trace events have the appropriate cause events. They can 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
 * It includes a **non-instanced** gameplay cue that is triggered by pressing `Q` and visualised as **sparks** emitted from the controlled character.
-* It also includes an **instanced** gameplay cue that is triggered by pressing `T` and visualised as a **cone** floating above the controlled character.
+* It also includes an **instanced** gameplay cue that is triggered by pressing `E` and visualised as a **cone** floating above the controlled character.
 * Manual steps:
   * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
   * In the Unreal Editor Toolbar, click Play to launch two clients.
   * Position one client's character in view of the other client and in the same virtual worker boundary.
   * Press `Q` to trigger the non-instanced gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
   * Both clients should print "Executed Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
-  * Press `T` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Press `E` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
   * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
