@@ -78,6 +78,10 @@ protected:
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 
+	// For sim player movement metrics
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
+
 private:
 	// Test scenarios
 
@@ -126,6 +130,14 @@ private:
 	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
+
+	// For sim player movement metrics
+	TMap<FString, FVector2D> LatestAvgVelocityMap;	// <worker id, <avg, count>>
+	float CurrentPlayerAvgVelocity;	// Each report will update this value.
+	float RecentPlayerAvgVelocity; // Recent 30 Avg for metrics check
+	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
+	FMetricTimer RequiredPlayerMovementReportTimer;
+	FMetricTimer RequiredPlayerMovementCheckTimer;
 	
 	int32 NumWorkers;
 	int32 NumSpawnZones;
@@ -147,6 +159,7 @@ private:
 	void TryAddSpatialMetrics();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
+	void TickPlayersMovementCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
@@ -162,6 +175,7 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
+	double GetPlayerMovement() const { return RecentPlayerAvgVelocity; }
 
 	void SetLifetime(int32 Lifetime);
 	int32 GetPlayerControllerCount() const;
@@ -176,4 +190,8 @@ private:
 	void GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World,
 		const FExpectedActorCount& ExpectedCount, TMap<FString, int>& MapAuthoritative,
 		float& TotalCount, int32 ActualCount, bool IsNPCs);
+
+	void GetVelocityForMovementReport();
+	void GetPlayersVelocitySum(FVector2D& Velocity);
+	void CheckVelocityForPlayerMovement();
 };

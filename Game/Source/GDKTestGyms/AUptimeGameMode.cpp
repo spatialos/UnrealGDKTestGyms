@@ -21,14 +21,31 @@ DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 namespace
 {
 	const FString UptimePlayerDensityWorkerFlag = TEXT("player_density");
+	const FString UptimePlayerDensityCommandLineKey = TEXT("PlayerDensity=");
+
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
+	const FString UptimeSpawnColsCommandLineKey = TEXT("-SpawnCols=");
+	
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
+	const FString UptimeSpawnRowsCommandLineKey = TEXT("-SpawnRows=");
+
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
+	const FString UptimeWorldWidthCommandLineKey = TEXT("-ZoneWidth=");
+
 	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
+	const FString UptimeWorldHeightCommandLineKey = TEXT("-ZoneHeight=");
+
 	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
+	const FString UptimeEgressSizeCommandLineKey = TEXT("-EgressTestSize=");
+	
 	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
+	const FString UptimeEgressFrequencyCommandLineKey = TEXT("-EgressTestFrequency=");
+	
 	const FString UptimeCrossServerSizeWorkerFlag = TEXT("cross_server_size");
+	const FString UptimeCrossServerSizeCommandLineKey = TEXT("-CrossServerSize=");
+
 	const FString UptimeCrossServerFrequencyWorkerFlag = TEXT("cross_server_frequency");
+	const FString UptimeCrossServerFrequencyCommandLineKey = TEXT("-CrossServerFrequency=");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
@@ -149,7 +166,15 @@ void AUptimeGameMode::ParsePassedValues()
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, *UptimePlayerDensityCommandLineKey, PlayerDensity);
+		FParse::Value(*CommandLine, *UptimeSpawnColsCommandLineKey, SpawnCols);
+		FParse::Value(*CommandLine, *UptimeSpawnRowsCommandLineKey, SpawnRows);
+		FParse::Value(*CommandLine, *UptimeWorldWidthCommandLineKey, ZoneHeight);
+		FParse::Value(*CommandLine, *UptimeWorldHeightCommandLineKey, ZoneWidth);
+		FParse::Value(*CommandLine, *UptimeEgressSizeCommandLineKey, TestDataSize);
+		FParse::Value(*CommandLine, *UptimeEgressFrequencyCommandLineKey, TestDataFrequency);
+		FParse::Value(*CommandLine, *UptimeCrossServerSizeCommandLineKey, CrossServerSize);
+		FParse::Value(*CommandLine, *UptimeCrossServerFrequencyCommandLineKey, CrossServerFrequency);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -172,7 +197,7 @@ void AUptimeGameMode::ParsePassedValues()
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
-	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Density %d, Clusters %d, SpawnCols %d, SpawnRows %d, ZoneHeight %d, ZoneWidth %d, TestDataSize %d, TestDataFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), PlayerDensity, NumPlayerClusters, SpawnCols, SpawnRows, ZoneHeight, ZoneWidth, TestDataSize, TestDataFrequency, CrossServerSize, CrossServerFrequency);
 }
 
 void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
