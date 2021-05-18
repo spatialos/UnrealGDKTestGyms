@@ -25,8 +25,8 @@ class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 		{}
 
 		explicit FActorCountInfo()
-			: Total(0),
-			SmoothedTotal(0.0f)
+			: Total(0)
+			, SmoothedTotal(0.0f)
 		{}
 
 		void SetTotal(int InTotal)
