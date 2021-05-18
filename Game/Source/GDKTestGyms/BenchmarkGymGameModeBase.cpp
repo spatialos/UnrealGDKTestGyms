@@ -312,18 +312,22 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
-		int SmoothedTotalAuthPlayers = TotalActorCounts[SimulatedPawnClass].GetSmoothedTotal();
-		if (SmoothedTotalAuthPlayers < RequiredPlayers)
+		const FActorCountInfo* ActorCountInfo = TotalActorCounts.Find(SimulatedPawnClass);
+		if (ActorCountInfo != nullptr)
 		{
-			bHasRequiredPlayersCheckFailed = true;
-			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %.1f"), *NFRFailureString, RequiredPlayers, SmoothedTotalAuthPlayers);
-		}
-		else
-		{
-			RequiredPlayerCheckTimer.SetTimer(10);
-			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %.1f"), RequiredPlayers, SmoothedTotalAuthPlayers);
+			int SmoothedTotalAuthPlayers = ActorCountInfo->GetSmoothedTotal();
+			if (SmoothedTotalAuthPlayers < RequiredPlayers)
+			{
+				bHasRequiredPlayersCheckFailed = true;
+				// This log is used by the NFR pipeline to indicate if a client failed to connect
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %.1f"), *NFRFailureString, RequiredPlayers, SmoothedTotalAuthPlayers);
+			}
+			else
+			{
+				RequiredPlayerCheckTimer.SetTimer(10);
+				// Useful for NFR log inspection
+				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %.1f"), RequiredPlayers, SmoothedTotalAuthPlayers);
+			}
 		}
 	}
 }
