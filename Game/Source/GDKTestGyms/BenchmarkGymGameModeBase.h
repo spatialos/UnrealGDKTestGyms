@@ -29,7 +29,7 @@ class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 			, SmoothedTotal(0.0f)
 		{}
 
-		void SetTotal(int InTotal)
+		void SetTotal(int32 InTotal)
 		{
 			Total = InTotal;
 			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1f;
