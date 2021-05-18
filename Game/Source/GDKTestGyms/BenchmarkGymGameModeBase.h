@@ -14,12 +14,6 @@ UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-public:
-	ABenchmarkGymGameModeBase();
-
-protected:
-
-	static FString ReadFromCommandLineKey;
 
 	class FActorCountInfo
 	{
@@ -65,12 +59,22 @@ protected:
 		int32 Variance;
 	};
 
+	using ActorCountMap = TMap<TSubclassOf<AActor>, FActorCountInfo>;
+
+public:
+	ABenchmarkGymGameModeBase();
+
+protected:
+
+	static FString ReadFromCommandLineKey;
+
 	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
 
 	// Total number of players that must connect for the test to pass. Must be less than ExpectedPlayers.
 	// This allows some accepted client flakes without failing the overall test.
 	int32 RequiredPlayers;
+
 
 	// Replicated so that offloading and zoning servers can get updates.
 	UPROPERTY(ReplicatedUsing = OnRepTotalNPCs, BlueprintReadWrite)
@@ -80,7 +84,7 @@ protected:
 	TSubclassOf<APawn> NPCClass;
 
 	virtual void BuildExpectedActorCounts();
-	void AddExpectedActorCount(TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
+	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, int32 ExpectedCount, int32 Variance);
 
 	virtual void ParsePassedValues();
 
@@ -91,20 +95,20 @@ protected:
 	void OnTotalNPCsUpdated(int32 Value);
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
 
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
-
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativeActorCount(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActualCount);
 
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 
 private:
-	// Test scenarios
 
 	double AveragedClientRTTMS; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
@@ -138,8 +142,8 @@ private:
 	FMetricTimer TestLifetimeTimer;
 	FMetricTimer TickActorCountTimer;
 
-	TMap<TSubclassOf<AActor>, FActorCountInfo> TotalActorCounts;
-	TMap<FString, TMap<TSubclassOf<AActor>, FActorCountInfo>> WorkerActorCounts;
+	ActorCountMap TotalActorCounts;
+	TMap<FString, ActorCountMap> WorkerActorCounts;
 	TMap<TSubclassOf<AActor>, FExpectedActorCountConfig> ExpectedActorCounts;
 
 	// For total player
@@ -158,8 +162,6 @@ private:
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
 #endif
-
-	virtual void BeginPlay() override;
 
 	void TryInitialiseExpectedActorCounts();
 
@@ -183,7 +185,7 @@ private:
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 
-	int32 GetActorAuthCount(TSubclassOf<AActor> ActorClass) const;
+	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
 
 	void SetLifetime(int32 Lifetime);
 	int32 GetPlayerControllerCount() const;
