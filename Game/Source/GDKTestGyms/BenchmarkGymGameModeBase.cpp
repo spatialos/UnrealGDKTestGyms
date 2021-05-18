@@ -842,7 +842,7 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 	TMap<TSubclassOf<AActor>, int32> TempTotalActorCounts;
 	for (const auto& WorkerPair : WorkerActorCounts)
 	{
-		const FString WorkerId = WorkerPair.Key;
+		const FString& WorkerId = WorkerPair.Key;
 		const ActorCountMap& SpecificWorkerActorCounts = WorkerPair.Value;
 
 		if (bLogActorCountDetails)
