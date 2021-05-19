@@ -144,14 +144,14 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
-	AddExpectedActorCount(NPCClass, TotalNPCs, 1);
-	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, 1);
+	AddExpectedActorCount(NPCClass, TotalNPCs - 1, TotalNPCs);
+	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, ExpectedPlayers);
 }
 
-void ABenchmarkGymGameModeBase::AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, int32 ExpectedCount, int32 Variance)
+void ABenchmarkGymGameModeBase::AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount)
 {
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, ExpectedCount: %d, Variance: %d"), *ActorClass->GetName(), ExpectedCount, Variance);
-	ExpectedActorCounts.Add(ActorClass, FExpectedActorCountConfig(ExpectedCount, Variance));
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, MinCount: %d, MaxCount: %d"), *ActorClass->GetName(), MinCount, MaxCount);
+	ExpectedActorCounts.Add(ActorClass, FExpectedActorCountConfig(MinCount, MaxCount));
 }
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegate()
@@ -501,7 +501,7 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			}
 
 			const FExpectedActorCountConfig& Config = Pair.Value;
-			if (Config.ExpectedCount > 0)
+			if (Config.MinCount > 0)
 			{
 				const int32 ActorCount = GetActorAuthCount(ActorClass);
 
@@ -930,7 +930,7 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 		{
 			// Check for test failure
 			const FExpectedActorCountConfig& ExpectedActorCount = ExpectedActorCounts[ActorClass];
-			bActorCountFailureState = abs(TotalActorCount - ExpectedActorCount.ExpectedCount) > ExpectedActorCount.Variance;
+			bActorCountFailureState = TotalActorCount < ExpectedActorCount.MinCount || TotalActorCount > ExpectedActorCount.MaxCount;
 			if (bActorCountFailureState && !bHasActorCountFailed)
 			{
 				bHasActorCountFailed = true;

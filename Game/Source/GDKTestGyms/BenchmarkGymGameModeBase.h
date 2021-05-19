@@ -45,18 +45,18 @@ class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 
 	struct FExpectedActorCountConfig
 	{
-		explicit FExpectedActorCountConfig(int32 InExpectedCount, int32 InVariance)
-			: ExpectedCount(InExpectedCount)
-			, Variance(InVariance)
+		explicit FExpectedActorCountConfig(int32 InMinCount, int32 InMaxCount)
+			: MinCount(InMinCount)
+			, MaxCount(InMaxCount)
 		{}
 
 		explicit FExpectedActorCountConfig()
-			: ExpectedCount(0)
-			, Variance(0)
+			: MinCount(0)
+			, MaxCount(0)
 		{}
 
-		int32 ExpectedCount;
-		int32 Variance;
+		int32 MinCount;
+		int32 MaxCount;
 	};
 
 	using ActorCountMap = TMap<TSubclassOf<AActor>, FActorCountInfo>;
@@ -84,7 +84,7 @@ protected:
 	TSubclassOf<APawn> NPCClass;
 
 	virtual void BuildExpectedActorCounts();
-	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, int32 ExpectedCount, int32 Variance);
+	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount);
 
 	virtual void ParsePassedValues();
 
