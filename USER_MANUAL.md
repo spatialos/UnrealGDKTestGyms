@@ -451,7 +451,7 @@ The late connecing client has validated the local state before sending the "Pass
   * Players are cleaned up correctly when they disconnect.
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * Pre-test steps:
-  * In the Unreal Editor's Content Browser, locate `Content/Maps/PlayerDisconnectGym1` and double click to open it.
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/SpatialPlayerDisconnectGym` and double click to open it.
 * How to test for a client disconnecting by returning to its main menu:
   * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
   * Select Play.
@@ -459,16 +459,6 @@ The late connecing client has validated the local state before sending the "Pass
   * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
   * Press `M` in one of the clients, to make that client leave the deployment by traveling to the empty map.
   * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
-  * In the Unreal Editor Toolbar, click Stop when you're done.
-  * Shut down the deployment if this doesn't happen automatically.
-* How to test for the server disconnecting all clients:
-  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
-  * Select Play.
-  * From the UnrealGDK toolbar, open the Inspector.
-  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
-  * Open a terminal window and `cd` `UnrealGDKTestGyms\spatial`.
-  * Run `curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown`.
-  * Verify in the Inspector that zero client worker entities, zero player controllers entities and zero player character entities exist.
   * In the Unreal Editor Toolbar, click Stop when you're done.
   * Shut down the deployment if this doesn't happen automatically.
 * How to test for a player disconnecting by exiting the client window:
@@ -481,6 +471,6 @@ The late connecing client has validated the local state before sending the "Pass
   * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
   * In the Unreal Editor Toolbar, click Stop when you're done.
   * Shut down the deployment if this doesn't happen automatically.
-* These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
+* These tests can also be run in the cloud by deploying the SpatialPlayerDisconnectGym and launching two clients.
 -----
 2019-11-15: Page added with editorial review
