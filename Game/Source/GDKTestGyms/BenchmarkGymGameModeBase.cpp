@@ -144,8 +144,9 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
-	AddExpectedActorCount(NPCClass, TotalNPCs - 1, TotalNPCs);
-	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, ExpectedPlayers);
+	// Zoning scenarios can report actor count numbers slightly higher than the expected number so add a little slack.
+	AddExpectedActorCount(NPCClass, TotalNPCs - 1, FMath::CeilToInt(TotalNPCs * 1.05));
+	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, FMath::CeilToInt(ExpectedPlayers * 1.05));
 }
 
 void ABenchmarkGymGameModeBase::AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount)
