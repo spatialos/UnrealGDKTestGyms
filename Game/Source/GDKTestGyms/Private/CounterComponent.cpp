@@ -25,7 +25,7 @@ void UCounterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-int32 UCounterComponent::GetActorTotalCount(TSubclassOf<AActor> ActorClass) const
+int32 UCounterComponent::GetActorTotalCount(const TSubclassOf<AActor>& ActorClass) const
 {
 	const FActorCountInfo* CachedCount = CachedClassCounts.Find(ActorClass);
 	if (CachedCount == nullptr)
@@ -37,7 +37,7 @@ int32 UCounterComponent::GetActorTotalCount(TSubclassOf<AActor> ActorClass) cons
 	return CachedCount->TotalCount;
 }
 
-int32 UCounterComponent::GetActorAuthCount(TSubclassOf<AActor> ActorClass) const
+int32 UCounterComponent::GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const
 {
 	const FActorCountInfo* CachedCount = CachedClassCounts.Find(ActorClass);
 	if (CachedCount == nullptr)

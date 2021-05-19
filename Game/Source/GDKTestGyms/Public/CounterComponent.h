@@ -29,8 +29,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<AActor>> ClassesToCount;
 
-	int32 GetActorTotalCount(TSubclassOf<AActor> ActorClass) const;
-	int32 GetActorAuthCount(TSubclassOf<AActor> ActorClass) const;
+	int32 GetActorTotalCount(const TSubclassOf<AActor>& ActorClass) const;
+	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
 
 protected:
 
