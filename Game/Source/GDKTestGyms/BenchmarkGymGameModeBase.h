@@ -108,6 +108,10 @@ protected:
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 
+	// For sim player movement metrics
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
+
 private:
 
 	double AveragedClientRTTMS; // The stored average of all the client RTTs
@@ -150,6 +154,14 @@ private:
 	bool bHasRequiredPlayersCheckFailed;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
+
+	// For sim player movement metrics
+	TMap<FString, FVector2D> LatestAvgVelocityMap;	// <worker id, <avg, count>>
+	float CurrentPlayerAvgVelocity;	// Each report will update this value.
+	float RecentPlayerAvgVelocity; // Recent 30 Avg for metrics check
+	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
+	FMetricTimer RequiredPlayerMovementReportTimer;
+	FMetricTimer RequiredPlayerMovementCheckTimer;
 	
 	int32 NumWorkers;
 	int32 NumSpawnZones;
@@ -169,6 +181,7 @@ private:
 	void TryAddSpatialMetrics();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
+	void TickPlayersMovementCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
@@ -184,6 +197,7 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
+	double GetPlayerMovement() const { return RecentPlayerAvgVelocity; }
 
 	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
 
@@ -198,4 +212,8 @@ private:
 	void OnRepTotalNPCs();
 
 	void CheckTotalCountsForActors();
+
+	void GetVelocityForMovementReport();
+	void GetPlayersVelocitySum(FVector2D& Velocity);
+	void CheckVelocityForPlayerMovement();
 };
