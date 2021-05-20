@@ -66,22 +66,6 @@
 		{
 			"Name": "MLSDK",
 			"Enabled": false
-		},
-		{
-			"Name": "FbxAutomationTestBuilder",
-			"Enabled": true
-		},
-		{
-			"Name": "EditorTests",
-			"Enabled": true
-		},
-		{
-			"Name": "FunctionalTestingEditor",
-			"Enabled": true
-		},
-		{
-			"Name": "RuntimeTests",
-			"Enabled": true
 		}
 	]
 }
