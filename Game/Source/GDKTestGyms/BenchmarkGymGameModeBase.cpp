@@ -334,13 +334,13 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 			{
 				bHasRequiredPlayersCheckFailed = true;
 				// This log is used by the NFR pipeline to indicate if a client failed to connect
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %.1f"), *NFRFailureString, RequiredPlayers, SmoothedTotalAuthPlayers);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, SmoothedTotalAuthPlayers);
 			}
 			else
 			{
 				RequiredPlayerCheckTimer.SetTimer(10);
 				// Useful for NFR log inspection
-				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %.1f"), RequiredPlayers, SmoothedTotalAuthPlayers);
+				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d"), RequiredPlayers, SmoothedTotalAuthPlayers);
 			}
 		}
 	}
