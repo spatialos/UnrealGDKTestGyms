@@ -452,7 +452,7 @@ The late connecing client has validated the local state before sending the "Pass
   * Players are cleaned up correctly when they disconnect.
 * NOTE: This gym can only be run manually (This can be automated once the test frameworks supports client disconnects [UNR-529](https://improbableio.atlassian.net/browse/UNR-529)).
 * Pre-test steps:
-  * In the Unreal Editor's Content Browser, locate `Content/Maps/SpatialPlayerDisconnectGym` and double click to open it.
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/SpatialPlayerDisconnectMap` and double click to open it.
 * How to test for a client disconnecting by returning to its main menu:
   * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
   * Select Play.
