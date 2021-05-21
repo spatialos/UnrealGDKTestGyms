@@ -33,8 +33,8 @@ steps:
       message: "testgyms-4.26 ${BUILDKITE_MESSAGE}"
       env: 
         BUILD_TYPE: "GDK"
-        GDK_BRANCH: "${GDK_BRANCH:-0.13.0}" # NOTE: temp fix for new ci release interop issues
-        ENGINE_BRANCH: "${ENGINE_BRANCH_426:-4.26-SpatialOSUnrealGDK-0.13.0}" # NOTE: temp fix for new ci release interop issues
+        GDK_BRANCH: "${GDK_BRANCH:-0.13.1-rc}" # NOTE: temp fix for new ci release interop issues
+        ENGINE_BRANCH: "${ENGINE_BRANCH_426:-4.26-SpatialOSUnrealGDK-0.13.1-rc}" # NOTE: temp fix for new ci release interop issues
         ENGINE_MAJOR: "4.26"
         PROJECT_BRANCH: "${BUILDKITE_BRANCH}"
         USE_FASTBUILD: "True"
@@ -52,8 +52,8 @@ steps:
       message: "testgyms-4.25 ${BUILDKITE_MESSAGE}"
       env: 
         BUILD_TYPE: "GDK"
-        GDK_BRANCH: "${GDK_BRANCH:-0.13.0}" # NOTE: temp fix for new ci release interop issues
-        ENGINE_BRANCH: "${ENGINE_BRANCH_425:-4.25-SpatialOSUnrealGDK-0.13.0}" # NOTE: temp fix for new ci release interop issues
+        GDK_BRANCH: "${GDK_BRANCH:-0.13.1-rc}" # NOTE: temp fix for new ci release interop issues
+        ENGINE_BRANCH: "${ENGINE_BRANCH_425:-4.25-SpatialOSUnrealGDK-0.13.1-rc}" # NOTE: temp fix for new ci release interop issues
         ENGINE_MAJOR: "4.25"
         PROJECT_BRANCH: "${BUILDKITE_BRANCH}" # NOTE: temp fix for new ci release interop issues
         USE_FASTBUILD: "True"
