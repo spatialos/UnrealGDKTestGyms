@@ -5,6 +5,7 @@
 #include "CounterComponent.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "EngineClasses/SpatialPackageMapClient.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/MovementComponent.h"
 #include "GDKTestGymsGameInstance.h"
@@ -13,6 +14,8 @@
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
+#include "SpatialConstants.h"
+#include "SpatialView/EntityView.h"
 #include "UserExperienceComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Utils/SpatialMetrics.h"
@@ -856,7 +859,16 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 	{
 		if (APlayerController* PC = PCIt->Get())
 		{
-			if (PC->HasAuthority())
+			if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+			{
+				Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(PC);
+				const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
+				if (Element != nullptr && Element->Authority.Find(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
+				{
+					++Count;
+				}
+			}
+			else if (PC->HasAuthority())
 			{
 				++Count;
 			}
