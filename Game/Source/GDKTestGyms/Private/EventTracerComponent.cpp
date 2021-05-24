@@ -24,7 +24,7 @@ void UEventTracerComponent::BeginPlay()
 
 	if (OwnerHasAuthority() && bUseEventTracing)
 	{
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UEventTracerComponent::TimerFunction, 5.0f, true);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UEventTracerComponent::TimerFunction, 1.0f, true);
 	}
 }
 
