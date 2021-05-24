@@ -145,6 +145,7 @@ void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 {
 	// Zoning scenarios can report actor count numbers slightly higher than the expected number so add a little slack.
+	// This is due to the fact that server report their auth actor counts out of sync.
 	AddExpectedActorCount(NPCClass, TotalNPCs - 1, FMath::CeilToInt(TotalNPCs * 1.05));
 	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, FMath::CeilToInt(ExpectedPlayers * 1.05));
 }
