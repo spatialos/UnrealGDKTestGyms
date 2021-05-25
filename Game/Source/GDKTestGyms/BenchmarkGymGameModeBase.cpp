@@ -863,7 +863,7 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 			{
 				Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(PC);
 				const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
-				if (Element != nullptr && Element->Authority.Find(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
+				if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
 				{
 					++Count;
 				}
