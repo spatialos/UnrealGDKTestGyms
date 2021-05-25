@@ -352,7 +352,7 @@ These test whether key trace events have the appropriate cause events. They can 
   * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
   * Click the Start deployment button.
   * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
-  * In the clinet, use the mouse and WASD to move the camera.
+  * In the client, use the mouse and WASD to move the camera.
   * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
@@ -456,5 +456,46 @@ Manual steps:
   * In the Unreal Editor Toolbar, click Stop when you're done.
   * Shut down the deployment if this doesn't happen automatically.
 * These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
+
+##### Visual Logger gym
+* Tests that:
+  * The Visual Logger displays multi worker logs accurately.
+  * The Visual Logger correctly colour codes spatial and non-spatial logging objects.
+  * The Visual Logger re-bases log times when loading multiple log files simultaneously.
+  * TODO: The Visual Logger correctly loads and displays native Unreal log files.
+* How to test:
+  * Open `Content\Maps\VisualLogger\VisualLoggerManualTest.umap`
+  * Open the Visual Logger window via menu `Window -> Developer Tools -> Visual Logger`
+  * Click the `Play` button in the Unreal toolbar to start PIE session, with one client.
+  * Click the `Start` button in the Visual Logger toolbar to start recording.
+  * Run game for 60 seconds, and then stop game and Visual Logger.
+  * Observe the following in the Visual Logger UI:
+    * Two `StationaryGymCubes` will log continously, one log per tick.
+    * Two `GymCubes` will log continously on the single client worker, one log per tick.
+    * Two `GymCubes` will split their logs (one log per tick), across the two server workers, alternating as the cubes cross the zero-interest worker boundary.
+    * The names of the `StationaryGymCubes` will be displayed in a different colour (default is `Blue`, see `Edit -> Editor Preferences -> Visual Logger -> Non Spatial Display Name Colour`)
+    * The names of the `GymCubes` will be displayed in a different colour (default is `Red`, see `Edit -> Editor Preferences -> Visual Logger -> Spatial Display Name Colour`)
+  * Save the log as `first.vlog`.
+  * Clear the Visual Logger using the `Clear` button.
+  * Repeat the process and save the log as `second.vlog`.
+  * Clear the Visual Logger using the `Clear` button.
+  * Set `Rebase Time On Load` to false in `Edit -> Editor Preferences -> Visual Logger -> Rebase Time On Load`.
+  * In the Visual Logger click `Load` and load in `first.vlog`.
+  * The file should successfully load and display expected logs.
+  * In the Visual Logger click `Load` and load in `second.vlog`.
+  * The file should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
+  * The files should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * Set `Rebase Time On Load` to true in `Edit -> Editor Preferences -> Visual Logger -> Rebase Time On Load`.
+  * In the Visual Logger click `Load` and load in `first.vlog`.
+  * The file should successfully load and display expected logs.
+  * In the Visual Logger click `Load` and load in `second.vlog`.
+  * The file should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
+  * The files should successfully load and display expected logs. The contents of two log files should be offset by the time delta between the two recordings.
+
 -----
 2019-11-15: Page added with editorial review
