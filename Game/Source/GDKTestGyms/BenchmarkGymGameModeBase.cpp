@@ -848,34 +848,6 @@ void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportInter
 }
 #endif
 
-int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
-{
-	int32 Count = 0;
-	for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
-	{
-		if (APlayerController* PC = PCIt->Get())
-		{
-			if (PC->HasAuthority())
-			{
-				++Count;
-			}
-			else if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
-			{
-				// During actor authority handover, there's a period where no server will believe it has authority over
-				// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
-				// the spatial authority as a fallback validation.
-				Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(PC);
-				const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
-				if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
-				{
-					++Count;
-				}
-			}
-		}
-	}
-	return Count;
-}
-
 void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActorCount)
 {
 	ActorCountMap& SpecificWorkerActorCounts = WorkerActorCounts.FindOrAdd(WorkerID);

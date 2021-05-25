@@ -202,7 +202,6 @@ private:
 	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
 
 	void SetLifetime(int32 Lifetime);
-	int32 GetPlayerControllerCount() const;
 #if	STATS
 	void InitStatTimer(const FString& CPUProfileString);
 	void InitMemReportTimer(const FString& MemReportIntervalString);

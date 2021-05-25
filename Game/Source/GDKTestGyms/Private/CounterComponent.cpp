@@ -3,7 +3,11 @@
 #include "CounterComponent.h"
 
 #include "Engine/World.h"
+#include "EngineClasses/SpatialPackageMapClient.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 #include "Kismet/GameplayStatics.h"
+#include "SpatialConstants.h"
+#include "SpatialView/EntityView.h"
 
 DEFINE_LOG_CATEGORY(LogCounterComponent);
 
@@ -52,6 +56,10 @@ int32 UCounterComponent::GetActorAuthCount(const TSubclassOf<AActor>& ActorClass
 void UCounterComponent::UpdateCachedAuthActorCounts()
 {
 	const UWorld* World = GetWorld();
+	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
+	USpatialPackageMapClient* PackageMap = SpatialDriver->PackageMap;
+	const SpatialGDK::EntityView& View = SpatialDriver->Connection->GetView();
+
 	for (TSubclassOf<AActor> ActorClass : ClassesToCount)
 	{
 		TArray<AActor*> Actors;
@@ -63,6 +71,18 @@ void UCounterComponent::UpdateCachedAuthActorCounts()
 			if (Actor->HasAuthority())
 			{
 				AuthCount++;
+			}
+			else if (PackageMap != nullptr)
+			{
+				// During actor authority handover, there's a period where no server will believe it has authority over
+				// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
+				// the spatial authority as a fallback validation.
+				Worker_EntityId EntityId = PackageMap->GetEntityIdFromObject(Actor);
+				const SpatialGDK::EntityViewElement* Element = View.Find(EntityId);
+				if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
+				{
+					AuthCount++;
+				}
 			}
 		}
 
