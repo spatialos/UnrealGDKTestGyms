@@ -473,23 +473,24 @@ The late connecing client has validated the local state before sending the "Pass
   * Shut down the deployment if this doesn't happen automatically.
 * These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
 
-####RPCTimeoutTestGym
-* Demonstrate that:
+#### RPCTimeoutTestGym
+* Demonstrates that:
   * RPC parameters holding references to loadable assets are able to be resolved without timing out.
-* NOTE: This gym can only be run manually (It requires tweaking settings and running in separate processes).
+* NOTE: This gym can only be run manually because it requires tweaking settings and running under multiple processes.
 * Pre-test steps:
-  * In the Unreal Editor's SpatialGDK runtime settings, set Replication->"Wait Time Before Processing Received RPC With Unresolved Refs" to 0
-  * In Unreal's advanced play settings, set "Run Under One Process" to false
-  * Set the number of players to 2
-* Testing : 
-  * Press play.
+  * Navigate to `Edit > Project Settings > SpatialOS GDK for Unreal - Runtime Settings > Replication > Wait Time Before Processing Received RPC With Unresolved Refs` from `1.0` to `0`.
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
+  * In the `Play` dropdown, set the number of players to `2`.
+  * From the content browser, open `Content/Maps/RPCTimeoutTestGym.umap`.
+* Testing: 
+  * Press Play.
   * Two clients should connect, at least one outside of the editor process.
-  * Controlled character should turn green after 2 sec.
+  * The player character should turn green from the perspective of the client controlling them, but appear white when observed from the other client. If this happens, the test has passed.
   * If characters turn red, the test has failed.
-  * If there is a red text reading : "ERROR : Material already loaded on client, test is invalid", check that this only happens on the client launched from within the editor
-  * Clients connected from a separate process, or running the test from a fresh editor instance should not display this error message.
+* Stuff you can ignore:
+  * In the client launched within the editor, if there is a red error text reading: `ERROR : Material already loaded on client, test is invalid`, then you can ignore it. If this error appears in the client launched as a standalone process however, the test is failed.
 
-  ##### Visual Logger gym
+##### Visual Logger gym
 * Tests that:
   * The Visual Logger displays multi worker logs accurately.
   * The Visual Logger correctly colour codes spatial and non-spatial logging objects.
