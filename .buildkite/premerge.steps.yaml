@@ -53,7 +53,7 @@ steps:
       env: 
         BUILD_TYPE: "GDK"
         GDK_BRANCH: "${GDK_BRANCH:-match_branch_name_pref::0.13.1-rc}"
-        ENGINE_BRANCH: "${ENGINE_BRANCH_426:-match_branch_name_pref_engine::4.26-SpatialOSUnrealGDK-0.13.1-rc}"
+        ENGINE_BRANCH: "${ENGINE_BRANCH_425:-match_branch_name_pref_engine::4.25-SpatialOSUnrealGDK-0.13.1-rc}"
         ENGINE_MAJOR: "4.25"
         PROJECT_BRANCH: "${BUILDKITE_BRANCH}"
         USE_FASTBUILD: "True"
