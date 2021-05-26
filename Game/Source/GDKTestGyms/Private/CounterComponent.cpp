@@ -60,7 +60,7 @@ void UCounterComponent::UpdateCachedActorCounts()
 	USpatialPackageMapClient* PackageMap = SpatialDriver->PackageMap;
 	const SpatialGDK::EntityView& View = SpatialDriver->Connection->GetView();
 
-	UE_LOG(LogTemp, Log, TEXT("Updating cached actor count for %s"), SpatialDriver->Connection->GetWorkerId());
+	UE_LOG(LogTemp, Log, TEXT("Updating cached actor count for %s"), *SpatialDriver->Connection->GetWorkerId());
 
 	for (TSubclassOf<AActor> ActorClass : ClassesToCount)
 	{
