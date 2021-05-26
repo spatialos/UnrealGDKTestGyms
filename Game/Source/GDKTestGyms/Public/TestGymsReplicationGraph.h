@@ -126,6 +126,7 @@ class UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter : public UReplic
 	virtual bool NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound=true) override { return false; }
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GetClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
 
 	virtual void PrepareForReplication() override;
 
