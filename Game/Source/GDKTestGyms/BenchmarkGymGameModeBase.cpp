@@ -36,7 +36,7 @@ namespace
 	const FString PlayerMovementMetricName = TEXT("UnrealPlayerMovement");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
-	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
+	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_timle_delta");
 	const FString MaxRoundTripCommandLineKey = TEXT("-MaxRoundTrip=");
 	const FString MaxUpdateTimeDeltaCommandLineKey = TEXT("-MaxUpdateTimeDelta=");
 
@@ -61,7 +61,8 @@ namespace
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
-
+#endif
+#if !UE_BUILD_SHIPPING
 	const FString MemReportFlag = TEXT("mem_report");
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
@@ -298,7 +299,8 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 			StatStopFileTimer.SetTimer(CPUProfileInterval);
 		}
 	}
-
+#endif
+#if !UE_BUILD_SHIPPING
 	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
 	{
 		FString Cmd = TEXT("memreport -full");
@@ -607,7 +609,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	FString CPUProfileString;
 	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
 	InitStatTimer(CPUProfileString);
-
+#endif
+#if !UE_BUILD_SHIPPING
 	FString MemReportIntervalString;
 	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
 	InitMemReportTimer(MemReportIntervalString);
@@ -843,7 +846,8 @@ void ABenchmarkGymGameModeBase::InitStatTimer(const FString& CPUProfileString)
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Please ensure both CPU profile interval and duration are set properly"));
 	}
 }
-
+#endif
+#if !UE_BUILD_SHIPPING
 void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportIntervalString)
 {
 	MemReportInterval = FCString::Atoi(*MemReportIntervalString);
