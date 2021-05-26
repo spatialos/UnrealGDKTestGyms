@@ -25,7 +25,7 @@ void UCounterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	if (Timer <= 0.0f)
 	{
 		Timer = ReportFrequency;
-		UpdateCachedAuthActorCounts();
+		UpdateCachedActorCounts();
 	}
 }
 
@@ -53,12 +53,14 @@ int32 UCounterComponent::GetActorAuthCount(const TSubclassOf<AActor>& ActorClass
 	return CachedCount->AuthCount;
 }
 
-void UCounterComponent::UpdateCachedAuthActorCounts()
+void UCounterComponent::UpdateCachedActorCounts()
 {
 	const UWorld* World = GetWorld();
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
 	USpatialPackageMapClient* PackageMap = SpatialDriver->PackageMap;
 	const SpatialGDK::EntityView& View = SpatialDriver->Connection->GetView();
+
+	UE_LOG(LogTemp, Log, TEXT("Updating cached actor count for %s"), SpatialDriver->Connection->GetWorkerId());
 
 	for (TSubclassOf<AActor> ActorClass : ClassesToCount)
 	{
@@ -89,5 +91,7 @@ void UCounterComponent::UpdateCachedAuthActorCounts()
 		FActorCountInfo& ActorCountInfo = CachedClassCounts.FindOrAdd(ActorClass);
 		ActorCountInfo.TotalCount = Actors.Num();
 		ActorCountInfo.AuthCount = AuthCount;
+
+		UE_LOG(LogTemp, Log, TEXT("Auth Count: %s - %d"), *ActorClass->GetName(), ActorCountInfo.AuthCount);
 	}
 }

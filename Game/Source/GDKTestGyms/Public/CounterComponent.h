@@ -41,5 +41,5 @@ private:
 	float Timer;
 	TMap<TSubclassOf<AActor>, FActorCountInfo> CachedClassCounts;
 
-	void UpdateCachedAuthActorCounts();
+	void UpdateCachedActorCounts();
 };

@@ -495,6 +495,8 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			return;
 		}
 
+		UE_LOG(LogTemp, Log, TEXT("Sending Actor counts for: %s"), *WorkerID);
+
 		ActorCountMap& ThisWorkerActorCounts = WorkerActorCounts.FindOrAdd(WorkerID);
 
 		for (auto const& Pair : ExpectedActorCounts)
@@ -853,6 +855,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 	ActorCountMap& SpecificWorkerActorCounts = WorkerActorCounts.FindOrAdd(WorkerID);
 	FActorCountInfo& ActorCountInfo = SpecificWorkerActorCounts.FindOrAdd(ActorClass);
 	ActorCountInfo.SetTotal(ActorCount);
+	UE_LOG(LogTemp, Log, TEXT("Recieve Actor counts for %s: Actor %s, Count %d"), *WorkerID, *ActorClass->GetName(), ActorCount);
 }
 
 void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
@@ -897,10 +900,10 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 		}
 	}
 
-	if (bLogActorCountDetails && TempTotalActorCounts.Num() > 0)
-	{
+	//if (bLogActorCountDetails && TempTotalActorCounts.Num() > 0)
+	//{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("--- Actor Count Totals ---"));
-	}
+	//}
 
 	for (const auto& ActorCountPair : TempTotalActorCounts)
 	{
@@ -910,10 +913,10 @@ void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
 		FActorCountInfo& TotalActorCountInfo = TotalActorCounts.FindOrAdd(ActorClass);
 		TotalActorCountInfo.SetTotal(TotalActorCount);
 
-		if (bLogActorCountDetails)
-		{
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d, Smoothed: %d"), *ActorClass->GetName(), TotalActorCount, TotalActorCountInfo.GetSmoothedTotal());
-		}
+		//if (bLogActorCountDetails)
+		//{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d, Smoothed: %d"), *ActorClass->GetName(), TotalActorCount, TotalActorCountInfo.GetSmoothedTotal());
+		//}
 
 		if (bIsReadyToConsiderActorCount)
 		{
