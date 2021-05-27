@@ -10,38 +10,28 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
+USTRUCT()
+struct FActorCount
+{
+	GENERATED_BODY()
+
+	explicit FActorCount() {}
+	explicit FActorCount(TSubclassOf<AActor> InActorClass, int32 InCount)
+		: ActorClass(InActorClass)
+		, Count(InCount)
+	{}
+
+	UPROPERTY()
+	TSubclassOf<AActor> ActorClass;
+
+	UPROPERTY()
+	int32 Count;
+};
+
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-
-	class FActorCountInfo
-	{
-	public:
-
-		explicit FActorCountInfo(int32 InTotal)
-			: Total(InTotal)
-			, SmoothedTotal(InTotal)
-		{}
-
-		explicit FActorCountInfo()
-			: Total(0)
-			, SmoothedTotal(0.0f)
-		{}
-
-		void SetTotal(int32 InTotal)
-		{
-			Total = InTotal;
-			SmoothedTotal = SmoothedTotal * 0.9f + Total * 0.1f;
-		}
-
-		int32 GetTotal() const { return Total; }
-		int32 GetSmoothedTotal() const { return FMath::RoundToInt(SmoothedTotal); }
-
-	private:
-		int32 Total;
-		float SmoothedTotal;
-	};
 
 	struct FExpectedActorCountConfig
 	{
@@ -59,7 +49,7 @@ class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 		int32 MaxCount;
 	};
 
-	using ActorCountMap = TMap<TSubclassOf<AActor>, FActorCountInfo>;
+	using ActorCountMap = TMap<TSubclassOf<AActor>, int32>;
 
 public:
 	ABenchmarkGymGameModeBase();
@@ -99,7 +89,7 @@ protected:
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativeActorCount(const FString& WorkerID, TSubclassOf<AActor> ActorClass, int32 ActualCount);
+	virtual void ReportAuthoritativeActorCount(const int32 ActorCountId, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -146,6 +136,11 @@ private:
 	FMetricTimer TestLifetimeTimer;
 	FMetricTimer TickActorCountTimer;
 
+	UPROPERTY(ReplicatedUsing = OnActorCountReportId)
+	int32 ActorCountReportId;
+
+	TMap<FString, int32> ActorCountReportedIds;
+
 	ActorCountMap TotalActorCounts;
 	TMap<FString, ActorCountMap> WorkerActorCounts;
 	TMap<TSubclassOf<AActor>, FExpectedActorCountConfig> ExpectedActorCounts;
@@ -162,7 +157,8 @@ private:
 	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
-	
+
+
 	int32 NumWorkers;
 	int32 NumSpawnZones;
 #if	STATS
@@ -209,6 +205,11 @@ private:
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
+
+	UFUNCTION()
+	void OnActorCountReportId();
+
+	void UpdateAndReportActorCounts();
 
 	void CheckTotalCountsForActors();
 
