@@ -39,7 +39,7 @@ void UEventTracerComponent::TimerFunction()
 	// Create a user trace event for sending an RPC
 	FEventTracerAddDataDelegate AddDataDelegate;
 	AddDataDelegate.BindLambda([](SpatialGDK::FSpatialTraceEventDataBuilder& Builder) {
-		Builder.AddKeyValue("Message", "Look mum, I'm adding data to a trace event using a delegate!");
+		Builder.AddKeyValue("Message", "Delegate value");
 	});
 
 	SpanId = USpatialEventTracerUserInterface::TraceEvent(this, "user.send_rpc", "", AddDataDelegate);
