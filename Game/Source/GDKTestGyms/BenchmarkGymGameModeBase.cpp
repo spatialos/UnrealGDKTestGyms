@@ -96,7 +96,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, ActorMigrationCheckDelay(5*60)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
-	, TickActorCountTimer(10) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
+	, TickActorCountTimer(60) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
 	, bHasRequiredPlayersCheckFailed(false)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
@@ -483,16 +483,19 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 {
-	TryInitialiseExpectedActorCounts();
-
 	// This test respects the initial delay timer in both native and GDK
-	if (TickActorCountTimer.HasTimerGoneOff() && HasAuthority())
+	if (TickActorCountTimer.HasTimerGoneOff())
 	{
-		ActorCountReportId++;
-		UpdateAndReportActorCounts();
+		TryInitialiseExpectedActorCounts();
 
-		const int32 TickActorCountPeriod = 10; /*seconds*/
-		TickActorCountTimer.SetTimer(TickActorCountPeriod);
+		if (HasAuthority())
+		{
+			ActorCountReportId++;
+			UpdateAndReportActorCounts();
+
+			const int32 TickActorCountPeriod = 10; /*seconds*/
+			TickActorCountTimer.SetTimer(TickActorCountPeriod);
+		}
 	}
 }
 
