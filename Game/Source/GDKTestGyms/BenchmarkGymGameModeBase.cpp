@@ -705,9 +705,9 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 	TArray<FActorCount> ActorCountArray;
 	ActorCountArray.Reserve(ThisWorkerActorCounts.Num());
 
-	for (const auto& ActorCount : ThisWorkerActorCounts)
+	for (const auto& Pair : ThisWorkerActorCounts)
 	{
-		ActorCountArray.Add(FActorCount(ActorCount.Key, ActorCount.Value));
+		ActorCountArray.Add(FActorCount(Pair.Key, Pair.Value));
 	}
 
 	ReportAuthoritativeActorCount(ActorCountReportId, WorkerID, ActorCountArray);
@@ -901,21 +901,17 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 		ActorCountReportedIds.Empty();
 		if (bAllWorkersInSync)
 		{
-			CheckTotalCountsForActors();
+			UpdateAndCheckTotalActorCounts();
 		}
 	}
 }
 
-void ABenchmarkGymGameModeBase::CheckTotalCountsForActors()
+void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 {
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
-	const bool bLogActorCountDetails = PrintMetricsTimer.HasTimerGoneOff();
-	const bool bIsReadyToConsiderActorCount = WorkerActorCounts.Num() == NumWorkers &&
-		Constants->ActorCheckDelay.HasTimerGoneOff() &&
-		!TestLifetimeTimer.HasTimerGoneOff();
-
+	const bool bIsReadyToConsiderActorCount = Constants->ActorCheckDelay.HasTimerGoneOff() && !TestLifetimeTimer.HasTimerGoneOff();
 	if (!bIsReadyToConsiderActorCount)
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Not ready to consider actor count metric"));
