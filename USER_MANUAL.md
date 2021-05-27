@@ -365,7 +365,7 @@ These test whether key trace events have the appropriate cause events. They can 
   * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
   * Click the Start deployment button.
   * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
-  * In the clinet, use the mouse and WASD to move the camera.
+  * In the client, use the mouse and WASD to move the camera.
   * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
@@ -377,7 +377,7 @@ These test whether key trace events have the appropriate cause events. They can 
   * Open `Content/Maps/MultiworkerWorldComposition/MultiworkerWorldComposition.umap`.
   * Generate schema.
   * Play with 1 client.
-  * In the clinet you should see two cubes moving back and forth over a worker boundary.
+  * In the client you should see two cubes moving back and forth over a worker boundary.
     * On each cross, the authority of the cube should switch to the appropriate server. If this happens, the test has passed.
   * Don't forget to open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and re-comment the `ReplicationDriverClassName` line.
   
@@ -450,9 +450,8 @@ The late connecing client has validated the local state before sending the "Pass
 ##### Player disconnect gym
 * Demonstrates that:
   * Players are cleaned up correctly when they disconnect.
-* NOTE: This gym can only be run manually (This can be automated once the test frameworks supports client disconnects [UNR-529](https://improbableio.atlassian.net/browse/UNR-529)).
 * Pre-test steps:
-  * In the Unreal Editor's Content Browser, locate `Content/Maps/PlayerDisconnectGym` and double click to open it.
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/SpatialPlayerDisconnectMap` and double click to open it.
 * How to test for a client disconnecting by returning to its main menu:
   * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
   * Select Play.
@@ -460,16 +459,6 @@ The late connecing client has validated the local state before sending the "Pass
   * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
   * Press `M` in one of the clients, to make that client leave the deployment by traveling to the empty map.
   * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
-  * In the Unreal Editor Toolbar, click Stop when you're done.
-  * Shut down the deployment if this doesn't happen automatically.
-* How to test for the server disconnecting all clients:
-  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
-  * Select Play.
-  * From the UnrealGDK toolbar, open the Inspector.
-  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
-  * Open a terminal window and `cd` `UnrealGDKTestGyms\spatial`.
-  * Run `curl -X PUT -d "Yes" localhost:5006/worker_flag/workers/UnrealWorker/flags/PrepareShutdown`.
-  * Verify in the Inspector that zero client worker entities, zero player controllers entities and zero player character entities exist.
   * In the Unreal Editor Toolbar, click Stop when you're done.
   * Shut down the deployment if this doesn't happen automatically.
 * How to test for a player disconnecting by exiting the client window:
@@ -499,5 +488,46 @@ The late connecing client has validated the local state before sending the "Pass
   * If characters turn red, the test has failed.
   * If there is a red text reading : "ERROR : Material already loaded on client, test is invalid", check that this only happens on the client launched from within the editor
   * Clients connected from a separate process, or running the test from a fresh editor instance should not display this error message.
+
+  ##### Visual Logger gym
+* Tests that:
+  * The Visual Logger displays multi worker logs accurately.
+  * The Visual Logger correctly colour codes spatial and non-spatial logging objects.
+  * The Visual Logger re-bases log times when loading multiple log files simultaneously.
+  * TODO: The Visual Logger correctly loads and displays native Unreal log files.
+* How to test:
+  * Open `Content\Maps\VisualLogger\VisualLoggerManualTest.umap`
+  * Open the Visual Logger window via menu `Window -> Developer Tools -> Visual Logger`
+  * Click the `Play` button in the Unreal toolbar to start PIE session, with one client.
+  * Click the `Start` button in the Visual Logger toolbar to start recording.
+  * Run game for 60 seconds, and then stop game and Visual Logger.
+  * Observe the following in the Visual Logger UI:
+    * Two `StationaryGymCubes` will log continously, one log per tick.
+    * Two `GymCubes` will log continously on the single client worker, one log per tick.
+    * Two `GymCubes` will split their logs (one log per tick), across the two server workers, alternating as the cubes cross the zero-interest worker boundary.
+    * The names of the `StationaryGymCubes` will be displayed in a different colour (default is `Blue`, see `Edit -> Editor Preferences -> Visual Logger -> Object Name Display Colors -> Other Objects`)
+    * The names of the `GymCubes` will be displayed in a different colour (default is `Green`, see `Edit -> Editor Preferences -> Visual Logger -> Object Name Display Colors ->Replicated Actors`)
+  * Save the log as `first.vlog`.
+  * Clear the Visual Logger using the `Clear` button.
+  * Repeat the process and save the log as `second.vlog`.
+  * Clear the Visual Logger using the `Clear` button.
+  * Set `Sync Log Timings Across Files` to false in `Edit -> Editor Preferences -> Visual Logger -> Sync Log Timings Across Files`.
+  * In the Visual Logger click `Load` and load in `first.vlog`.
+  * The file should successfully load and display expected logs.
+  * In the Visual Logger click `Load` and load in `second.vlog`.
+  * The file should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
+  * The files should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * Set `Sync Log Timings Across Files` to true in `Edit -> Editor Preferences -> Visual Logger -> Sync Log Timings Across Files`.
+  * In the Visual Logger click `Load` and load in `first.vlog`.
+  * The file should successfully load and display expected logs.
+  * In the Visual Logger click `Load` and load in `second.vlog`.
+  * The file should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
+  * The files should successfully load and display expected logs. The contents of two log files should be offset by the time delta between the two recordings.
+
 -----
 2019-11-15: Page added with editorial review

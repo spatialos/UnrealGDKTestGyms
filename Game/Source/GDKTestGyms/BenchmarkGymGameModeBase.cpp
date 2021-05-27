@@ -5,6 +5,7 @@
 #include "CounterComponent.h"
 #include "Engine/World.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "EngineClasses/SpatialPackageMapClient.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/MovementComponent.h"
 #include "GDKTestGymsGameInstance.h"
@@ -13,6 +14,8 @@
 #include "Interop/SpatialWorkerFlags.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
+#include "SpatialConstants.h"
+#include "SpatialView/EntityView.h"
 #include "UserExperienceComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Utils/SpatialMetrics.h"
@@ -859,6 +862,18 @@ int32 ABenchmarkGymGameModeBase::GetPlayerControllerCount() const
 			if (PC->HasAuthority())
 			{
 				++Count;
+			}
+			else if (USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver()))
+			{
+				// During actor authority handover, there's a period where no server will believe it has authority over
+				// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
+				// the spatial authority as a fallback validation.
+				Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(PC);
+				const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
+				if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
+				{
+					++Count;
+				}
 			}
 		}
 	}
