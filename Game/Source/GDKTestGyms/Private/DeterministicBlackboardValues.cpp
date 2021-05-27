@@ -9,7 +9,7 @@
 
 DEFINE_LOG_CATEGORY(LogDeterministicBlackboardValues);
 
-void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Component is added 
+void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats until the Component is added 
 {
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	AController* Controller = Pawn->GetController();
@@ -43,7 +43,7 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 		AIController = FuncSearchChildren(Controller);
 	}
 
-	UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("UDeterministicBlackboardValues::ApplyValues Pawn:%s Controller:%s"), *Pawn->GetName(), Controller ? *Controller->GetName() : TEXT("Unset"));
+	UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("UDeterministicBlackboardValues::InitialApplyBlackboardValues Pawn:%s Controller:%s"), *Pawn->GetName(), Controller ? *Controller->GetName() : TEXT("Unset"));
 
 	if (AIController)
 	{
@@ -73,9 +73,12 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocB);
 			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
 		}
-		
-		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, LocA);
-		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, LocB);
+
+		BlackboardValues.TargetAValue = LocA;
+		BlackboardValues.TargetBValue = LocB;
+
+		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
+		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
 
 		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Setting points to run between as %s and %s for AI controller %s"), *LocA.Location.ToString(), *LocB.Location.ToString(), *Controller->GetName());
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
@@ -87,11 +90,25 @@ void UDeterministicBlackboardValues::ApplyValues() // Repeats until the Componen
 #endif
 	}
 }
+
+void UDeterministicBlackboardValues::ApplyBlackboardValues()
+{
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	if (AAIController* AIController = Cast<AAIController>(Pawn->GetController()))
+	{
+		if (UBlackboardComponent* Blackboard = Cast<UBlackboardComponent>(AIController->GetBlackboardComponent()))
+		{
+			Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
+			Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
+		}
+	}
+}
+
 void UDeterministicBlackboardValues::ClientSetBlackboardAILocations_Implementation(const FBlackboardValues& InBlackboardValues)
 {
 	BlackboardValues = InBlackboardValues;
 
 	// Sim-players do not spawn their AI controllers immediately, this timer will pump 
 	// until the AI controller + blackboard is spawned and then set the values.
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UDeterministicBlackboardValues::ApplyValues, 1.0f, true);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UDeterministicBlackboardValues::InitialApplyBlackboardValues, 1.0f, true);
 }
