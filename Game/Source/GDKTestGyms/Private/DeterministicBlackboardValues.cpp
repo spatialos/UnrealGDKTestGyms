@@ -76,11 +76,11 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 
 		BlackboardValues.TargetAValue = LocA;
 		BlackboardValues.TargetBValue = LocB;
-		BlackboardValues.TargetStateIsAOrB = true; // Set initial target to TargetA
+		BlackboardValues.TargetStateIsA = true; // Set initial target to TargetA
 
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
-		Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAOrBName, BlackboardValues.TargetStateIsAOrB);
+		Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
 
 		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Setting points to run between as %s and %s for AI controller %s"), *LocA.Location.ToString(), *LocB.Location.ToString(), *Controller->GetName());
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
@@ -102,7 +102,7 @@ void UDeterministicBlackboardValues::ApplyBlackboardValues()
 		{
 			Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 			Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
-			Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAOrBName, BlackboardValues.TargetStateIsAOrB);
+			Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
 		}
 	}
 }
@@ -114,8 +114,8 @@ void UDeterministicBlackboardValues::SwapTarget()
 	{
 		if (UBlackboardComponent* Blackboard = Cast<UBlackboardComponent>(AIController->GetBlackboardComponent()))
 		{
-			BlackboardValues.TargetStateIsAOrB = !BlackboardValues.TargetStateIsAOrB;
-			Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAOrBName, BlackboardValues.TargetStateIsAOrB);
+			BlackboardValues.TargetStateIsA = !BlackboardValues.TargetStateIsA;
+			Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
 		}
 	}
 }
