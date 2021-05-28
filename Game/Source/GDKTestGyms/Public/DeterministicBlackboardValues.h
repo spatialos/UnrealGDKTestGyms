@@ -14,11 +14,21 @@ class GDKTESTGYMS_API UDeterministicBlackboardValues : public UActorComponent
 {
 	GENERATED_BODY()
 public:
-	void ApplyValues();
+
+	void InitialApplyBlackboardValues();
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyBlackboardValues();
+
+	UFUNCTION(BlueprintCallable)
+	void SwapTarget();
 
 	UFUNCTION(Client, Reliable)
 	void ClientSetBlackboardAILocations(const FBlackboardValues& InBlackboardValues);
+
 protected:
 	FTimerHandle TimerHandle;
+
+	UPROPERTY(Handover)
 	FBlackboardValues BlackboardValues;
 };
