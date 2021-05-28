@@ -20,6 +20,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyBlackboardValues();
 
+	UFUNCTION(BlueprintCallable)
+	void SwapTarget();
+
 	UFUNCTION(Client, Reliable)
 	void ClientSetBlackboardAILocations(const FBlackboardValues& InBlackboardValues);
 

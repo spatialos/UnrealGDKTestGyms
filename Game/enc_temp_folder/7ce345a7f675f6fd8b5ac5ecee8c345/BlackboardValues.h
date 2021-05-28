@@ -12,7 +12,7 @@ struct GDKTESTGYMS_API FBlackboardValues
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FVector TargetAValue; // Points to run between
+	FVector TargetAValue; // Points to run betweeen
 	UPROPERTY()
 	FVector TargetBValue;
 	UPROPERTY()
