@@ -691,7 +691,10 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GetClientInteres
 {
 	for (auto ListIdx = 0; ListIdx < ReplicationActorLists.Num(); ++ListIdx)
 	{
-		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorLists[ListIdx]);
+		if (ReplicationActorLists[ListIdx].Num() > 0)
+		{
+			Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorLists[ListIdx]);
+		}
 	}
 
 	if (ForceNetUpdateReplicationActorList.Num() > 0)
@@ -743,6 +746,14 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 	}
 
 	Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+}
+
+void UTestGymsReplicationGraphNode_GlobalViewTarget::GetClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	if (ReplicationActorList.Num() > 0)
+	{
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
 }
 
 void UTestGymsReplicationGraphNode_GlobalViewTarget::LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const

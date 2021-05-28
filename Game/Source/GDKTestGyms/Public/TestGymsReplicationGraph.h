@@ -148,6 +148,8 @@ class UTestGymsReplicationGraphNode_GlobalViewTarget : public UReplicationGraphN
 	GENERATED_BODY()
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
+	
+	virtual void GetClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
 
 	virtual void LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const override;
 
