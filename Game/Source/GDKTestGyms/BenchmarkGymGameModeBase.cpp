@@ -727,7 +727,7 @@ int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& Ac
 	UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
 
 	int32 AuthCount = 0;
-	for (AActor* Actor : Actors)
+	for (const AActor* Actor : Actors)
 	{
 		if (Actor->HasAuthority())
 		{
@@ -900,6 +900,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 				break;
 			}
 		}
+
 
 		ActorCountReportedIds.Empty();
 		if (bAllWorkersInSync)

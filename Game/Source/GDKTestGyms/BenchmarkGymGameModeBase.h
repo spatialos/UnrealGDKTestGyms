@@ -193,8 +193,6 @@ private:
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 	double GetPlayerMovement() const { return RecentPlayerAvgVelocity; }
 
-	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
-
 	void SetLifetime(int32 Lifetime);
 #if	STATS
 	void InitStatTimer(const FString& CPUProfileString);
@@ -207,9 +205,9 @@ private:
 	UFUNCTION()
 	void OnActorCountReportId();
 
-	void UpdateAndReportActorCounts();
-
+	void UpdateAndReportActorCounts()
 	void UpdateAndCheckTotalActorCounts();
+	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
 
 	void GetVelocityForMovementReport();
 	void GetPlayersVelocitySum(FVector2D& Velocity);
