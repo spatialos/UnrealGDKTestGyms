@@ -490,7 +490,6 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 		if (HasAuthority())
 		{
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Gathering actor counts"));
 			ActorCountReportId++;
 			UpdateAndReportActorCounts();
 
@@ -714,7 +713,6 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 		ActorCountArray.Add(FActorCount(Pair.Key, Pair.Value));
 	}
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Sending actor count"));
 	ReportAuthoritativeActorCount(ActorCountReportId, WorkerID, ActorCountArray);
 }
 
@@ -902,8 +900,6 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 				break;
 			}
 		}
-
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All works in sync for actor count? %s"), bAllWorkersInSync ? TEXT("TRUE") : TEXT("FALSE"));
 
 		ActorCountReportedIds.Empty();
 		if (bAllWorkersInSync)
