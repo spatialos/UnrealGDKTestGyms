@@ -205,7 +205,7 @@ private:
 	UFUNCTION()
 	void OnActorCountReportId();
 
-	void UpdateAndReportActorCounts()
+	void UpdateAndReportActorCounts();
 	void UpdateAndCheckTotalActorCounts();
 	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
 
