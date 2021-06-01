@@ -15,10 +15,5 @@ public class GDKTestGymsServerTarget : TargetRules
 		{
 			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
 		}
-
-		if (Environment.GetEnvironmentVariable("ImprobableNFRStats") != null)
-		{
-			bUseMallocProfiler = true;
-		}
 	}
 }
