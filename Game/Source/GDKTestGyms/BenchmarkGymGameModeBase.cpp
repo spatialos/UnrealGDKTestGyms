@@ -332,20 +332,17 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
 		const int32* ActorCount = TotalActorCounts.Find(SimulatedPawnClass);
-		if (ActorCount != nullptr)
+		if (ActorCount != nullptr && *ActorCount >= RequiredPlayers)
 		{
-			if ((*ActorCount) < RequiredPlayers)
-			{
-				bHasRequiredPlayersCheckFailed = true;
-				// This log is used by the NFR pipeline to indicate if a client failed to connect
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, (*ActorCount));
-			}
-			else
-			{
-				RequiredPlayerCheckTimer.SetTimer(10);
-				// Useful for NFR log inspection
-				NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d"), RequiredPlayers, (*ActorCount));
-			}
+			RequiredPlayerCheckTimer.SetTimer(10);
+			// Useful for NFR log inspection
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d"), RequiredPlayers, (*ActorCount));
+		}
+		else
+		{
+			bHasRequiredPlayersCheckFailed = true;
+			// This log is used by the NFR pipeline to indicate if a client failed to connect
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, (*ActorCount));
 		}
 	}
 }
@@ -493,8 +490,8 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 			ActorCountReportId++;
 			UpdateAndReportActorCounts();
 
-			const int32 TickActorCountPeriod = 10; /*seconds*/
-			TickActorCountTimer.SetTimer(TickActorCountPeriod);
+			const int32 TickActorCountPeriodInSeconds = 10;
+			TickActorCountTimer.SetTimer(TickActorCountPeriodInSeconds);
 		}
 	}
 }
@@ -683,7 +680,8 @@ void ABenchmarkGymGameModeBase::OnActorCountReportId()
 void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 {
 	const UWorld* World = GetWorld();
-	const FString WorkerID = GetGameInstance()->GetSpatialWorkerId();
+	bool bSpatialEnabled = USpatialStatics::IsSpatialNetworkingEnabled();
+	const FString WorkerID = bSpatialEnabled ? GetGameInstance()->GetSpatialWorkerId() : TEXT("Worker1");
 	if (WorkerID.IsEmpty())
 	{
 		return;
@@ -720,8 +718,6 @@ int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& Ac
 {
 	const UWorld* World = GetWorld();
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
-	USpatialPackageMapClient* PackageMap = SpatialDriver->PackageMap;
-	const SpatialGDK::EntityView& View = SpatialDriver->Connection->GetView();
 
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
@@ -733,13 +729,13 @@ int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& Ac
 		{
 			AuthCount++;
 		}
-		else if (PackageMap != nullptr)
+		else if (SpatialDriver != nullptr)
 		{
 			// During actor authority handover, there's a period where no server will believe it has authority over
 			// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
 			// the spatial authority as a fallback validation.
-			Worker_EntityId EntityId = PackageMap->GetEntityIdFromObject(Actor);
-			const SpatialGDK::EntityViewElement* Element = View.Find(EntityId);
+			Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(Actor);
+			const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
 			if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
 			{
 				AuthCount++;
