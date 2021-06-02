@@ -26,9 +26,11 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientSetBlackboardAILocations(const FBlackboardValues& InBlackboardValues);
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	FTimerHandle TimerHandle;
 
-	UPROPERTY(Handover)
+	UPROPERTY(Replicated)
 	FBlackboardValues BlackboardValues;
 };
