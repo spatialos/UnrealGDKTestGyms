@@ -714,7 +714,10 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 		const FExpectedActorCountConfig& Config = Pair.Value;
 		if (Config.MinCount > 0)
 		{
-			ThisWorkerActorCounts.FindOrAdd(ActorClass) = GetActorAuthCount(ActorClass);
+			int32 TotalCount = 0;
+			int32& AuthCount = ThisWorkerActorCounts.FindOrAdd(ActorClass);
+			GetActorCount(ActorClass, TotalCount, AuthCount);
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor count for %s: ActorClass: %s Count: %d, AuthCount: %d"), *WorkerID , ActorClass->GetName(), TotalCount, AuthCount);
 		}
 	}
 
@@ -729,7 +732,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 	ReportAuthoritativeActorCount(ActorCountReportIdx, WorkerID, ActorCountArray);
 }
 
-int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const
+void ABenchmarkGymGameModeBase::GetActorCount(const TSubclassOf<AActor>& ActorClass, int32& OutTotalCount, int32& OutAuthCount) const
 {
 	const UWorld* World = GetWorld();
 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
@@ -737,12 +740,12 @@ int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& Ac
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
 
-	int32 AuthCount = 0;
+	OutAuthCount = 0;
 	for (const AActor* Actor : Actors)
 	{
 		if (Actor->HasAuthority())
 		{
-			AuthCount++;
+			OutAuthCount++;
 		}
 		else if (SpatialDriver != nullptr)
 		{
@@ -753,12 +756,12 @@ int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& Ac
 			const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
 			if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
 			{
-				AuthCount++;
+				OutAuthCount++;
 			}
 		}
 	}
 
-	return AuthCount;
+	OutTotalCount = Actors.Num();
 }
 
 void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)

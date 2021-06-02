@@ -208,7 +208,7 @@ private:
 
 	void UpdateAndReportActorCounts();
 	void UpdateAndCheckTotalActorCounts();
-	int32 GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const;
+	void GetActorCount(const TSubclassOf<AActor>& ActorClass, int32& OutTotalCount, int32& OutAuthCount) const;
 
 	void GetVelocityForMovementReport();
 	void GetPlayersVelocitySum(FVector2D& Velocity);
