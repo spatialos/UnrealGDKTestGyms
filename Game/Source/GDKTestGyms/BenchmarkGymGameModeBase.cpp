@@ -698,6 +698,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 	const FString WorkerID = bSpatialEnabled ? GetGameInstance()->GetSpatialWorkerId() : TEXT("Worker1");
 	if (WorkerID.IsEmpty())
 	{
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Worker ID was empty"), *NFRFailureString);
 		return;
 	}
 
