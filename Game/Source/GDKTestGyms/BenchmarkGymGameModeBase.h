@@ -88,7 +88,7 @@ protected:
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativeActorCount(const int32 ActorCountId, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
+	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -135,11 +135,12 @@ private:
 	FMetricTimer TestLifetimeTimer;
 	FMetricTimer TickActorCountTimer;
 
-	UPROPERTY(ReplicatedUsing = OnActorCountReportId)
-	int32 ActorCountReportId;
+	UPROPERTY(ReplicatedUsing = OnActorCountReportIdx)
+	int32 ActorCountReportIdx;
 
-	TMap<FString, int32> ActorCountReportedIds;
+	TMap<FString, int32> ActorCountReportedIdxs;
 
+	float TimeSinceLastCheckedTotalActorCounts;
 	ActorCountMap TotalActorCounts;
 	TMap<FString, ActorCountMap> WorkerActorCounts;
 	TMap<TSubclassOf<AActor>, FExpectedActorCountConfig> ExpectedActorCounts;
@@ -203,7 +204,7 @@ private:
 	void OnRepTotalNPCs();
 
 	UFUNCTION()
-	void OnActorCountReportId();
+	void OnActorCountReportIdx();
 
 	void UpdateAndReportActorCounts();
 	void UpdateAndCheckTotalActorCounts();

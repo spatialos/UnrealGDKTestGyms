@@ -97,6 +97,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
 	, TickActorCountTimer(60) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
+	, TimeSinceLastCheckedTotalActorCounts(0.0f)
 	, bHasRequiredPlayersCheckFailed(false)
 	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
 	, DeploymentValidTimer(16*60) // 16-minute window to check between
@@ -125,7 +126,7 @@ void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ABenchmarkGymGameModeBase, TotalNPCs);
-	DOREPLIFETIME(ABenchmarkGymGameModeBase, ActorCountReportId);
+	DOREPLIFETIME(ABenchmarkGymGameModeBase, ActorCountReportIdx);
 }
 
 void ABenchmarkGymGameModeBase::BeginPlay()
@@ -487,11 +488,19 @@ void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
 
 		if (HasAuthority())
 		{
-			ActorCountReportId++;
+			ActorCountReportIdx++;
 			UpdateAndReportActorCounts();
 
 			const int32 TickActorCountPeriodInSeconds = 10;
 			TickActorCountTimer.SetTimer(TickActorCountPeriodInSeconds);
+
+			TimeSinceLastCheckedTotalActorCounts += DeltaSeconds;
+			bActorCountFailureState = TimeSinceLastCheckedTotalActorCounts > TickActorCountPeriodInSeconds * 2;
+			if (bActorCountFailureState && !bHasActorCountFailed)
+			{
+				bHasActorCountFailed = true;
+				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor count was not checked at reasonable frequency."), *NFRFailureString);
+			}
 		}
 	}
 }
@@ -672,7 +681,7 @@ void ABenchmarkGymGameModeBase::OnRepTotalNPCs()
 	OnTotalNPCsUpdated(TotalNPCs);
 }
 
-void ABenchmarkGymGameModeBase::OnActorCountReportId()
+void ABenchmarkGymGameModeBase::OnActorCountReportIdx()
 {
 	UpdateAndReportActorCounts();
 }
@@ -711,7 +720,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 		ActorCountArray.Add(FActorCount(Pair.Key, Pair.Value));
 	}
 
-	ReportAuthoritativeActorCount(ActorCountReportId, WorkerID, ActorCountArray);
+	ReportAuthoritativeActorCount(ActorCountReportIdx, WorkerID, ActorCountArray);
 }
 
 int32 ABenchmarkGymGameModeBase::GetActorAuthCount(const TSubclassOf<AActor>& ActorClass) const
@@ -876,7 +885,7 @@ void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportInter
 }
 #endif
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const int32 ActorCountId, const FString& WorkerID, const TArray<FActorCount>& ActorCounts)
+void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts)
 {
 	ActorCountMap& ActorCountMap = WorkerActorCounts.FindOrAdd(WorkerID);
 	for (const FActorCount& ActorCount : ActorCounts)
@@ -884,21 +893,19 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 		ActorCountMap.FindOrAdd(ActorCount.ActorClass) = ActorCount.Count;
 	}
 
-	ActorCountReportedIds.FindOrAdd(WorkerID) = ActorCountId;
-	if (ActorCountReportedIds.Num() == NumWorkers)
+	ActorCountReportedIdxs.FindOrAdd(WorkerID) = WorkerActorCountReportIdx;
+	if (ActorCountReportedIdxs.Num() == NumWorkers)
 	{
 		bool bAllWorkersInSync = true;
-		for (const auto& Pair : ActorCountReportedIds)
+		for (const auto& Pair : ActorCountReportedIdxs)
 		{
-			if (Pair.Value != ActorCountReportId)
+			if (Pair.Value != WorkerActorCountReportIdx)
 			{
 				bAllWorkersInSync = false;
 				break;
 			}
 		}
 
-
-		ActorCountReportedIds.Empty();
 		if (bAllWorkersInSync)
 		{
 			UpdateAndCheckTotalActorCounts();
@@ -908,6 +915,8 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 
 void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 {
+	TimeSinceLastCheckedTotalActorCounts = 0.0f;
+
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
@@ -928,7 +937,7 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 		for (const auto& ActorCountPair : SpecificWorkerActorCounts)
 		{
 			const TSubclassOf<AActor>& ActorClass = ActorCountPair.Key;
-			const int32& ActorCount= ActorCountPair.Value;
+			const int32& ActorCount = ActorCountPair.Value;
 
 			int32& TotalActorCount = TempTotalActorCounts.FindOrAdd(ActorClass);
 			TotalActorCount += ActorCount;
