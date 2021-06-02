@@ -926,10 +926,14 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
 
-	const bool bIsReadyToConsiderActorCount = Constants->ActorCheckDelay.HasTimerGoneOff() && !TestLifetimeTimer.HasTimerGoneOff();
-	if (!bIsReadyToConsiderActorCount)
+	if (!Constants->ActorCheckDelay.HasTimerGoneOff())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Not ready to consider actor count metric"));
+	}
+
+	if (TestLifetimeTimer.HasTimerGoneOff())
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Test lifetime over. Will not consider actor count metric"));
 	}
 
 	ActorCountMap TempTotalActorCounts;
@@ -962,6 +966,7 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 		TotalActorCounts.FindOrAdd(ActorClass) = TotalActorCount;
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Class: %s, Total: %d"), *ActorClass->GetName(), TotalActorCount);
 
+		const bool bIsReadyToConsiderActorCount = Constants->ActorCheckDelay.HasTimerGoneOff() && !TestLifetimeTimer.HasTimerGoneOff();
 		if (bIsReadyToConsiderActorCount)
 		{
 			// Check for test failure
