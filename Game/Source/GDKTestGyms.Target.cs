@@ -18,7 +18,7 @@ public class GDKTestGymsTarget : TargetRules
 
 		if (Environment.GetEnvironmentVariable("ImprobableNFRStats") != null)
 		{
-			bUseMallocProfiler = true;
+			GlobalDefinitions.Add("FORCE_USE_STATS=1")
 		}
 	}
 }
