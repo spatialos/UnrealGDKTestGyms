@@ -19,6 +19,7 @@ public class GDKTestGyms : ModuleRules
 				"GameplayAbilities",
 				"GameplayTasks",
 				"InputCore",
+				"Slate",
 				"Sockets",
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",

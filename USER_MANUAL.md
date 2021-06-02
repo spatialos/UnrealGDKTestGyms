@@ -529,5 +529,14 @@ The late connecing client has validated the local state before sending the "Pass
   * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
   * The files should successfully load and display expected logs. The contents of two log files should be offset by the time delta between the two recordings.
 
+##### Replay gym
+* Tests that the replay system works by recording gameplay from a client or server perspective.
+* How to test:
+  * J to start a recording
+  * K to stop a recording
+  * L to switch between recording on a client and on a server (does not work when a recording is already being captured).
+  * The test is fairly free-form, start a recording, run around a bit, and see if the captured recording accurately records what you did.
+  * Check that the server-side recording contains the server-only cube pointed out in the map.
+
 -----
 2019-11-15: Page added with editorial review
