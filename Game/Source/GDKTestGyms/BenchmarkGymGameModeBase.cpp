@@ -333,17 +333,22 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
 		const int32* ActorCount = TotalActorCounts.Find(SimulatedPawnClass);
-		if (ActorCount != nullptr && *ActorCount >= RequiredPlayers)
+
+		if (ActorCount == nullptr)
+		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Could not get Simulated Player actor count."), *NFRFailureString);
+		}
+		else if (*ActorCount >= RequiredPlayers)
 		{
 			RequiredPlayerCheckTimer.SetTimer(10);
 			// Useful for NFR log inspection
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d"), RequiredPlayers, (*ActorCount));
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("All clients successfully connected. Required %d, got %d"), RequiredPlayers, *ActorCount);
 		}
 		else
 		{
 			bHasRequiredPlayersCheckFailed = true;
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, (*ActorCount));
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, *ActorCount);
 		}
 	}
 }
