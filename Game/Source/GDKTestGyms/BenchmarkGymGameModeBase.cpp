@@ -717,7 +717,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 			int32 TotalCount = 0;
 			int32& AuthCount = ThisWorkerActorCounts.FindOrAdd(ActorClass);
 			GetActorCount(ActorClass, TotalCount, AuthCount);
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor count for %s: ActorClass: %s Count: %d, AuthCount: %d"), *WorkerID , ActorClass->GetName(), TotalCount, AuthCount);
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor count for %s: ActorClass: %s Count: %d, AuthCount: %d"), *WorkerID , *ActorClass->GetName(), TotalCount, AuthCount);
 		}
 	}
 
