@@ -36,7 +36,7 @@ namespace
 	const FString PlayerMovementMetricName = TEXT("UnrealPlayerMovement");
 
 	const FString MaxRoundTripWorkerFlag = TEXT("max_round_trip");
-	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_timle_delta");
+	const FString MaxUpdateTimeDeltaWorkerFlag = TEXT("max_update_time_delta");
 	const FString MaxRoundTripCommandLineKey = TEXT("-MaxRoundTrip=");
 	const FString MaxUpdateTimeDeltaCommandLineKey = TEXT("-MaxUpdateTimeDelta=");
 
