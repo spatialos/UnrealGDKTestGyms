@@ -6,8 +6,17 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NavigationSystem.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogDeterministicBlackboardValues);
+
+void UDeterministicBlackboardValues::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ThisClass, BlackboardValues, COND_ServerOnly);
+}
+
 
 void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats until the Component is added 
 {
