@@ -147,7 +147,7 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 
 	// Timer to build expected actor counts using worker flags or CMD argument after a delay.
 	FTimerHandle InitialiseExpectedActorCountsTimerHandle;
-	const float InitialiseExpectedActorCountsDelayInSeconds = 10.0f;
+	const float InitialiseExpectedActorCountsDelayInSeconds = 30.0f;
 	TimerManager.SetTimer(
 		InitialiseExpectedActorCountsTimerHandle,
 		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
@@ -158,7 +158,7 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 		},
 		InitialiseExpectedActorCountsDelayInSeconds, false);
 
-	// Timer to build expected actor counts using worker flags or CMD argument after a delay.
+	// Timer trigger periodic check of total actor count across all workers.
 	TimerManager.SetTimer(
 		UpdateActorCountCheckTimerHandle,
 		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
@@ -169,6 +169,14 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 		},
 		UpdateActorCountCheckPeriodInSeconds, true,
 		UpdateActorCountCheckInitialDelayInSeconds);
+}
+
+void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
+{
+	// Zoning scenarios can report actor count numbers slightly higher than the expected number so add a little slack.
+	// This is due to the fact that server report their auth actor counts out of sync.
+	AddExpectedActorCount(NPCClass, TotalNPCs - 1, FMath::CeilToInt(TotalNPCs * 1.05));
+	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, FMath::CeilToInt(ExpectedPlayers * 1.05));
 }
 
 void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
@@ -186,14 +194,6 @@ void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor count was not checked at reasonable frequency."), *NFRFailureString);
 		}
 	}
-}
-
-void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
-{
-	// Zoning scenarios can report actor count numbers slightly higher than the expected number so add a little slack.
-	// This is due to the fact that server report their auth actor counts out of sync.
-	AddExpectedActorCount(NPCClass, TotalNPCs - 1, FMath::CeilToInt(TotalNPCs * 1.05));
-	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, FMath::CeilToInt(ExpectedPlayers * 1.05));
 }
 
 void ABenchmarkGymGameModeBase::AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount)
