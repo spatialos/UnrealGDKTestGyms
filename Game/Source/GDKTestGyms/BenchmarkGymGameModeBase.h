@@ -113,7 +113,6 @@ private:
 	bool bHasActorCountFailed;
 	// bActorCountFailureState will be true if the test has failed
 	bool bActorCountFailureState;
-	bool bExpectedActorCountsInitialised;
 
 	// For actor migration count
 	bool bHasActorMigrationCheckFailed;
@@ -170,18 +169,23 @@ private:
 	FMetricTimer MemReportIntervalTimer;
 #endif
 
-	void TryInitialiseExpectedActorCounts();
-
 	void TryBindWorkerFlagsDelegate();
 	void TryAddSpatialMetrics();
+
+	FTimerHandle UpdateActorCountCheckTimerHandle;
+	const float UpdateActorCountCheckPeriodInSeconds = 10.0f;
+	const float UpdateActorCountCheckInitialDelayInSeconds = 60.0f;
+	void InitialiseActorCountCheckTimer();
+	void UpdateActorCountCheck();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickPlayersMovementCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
-	void TickActorCountCheck(float DeltaSeconds);
 	void TickActorMigration(float DeltaSeconds);
+
+
 
 	void SetTotalNPCs(int32 Value);
 

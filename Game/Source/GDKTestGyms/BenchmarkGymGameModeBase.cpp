@@ -16,6 +16,7 @@
 #include "Net/UnrealNetwork.h"
 #include "SpatialConstants.h"
 #include "SpatialView/EntityView.h"
+#include "TimerManager.h"
 #include "UserExperienceComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Utils/SpatialMetrics.h"
@@ -83,7 +84,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasClientFpsFailed(false)
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
-	, bExpectedActorCountsInitialised(false)
 	, bHasActorMigrationCheckFailed(false)
 	, PreviousTickMigration(0)
 	, UXAuthActorCount(0)
@@ -136,14 +136,54 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	ParsePassedValues();
 	TryBindWorkerFlagsDelegate();
 	TryAddSpatialMetrics();
+
+	InitialiseActorCountCheckTimer();
 }
 
-void ABenchmarkGymGameModeBase::TryInitialiseExpectedActorCounts()
+void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 {
-	if (!bExpectedActorCountsInitialised)
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	// Timer to build expected actor counts using worker flags or CMD argument after a delay.
+	FTimerHandle InitialiseExpectedActorCountsTimerHandle;
+	const float InitialiseExpectedActorCountsDelayInSeconds = 10.0f;
+	TimerManager.SetTimer(
+		InitialiseExpectedActorCountsTimerHandle,
+		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+			if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+			{
+				GameMode->BuildExpectedActorCounts();
+			}
+		},
+		InitialiseExpectedActorCountsDelayInSeconds, false);
+
+	// Timer to build expected actor counts using worker flags or CMD argument after a delay.
+	TimerManager.SetTimer(
+		UpdateActorCountCheckTimerHandle,
+		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+			if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+			{
+				GameMode->UpdateActorCountCheck();
+			}
+		},
+		UpdateActorCountCheckPeriodInSeconds, true,
+		UpdateActorCountCheckInitialDelayInSeconds);
+}
+
+void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
+{
+	if (HasAuthority())
 	{
-		BuildExpectedActorCounts();
-		bExpectedActorCountsInitialised = true;
+		ActorCountReportIdx++;
+		UpdateAndReportActorCounts();
+
+		TimeSinceLastCheckedTotalActorCounts += UpdateActorCountCheckPeriodInSeconds;
+		bActorCountFailureState = TimeSinceLastCheckedTotalActorCounts > UpdateActorCountCheckPeriodInSeconds * 2;
+		if (bActorCountFailureState && !bHasActorCountFailed)
+		{
+			bHasActorCountFailed = true;
+			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor count was not checked at reasonable frequency."), *NFRFailureString);
+		}
 	}
 }
 
@@ -264,7 +304,6 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	TickPlayersConnectedCheck(DeltaSeconds);
 	TickPlayersMovementCheck(DeltaSeconds);
 	TickUXMetricCheck(DeltaSeconds);
-	TickActorCountCheck(DeltaSeconds);
 	TickActorMigration(DeltaSeconds);
 	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
@@ -336,6 +375,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 		if (ActorCount == nullptr)
 		{
+			bHasRequiredPlayersCheckFailed = true;
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Could not get Simulated Player actor count."), *NFRFailureString);
 		}
 		else if (*ActorCount >= RequiredPlayers)
@@ -481,32 +521,6 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	if (PrintMetricsTimer.HasTimerGoneOff())
 	{
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d)"), AveragedClientRTTMS, ValidRTTCount, AveragedClientUpdateTimeDeltaMS, ValidUpdateTimeDeltaCount);
-	}
-}
-
-void ABenchmarkGymGameModeBase::TickActorCountCheck(float DeltaSeconds)
-{
-	// This test respects the initial delay timer in both native and GDK
-	if (TickActorCountTimer.HasTimerGoneOff())
-	{
-		TryInitialiseExpectedActorCounts();
-
-		if (HasAuthority())
-		{
-			ActorCountReportIdx++;
-			UpdateAndReportActorCounts();
-
-			const int32 TickActorCountPeriodInSeconds = 10;
-			TickActorCountTimer.SetTimer(TickActorCountPeriodInSeconds);
-
-			TimeSinceLastCheckedTotalActorCounts += DeltaSeconds;
-			bActorCountFailureState = TimeSinceLastCheckedTotalActorCounts > TickActorCountPeriodInSeconds * 2;
-			if (bActorCountFailureState && !bHasActorCountFailed)
-			{
-				bHasActorCountFailed = true;
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor count was not checked at reasonable frequency."), *NFRFailureString);
-			}
-		}
 	}
 }
 
