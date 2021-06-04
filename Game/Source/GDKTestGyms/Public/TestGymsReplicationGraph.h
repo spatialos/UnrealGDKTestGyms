@@ -91,6 +91,8 @@ public:
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
 
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+
 	virtual void LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const override;
 
 	void OnClientLevelVisibilityAdd(FName LevelName, UWorld* StreamingWorld);
@@ -126,7 +128,7 @@ class UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter : public UReplic
 	virtual bool NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound=true) override { return false; }
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
-	virtual void GetClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
 
 	virtual void PrepareForReplication() override;
 
@@ -139,6 +141,7 @@ private:
 	
 	TArray<FActorRepListRefView> ReplicationActorLists;
 	FActorRepListRefView ForceNetUpdateReplicationActorList;
+	FActorRepListRefView ClientInterestList;
 };
 
 /** This is a specialized node only used in Spatial to ensure that connection views and targets are replicated each frame. */
@@ -149,7 +152,7 @@ class UTestGymsReplicationGraphNode_GlobalViewTarget : public UReplicationGraphN
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
 	
-	virtual void GetClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
 
 	virtual void LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const override;
 

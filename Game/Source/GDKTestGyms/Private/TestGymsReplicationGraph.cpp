@@ -468,6 +468,44 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::ResetGameWorldS
 	AlwaysRelevantStreamingLevelsNeedingReplication.Empty();
 }
 
+void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	FActorRepListRefView InterestedActorList;
+
+	for (const FNetViewer& CurViewer : Params.Viewers)
+	{
+		InterestedActorList.ConditionalAdd(CurViewer.InViewer);
+		InterestedActorList.ConditionalAdd(CurViewer.ViewTarget);
+		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
+		{
+			if (APlayerState* PS = PC->PlayerState)
+			{
+				InterestedActorList.ConditionalAdd(PS);
+			}
+		}
+	}
+
+	UTestGymsReplicationGraph* TestGymsGraph = CastChecked<UTestGymsReplicationGraph>(GetOuter());
+	TMap<FName, FActorRepListRefView>& AlwaysRelevantStreamingLevelActors = TestGymsGraph->AlwaysRelevantStreamingLevelActors;
+
+	for (int32 Idx = AlwaysRelevantStreamingLevelsNeedingReplication.Num() - 1; Idx >= 0; --Idx)
+	{
+		const FName& StreamingLevel = AlwaysRelevantStreamingLevelsNeedingReplication[Idx];
+
+		FActorRepListRefView* Ptr = AlwaysRelevantStreamingLevelActors.Find(StreamingLevel);
+		if (Ptr == nullptr)
+		{
+			continue;
+		}
+
+		FActorRepListRefView& RepList = *Ptr;
+		if (RepList.Num() > 0)
+		{
+			Params.OutGatheredReplicationLists.AddReplicationActorList(RepList);
+		}
+	}
+}
+
 void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
 {
 	QUICK_SCOPE_CYCLE_COUNTER(UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection_GatherActorListsForConnection);
@@ -654,6 +692,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 	FActorRepListRefView* CurrentList = &ReplicationActorLists[0];
 	CurrentList->PrepareForWrite();
 
+	ClientInterestList.Reset();
+	ClientInterestList.PrepareForWrite();
+
 	// We rebuild our lists of player states each frame. This is not as efficient as it could be but its the simplest way
 	// to handle players disconnecting and keeping the lists compact. If the lists were persistent we would need to defrag them as players left.
 
@@ -673,6 +714,7 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 		}
 
 		CurrentList->Add(PS);
+		ClientInterestList.Add(PS);
 	}
 }
 
@@ -687,15 +729,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GatherActorLists
 	}
 }
 
-void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GetClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
 {
-	for (auto ListIdx = 0; ListIdx < ReplicationActorLists.Num(); ++ListIdx)
-	{
-		if (ReplicationActorLists[ListIdx].Num() > 0)
-		{
-			Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorLists[ListIdx]);
-		}
-	}
+	Params.OutGatheredReplicationLists.AddReplicationActorList(ClientInterestList);
 
 	if (ForceNetUpdateReplicationActorList.Num() > 0)
 	{
@@ -748,7 +784,7 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 	Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
 }
 
-void UTestGymsReplicationGraphNode_GlobalViewTarget::GetClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
 {
 	if (ReplicationActorList.Num() > 0)
 	{
