@@ -146,6 +146,8 @@ private:
 	int32 CPUProfileInterval;
 	FMetricTimer StatStartFileTimer;
 	FMetricTimer StatStopFileTimer;
+#endif
+#if !UE_BUILD_SHIPPING
 	//For MemReport profile
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
@@ -181,6 +183,8 @@ private:
 	int32 GetPlayerControllerCount() const;
 #if	STATS
 	void InitStatTimer(const FString& CPUProfileString);
+#endif
+#if !UE_BUILD_SHIPPING
 	void InitMemReportTimer(const FString& MemReportIntervalString);
 #endif
 
