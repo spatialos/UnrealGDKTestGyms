@@ -174,11 +174,13 @@ private:
 	void TryBindWorkerFlagsDelegate();
 	void TryAddSpatialMetrics();
 
+	FTimerHandle FailActorCountTimeoutTimerHandle;
 	FTimerHandle UpdateActorCountCheckTimerHandle;
 	const float UpdateActorCountCheckPeriodInSeconds = 10.0f;
 	const float UpdateActorCountCheckInitialDelayInSeconds = 60.0f;
 	void InitialiseActorCountCheckTimer();
 	void UpdateActorCountCheck();
+	void FailActorCountDueToTimeout();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickPlayersMovementCheck(float DeltaSeconds);

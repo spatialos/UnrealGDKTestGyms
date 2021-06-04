@@ -158,17 +158,20 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 		},
 		InitialiseExpectedActorCountsDelayInSeconds, false);
 
-	// Timer trigger periodic check of total actor count across all workers.
-	TimerManager.SetTimer(
-		UpdateActorCountCheckTimerHandle,
-		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
-			if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
-			{
-				GameMode->UpdateActorCountCheck();
-			}
-		},
-		UpdateActorCountCheckPeriodInSeconds, true,
-		UpdateActorCountCheckInitialDelayInSeconds);
+	if (HasAuthority())
+	{
+		// Timer trigger periodic check of total actor count across all workers.
+		TimerManager.SetTimer(
+			UpdateActorCountCheckTimerHandle,
+			[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+				if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+				{
+					GameMode->UpdateActorCountCheck();
+				}
+			},
+			UpdateActorCountCheckPeriodInSeconds, true,
+			UpdateActorCountCheckInitialDelayInSeconds);
+	}
 }
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
@@ -186,13 +189,30 @@ void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
 		ActorCountReportIdx++;
 		UpdateAndReportActorCounts();
 
-		TimeSinceLastCheckedTotalActorCounts += UpdateActorCountCheckPeriodInSeconds;
-		bActorCountFailureState = TimeSinceLastCheckedTotalActorCounts > UpdateActorCountCheckPeriodInSeconds * 2;
-		if (bActorCountFailureState && !bHasActorCountFailed)
+		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+		if (!TimerManager.IsTimerActive(FailActorCountTimeoutTimerHandle))
 		{
-			bHasActorCountFailed = true;
-			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor count was not checked at reasonable frequency."), *NFRFailureString);
+			float FailActorCountTimeout = 2.5f * UpdateActorCountCheckPeriodInSeconds;
+			TimerManager.SetTimer(
+				FailActorCountTimeoutTimerHandle,
+				[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+					if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+					{
+						GameMode->FailActorCountDueToTimeout();
+					}
+				},
+				FailActorCountTimeout, false);
 		}
+	}
+}
+
+void ABenchmarkGymGameModeBase::FailActorCountDueToTimeout()
+{
+	bActorCountFailureState = true;
+	if (!bHasActorCountFailed)
+	{
+		bHasActorCountFailed = true;
+		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor count was not checked at reasonable frequency."), *NFRFailureString);
 	}
 }
 
@@ -734,7 +754,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 			int32 TotalCount = 0;
 			int32& AuthCount = ThisWorkerActorCounts.FindOrAdd(ActorClass);
 			GetActorCount(ActorClass, TotalCount, AuthCount);
-			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor count for %s: ActorClass: %s Count: %d, AuthCount: %d"), *WorkerID , *ActorClass->GetName(), TotalCount, AuthCount);
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Local Actor Count - ActorClass: %s Count: %d, AuthCount: %d"), *ActorClass->GetName(), TotalCount, AuthCount);
 		}
 	}
 
@@ -942,7 +962,9 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 
 void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 {
-	TimeSinceLastCheckedTotalActorCounts = 0.0f;
+	// Clear the failure timer as we are able to calculate actor count totals.
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.ClearTimer(FailActorCountTimeoutTimerHandle);
 
 	const UNFRConstants* Constants = UNFRConstants::Get(GetWorld());
 	check(Constants);
