@@ -478,7 +478,7 @@ The late connecing client has validated the local state before sending the "Pass
   * RPC parameters holding references to loadable assets are able to be resolved without timing out.
 * NOTE: This gym can only be run manually because it requires tweaking settings and running under multiple processes.
 * Pre-test steps:
-  * Navigate to `Edit > Project Settings > SpatialOS GDK for Unreal - Runtime Settings > Replication` and set Wait Time Before Processing Received RPC With Unresolved Refs` to `0` (revert it to the previous value after the test).
+  * Navigate to `Edit > Project Settings > SpatialOS GDK for Unreal - Runtime Settings > Replication` and set `Wait Time Before Processing Received RPC With Unresolved Refs` to `0` (revert it to the previous value after the test).
   * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * In the `Play` dropdown, set the number of players to `2`.
   * From the content browser, open `Content/Maps/RPCTimeoutTestGym.umap`.
