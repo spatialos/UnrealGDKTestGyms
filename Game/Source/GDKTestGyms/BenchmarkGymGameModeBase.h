@@ -189,8 +189,6 @@ private:
 	void TickUXMetricCheck(float DeltaSeconds);
 	void TickActorMigration(float DeltaSeconds);
 
-
-
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTMS; }

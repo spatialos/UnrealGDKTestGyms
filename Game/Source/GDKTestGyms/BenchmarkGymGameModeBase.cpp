@@ -192,7 +192,7 @@ void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
 		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 		if (!TimerManager.IsTimerActive(FailActorCountTimeoutTimerHandle))
 		{
-			float FailActorCountTimeout = 2.5f * UpdateActorCountCheckPeriodInSeconds;
+			const float FailActorCountTimeout = 2.5f * UpdateActorCountCheckPeriodInSeconds;
 			TimerManager.SetTimer(
 				FailActorCountTimeoutTimerHandle,
 				[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
