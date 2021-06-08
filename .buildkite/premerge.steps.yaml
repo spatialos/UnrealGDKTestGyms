@@ -24,7 +24,7 @@ steps:
         ENGINE_BRANCH: "${ENGINE_BRANCH_426:-match_branch_name_pref_engine::4.26-SpatialOSUnrealGDK}"
         ENGINE_MAJOR: "4.26"
 
-  # Trigger a 4.25 build
+  # Trigger a 4.25 build test
   - trigger: "unrealgdkbuild-ci"
     label: "testgyms-ci-4.25"
     async: false
