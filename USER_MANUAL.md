@@ -126,6 +126,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * This gym tests latency timing generation.
 * Manual Steps:
 1. Close your Unreal Editor if you have it open.
+1. Run `UnrealGDK\SetupIncTraceLibs.bat`.
 1. Login to [console.cloud.google.com](https://console.cloud.google.com/) using your work email address.
 1. Ask `@support-unreal` in [`#unreal-support`](https://improbable.slack.com/archives/CG3HFTK8T) for them to send you a `GOOGLE_APPLICATION_CREDENTIALS` certificate, and a `roots.pem` file for you to test with.
 1. In the Windows search bar, type "Environment Variable" and select "Edit the system environment variables"
