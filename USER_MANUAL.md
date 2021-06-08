@@ -506,13 +506,13 @@ The late connecing client has validated the local state before sending the "Pass
     * Two `StationaryGymCubes` will log continously, one log per tick.
     * Two `GymCubes` will log continously on the single client worker, one log per tick.
     * Two `GymCubes` will split their logs (one log per tick), across the two server workers, alternating as the cubes cross the zero-interest worker boundary.
-    * The names of the `StationaryGymCubes` will be displayed in a different colour (default is `Blue`, see `Edit -> Editor Preferences -> Visual Logger -> Non Spatial Display Name Colour`)
-    * The names of the `GymCubes` will be displayed in a different colour (default is `Red`, see `Edit -> Editor Preferences -> Visual Logger -> Spatial Display Name Colour`)
+    * The names of the `StationaryGymCubes` will be displayed in a different colour (default is `Blue`, see `Edit -> Editor Preferences -> Visual Logger -> Object Name Display Colors -> Other Objects`)
+    * The names of the `GymCubes` will be displayed in a different colour (default is `Green`, see `Edit -> Editor Preferences -> Visual Logger -> Object Name Display Colors ->Replicated Actors`)
   * Save the log as `first.vlog`.
   * Clear the Visual Logger using the `Clear` button.
   * Repeat the process and save the log as `second.vlog`.
   * Clear the Visual Logger using the `Clear` button.
-  * Set `Rebase Time On Load` to false in `Edit -> Editor Preferences -> Visual Logger -> Rebase Time On Load`.
+  * Set `Sync Log Timings Across Files` to false in `Edit -> Editor Preferences -> Visual Logger -> Sync Log Timings Across Files`.
   * In the Visual Logger click `Load` and load in `first.vlog`.
   * The file should successfully load and display expected logs.
   * In the Visual Logger click `Load` and load in `second.vlog`.
@@ -521,7 +521,7 @@ The late connecing client has validated the local state before sending the "Pass
   * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
   * The files should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
   * Clear the Visual Logger using the `Clear` button.
-  * Set `Rebase Time On Load` to true in `Edit -> Editor Preferences -> Visual Logger -> Rebase Time On Load`.
+  * Set `Sync Log Timings Across Files` to true in `Edit -> Editor Preferences -> Visual Logger -> Sync Log Timings Across Files`.
   * In the Visual Logger click `Load` and load in `first.vlog`.
   * The file should successfully load and display expected logs.
   * In the Visual Logger click `Load` and load in `second.vlog`.
