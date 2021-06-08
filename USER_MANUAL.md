@@ -262,25 +262,24 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller.
 * To test the scenario follow these steps:
-	1. Select `Play` on the Unreal toolbar.
-	2. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
+ 1. Select `Play` on the Unreal toolbar.
+ 1. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
 	   "MultipleOwnershipCube has no owner"
 	   "MultipleOwnershipCube2 has no owner"
 	   At this point in the test the player controller doesn't posses a pawn. This is why hitting `Enter` results in no server logs, and in client logs suggesting that no pawn is owned by the player controller.
-	3. Press `Space` once to possess one of the pawns.
-	4. Press `Enter` and check the logs printed. They should say the following:
+1. Press `Space` once to possess one of the pawns.
+1. Press `Enter` and check the logs printed. They should say the following:
 	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
 	   "RPC successfully called on MultipleOwnershipCube"
 	   "MultipleOwnershipCube2 has no owner"
 	   Pressing `Space` switched the possession between the two cubes in the gym.
-	5. Press `Space` a second time to possess the second pawn.
-	6. Press enter and check the logs printed. They should say the following:
+1. Press `Space` a second time to possess the second pawn.
+1. Press enter and check the logs printed. They should say the following:
 	   "MultipleOwnershipCube2 is owned by MultipleOwnershipController"
 	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
 	   "RPC successfully called on MultipleOwnershipCube2"
 	   "RPC successfully called on MultipleOwnershipCube"
-
-	Note: the order of the logs should not matter.
+<br>Note: the order of the logs should not matter.
 
 ##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
