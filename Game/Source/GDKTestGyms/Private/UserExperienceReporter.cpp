@@ -8,7 +8,9 @@
 #include "Net/UnrealNetwork.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "UserExperienceComponent.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 #include "Utils/SpatialMetrics.h"
+#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceReporter);
 
@@ -96,6 +98,11 @@ void UUserExperienceReporter::ReportMetrics()
 			if (Constants->ClientFPSMetricDelay.HasTimerGoneOff() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
 			{
 				bFrameRateValid = false;
+				if (const USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GameInstance->GetWorld()->GetNetDriver()))
+				{
+					UE_LOG(LogTemp, Error, TEXT("Client %s failed with fps %f below min threshold %s"), *NetDriver->Connection->GetWorkerId(), Constants->GetMinClientFPS());
+
+				}
 			}
 		}
 		ServerReportedMetrics(RoundTripTimeMS, UpdateTimeDeltaMS, bFrameRateValid);
