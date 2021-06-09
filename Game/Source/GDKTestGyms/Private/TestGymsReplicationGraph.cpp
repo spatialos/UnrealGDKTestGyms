@@ -786,10 +786,31 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 
 void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
 {
-	if (ReplicationActorList.Num() > 0)
+	ReplicationActorList.Reset();
+
+	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
-		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+		if (CurViewer.InViewer)
+		{
+			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
+		}
+		if (CurViewer.ViewTarget)
+		{
+			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
+		}
+		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
+		{
+			if (ACharacter* Pawn = Cast<ACharacter>(PC->GetPawn()))
+			{
+				if (Pawn != CurViewer.ViewTarget)
+				{
+					ReplicationActorList.ConditionalAdd(Pawn);
+				}
+			}
+		}
 	}
+
+	Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
 }
 
 void UTestGymsReplicationGraphNode_GlobalViewTarget::LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const
