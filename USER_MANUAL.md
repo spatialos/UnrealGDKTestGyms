@@ -116,17 +116,35 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * Demonstrates that an actor with an ability system component can transition between workers correctly.
 * Internally GAS uses Fast Array Serialization.
 * Manual Steps:
-  1. In the Unreal Editor's Content Browser, locate `Content/Maps/FASHandoverGym` and double click to open it.
-  1. In the Unreal Editor Toolbar, click Play to launch one client.
-  1. As soon as the game launches, a new GameplayEffect is added by the authoritative server on authority gained.
-  1. `Effect Applied Correctly` and `Effect Persisted Correctly` should be printed in the client viewport and in the Output Log. If this happens, and there are no warns or errors, then the test has passed.
+1. In the Unreal Editor's Content Browser, locate `Content/Maps/FASHandoverGym` and double click to open it.
+1. In the Unreal Editor Toolbar, click Play to launch one client.
+1. As soon as the game launches, a new GameplayEffect is added by the authoritative server on authority gained.
+1. `Effect Applied Correctly` and `Effect Persisted Correctly` should be printed in the client viewport and in the Output Log. If this happens, and there are no warns or errors, then the test has passed.
 
 ##### Latency gym
-* NOTE: This gym runs nightly as an automated test in the [unrealgdk-nfr](https://buildkite.com/improbable/unrealgdk-nfr) pipeline. You should only run the gym manually if you're debugging that pipline. QA are not required to run this gym manually.
+* NOTE: This gym runs nightly as an automated test in the [unrealgdk-nfr](https://buildkite.com/improbable/unrealgdk-nfr) pipeline. You should only run the gym manually if you're debugging that pipline. QA are not required to run this gym manually as part of their usual Test Gym Test Suite.
 * This gym tests latency timing generation.
-* To run it, you will requires access to Google's Stackdriver - see the instructions at [UnrealGDK/SpatialGDK/Source/SpatialGDK/Public/Utils/SpatialLatencyTracer.h#L52](https://github.com/spatialos/UnrealGDK/blob/master/SpatialGDK/Source/SpatialGDK/Public/Utils/SpatialLatencyTracer.h#L52).
-* Latency tests are run automatically once per connected client.
-* To see results of the tests, go to Google Stackdriver project [holocentroid-aimful-6523579](https://console.cloud.google.com/traces/traces?project=holocentroid-aimful-6523579).
+* Manual Steps:
+1. Close your Unreal Editor if you have it open.
+1. Run `UnrealGDK\SetupIncTraceLibs.bat`.
+1. Login to [console.cloud.google.com](https://console.cloud.google.com/) using your work email address.
+1. Ask `@support-unreal` in [`#unreal-support`](https://improbable.slack.com/archives/CG3HFTK8T) for them to send you a `GOOGLE_APPLICATION_CREDENTIALS` certificate, and a `roots.pem` file for you to test with.
+1. In the Windows search bar, type "Environment Variable" and select "Edit the system environment variables"
+1. Set a system environment variable `GOOGLE_APPLICATION_CREDENTIALS` that points to the certificate.
+1. Set a system environment variable `GRPC_DEFAULT_SSL_ROOTS_FILE_PATH` that points to the `roots.pem` file.
+1. Open the Test Gyms project in the Unreal Editor.
+1. Open `Content/Maps/latencygym.umap` from the Content Browser.
+1. Play in Editor with one client.
+1. After 10 seconds, stop the PIE session.
+1. In a terminal of your choice, `cd` to `UnrealGDKTestGyms\Game\Saved\EventTracing`
+1. `cd` into the latest event tracing directory, it should look something like `UnrealClientC1A375904ECEDEB4934CEB835FCF86F0`.
+1. Run `spatial package retrieve internal etlog-x86_64-win32 15.1.0 tools --unzip`. Note, you may need to modify `15.1.0` to whatever the latest runtime version is.
+1. `cd` to the `tools` directory which you just created by running the command in the last step.
+1. Run `etlog.exe -print_spans -print_events <file> | grep latency`, where `<file>` is the path to `gdk.etlog`.
+1. If the output of this command is a human readable list of events, the test has passed.
+
+What did I just validate?<br>
+* You just validated that our latency tracing functionality is correctly logging events.
 
 ##### Unresolved reference gym
 * Tests what happens when structs with references to actors whose entity have not been created yet are replicated. Replicating null references is accepted, but they should be resolved eventually.
