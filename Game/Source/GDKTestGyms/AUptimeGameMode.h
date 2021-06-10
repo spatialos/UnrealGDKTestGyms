@@ -85,8 +85,6 @@ private:
 	static void GenerateGridSettings(int DistBetweenPoints, int NumPoints, int& OutNumRows, int& OutNumCols, int& OutMinRelativeX, int& OutMinRelativeY);
 	void GenerateSpawnPointClusters(int NumClusters);
 	void GenerateSpawnPoints(int CenterX, int CenterY, int SpawnPointsNum);
-
-	FExpectedActorCount ExpectedDropCubeCount;
 	
 	void SpawnCrossServerActors(int32 CrossServerPoint);
 	TArray<FVector> GenerateCrossServerLoaction();
