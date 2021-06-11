@@ -166,6 +166,9 @@ private:
 	int32 NumWorkers;
 	int32 NumSpawnZones;
 	
+	float CubeRespawnBaseTime;
+	float CubeRespawnRandomRangeTime;
+	
 #if	STATS
 	// For stat profile
 	int32 CPUProfileInterval;
@@ -177,9 +180,6 @@ private:
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
 #endif
-
-	float CubeRespawnBaseTime;
-	float CubeRespawnRandomRangeTime;
 
 	virtual void BeginPlay() override;
 
