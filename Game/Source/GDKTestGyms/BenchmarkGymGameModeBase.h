@@ -96,6 +96,12 @@ protected:
 
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetNumSpawnZones() const { return NumSpawnZones; }
+	
+	UFUNCTION(BlueprintCallable)
+	float GetCubeRespawnBaseTime() const { return CubeRespawnBaseTime; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetCubeRespawnRandomRangeTime() const { return CubeRespawnRandomRangeTime; }
 
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
@@ -159,6 +165,7 @@ private:
 
 	int32 NumWorkers;
 	int32 NumSpawnZones;
+	
 #if	STATS
 	// For stat profile
 	int32 CPUProfileInterval;
@@ -170,6 +177,13 @@ private:
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
 #endif
+
+	float CubeRespawnBaseTime;
+	float CubeRespawnRandomRangeTime;
+
+	virtual void BeginPlay() override;
+
+	void TryInitialiseExpectedActorCounts();
 
 	void TryBindWorkerFlagsDelegate();
 	void TryAddSpatialMetrics();

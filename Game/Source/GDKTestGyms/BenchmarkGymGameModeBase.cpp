@@ -59,6 +59,12 @@ namespace
 
 	const FString NumSpawnZonesWorkerFlag = TEXT("num_spawn_zones");
 	const FString NumSpawnZonesCommandLineKey = TEXT("-NumSpawnZones=");
+
+	const FString CubeRespawnBaseTimeWorkerFlag = TEXT("cube_base_respawn_time");
+	const FString CubeRespawnBaseTimeCommandLineKey = TEXT("-CubeBaseRespawnTime=");
+	
+	const FString CubeRespawnRandomRangeTimeWorkerFlag = TEXT("cube_random_range_respawn_time");
+	const FString CubeRespawnRandomRangeCommandLineKey = TEXT("-CubeRandomRangeRespawnTime=");
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
@@ -108,6 +114,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RequiredPlayerMovementCheckTimer(6 * 60)
 	, NumWorkers(1)
 	, NumSpawnZones(1)
+	, CubeRespawnBaseTime(5.0f)
+	, CubeRespawnRandomRangeTime(5.0f)
 #if	STATS
 	, StatStartFileTimer(60 * 60 * 24)
 	, StatStopFileTimer(60)
@@ -569,12 +577,14 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 		FParse::Value(*CommandLine, *MinActorMigrationCommandLineKey, MinActorMigrationPerSecond);
 		FParse::Value(*CommandLine, *NumWorkersCommandLineKey, NumWorkers);
 		FParse::Value(*CommandLine, *NumSpawnZonesCommandLineKey, NumSpawnZones);
+		FParse::Value(*CommandLine, *CubeRespawnBaseTimeCommandLineKey, CubeRespawnBaseTime);
+		FParse::Value(*CommandLine, *CubeRespawnRandomRangeCommandLineKey, CubeRespawnRandomRangeTime);
 		
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, MinActorMigrationString, NumWorkersString, NumSpawnZonesString;
+		FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, MinActorMigrationString, NumWorkersString, NumSpawnZonesString, CubeRespawnBaseTimeString, CubeRespawnRandomRangeTimeString;
 
 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
 		if (ensure(SpatialDriver != nullptr))
@@ -626,6 +636,17 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 				{
 					NumSpawnZones = FCString::Atoi(*NumSpawnZonesString);
 				}
+
+				if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnBaseTimeWorkerFlag, CubeRespawnBaseTimeString))
+				{
+					CubeRespawnBaseTime = FCString::Atof(*CubeRespawnBaseTimeString);
+				}
+
+				if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnRandomRangeTimeWorkerFlag, CubeRespawnRandomRangeTimeString))
+				{
+					CubeRespawnRandomRangeTime = FCString::Atof(*CubeRespawnRandomRangeTimeString);
+				}
+
 #if	STATS
 				FString CPUProfileString;
 				if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
@@ -654,8 +675,8 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
 	InitMemReportTimer(MemReportIntervalString);
 #endif
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d, NumSpawnZones %d"), 
-		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers, NumSpawnZones);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d, NumSpawnZones %d, CubeRespawnBaseTime %f, CubeRespawnRandomRangeTime %f"), 
+		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers, NumSpawnZones, CubeRespawnBaseTime, CubeRespawnRandomRangeTime);
 }
 
 void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -695,6 +716,14 @@ void ABenchmarkGymGameModeBase::OnAnyWorkerFlagUpdated(const FString& FlagName, 
 	else if (FlagName == NumSpawnZonesWorkerFlag)
 	{
 		NumSpawnZones = FCString::Atof(*FlagValue);
+	}
+	else if (FlagName == CubeRespawnBaseTimeWorkerFlag)
+	{
+		CubeRespawnBaseTime = FCString::Atof(*FlagValue);
+	}
+	else if (FlagName == CubeRespawnRandomRangeTimeWorkerFlag)
+	{
+		CubeRespawnRandomRangeTime = FCString::Atof(*FlagValue);
 	}
 #if	STATS
 	else if (FlagName == StatProfileWorkerFlag)
