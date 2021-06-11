@@ -95,7 +95,6 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	int32 GetNumWorkers() const { return NumWorkers; }
-	int32 GetNumSpawnZones() const { return NumSpawnZones; }
 
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
