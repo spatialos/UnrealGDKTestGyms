@@ -25,7 +25,7 @@ public:
 	int32 MaxSpawnPoints;
 
 	void GenerateSpawnPoints();
-	void CreateSpawnPointActors(const int32 NumSpawnPoints, TArray<AActor*>& OutSpawnPointActors);
+	TArray<AActor*> CreateSpawnPointActors();
 	int32 GetNumSpawnPointActorsAllowedToCreate() const;
 
 private:
@@ -57,7 +57,7 @@ public:
 	float MinDistanceBetweenClusters;
 
 	void GenerateSpawnClusters();
-	void CreateSpawnPointActors(const int32 NumSpawnPoints, TArray<AActor*>& OutSpawnPointActors);
+	TArray<AActor*> CreateSpawnPointActors();
 
 private:
 
