@@ -31,12 +31,12 @@ namespace
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
 	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
 
-	// Returns an array of co-ordinates. Each co-ordinate represents center of a cell in a generated grid.
+	// Returns an array of co-ordinates. Each co-ordinate represents the center of a cell in a generated grid.
 	// The grid created will abide by these rules if the function returns true:
 	//		- Fit inside the dimensions GridMaxWidth, GridMaxHeight.
 	//		- Have an odd number of rows and columns.
 	//		- Have at minimum MinCells cells.
-	//		- All cell center position will be CellSize apart.
+	//		- All center positions will be CellSize apart.
 
 	bool GenerateMinimalGridInArea(const float GridMaxWidth, const float GridMaxHeight, const int32 MinCells, const float CellSize, const FVector& WorldPositon, TArray<FVector>& OutCellCenterPoints)
 	{
@@ -49,45 +49,47 @@ namespace
 		const int32 MaxRows = FMath::FloorToInt(GridMaxHeight / CellSize);
 		const int32 MaxCols = FMath::FloorToInt(GridMaxWidth / CellSize);
 
-		if (MaxRows * MaxCols < MinCells)
+		// Ensure we have odd number of rows and cols.
+		int32 Rows = MaxRows % 2 == 0 ? MaxRows - 1 : MaxRows;
+		int32 Cols = MaxCols % 2 == 0 ? MaxCols - 1 : MaxCols;
+
+		if (Rows * Cols < MinCells)
 		{
 			UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Area not big enough for MinCells"));
 			return false;
 		}
 
 		const float MaxRowMaxColRatio = MaxRows / MaxCols;
-		auto EvaluateRowsAndColumns = [MinCells, MaxRowMaxColRatio](const int32 Rows, const int32 Cols, bool& OutSatisfiesMinCells, float& OutRatioDiff)
+		auto EvaluateRowsAndColumns = [MinCells, MaxRowMaxColRatio](const int32 Rows, const int32 Cols, bool& bOutSatisfiesMinCells, float& OutRatioDiff)
 		{
-			OutSatisfiesMinCells = Rows > 0 && Cols > 0 && Rows * Cols >= MinCells;
-			if (OutSatisfiesMinCells)
+			bOutSatisfiesMinCells = Rows > 0 && Cols > 0 && Rows * Cols >= MinCells;
+			if (bOutSatisfiesMinCells)
 			{
 				const float RowColRatio = Rows / static_cast<float>(Cols);
 				OutRatioDiff = FMath::Abs(RowColRatio - MaxRowMaxColRatio);
 			}
 		};
 
-		int32 Rows = MaxRows % 2 == 0 ? MaxRows - 1 : MaxRows;
-		int32 Cols = MaxCols % 2 == 0 ? MaxCols - 1 : MaxCols;
 		while (true)
 		{
 			const int32 NextRows = Rows - 2;
 			const int32 NextCols = Cols - 2;
 
-			bool NextRowsSatisfiesMinCells;
+			bool bNextRowsSatisfiesMinCells;
 			float NextRowsRowColRatioDiff = 0.0f;
-			EvaluateRowsAndColumns(NextRows, Cols, NextRowsSatisfiesMinCells, NextRowsRowColRatioDiff);
+			EvaluateRowsAndColumns(NextRows, Cols, bNextRowsSatisfiesMinCells, NextRowsRowColRatioDiff);
 
-			bool NextColsSatisfiesMinCells;
+			bool bNextColsSatisfiesMinCells;
 			float NextColsRowColRatioDiff = 0.0f;
-			EvaluateRowsAndColumns(Rows, NextCols, NextColsSatisfiesMinCells, NextColsRowColRatioDiff);
+			EvaluateRowsAndColumns(Rows, NextCols, bNextColsSatisfiesMinCells, NextColsRowColRatioDiff);
 
-			if (NextRowsSatisfiesMinCells &&
-				(NextRowsRowColRatioDiff < NextColsRowColRatioDiff || !NextColsSatisfiesMinCells))
+			if (bNextRowsSatisfiesMinCells &&
+				(NextRowsRowColRatioDiff < NextColsRowColRatioDiff || !bNextColsSatisfiesMinCells))
 			{
 				Rows = NextRows;
 			}
-			else if (NextColsSatisfiesMinCells &&
-				(NextRowsRowColRatioDiff >= NextColsRowColRatioDiff || !NextRowsSatisfiesMinCells))
+			else if (bNextColsSatisfiesMinCells &&
+				(NextRowsRowColRatioDiff >= NextColsRowColRatioDiff || !bNextRowsSatisfiesMinCells))
 			{
 				Cols = NextCols;
 			}
@@ -141,19 +143,20 @@ void USpawnCluster::GenerateSpawnPoints()
 	// This ensures we iterate from closest to furthest spawn point.
 	SpawnPoints.Sort([this](const FVector& Point1, const FVector& Point2)
 	{
-		float Distance1 = FVector::Distance(Point1, WorldPosition);
-		float Distance2 = FVector::Distance(Point2, WorldPosition);
+		const float Distance1 = FVector::Distance(Point1, WorldPosition);
+		const float Distance2 = FVector::Distance(Point2, WorldPosition);
 		return Distance2 < Distance1;
 	});
+
+	//Remove any excess spawn points
+	SpawnPoints.RemoveAt(MaxSpawnPoints, SpawnPoints.Num() - MaxSpawnPoints);
 }
 
 TArray<AActor*> USpawnCluster::CreateSpawnPointActors()
 {
-	const int32 NumSpawnPointsActorsToCreate = MaxSpawnPoints;
-
 	UWorld* World = GetWorld();
 
-	for (int i = 0; i < NumSpawnPointsActorsToCreate; ++i)
+	for (int i = 0; i < MaxSpawnPoints; ++i)
 	{
 		const FVector& SpawnPoint = SpawnPoints[i];
 
@@ -184,8 +187,22 @@ void USpawnArea::GenerateSpawnClusters()
 		return;
 	}
 
-	for (const FVector& ClusterPoint : ClusterPoints)
+	// Sort the clusters by "distance from centre of area" ascending.
+	// This ensures we iterate from closest to furthest cluster.
+	ClusterPoints.Sort([this](const USpawnCluster& Cluster1, const USpawnCluster& Cluster2)
 	{
+		const float Distance1 = FVector::Distance(Cluster1.WorldPosition, WorldPosition);
+		const float Distance2 = FVector::Distance(Cluster2.WorldPosition, WorldPosition);
+		return Distance2 < Distance1;
+	});
+
+
+	//Remove any excess areas
+	ClusterPoints.RemoveAt(MaxClusters, ClusterPoints.Num() - MaxClusters);
+
+	for (int32 i = 0; i < ClusterPoints.Num() && i < MaxClusters; ++i)
+	{
+		const FVector& ClusterPoint = ClusterPoints[i];
 		USpawnCluster* NewSpawnCluster = NewObject<USpawnCluster>(this);
 		if (NewSpawnCluster != nullptr)
 		{
@@ -198,15 +215,6 @@ void USpawnArea::GenerateSpawnClusters()
 			SpawnClusters.Add(NewSpawnCluster);
 		}
 	}
-
-	// Sort the clusters by "distance from centre of area" ascending.
-	// This ensures we iterate from closest to furthest cluster.
-	SpawnClusters.Sort([this](const USpawnCluster& Cluster1, const USpawnCluster& Cluster2)
-	{
-		float Distance1 = FVector::Distance(Cluster1.WorldPosition, WorldPosition);
-		float Distance2 = FVector::Distance(Cluster2.WorldPosition, WorldPosition);
-		return Distance2 < Distance1;
-	});
 }
 
 TArray<AActor*> USpawnArea::CreateSpawnPointActors()
@@ -226,11 +234,11 @@ TArray<AActor*> USpawnArea::CreateSpawnPointActors()
 
 // --- USpawnManager ---
 
-void USpawnManager::GenerateSpawnPoints(const int32 ZoningRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
+void USpawnManager::GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoneCols, const int32 ZoneWidth, const int32 ZoneHeight,
 	const int32 ZoneClusters, const int32 BoundaryClusters,
 	const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters)
 {
-	GenerateSpawnAreas(ZoningRows, ZoningCols, ZoneWidth, ZoneHeight, ZoneClusters, BoundaryClusters, MaxSpawnPointsPerCluster, MinDistanceBetweenClusters);
+	GenerateSpawnAreas(ZoneRows, ZoneCols, ZoneWidth, ZoneHeight, ZoneClusters, BoundaryClusters, MaxSpawnPointsPerCluster, MinDistanceBetweenClusters);
 	CreateSpawnPointActors(ZoneClusters, BoundaryClusters, MaxSpawnPointsPerCluster);
 }
 
@@ -255,19 +263,19 @@ void USpawnManager::ClearSpawnPoints()
 	SpawnPointActors.Empty();
 }
 
-void USpawnManager::GenerateSpawnAreas(const int32 ZoningRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
+void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCols, const int32 ZoneWidth, const int32 ZoneHeight,
 	const int32 ZoneClusters, const int32 BoundaryClusters,
 	const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters)
 {
-	const float StartX = ZoneWidth / 2.0f - ZoningCols * ZoneWidth / 2.0f;
-	const float StartY = ZoneHeight / 2.0f - ZoningRows * ZoneHeight / 2.0f;
-	const int32 SpawnAreaRows = ZoningRows * 2 - 1;
-	const int32 SpawnAreaCols = ZoningCols * 2 - 1;
+	const float StartX = ZoneWidth / 2.0f - ZoneCols * ZoneWidth / 2.0f;
+	const float StartY = ZoneHeight / 2.0f - ZoneRows * ZoneHeight / 2.0f;
+	const int32 SpawnAreaRows = ZoneRows * 2 - 1;
+	const int32 SpawnAreaCols = ZoneCols * 2 - 1;
 	const int32 SpawnAreaWidth = ZoneWidth - MinDistanceBetweenClusters;
 	const int32 SpawnAreaHeight = ZoneHeight - MinDistanceBetweenClusters;
 
-	const int32 NumZones = ZoningRows * ZoningCols;
-	const int32 NumBoundaries = ZoningRows * (ZoningCols - 1) + ZoningCols * (ZoningRows - 1);
+	const int32 NumZones = ZoneRows * ZoneCols;
+	const int32 NumBoundaries = ZoneRows * (ZoneCols - 1) + ZoneCols * (ZoneRows - 1);
 
 	const int32 MaxClustersPerZone = FMath::CeilToInt(ZoneClusters / static_cast<float>(NumZones));
 	const int32 MaxClustersPerBoundary = NumBoundaries != 0 ? FMath::CeilToInt(BoundaryClusters / static_cast<float>(NumBoundaries)) : 0;
@@ -276,14 +284,14 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoningRows, const int32 Zonin
 	{
 		for (int32 Col = 0; Col < SpawnAreaCols; ++Col)
 		{
-			bool bZoningRow = Row % 2 == 0;
-			bool bZoningCol = Col % 2 == 0;
-			if (!bZoningRow && !bZoningCol)
+			bool bZoneRow = Row % 2 == 0;
+			bool bZoneCol = Col % 2 == 0;
+			if (!bZoneRow && !bZoneCol)
 			{
 				continue;
 			}
 
-			bool bIsZone = bZoningRow && bZoningCol;
+			bool bIsZone = bZoneRow && bZoneCol;
 			const int32 MaxClusters = bIsZone ? MaxClustersPerZone : MaxClustersPerBoundary;
 			if (MaxClusters == 0)
 			{
@@ -299,8 +307,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoningRows, const int32 Zonin
 				const float Y = StartY + Row * ZoneHeight / 2;
 				NewSpawnArea->WorldPosition = { X, Y, 0.0f };
 
-				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoningRow ? MinDistanceBetweenClusters : SpawnAreaWidth;
-				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoningCol ? MinDistanceBetweenClusters : SpawnAreaHeight;
+				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoneRow ? MinDistanceBetweenClusters : SpawnAreaWidth;
+				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoneCol ? MinDistanceBetweenClusters : SpawnAreaHeight;
 				NewSpawnArea->MaxClusters = MaxClusters;
 				NewSpawnArea->MaxSpawnPointsPerCluster = MaxSpawnPointsPerCluster;
 				NewSpawnArea->MinDistanceBetweenClusters = MinDistanceBetweenClusters;

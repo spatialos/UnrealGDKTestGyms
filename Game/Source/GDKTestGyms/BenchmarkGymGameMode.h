@@ -71,7 +71,7 @@ class GDKTESTGYMS_API USpawnManager: public UObject
 	GENERATED_BODY()
 public:
 
-	void GenerateSpawnPoints(const int32 ZoningRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
+	void GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
 		const int32 ZoneClusters, const int32 BoundaryClusters,
 		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
 
@@ -82,7 +82,7 @@ public:
 
 private:
 
-	void GenerateSpawnAreas(const int32 ZoningRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
+	void GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
 		const int32 ZoneClusters, const int32 BoundaryClusters,
 		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
 	void CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClusters, const int32 MaxSpawnPointsPerCluster);
