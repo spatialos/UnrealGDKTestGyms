@@ -21,12 +21,12 @@ public:
 	~USpawnCluster();
 
 	FVector WorldPosition;
-	float ClusterSize;
+	float Width;
+	float Height;
 	int32 MaxSpawnPoints;
 
 	void GenerateSpawnPoints();
 	TArray<AActor*> CreateSpawnPointActors();
-	int32 GetNumSpawnPointActorsAllowedToCreate() const;
 
 private:
 

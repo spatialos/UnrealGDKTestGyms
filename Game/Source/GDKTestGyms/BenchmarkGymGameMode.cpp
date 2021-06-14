@@ -131,7 +131,7 @@ USpawnCluster::~USpawnCluster()
 void USpawnCluster::GenerateSpawnPoints()
 {
 	const int32 DistBetweenSpawnPoints = 300;
-	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(ClusterSize, ClusterSize, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
+	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
 	if (!bSuccefullyCreatedReducedGrid)
 	{
 		return;
@@ -190,7 +190,8 @@ void USpawnArea::GenerateSpawnClusters()
 		if (NewSpawnCluster != nullptr)
 		{
 			NewSpawnCluster->WorldPosition = ClusterPoint;
-			NewSpawnCluster->ClusterSize = MinDistanceBetweenClusters;
+			NewSpawnCluster->Width = MinDistanceBetweenClusters;
+			NewSpawnCluster->Height = MinDistanceBetweenClusters;
 			NewSpawnCluster->MaxSpawnPoints = MaxSpawnPointsPerCluster;
 
 			NewSpawnCluster->GenerateSpawnPoints();
