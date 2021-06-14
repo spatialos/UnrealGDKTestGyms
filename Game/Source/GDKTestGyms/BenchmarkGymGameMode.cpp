@@ -145,18 +145,18 @@ void USpawnCluster::GenerateSpawnPoints()
 	{
 		const float Distance1 = FVector::Distance(Point1, WorldPosition);
 		const float Distance2 = FVector::Distance(Point2, WorldPosition);
-		return Distance2 < Distance1;
+		return Distance2 > Distance1;
 	});
 
 	//Remove any excess spawn points
 	SpawnPoints.RemoveAt(MaxSpawnPoints, SpawnPoints.Num() - MaxSpawnPoints);
 }
 
-TArray<AActor*> USpawnCluster::CreateSpawnPointActors()
+const TArray<AActor*>& USpawnCluster::CreateSpawnPointActors()
 {
 	UWorld* World = GetWorld();
 
-	for (int i = 0; i < MaxSpawnPoints; ++i)
+	for (int i = 0; i < SpawnPoints.Num(); ++i)
 	{
 		const FVector& SpawnPoint = SpawnPoints[i];
 
@@ -189,13 +189,12 @@ void USpawnArea::GenerateSpawnClusters()
 
 	// Sort the clusters by "distance from centre of area" ascending.
 	// This ensures we iterate from closest to furthest cluster.
-	ClusterPoints.Sort([this](const USpawnCluster& Cluster1, const USpawnCluster& Cluster2)
+	ClusterPoints.Sort([this](const FVector& Point1, const FVector& Point2)
 	{
-		const float Distance1 = FVector::Distance(Cluster1.WorldPosition, WorldPosition);
-		const float Distance2 = FVector::Distance(Cluster2.WorldPosition, WorldPosition);
-		return Distance2 < Distance1;
+		const float Distance1 = FVector::Distance(Point1, WorldPosition);
+		const float Distance2 = FVector::Distance(Point2, WorldPosition);
+		return Distance2 > Distance1;
 	});
-
 
 	//Remove any excess areas
 	ClusterPoints.RemoveAt(MaxClusters, ClusterPoints.Num() - MaxClusters);
