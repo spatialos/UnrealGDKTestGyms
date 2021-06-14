@@ -287,6 +287,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 			bool bZoneCol = Col % 2 == 0;
 			if (!bZoneRow && !bZoneCol)
 			{
+				// Skip boundary intersections
 				continue;
 			}
 
@@ -294,6 +295,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 			const int32 MaxClusters = bIsZone ? MaxClustersPerZone : MaxClustersPerBoundary;
 			if (MaxClusters == 0)
 			{
+				// Skip areas that need 0 clusters
 				continue;
 			}
 
@@ -321,25 +323,16 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 
 void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClusters, const int32 MaxSpawnPointsPerCluster)
 {
-	auto CreateSpawnPointActorsForArea = [this, MaxSpawnPointsPerCluster](USpawnArea& SpawnArea)
-	{
-		SpawnPointActors += SpawnArea.CreateSpawnPointActors();
-		if (SpawnPointActors.Num() != MaxSpawnPointsPerCluster)
-		{
-			UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Failed to add spawn points to spawn area."));
-		}
-	};
-
 	for (USpawnArea* SpawnArea : SpawnAreas)
 	{
 		if (SpawnArea->Type == USpawnArea::Type::Boundary && BoundaryClusters > 0)
 		{
-			CreateSpawnPointActorsForArea(*SpawnArea);
+			SpawnPointActors += SpawnArea->CreateSpawnPointActors();
 			BoundaryClusters--;
 		}
 		else if (SpawnArea->Type == USpawnArea::Type::Zone && ZoneClusters > 0)
 		{
-			CreateSpawnPointActorsForArea(*SpawnArea);
+			SpawnPointActors += SpawnArea->CreateSpawnPointActors();
 			ZoneClusters--;
 		}
 	}
@@ -447,7 +440,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		{
 			int32 NPCIndex = TotalNPCs - NPCSToSpawn--;
 			const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
-
 			if (SpawnPoint != nullptr)
 			{
 				FVector SpawnLocation = SpawnPoint->GetActorLocation();
@@ -508,6 +500,8 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 			}
 		}
 	}
+
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Player Density %d"), PlayerDensity);
 }
 
 void ABenchmarkGymGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
@@ -563,8 +557,8 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints()
 	const float PercentageSpawnPointsOnWorkerBoundaries = 0.25f;
 
 	const int32 NumClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
-	int32 BoundaryClusters = FMath::CeilToInt(NumClusters * PercentageSpawnPointsOnWorkerBoundaries);
-	int32 ZoneClusters = NumClusters - BoundaryClusters;
+	const int32 BoundaryClusters = FMath::CeilToInt(NumClusters * PercentageSpawnPointsOnWorkerBoundaries);
+	const int32 ZoneClusters = NumClusters - BoundaryClusters;
 
 	SpawnManager->GenerateSpawnPoints(Rows, Cols, ZoneWidth, ZoneHeight, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
 }
