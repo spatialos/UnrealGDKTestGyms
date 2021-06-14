@@ -26,7 +26,7 @@ public:
 	int32 MaxSpawnPoints;
 
 	void GenerateSpawnPoints();
-	TArray<AActor*> CreateSpawnPointActors();
+	const TArray<AActor*>& CreateSpawnPointActors();
 
 private:
 

@@ -445,7 +445,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 	{
 		if (NPCSToSpawn > 0)
 		{
-			int32 NPCIndex = --NPCSToSpawn;
+			int32 NPCIndex = TotalNPCs - NPCSToSpawn--;
 			const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
 
 			if (SpawnPoint != nullptr)
