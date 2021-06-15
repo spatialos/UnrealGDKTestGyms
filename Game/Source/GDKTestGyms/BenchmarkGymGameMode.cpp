@@ -166,6 +166,7 @@ const TArray<AActor*>& USpawnCluster::CreateSpawnPointActors()
 		SpawnInfo.bDeferConstruction = false;
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+		// Swapping X and Y as GridBaseLBStrategy has the two reversed.
 		FVector ModifiedSpawnPoint = SpawnPoint;
 		ModifiedSpawnPoint.X = SpawnPoint.Y;
 		ModifiedSpawnPoint.Y = SpawnPoint.X;
