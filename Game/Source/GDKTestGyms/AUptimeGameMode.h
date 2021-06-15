@@ -29,10 +29,41 @@ public:
 
 protected:
 	virtual void BuildExpectedActorCounts() override;
-	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
+
+	virtual void ReadCommandLineArgs(const FString& CommandLine) override;
+	virtual void ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	virtual void BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
 
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<AUptimeCrossServerBeacon> CrossServerClass;
+
+	// Worker flag update delegate functions
+	UFUNCTION()
+	virtual void OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeSpawnColsFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeSpawnRowsFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeWorldWidthFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeWorldHeightFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeEgressFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeCrossServerSizeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnUptimeCrossServerFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
@@ -42,7 +73,6 @@ private:
 	TArray<ControllerIntegerPair> AIControlledPlayers;
 
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void ParsePassedValues() override;
 
 	// Custom density spawning parameters.
 	bool bInitializedCustomSpawnParameters;

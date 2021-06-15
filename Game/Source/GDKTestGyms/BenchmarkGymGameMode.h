@@ -110,7 +110,15 @@ public:
 protected:
 
 	virtual void BuildExpectedActorCounts() override;
-	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue) override;
+
+	virtual void ReadCommandLineArgs(const FString& CommandLine) override;
+	virtual void ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	virtual void BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
+
+	virtual void OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue) override;
+
+	UFUNCTION()
+	virtual void OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 private:
 	TArray<FBlackboardValues> PlayerRunPoints;
@@ -120,10 +128,9 @@ private:
 	TArray<ControllerIntegerPair> AIControlledPlayers;
 
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void ParsePassedValues() override;
 
-	// Custom density spawning parameters.
-	bool bInitializedCustomSpawnParameters;
+	bool bHasCreatedSpawnPoints;
+
 	// Number of players per cluster. Players only see other players in the same cluster.
 	// Number of generated clusters is Ceil(TotalPlayers / PlayerDensity)
 	int32 PlayerDensity;
@@ -140,9 +147,8 @@ private:
 	UPROPERTY()
 	USpawnManager* SpawnManager;
 
-	void CheckCmdLineParameters();
 	void ClearExistingSpawnPoints();
-	void StartCustomNPCSpawning();
+	void TryStartCustomNPCSpawning();
 	void GenerateSpawnPoints();
 	void SpawnNPCs(int NumNPCs);
 	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);

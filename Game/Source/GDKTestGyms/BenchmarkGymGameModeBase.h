@@ -28,6 +28,8 @@ struct FActorCount
 	int32 Count;
 };
 
+class USpatialWorkerFlags;
+
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 {
@@ -75,11 +77,6 @@ protected:
 	virtual void BuildExpectedActorCounts();
 	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount);
 
-	virtual void ParsePassedValues();
-
-	UFUNCTION()
-	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue);
-
 	UFUNCTION(BlueprintNativeEvent)
 	void OnTotalNPCsUpdated(int32 Value);
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
@@ -96,9 +93,44 @@ protected:
 
 	int32 GetNumWorkers() const { return NumWorkers; }
 
+	virtual void ReadCommandLineArgs(const FString& CommandLine);
+	virtual void ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags);
+	virtual void BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags);
+
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
+
+	// Worker flag update delegate functions
+	UFUNCTION()
+	virtual void OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnRequiredPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnTotalNPCsFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnMaxRoundTripFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnMaxUpdateTimeDeltaFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnNumWorkersFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	virtual void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 private:
 
@@ -170,8 +202,9 @@ private:
 	FMetricTimer MemReportIntervalTimer;
 #endif
 
-	void TryBindWorkerFlagsDelegate();
+	void ParsePassedValues();
 	void TryAddSpatialMetrics();
+	void TryBindWorkerFlagsDelegates();
 
 	FTimerHandle FailActorCountTimeoutTimerHandle;
 	FTimerHandle UpdateActorCountCheckTimerHandle;

@@ -20,7 +20,6 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
-#include "TimerManager.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
 
@@ -344,7 +343,8 @@ void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClu
 // --- ABenchmarkGymGameMode ---
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: bInitializedCustomSpawnParameters(false)
+	: bHasCreatedSpawnPoints(false)
+	, PlayerDensity(-1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
@@ -358,22 +358,33 @@ void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	SpawnManager = NewObject<USpawnManager>(this);
+	TryStartCustomNPCSpawning();
+}
 
-	if (HasAuthority())
+void ABenchmarkGymGameMode::BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
+{
+	Super::BindWorkerFlagsDelegates(SpatialWorkerFlags);
 	{
-		// It's possible for CheckCmdLineParameters may not get called on the game mode auth server if no players are spawned on the game mode auth server.
-		// In case this happens, ensure we still call CheckCmdLineParameters after a delay. The delay ensure worker flags are set.
-		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-		FTimerHandle TimerHandle;
-		TimerManager.SetTimer(
-			TimerHandle,
-				[WeakThis = TWeakObjectPtr<ABenchmarkGymGameMode>(this)]() {
-				if (ABenchmarkGymGameMode* GameMode = WeakThis.Get())
-				{
-					GameMode->CheckCmdLineParameters();
-				}
-			},
-			5.0f, false);
+		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(PlayerDensityWorkerFlag, WorkerFlagDelegate);
+	}
+}
+
+void ABenchmarkGymGameMode::ReadCommandLineArgs(const FString& CommandLine)
+{
+	Super::ReadCommandLineArgs(CommandLine);
+	FParse::Value(*CommandLine, *BenchmarkPlayerDensityCommandLineKey, PlayerDensity);
+}
+
+void ABenchmarkGymGameMode::ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags)
+{
+	Super::ReadWorkerFlagsValues(SpatialWorkerFlags);
+
+	FString PlayerDensityString;
+	if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+	{
+		PlayerDensity = FCString::Atoi(*PlayerDensityString);
 	}
 }
 
@@ -404,23 +415,17 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 	}
 }
 
-void ABenchmarkGymGameMode::CheckCmdLineParameters()
+void ABenchmarkGymGameMode::TryStartCustomNPCSpawning()
 {
-	if (bInitializedCustomSpawnParameters)
+	if (ExpectedPlayers == -1 || PlayerDensity == -1 || bHasCreatedSpawnPoints)
 	{
 		return;
 	}
 
-	ParsePassedValues();
-	StartCustomNPCSpawning();
-
-	bInitializedCustomSpawnParameters = true;
-}
-
-void ABenchmarkGymGameMode::StartCustomNPCSpawning()
-{
 	ClearExistingSpawnPoints();
 	GenerateSpawnPoints();
+
+	bHasCreatedSpawnPoints = true;
 
 	const int32 NumSpawnPoints = SpawnManager->GetNumSpawnPoints();
 	if (NumSpawnPoints < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
@@ -465,48 +470,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			Blackboard->ClientSetBlackboardAILocations(Points);
 		}
 		AIControlledPlayers.Empty();
-	}
-}
-
-void ABenchmarkGymGameMode::ParsePassedValues()
-{
-	Super::ParsePassedValues();
-
-	PlayerDensity = ExpectedPlayers;
-
-	const FString& CommandLine = FCommandLine::Get();
-	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
-	{
-		FParse::Value(*CommandLine, *BenchmarkPlayerDensityCommandLineKey, PlayerDensity);
-	}
-	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-	{
-		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-
-		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetNetDriver());
-		if (ensure(NetDriver != nullptr))
-		{
-			const USpatialWorkerFlags* SpatialWorkerFlags = NetDriver->SpatialWorkerFlags;
-			if (ensure(SpatialWorkerFlags != nullptr))
-			{
-				FString PlayerDensityString;
-				if(SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
-				{
-					PlayerDensity = FCString::Atoi(*PlayerDensityString);
-				}
-			}
-		}
-	}
-
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Player Density %d"), PlayerDensity);
-}
-
-void ABenchmarkGymGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
-{
-	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
-	if (FlagName == PlayerDensityWorkerFlag)
-	{
-		PlayerDensity = FCString::Atoi(*FlagValue);
 	}
 }
 
@@ -596,8 +559,6 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	CheckCmdLineParameters();
-
 	if (SpawnManager->GetNumSpawnPoints() == 0)
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
@@ -629,4 +590,16 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+void ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue)
+{
+	PlayerDensity = FCString::Atoi(*FlagValue);
+	TryStartCustomNPCSpawning();
+}
+
+void ABenchmarkGymGameMode::OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue)
+{
+	Super::OnExpectedPlayerFlagUpdate(FlagName, FlagValue);
+	TryStartCustomNPCSpawning();
 }
