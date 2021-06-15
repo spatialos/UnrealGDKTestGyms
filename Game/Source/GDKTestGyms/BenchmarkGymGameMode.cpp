@@ -167,6 +167,8 @@ const TArray<AActor*>& USpawnCluster::CreateSpawnPointActors()
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		FVector ModifiedSpawnPoint = SpawnPoint;
+		ModifiedSpawnPoint.X = SpawnPoint.Y;
+		ModifiedSpawnPoint.Y = SpawnPoint.X;
 		ModifiedSpawnPoint.Z = 300;
 
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *ModifiedSpawnPoint.ToString());
@@ -443,12 +445,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 			if (SpawnPoint != nullptr)
 			{
 				FVector SpawnLocation = SpawnPoint->GetActorLocation();
-
-				// Swap X and Y
-				float SpawnLocationX = SpawnLocation.X;
-				SpawnLocation.X = SpawnLocation.Y;
-				SpawnLocation.Y = SpawnLocationX;
-
 				SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
 			}
 		}
