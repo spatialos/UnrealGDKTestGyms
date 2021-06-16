@@ -177,11 +177,17 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 
 void ABenchmarkGymGameModeBase::GatherWorkerConfiguration()
 {
+	// No need to fiddle with configuration as the defaults should reflect the native scenario.
+	if (!USpatialStatics::IsSpatialNetworkingEnabled())
+	{
+		return;
+	}
+
 	const UWorld* World = GetWorld();
 	const UAbstractSpatialMultiWorkerSettings* MultiWorkerSettings =
 		USpatialStatics::GetSpatialMultiWorkerClass(World)->GetDefaultObject<UAbstractSpatialMultiWorkerSettings>();
 
-	if (USpatialStatics::IsSpatialNetworkingEnabled() && MultiWorkerSettings != nullptr && MultiWorkerSettings->WorkerLayers.Num() > 0)
+	if (MultiWorkerSettings != nullptr && MultiWorkerSettings->WorkerLayers.Num() > 0)
 	{
 		NumWorkers = 0;
 		for (const FLayerInfo& LayerInfo : MultiWorkerSettings->WorkerLayers)
