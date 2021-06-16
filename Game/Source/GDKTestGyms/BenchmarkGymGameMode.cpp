@@ -343,7 +343,13 @@ void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClu
 // --- ABenchmarkGymGameMode ---
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: bHasCreatedSpawnPoints(false)
+	: DistBetweenClusterCenters(40000) // 400 meters, in Unreal units.
+	, PercentageSpawnPointsOnWorkerBoundaries(0.25f)
+	, ZoningCols(1)
+	, ZoningRows(1)
+	, ZoneWidth(1000000.0f)
+	, ZoneHeight(1000000.0f)
+	, bHasCreatedSpawnPoints(false)
 	, PlayerDensity(-1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -358,7 +364,46 @@ void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	SpawnManager = NewObject<USpawnManager>(this);
+	GatherZoningConfiguration();
 	TryStartCustomNPCSpawning();
+}
+
+void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	TryStartCustomNPCSpawning();
+
+	if (HasAuthority())
+	{
+		if (NPCSToSpawn > 0)
+		{
+			const int32 NPCIndex = TotalNPCs - NPCSToSpawn;
+			const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
+			if (SpawnPoint != nullptr)
+			{
+				FVector SpawnLocation = SpawnPoint->GetActorLocation();
+				SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
+				NPCSToSpawn--;
+			}
+		}
+
+		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+		{
+			AController* Controller = AIControlledPlayers[i].Key.Get();
+			int InfoIndex = AIControlledPlayers[i].Value;
+
+			checkf(Controller, TEXT("Simplayer controller has been deleted."));
+			ACharacter* Character = Controller->GetCharacter();
+			checkf(Character, TEXT("Simplayer character does not exist."));
+			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
+
+			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+			Blackboard->ClientSetBlackboardAILocations(Points);
+		}
+		AIControlledPlayers.Empty();
+	}
 }
 
 void ABenchmarkGymGameMode::BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
@@ -422,10 +467,13 @@ void ABenchmarkGymGameMode::TryStartCustomNPCSpawning()
 		return;
 	}
 
+	StartCustomNPCSpawning();
+}
+
+void ABenchmarkGymGameMode::StartCustomNPCSpawning()
+{
 	ClearExistingSpawnPoints();
 	GenerateSpawnPoints();
-
-	bHasCreatedSpawnPoints = true;
 
 	const int32 NumSpawnPoints = SpawnManager->GetNumSpawnPoints();
 	if (NumSpawnPoints < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
@@ -436,41 +484,8 @@ void ABenchmarkGymGameMode::TryStartCustomNPCSpawning()
 	GenerateTestScenarioLocations();
 
 	SpawnNPCs(TotalNPCs);
-}
 
-void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	if (HasAuthority())
-	{
-		if (NPCSToSpawn > 0)
-		{
-			int32 NPCIndex = TotalNPCs - NPCSToSpawn--;
-			const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
-			if (SpawnPoint != nullptr)
-			{
-				FVector SpawnLocation = SpawnPoint->GetActorLocation();
-				SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
-			}
-		}
-
-		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
-		{
-			AController* Controller = AIControlledPlayers[i].Key.Get();
-			int InfoIndex = AIControlledPlayers[i].Value;
-
-			checkf(Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = Controller->GetCharacter();
-			checkf(Character, TEXT("Simplayer character does not exist."));
-			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
-
-			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
-			Blackboard->ClientSetBlackboardAILocations(Points);
-		}
-		AIControlledPlayers.Empty();
-	}
+	bHasCreatedSpawnPoints = true;
 }
 
 void ABenchmarkGymGameMode::BuildExpectedActorCounts()
@@ -488,15 +503,8 @@ void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 	PlayerIdToSpawnPointMap.Reset();
 }
 
-void ABenchmarkGymGameMode::GenerateSpawnPoints()
+void ABenchmarkGymGameMode::GatherZoningConfiguration()
 {
-	const int DistBetweenClusterCenters = 40000; // 400 meters, in Unreal units.
-
-	int32 Rows = 1;
-	int32 Cols = 1;
-	float ZoneWidth = 1000000.0f;
-	float ZoneHeight = 1000000.0f;
-
 	const UWorld* World = GetWorld();
 	const UAbstractSpatialMultiWorkerSettings* MultiWorkerSettings =
 		USpatialStatics::GetSpatialMultiWorkerClass(World)->GetDefaultObject<UAbstractSpatialMultiWorkerSettings>();
@@ -507,20 +515,20 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints()
 		const UGridBasedLBStrategy* GridLBStrategy = Cast<UGridBasedLBStrategy>(LBStrategy);
 		if (GridLBStrategy != nullptr)
 		{
-			Rows = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetRows()));
-			Cols = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetCols()));
-			ZoneWidth = GridLBStrategy->GetWorldWidth() / Cols;
-			ZoneHeight = GridLBStrategy->GetWorldHeight() / Rows;
+			ZoningRows = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetRows()));
+			ZoningCols = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetCols()));
+			ZoneWidth = GridLBStrategy->GetWorldWidth() / ZoningCols;
+			ZoneHeight = GridLBStrategy->GetWorldHeight() / ZoningRows;
 		}
 	}
+}
 
-	const float PercentageSpawnPointsOnWorkerBoundaries = 0.25f;
-
+void ABenchmarkGymGameMode::GenerateSpawnPoints()
+{
 	const int32 NumClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 	const int32 BoundaryClusters = FMath::CeilToInt(NumClusters * PercentageSpawnPointsOnWorkerBoundaries);
 	const int32 ZoneClusters = NumClusters - BoundaryClusters;
-
-	SpawnManager->GenerateSpawnPoints(Rows, Cols, ZoneWidth, ZoneHeight, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
+	SpawnManager->GenerateSpawnPoints(ZoningRows, ZoningCols, ZoneWidth, ZoneHeight, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
 }
 
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
@@ -547,6 +555,7 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		}
 		NPCSpawner = Spawner;
 	}
+
 	if (NPCSpawner != nullptr)
 	{
 		NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
@@ -595,11 +604,4 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 void ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	PlayerDensity = FCString::Atoi(*FlagValue);
-	TryStartCustomNPCSpawning();
-}
-
-void ABenchmarkGymGameMode::OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue)
-{
-	Super::OnExpectedPlayerFlagUpdate(FlagName, FlagValue);
-	TryStartCustomNPCSpawning();
 }

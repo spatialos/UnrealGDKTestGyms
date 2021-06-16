@@ -1149,10 +1149,14 @@ void ABenchmarkGymGameModeBase::OnNumWorkersFlagUpdate(const FString& FlagName, 
 
 void ABenchmarkGymGameModeBase::OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
+#if	STATS
 	InitStatTimer(FlagValue);
+#endif
 }
 
 void ABenchmarkGymGameModeBase::OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
+#if	STATS
 	InitMemReportTimer(FlagValue);
+#endif
 }

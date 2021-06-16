@@ -10,6 +10,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
+class USpatialWorkerFlags;
+
 USTRUCT()
 struct FActorCount
 {
@@ -27,8 +29,6 @@ struct FActorCount
 	UPROPERTY()
 	int32 Count;
 };
-
-class USpatialWorkerFlags;
 
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
@@ -100,37 +100,6 @@ protected:
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
-
-	// Worker flag update delegate functions
-	UFUNCTION()
-	virtual void OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnRequiredPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnTotalNPCsFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnMaxRoundTripFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnMaxUpdateTimeDeltaFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnNumWorkersFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	virtual void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 private:
 
@@ -253,4 +222,35 @@ private:
 	void GetVelocityForMovementReport();
 	void GetPlayersVelocitySum(FVector2D& Velocity);
 	void CheckVelocityForPlayerMovement();
+
+	// Worker flag update delegate functions
+	UFUNCTION()
+	void OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnRequiredPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnTotalNPCsFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMaxRoundTripFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMaxUpdateTimeDeltaFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnNumWorkersFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
 };

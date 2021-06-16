@@ -10,7 +10,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameMode, Log, All);
 
-typedef TPair<TWeakObjectPtr<AController>, int> ControllerIntegerPair;
+using ControllerIntegerPair = TPair<TWeakObjectPtr<AController>, int>;
 
 UCLASS()
 class GDKTESTGYMS_API USpawnCluster : public UObject
@@ -94,9 +94,6 @@ private:
 	TArray<AActor*> SpawnPointActors;
 };
 
-/**
- *
- */
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameMode : public ABenchmarkGymGameModeBase
 {
@@ -109,25 +106,37 @@ public:
 
 protected:
 
+	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
+	TSubclassOf<AActor> DropCubeClass;
+
+	int DistBetweenClusterCenters;
+	float PercentageSpawnPointsOnWorkerBoundaries;
+
+	virtual void Tick(float DeltaSeconds) override;
+
+	virtual void StartCustomNPCSpawning();
 	virtual void BuildExpectedActorCounts() override;
 
 	virtual void ReadCommandLineArgs(const FString& CommandLine) override;
 	virtual void ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
 	virtual void BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
 
-	virtual void OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue) override;
-
-	UFUNCTION()
-	virtual void OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue);
+	int32 GetZoningCols() const { return ZoningCols; }
+	int32 GetZoningRows() const { return ZoningRows; }
+	int32 GetZoneWidth() const { return ZoneWidth; }
+	int32 GetZoneHeight() const { return ZoneHeight; }
 
 private:
+
+	int32 ZoningCols;
+	int32 ZoningRows;
+	float ZoneWidth;
+	float ZoneHeight;
+
 	TArray<FBlackboardValues> PlayerRunPoints;
 	TArray<FBlackboardValues> NPCRunPoints;
-	void GenerateTestScenarioLocations();
 
 	TArray<ControllerIntegerPair> AIControlledPlayers;
-
-	virtual void Tick(float DeltaSeconds) override;
 
 	bool bHasCreatedSpawnPoints;
 
@@ -139,7 +148,6 @@ private:
 
 	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
-	TSubclassOf<AActor> DropCubeClass;
 
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
@@ -147,9 +155,15 @@ private:
 	UPROPERTY()
 	USpawnManager* SpawnManager;
 
+	void GatherZoningConfiguration();
+	void GenerateTestScenarioLocations();
 	void ClearExistingSpawnPoints();
 	void TryStartCustomNPCSpawning();
 	void GenerateSpawnPoints();
 	void SpawnNPCs(int NumNPCs);
 	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
+
+	// Worker flag update delegate functions
+	UFUNCTION()
+	void OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue);
 };
