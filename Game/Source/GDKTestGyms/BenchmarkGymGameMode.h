@@ -83,6 +83,8 @@ public:
 private:
 
 	// Will create SpawnAreas for zones and boundaries for given parameters and add them to the member SpawnAreas.
+	// Each SpawnArea will be set up to only create a certain number of spawn points.
+	// This function should allow you to vary how many NPCs/Simplayers are spawned in the centre of zones or on boundaries.
 	void GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
 		const int32 ZoneClusters, const int32 BoundaryClusters,
 		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
