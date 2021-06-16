@@ -20,5 +20,7 @@ public class GDKTestGymsTarget : TargetRules
 		{
 			GlobalDefinitions.Add("FORCE_USE_STATS=1");
 		}
+
+		GlobalDefinitions.Add("PUSH_MODEL=1");
 	}
 }
