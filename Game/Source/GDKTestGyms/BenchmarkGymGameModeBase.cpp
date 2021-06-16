@@ -71,7 +71,7 @@ namespace
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
 
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
-	: ExpectedPlayers(-1)
+	: ExpectedPlayers(-1) // ExpectedPlayers is invalid until set via command line arg or worker flag.
 	, RequiredPlayers(4096)
 	, NumWorkers(1)
 	, ZoningCols(1)

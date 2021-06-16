@@ -82,6 +82,7 @@ public:
 
 private:
 
+	// Will create SpawnAreas for zones and boundaries for given parameters and add them to the member SpawnAreas.
 	void GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
 		const int32 ZoneClusters, const int32 BoundaryClusters,
 		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
@@ -153,5 +154,6 @@ private:
 	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
 	// Worker flag update delegate functions
-	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(PlayerDensity)
+	UFUNCTION()
+	void OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue);
 };

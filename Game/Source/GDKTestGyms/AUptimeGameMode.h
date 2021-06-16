@@ -42,8 +42,15 @@ private:
 	TArray<FVector> GenerateCrossServerLoaction();
 
 	// Worker flag update delegate functions
-	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(EgressSize)
-	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(EgressFrequency)
-	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(CrossServerSize)
-	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(CrossServerFrequency)
+	UFUNCTION()
+	void OnEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnEgressFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnCrossServerSizeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnCrossServerFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue);
 };

@@ -129,7 +129,8 @@ USpawnCluster::~USpawnCluster()
 
 void USpawnCluster::GenerateSpawnPoints()
 {
-	const int32 DistBetweenSpawnPoints = 300;
+	// Spawn points 3m apart to avoid spawn collision issues.
+	const float DistBetweenSpawnPoints = 300.0f;
 	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
 	if (!bSuccefullyCreatedReducedGrid)
 	{
@@ -159,15 +160,15 @@ const TArray<AActor*>& USpawnCluster::CreateSpawnPointActors()
 
 		FActorSpawnParameters SpawnInfo;
 		SpawnInfo.Owner = World->GetAuthGameMode();
-		SpawnInfo.Instigator = NULL;
 		SpawnInfo.bDeferConstruction = false;
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		// Swapping X and Y as GridBaseLBStrategy has the two reversed.
+		// Spawn actor is placed 3m off the ground to avoid spawning collisions.
 		FVector ModifiedSpawnPoint = SpawnPoint;
 		ModifiedSpawnPoint.X = SpawnPoint.Y;
 		ModifiedSpawnPoint.Y = SpawnPoint.X;
-		ModifiedSpawnPoint.Z = 300;
+		ModifiedSpawnPoint.Z = 300.0f;
 
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *ModifiedSpawnPoint.ToString());
 		SpawnPointActors.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), ModifiedSpawnPoint, FRotator::ZeroRotator, SpawnInfo));
@@ -304,8 +305,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 			{
 				NewSpawnArea->Type = bIsZone ? USpawnArea::Type::Zone : USpawnArea::Type::Boundary;
 
-				const float X = StartX + Col * ZoneWidth / 2;
-				const float Y = StartY + Row * ZoneHeight / 2;
+				const float X = StartX + Col * ZoneWidth / 2.0f;
+				const float Y = StartY + Row * ZoneHeight / 2.0f;
 				NewSpawnArea->WorldPosition = { X, Y, 0.0f };
 
 				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoneRow ? MinDistanceBetweenClusters : SpawnAreaWidth;
@@ -344,13 +345,19 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: DistBetweenClusterCenters(40000) // 400 meters, in Unreal units.
 	, PercentageSpawnPointsOnWorkerBoundaries(0.05f)
 	, bHasCreatedSpawnPoints(false)
-	, PlayerDensity(-1)
+	, PlayerDensity(-1) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(TEXT("/Game/Benchmark/DropCube_BP"));
+	FString DropCubeAssetPath = TEXT("/Game/Benchmark/DropCube_BP");
+	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(*DropCubeAssetPath);
+	if (!DropCubeClassFinder.Succeeded())
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Provided DropCube asset path unsuccesfully loaded. Path: %s"), *DropCubeAssetPath);
+		return;
+	}
 	DropCubeClass = DropCubeClassFinder.Class;
 }
 
@@ -428,7 +435,8 @@ void ABenchmarkGymGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWor
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
-	constexpr float RoamRadius = 7500.0f; // Set to half the NetCullDistance
+	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
+	const float RoamRadius = FMath::Sqrt(Pawn->NetCullDistanceSquared) / 2.0f;
 	{
 		FRandomStream PlayerStream;
 		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
