@@ -10,6 +10,10 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
+#define DECLARE_WORKER_FLAG_UPDATE_FUNCTION(VARIABLE_NAME) \
+	UFUNCTION() \
+	void On##VARIABLE_NAME##FlagUpdate(const FString& FlagName, const FString& FlagValue);
+
 class USpatialWorkerFlags;
 
 USTRUCT()
@@ -233,30 +237,13 @@ private:
 	void CheckVelocityForPlayerMovement();
 
 	// Worker flag update delegate functions
-	UFUNCTION()
-	void OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnRequiredPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnTotalNPCsFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnMaxRoundTripFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnMaxUpdateTimeDeltaFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(ExpectedPlayers)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(RequiredPlayers)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(TotalNPCs)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(MaxRoundTrip)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(MaxUpdateTimeDelta)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(TestLiftime)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(MinActorMigration)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(StatProfile)
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(MemReport)
 };

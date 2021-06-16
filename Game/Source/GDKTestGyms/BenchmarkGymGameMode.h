@@ -153,6 +153,5 @@ private:
 	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
 	// Worker flag update delegate functions
-	UFUNCTION()
-	void OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue);
+	DECLARE_WORKER_FLAG_UPDATE_FUNCTION(PlayerDensity)
 };

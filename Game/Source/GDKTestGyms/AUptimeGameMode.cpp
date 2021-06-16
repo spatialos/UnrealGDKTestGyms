@@ -9,17 +9,17 @@ DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
 namespace
 {
-	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
-	const FString UptimeEgressSizeCommandLineKey = TEXT("-EgressTestSize=");
+	const FString EgressSizeWorkerFlag = TEXT("egress_test_size");
+	const FString EgressSizeCommandLineKey = TEXT("-EgressTestSize=");
 	
-	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
-	const FString UptimeEgressFrequencyCommandLineKey = TEXT("-EgressTestFrequency=");
+	const FString EgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
+	const FString EgressFrequencyCommandLineKey = TEXT("-EgressTestFrequency=");
 	
-	const FString UptimeCrossServerSizeWorkerFlag = TEXT("cross_server_size");
-	const FString UptimeCrossServerSizeCommandLineKey = TEXT("-CrossServerSize=");
+	const FString CrossServerSizeWorkerFlag = TEXT("cross_server_size");
+	const FString CrossServerSizeCommandLineKey = TEXT("-CrossServerSize=");
 
-	const FString UptimeCrossServerFrequencyWorkerFlag = TEXT("cross_server_frequency");
-	const FString UptimeCrossServerFrequencyCommandLineKey = TEXT("-CrossServerFrequency=");
+	const FString CrossServerFrequencyWorkerFlag = TEXT("cross_server_frequency");
+	const FString CrossServerFrequencyCommandLineKey = TEXT("-CrossServerFrequency=");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
@@ -37,33 +37,33 @@ void AUptimeGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorker
 	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnUptimeEgressSizeFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(UptimeEgressSizeWorkerFlag, WorkerFlagDelegate);
+		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnEgressSizeFlagUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(EgressSizeWorkerFlag, WorkerFlagDelegate);
 	}
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnUptimeEgressFrequencyFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(UptimeEgressFrequencyWorkerFlag, WorkerFlagDelegate);
+		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnEgressFrequencyFlagUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(EgressFrequencyWorkerFlag, WorkerFlagDelegate);
 	}
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnUptimeCrossServerSizeFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(UptimeCrossServerSizeWorkerFlag, WorkerFlagDelegate);
+		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnCrossServerSizeFlagUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CrossServerSizeWorkerFlag, WorkerFlagDelegate);
 	}
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnUptimeCrossServerFrequencyFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(UptimeCrossServerFrequencyCommandLineKey, WorkerFlagDelegate);
+		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnCrossServerFrequencyFlagUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CrossServerFrequencyCommandLineKey, WorkerFlagDelegate);
 	}
 }
 
 void AUptimeGameMode::ReadCommandLineArgs(const FString& CommandLine)
 {
 	Super::ReadCommandLineArgs(CommandLine);
-	FParse::Value(*CommandLine, *UptimeEgressSizeCommandLineKey, EgressSize);
-	FParse::Value(*CommandLine, *UptimeEgressFrequencyCommandLineKey, EgressFrequency);
-	FParse::Value(*CommandLine, *UptimeCrossServerSizeCommandLineKey, CrossServerSize);
-	FParse::Value(*CommandLine, *UptimeCrossServerFrequencyCommandLineKey, CrossServerFrequency);
+	FParse::Value(*CommandLine, *EgressSizeCommandLineKey, EgressSize);
+	FParse::Value(*CommandLine, *EgressFrequencyCommandLineKey, EgressFrequency);
+	FParse::Value(*CommandLine, *CrossServerSizeCommandLineKey, CrossServerSize);
+	FParse::Value(*CommandLine, *CrossServerFrequencyCommandLineKey, CrossServerFrequency);
 }
 
 void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
@@ -71,22 +71,22 @@ void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFla
 	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
 	FString EgressSizeString, EgressFrequencyString, CrossServerSizeString, CrossServerFrequencyString;
 
-	if (SpatialWorkerFlags->GetWorkerFlag(UptimeEgressSizeWorkerFlag, EgressSizeString))
+	if (SpatialWorkerFlags->GetWorkerFlag(EgressSizeWorkerFlag, EgressSizeString))
 	{
 		EgressSize = FCString::Atoi(*EgressSizeString);
 	}
 
-	if (SpatialWorkerFlags->GetWorkerFlag(UptimeEgressFrequencyWorkerFlag, EgressFrequencyString))
+	if (SpatialWorkerFlags->GetWorkerFlag(EgressFrequencyWorkerFlag, EgressFrequencyString))
 	{
 		EgressFrequency = FCString::Atoi(*EgressFrequencyString);
 	}
 
-	if (SpatialWorkerFlags->GetWorkerFlag(UptimeCrossServerSizeWorkerFlag, CrossServerSizeString))
+	if (SpatialWorkerFlags->GetWorkerFlag(CrossServerSizeWorkerFlag, CrossServerSizeString))
 	{
 		CrossServerSize = FCString::Atoi(*CrossServerSizeString);
 	}
 
-	if (SpatialWorkerFlags->GetWorkerFlag(UptimeCrossServerFrequencyCommandLineKey, CrossServerFrequencyString))
+	if (SpatialWorkerFlags->GetWorkerFlag(CrossServerFrequencyCommandLineKey, CrossServerFrequencyString))
 	{
 		CrossServerFrequency = FCString::Atoi(*CrossServerFrequencyString);
 	}
@@ -148,22 +148,22 @@ TArray<FVector> AUptimeGameMode::GenerateCrossServerLoaction()
 	return Locations;
 }
 
-void AUptimeGameMode::OnUptimeEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
+void AUptimeGameMode::OnEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	EgressSize = FCString::Atoi(*FlagValue);
 }
 
-void AUptimeGameMode::OnUptimeEgressFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue)
+void AUptimeGameMode::OnEgressFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	EgressFrequency = FCString::Atoi(*FlagValue);
 }
 
-void AUptimeGameMode::OnUptimeCrossServerSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
+void AUptimeGameMode::OnCrossServerSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	CrossServerSize = FCString::Atoi(*FlagValue);
 }
 
-void AUptimeGameMode::OnUptimeCrossServerFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue)
+void AUptimeGameMode::OnCrossServerFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	CrossServerFrequency = FCString::Atoi(*FlagValue);
 }

@@ -278,7 +278,7 @@ void ABenchmarkGymGameModeBase::BindWorkerFlagDelegates(USpatialWorkerFlags* Spa
 {
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnExpectedPlayerFlagUpdate);
+		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate);
 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TotalPlayerWorkerFlag, WorkerFlagDelegate);
 	}
 	{
@@ -1128,7 +1128,7 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 	}
 }
 
-void ABenchmarkGymGameModeBase::OnExpectedPlayerFlagUpdate(const FString& FlagName, const FString& FlagValue)
+void ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	ExpectedPlayers = FCString::Atoi(*FlagValue);
 }
