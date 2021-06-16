@@ -15,8 +15,6 @@
 #include "GeneralProjectSettings.h"
 #include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
-#include "LoadBalancing/SpatialMultiWorkerSettings.h"
-#include "LoadBalancing/GridBasedLBStrategy.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
@@ -345,10 +343,6 @@ void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClu
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: DistBetweenClusterCenters(40000) // 400 meters, in Unreal units.
 	, PercentageSpawnPointsOnWorkerBoundaries(0.25f)
-	, ZoningCols(1)
-	, ZoningRows(1)
-	, ZoneWidth(1000000.0f)
-	, ZoneHeight(1000000.0f)
 	, bHasCreatedSpawnPoints(false)
 	, PlayerDensity(-1)
 	, PlayersSpawned(0)
@@ -364,7 +358,6 @@ void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	SpawnManager = NewObject<USpawnManager>(this);
-	GatherZoningConfiguration();
 	TryStartCustomNPCSpawning();
 }
 
@@ -406,9 +399,9 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 	}
 }
 
-void ABenchmarkGymGameMode::BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
+void ABenchmarkGymGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
 {
-	Super::BindWorkerFlagsDelegates(SpatialWorkerFlags);
+	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate);
@@ -422,9 +415,9 @@ void ABenchmarkGymGameMode::ReadCommandLineArgs(const FString& CommandLine)
 	FParse::Value(*CommandLine, *BenchmarkPlayerDensityCommandLineKey, PlayerDensity);
 }
 
-void ABenchmarkGymGameMode::ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags)
+void ABenchmarkGymGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
 {
-	Super::ReadWorkerFlagsValues(SpatialWorkerFlags);
+	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
 
 	FString PlayerDensityString;
 	if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
@@ -503,32 +496,18 @@ void ABenchmarkGymGameMode::ClearExistingSpawnPoints()
 	PlayerIdToSpawnPointMap.Reset();
 }
 
-void ABenchmarkGymGameMode::GatherZoningConfiguration()
-{
-	const UWorld* World = GetWorld();
-	const UAbstractSpatialMultiWorkerSettings* MultiWorkerSettings =
-		USpatialStatics::GetSpatialMultiWorkerClass(World)->GetDefaultObject<UAbstractSpatialMultiWorkerSettings>();
-
-	if (MultiWorkerSettings != nullptr && MultiWorkerSettings->WorkerLayers.Num() > 0)
-	{
-		const UAbstractLBStrategy* LBStrategy = GetDefault<UAbstractLBStrategy>(MultiWorkerSettings->WorkerLayers[0].LoadBalanceStrategy);
-		const UGridBasedLBStrategy* GridLBStrategy = Cast<UGridBasedLBStrategy>(LBStrategy);
-		if (GridLBStrategy != nullptr)
-		{
-			ZoningRows = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetRows()));
-			ZoningCols = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetCols()));
-			ZoneWidth = GridLBStrategy->GetWorldWidth() / ZoningCols;
-			ZoneHeight = GridLBStrategy->GetWorldHeight() / ZoningRows;
-		}
-	}
-}
-
 void ABenchmarkGymGameMode::GenerateSpawnPoints()
 {
 	const int32 NumClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 	const int32 BoundaryClusters = FMath::CeilToInt(NumClusters * PercentageSpawnPointsOnWorkerBoundaries);
 	const int32 ZoneClusters = NumClusters - BoundaryClusters;
-	SpawnManager->GenerateSpawnPoints(ZoningRows, ZoningCols, ZoneWidth, ZoneHeight, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
+
+	const int32 Rows = GetZoningRows();
+	const int32 Cols = GetZoningCols();
+	const float Width = GetZoneWidth();
+	const float Height = GetZoneHeight();
+
+	SpawnManager->GenerateSpawnPoints(Rows, Cols, Width, Height, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
 }
 
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)

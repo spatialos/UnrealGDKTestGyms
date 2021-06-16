@@ -91,17 +91,27 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-	int32 GetNumWorkers() const { return NumWorkers; }
-
 	virtual void ReadCommandLineArgs(const FString& CommandLine);
-	virtual void ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags);
-	virtual void BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags);
+	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags);
+	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags);
 
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
 
+	int32 GetNumWorkers() const { return NumWorkers; }
+	int32 GetZoningCols() const { return ZoningCols; }
+	int32 GetZoningRows() const { return ZoningRows; }
+	float GetZoneWidth() const { return ZoneWidth; }
+	float GetZoneHeight() const { return ZoneHeight; }
+
 private:
+
+	int32 NumWorkers;
+	int32 ZoningCols;
+	int32 ZoningRows;
+	float ZoneWidth;
+	float ZoneHeight;
 
 	double AveragedClientRTTMS; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
@@ -157,8 +167,6 @@ private:
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
 
-	int32 NumWorkers;
-	int32 NumSpawnZones;
 #if	STATS
 	// For stat profile
 	int32 CPUProfileInterval;
@@ -171,6 +179,7 @@ private:
 	FMetricTimer MemReportIntervalTimer;
 #endif
 
+	void GatherWorkerConfiguration();
 	void ParsePassedValues();
 	void TryAddSpatialMetrics();
 	void TryBindWorkerFlagsDelegates();
@@ -244,9 +253,6 @@ private:
 
 	UFUNCTION()
 	void OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnNumWorkersFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION()
 	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);

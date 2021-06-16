@@ -32,9 +32,9 @@ AUptimeGameMode::AUptimeGameMode()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AUptimeGameMode::BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
+void AUptimeGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
 {
-	Super::BindWorkerFlagsDelegates(SpatialWorkerFlags);
+	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
 	{
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
 		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnUptimeEgressSizeFlagUpdate);
@@ -66,9 +66,9 @@ void AUptimeGameMode::ReadCommandLineArgs(const FString& CommandLine)
 	FParse::Value(*CommandLine, *UptimeCrossServerFrequencyCommandLineKey, CrossServerFrequency);
 }
 
-void AUptimeGameMode::ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags)
+void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
 {
-	Super::ReadWorkerFlagsValues(SpatialWorkerFlags);
+	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
 	FString EgressSizeString, EgressFrequencyString, CrossServerSizeString, CrossServerFrequencyString;
 
 	if (SpatialWorkerFlags->GetWorkerFlag(UptimeEgressSizeWorkerFlag, EgressSizeString))
@@ -134,13 +134,13 @@ TArray<FVector> AUptimeGameMode::GenerateCrossServerLoaction()
 	const float StartingY = -(Rows - 1) * Height / 2 / Rows;
 
 	TArray<FVector> Locations;
-	const int32 Z = 300;
-	for (int32 x = 0; x < Cols; ++x)
+	const float Z = 300.0f;
+	for (int32 Col = 0; Col < Cols; ++Col)
 	{
-		for (int32 y = 0; y < Rows; ++y)
+		for (int32 Row = 0; Row < Rows; ++Row)
 		{
-			const float X = StartingX + x * DistBetweenCols;
-			const float Y = StartingY + y * DistBetweenRows;
+			const float X = StartingX + Col * DistBetweenCols;
+			const float Y = StartingY + Row * DistBetweenRows;
 			FVector Location = FVector(X, Y, Z);
 			Locations.Add(Location);
 		}

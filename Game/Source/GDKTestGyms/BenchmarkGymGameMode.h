@@ -118,20 +118,10 @@ protected:
 	virtual void BuildExpectedActorCounts() override;
 
 	virtual void ReadCommandLineArgs(const FString& CommandLine) override;
-	virtual void ReadWorkerFlagsValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
-	virtual void BindWorkerFlagsDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
-
-	int32 GetZoningCols() const { return ZoningCols; }
-	int32 GetZoningRows() const { return ZoningRows; }
-	int32 GetZoneWidth() const { return ZoneWidth; }
-	int32 GetZoneHeight() const { return ZoneHeight; }
+	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
 
 private:
-
-	int32 ZoningCols;
-	int32 ZoningRows;
-	float ZoneWidth;
-	float ZoneHeight;
 
 	TArray<FBlackboardValues> PlayerRunPoints;
 	TArray<FBlackboardValues> NPCRunPoints;
@@ -155,7 +145,6 @@ private:
 	UPROPERTY()
 	USpawnManager* SpawnManager;
 
-	void GatherZoningConfiguration();
 	void GenerateTestScenarioLocations();
 	void ClearExistingSpawnPoints();
 	void TryStartCustomNPCSpawning();
