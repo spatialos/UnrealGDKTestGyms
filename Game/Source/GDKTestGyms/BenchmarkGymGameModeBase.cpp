@@ -648,9 +648,6 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 			}
 		}
 	}
-
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f, NumWorkers %d"),
-		ExpectedPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond, NumWorkers);
 }
 
 void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
@@ -682,6 +679,9 @@ void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
 	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
 	InitMemReportTimer(MemReportIntervalString);
 #endif
+
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f"),
+		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond);
 }
 
 void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
@@ -737,6 +737,9 @@ void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* Spatia
 		InitMemReportTimer(MemReportIntervalString);
 	}
 #endif
+
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, MinActorMigrationPerSecond %.8f"),
+		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, MinActorMigrationPerSecond);
 }
 
 void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
@@ -1137,26 +1140,31 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 void ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	ExpectedPlayers = FCString::Atoi(*FlagValue);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("ExpectedPlayers %d"), ExpectedPlayers);
 }
 
 void ABenchmarkGymGameModeBase::OnRequiredPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	RequiredPlayers = FCString::Atoi(*FlagValue);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("RequiredPlayers %d"), RequiredPlayers);
 }
 
 void ABenchmarkGymGameModeBase::OnTotalNPCsFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	SetTotalNPCs(FCString::Atoi(*FlagValue));
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("TotalNPCs %d"), TotalNPCs);
 }
 
 void ABenchmarkGymGameModeBase::OnMaxRoundTripFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	MaxClientRoundTripMS = FCString::Atoi(*FlagValue);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MaxClientRoundTripMS %d"), MaxClientRoundTripMS);
 }
 
 void ABenchmarkGymGameModeBase::OnMaxUpdateTimeDeltaFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	MaxClientUpdateTimeDeltaMS = FCString::Atoi(*FlagValue);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MaxClientUpdateTimeDeltaMS %d"), MaxClientUpdateTimeDeltaMS);
 }
 
 void ABenchmarkGymGameModeBase::OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue)
@@ -1167,6 +1175,7 @@ void ABenchmarkGymGameModeBase::OnTestLiftimeFlagUpdate(const FString& FlagName,
 void ABenchmarkGymGameModeBase::OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	MinActorMigrationPerSecond = FCString::Atof(*FlagValue);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("MinActorMigrationPerSecond %d"), MinActorMigrationPerSecond);
 }
 
 void ABenchmarkGymGameModeBase::OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue)

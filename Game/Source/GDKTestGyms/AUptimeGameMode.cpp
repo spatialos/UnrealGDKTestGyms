@@ -64,6 +64,8 @@ void AUptimeGameMode::ReadCommandLineArgs(const FString& CommandLine)
 	FParse::Value(*CommandLine, *EgressFrequencyCommandLineKey, EgressFrequency);
 	FParse::Value(*CommandLine, *CrossServerSizeCommandLineKey, CrossServerSize);
 	FParse::Value(*CommandLine, *CrossServerFrequencyCommandLineKey, CrossServerFrequency);
+
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("EgressSize %d, EgressFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), EgressSize, EgressFrequency, CrossServerSize, CrossServerFrequency);
 }
 
 void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
@@ -90,6 +92,8 @@ void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFla
 	{
 		CrossServerFrequency = FCString::Atoi(*CrossServerFrequencyString);
 	}
+
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("EgressSize %d, EgressFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), EgressSize, EgressFrequency, CrossServerSize, CrossServerFrequency);
 }
 
 void AUptimeGameMode::StartCustomNPCSpawning()
@@ -151,19 +155,23 @@ TArray<FVector> AUptimeGameMode::GenerateCrossServerLoaction()
 void AUptimeGameMode::OnEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	EgressSize = FCString::Atoi(*FlagValue);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("EgressSize %d"), EgressSize);
 }
 
 void AUptimeGameMode::OnEgressFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	EgressFrequency = FCString::Atoi(*FlagValue);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("EgressFrequency %d"), EgressFrequency);
 }
 
 void AUptimeGameMode::OnCrossServerSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	CrossServerSize = FCString::Atoi(*FlagValue);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("CrossServerSize %d"), CrossServerSize);
 }
 
 void AUptimeGameMode::OnCrossServerFrequencyFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	CrossServerFrequency = FCString::Atoi(*FlagValue);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("CrossServerFrequency %d"), CrossServerFrequency);
 }

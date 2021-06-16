@@ -420,6 +420,8 @@ void ABenchmarkGymGameMode::ReadCommandLineArgs(const FString& CommandLine)
 {
 	Super::ReadCommandLineArgs(CommandLine);
 	FParse::Value(*CommandLine, *BenchmarkPlayerDensityCommandLineKey, PlayerDensity);
+
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("PlayersDensity %d"), PlayerDensity);
 }
 
 void ABenchmarkGymGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
@@ -431,6 +433,8 @@ void ABenchmarkGymGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWor
 	{
 		PlayerDensity = FCString::Atoi(*PlayerDensityString);
 	}
+
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("PlayersDensity %d"), PlayerDensity);
 }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
@@ -591,4 +595,5 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 void ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	PlayerDensity = FCString::Atoi(*FlagValue);
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("PlayerDensity %d"), PlayerDensity);
 }
