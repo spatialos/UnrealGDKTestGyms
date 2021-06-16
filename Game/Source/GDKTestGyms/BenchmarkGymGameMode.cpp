@@ -342,7 +342,7 @@ void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClu
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: DistBetweenClusterCenters(40000) // 400 meters, in Unreal units.
-	, PercentageSpawnPointsOnWorkerBoundaries(0.25f)
+	, PercentageSpawnPointsOnWorkerBoundaries(0.05f)
 	, bHasCreatedSpawnPoints(false)
 	, PlayerDensity(-1)
 	, PlayersSpawned(0)
