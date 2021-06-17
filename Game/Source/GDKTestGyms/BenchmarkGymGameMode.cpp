@@ -39,7 +39,7 @@ namespace
 	{
 		if (CellSize == 0)
 		{
-			UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Trying to generate grid settings using invalid CellSize"));
+			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Trying to generate grid settings using invalid CellSize"));
 			return false;
 		}
 
@@ -47,12 +47,12 @@ namespace
 		const int32 MaxCols = FMath::FloorToInt(GridMaxWidth / CellSize);
 
 		// Ensure we have odd number of rows and cols.
-		int32 Rows = MaxRows % 2 == 0 ? MaxRows - 1 : MaxRows;
-		int32 Cols = MaxCols % 2 == 0 ? MaxCols - 1 : MaxCols;
+		int32 Rows = MaxRows % 2 == 0 ? FMath::Max(0, MaxRows - 1) : MaxRows;
+		int32 Cols = MaxCols % 2 == 0 ? FMath::Max(0, MaxCols - 1) : MaxCols;
 
 		if (Rows * Cols < MinCells)
 		{
-			UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Area not big enough for MinCells"));
+			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Area not big enough for MinCells"));
 			return false;
 		}
 
@@ -376,14 +376,16 @@ void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClu
 // --- ABenchmarkGymGameMode ---
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: DistBetweenClusterCenters(40000) // 400 meters, in Unreal units.
-	, PercentageSpawnPointsOnWorkerBoundaries(0.05f)
+	: PercentageSpawnPointsOnWorkerBoundaries(0.05f)
 	, bHasCreatedSpawnPoints(false)
 	, PlayerDensity(-1) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
+	DistBetweenClusterCenters = FMath::Sqrt(Pawn->NetCullDistanceSquared) * 2.2f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay()
