@@ -177,7 +177,7 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 
 void ABenchmarkGymGameModeBase::GatherWorkerConfiguration()
 {
-	// No need to fiddle with configuration as the defaults should reflect the native scenario.
+	// No need to fiddle with configuration as the defaults should reflect the single server scenario which is all that's required in native.
 	if (!USpatialStatics::IsSpatialNetworkingEnabled())
 	{
 		return;
@@ -189,12 +189,7 @@ void ABenchmarkGymGameModeBase::GatherWorkerConfiguration()
 
 	if (MultiWorkerSettings != nullptr && MultiWorkerSettings->WorkerLayers.Num() > 0)
 	{
-		NumWorkers = 0;
-		for (const FLayerInfo& LayerInfo : MultiWorkerSettings->WorkerLayers)
-		{
-			const UAbstractLBStrategy* LBStrategy = GetDefault<UAbstractLBStrategy>(MultiWorkerSettings->WorkerLayers[0].LoadBalanceStrategy);
-			NumWorkers += LBStrategy->GetMinimumRequiredWorkers();
-		}
+		NumWorkers = MultiWorkerSettings->GetMinimumRequiredWorkerCount();
 
 		const UAbstractLBStrategy* LBStrategy = GetDefault<UAbstractLBStrategy>(MultiWorkerSettings->WorkerLayers[0].LoadBalanceStrategy);
 		const UGridBasedLBStrategy* GridLBStrategy = Cast<UGridBasedLBStrategy>(LBStrategy);

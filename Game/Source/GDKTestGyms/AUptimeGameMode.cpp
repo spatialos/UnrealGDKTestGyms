@@ -119,6 +119,11 @@ void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
 
 	SpawnManager->ForEachZoneArea([this, World](USpawnArea& ZoneArea) {
 		AActor* SpawnPointActor = ZoneArea.GetSpawnPointActorByIndex(0);
+		if (SpawnPointActor == nullptr)
+		{
+			return;
+		}
+
 		FVector SpawnLocation = SpawnPointActor->GetActorLocation();
 
 		AUptimeCrossServerBeacon* Beacon = World->SpawnActor<AUptimeCrossServerBeacon>(CrossServerClass, SpawnLocation, FRotator::ZeroRotator, FActorSpawnParameters());
