@@ -398,10 +398,10 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	TryStartCustomNPCSpawning();
-
 	if (HasAuthority())
 	{
+		TryStartCustomNPCSpawning();
+
 		if (NPCSToSpawn > 0)
 		{
 			const int32 NPCIndex = TotalNPCs - NPCSToSpawn;
