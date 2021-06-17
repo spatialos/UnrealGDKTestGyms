@@ -789,7 +789,7 @@ void ABenchmarkGymGameModeBase::GetActorCount(const TSubclassOf<AActor>& ActorCl
 			// During actor authority handover, there's a period where no server will believe it has authority over
 			// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
 			// the spatial authority as a fallback validation.
-			Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(Actor);
+			const FSpatialEntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(Actor);
 			const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
 			if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
 			{
