@@ -372,15 +372,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, NPCSToSpawn(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	FString DropCubeAssetPath = TEXT("/Game/Benchmark/DropCube_BP");
-	static ConstructorHelpers::FClassFinder<AActor> DropCubeClassFinder(*DropCubeAssetPath);
-	if (!DropCubeClassFinder.Succeeded())
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Provided DropCube asset path unsuccesfully loaded. Path: %s"), *DropCubeAssetPath);
-		return;
-	}
-	DropCubeClass = DropCubeClassFinder.Class;
 }
 
 void ABenchmarkGymGameMode::BeginPlay()
