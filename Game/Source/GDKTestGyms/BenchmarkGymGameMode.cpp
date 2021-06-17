@@ -302,6 +302,9 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 	const int32 MaxClustersPerZone = FMath::CeilToInt(ZoneClusters / static_cast<float>(NumZones));
 	const int32 MaxClustersPerBoundary = NumBoundaries != 0 ? FMath::CeilToInt(BoundaryClusters / static_cast<float>(NumBoundaries)) : 0;
 
+	int32 ZoneClustersToAdd = ZoneClusters;
+	int32 BoundaryClustersToAdd = BoundaryClusters;
+
 	for (int32 Row = 0; Row < SpawnAreaRows; ++Row)
 	{
 		for (int32 Col = 0; Col < SpawnAreaCols; ++Col)
@@ -322,6 +325,13 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 				continue;
 			}
 
+			int32& ClusterToAdd = bIsZone ? ZoneClustersToAdd : BoundaryClustersToAdd;
+			if (ClusterToAdd <= 0)
+			{
+				// Don't create new areas if we have already added enough clusters for area type.
+				continue;
+			}
+
 			USpawnArea* NewSpawnArea = NewObject<USpawnArea>(this);
 			if (NewSpawnArea != nullptr)
 			{
@@ -339,6 +349,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 
 				NewSpawnArea->GenerateSpawnClusters();
 				SpawnAreas.Add(NewSpawnArea);
+
+				ClusterToAdd -= MaxClusters;
 			}
 		}
 	}
@@ -378,7 +390,6 @@ void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	SpawnManager = NewObject<USpawnManager>(this);
-	TryStartCustomNPCSpawning();
 }
 
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
