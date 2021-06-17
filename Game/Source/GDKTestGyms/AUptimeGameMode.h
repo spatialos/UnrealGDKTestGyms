@@ -39,7 +39,6 @@ private:
 	int32 CrossServerFrequency;
 
 	void SpawnCrossServerActors(int32 CrossServerPoint);
-	TArray<FVector> GenerateCrossServerLoaction();
 
 	// Worker flag update delegate functions
 	UFUNCTION()

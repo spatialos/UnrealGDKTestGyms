@@ -28,7 +28,7 @@ namespace
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
 	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
 
-	// Returns an array of co-ordinates. Each co-ordinate represents the center of a cell in a generated grid.
+	// Returns an array of coordinates. Each coordinate represents the center of a cell in a generated grid.
 	// The grid created will abide by these rules if the function returns true:
 	//		- Fit inside the dimensions GridMaxWidth, GridMaxHeight.
 	//		- Have an odd number of rows and columns.
@@ -141,9 +141,9 @@ void USpawnCluster::GenerateSpawnPoints()
 	// This ensures we iterate from closest to furthest spawn point.
 	SpawnPoints.Sort([this](const FVector& Point1, const FVector& Point2)
 	{
-		const float Distance1 = FVector::Distance(Point1, WorldPosition);
-		const float Distance2 = FVector::Distance(Point2, WorldPosition);
-		return Distance2 > Distance1;
+		const float DistanceSqr1 = FVector::DistSquared(Point1, WorldPosition);
+		const float DistanceSqr2 = FVector::DistSquared(Point2, WorldPosition);
+		return DistanceSqr2 > DistanceSqr1;
 	});
 
 	//Remove any excess spawn points
@@ -192,9 +192,9 @@ void USpawnArea::GenerateSpawnClusters()
 	// This ensures we iterate from closest to furthest cluster.
 	ClusterPoints.Sort([this](const FVector& Point1, const FVector& Point2)
 	{
-		const float Distance1 = FVector::Distance(Point1, WorldPosition);
-		const float Distance2 = FVector::Distance(Point2, WorldPosition);
-		return Distance2 > Distance1;
+		const float DistanceSqr1 = FVector::DistSquared(Point1, WorldPosition);
+		const float DistanceSqr2 = FVector::DistSquared(Point2, WorldPosition);
+		return DistanceSqr2 > DistanceSqr1;
 	});
 
 	//Remove any excess areas
@@ -217,19 +217,29 @@ void USpawnArea::GenerateSpawnClusters()
 	}
 }
 
-TArray<AActor*> USpawnArea::CreateSpawnPointActors()
+const TArray<AActor*>& USpawnArea::CreateSpawnPointActors()
 {
+	SpawnPointActors.Empty();
 	if (SpawnClusters.Num() == 0)
 	{
-		return {};
+		return SpawnPointActors;
 	}
 
-	TArray<AActor*> OutSpawnPointActors;
 	for (USpawnCluster* Cluster : SpawnClusters)
 	{
-		OutSpawnPointActors += Cluster->CreateSpawnPointActors();
+		SpawnPointActors += Cluster->CreateSpawnPointActors();
 	}
-	return OutSpawnPointActors;
+	return SpawnPointActors;
+}
+
+AActor* USpawnArea::GetSpawnPointActorByIndex(const int32 Index) const
+{
+	const int32 NumSpawnPoints = SpawnPointActors.Num();
+	if (NumSpawnPoints == 0)
+	{
+		return nullptr;
+	}
+	return SpawnPointActors[Index % NumSpawnPoints];
 }
 
 // --- USpawnManager ---
@@ -261,6 +271,18 @@ void USpawnManager::ClearSpawnPoints()
 {
 	SpawnAreas.Empty();
 	SpawnPointActors.Empty();
+}
+
+void USpawnManager::ForEachZoneArea(TFunctionRef<void(USpawnArea& ZoneArea)> Predicate)
+{
+	for (USpawnArea* SpawnArea : SpawnAreas)
+	{
+		if (SpawnArea != nullptr &&
+			SpawnArea->Type == USpawnArea::Type::Zone)
+		{
+			Predicate(*SpawnArea);
+		}
+	}
 }
 
 void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCols, const int32 ZoneWidth, const int32 ZoneHeight,

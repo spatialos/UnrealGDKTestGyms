@@ -57,12 +57,16 @@ public:
 	float MinDistanceBetweenClusters;
 
 	void GenerateSpawnClusters();
-	TArray<AActor*> CreateSpawnPointActors();
+	const TArray<AActor*>& CreateSpawnPointActors();
+	AActor* GetSpawnPointActorByIndex(const int32 Index) const;
 
 private:
 
 	UPROPERTY()
 	TArray<USpawnCluster*> SpawnClusters;
+
+	UPROPERTY()
+	TArray<AActor*> SpawnPointActors;
 };
 
 UCLASS()
@@ -79,6 +83,8 @@ public:
 	int32 GetNumSpawnPoints() const;
 
 	void ClearSpawnPoints();
+
+	void ForEachZoneArea(TFunctionRef<void(USpawnArea& ZoneArea)> Predicate);
 
 private:
 
@@ -108,6 +114,9 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
+
+	UPROPERTY()
+	USpawnManager* SpawnManager;
 
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<AActor> DropCubeClass;
@@ -144,9 +153,6 @@ private:
 
 	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
-
-	UPROPERTY()
-	USpawnManager* SpawnManager;
 
 	void GenerateTestScenarioLocations();
 	void ClearExistingSpawnPoints();

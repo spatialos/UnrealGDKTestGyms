@@ -111,45 +111,23 @@ void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
 		return;
 	}
 
-	TArray<FVector> Locations = GenerateCrossServerLoaction();
-	auto SizeOfLocations = Locations.Num();
-	for (auto i = 0; i < SizeOfLocations; ++i)
+	if (SpawnManager == nullptr)
 	{
-		AUptimeCrossServerBeacon* Beacon = World->SpawnActor<AUptimeCrossServerBeacon>(CrossServerClass, Locations[i], FRotator::ZeroRotator, FActorSpawnParameters());
-		checkf(Beacon, TEXT("Beacon failed to spawn at %s"), *Locations[i].ToString());
+		UE_LOG(LogUptimeGymGameMode, Error, TEXT("Error spawning, SpawnManager is null"));
+		return;
+	}
+
+	SpawnManager->ForEachZoneArea([this, World](USpawnArea& ZoneArea) {
+		AActor* SpawnPointActor = ZoneArea.GetSpawnPointActorByIndex(0);
+		FVector SpawnLocation = SpawnPointActor->GetActorLocation();
+
+		AUptimeCrossServerBeacon* Beacon = World->SpawnActor<AUptimeCrossServerBeacon>(CrossServerClass, SpawnLocation, FRotator::ZeroRotator, FActorSpawnParameters());
+		checkf(Beacon, TEXT("Beacon failed to spawn at %s"), *SpawnLocation.ToString());
 
 		Beacon->SetCrossServerSize(CrossServerSize);
 		Beacon->SetCrossServerFrequency(CrossServerFrequency);
 		UE_LOG(LogUptimeGymGameMode, Log, TEXT("cross server size: %d, cross server frequency: %d"), CrossServerSize, CrossServerFrequency);
-	}
-}
-
-TArray<FVector> AUptimeGameMode::GenerateCrossServerLoaction()
-{
-	const float Height = GetZoneHeight();
-	const float Width = GetZoneWidth();
-	const float Rows = GetZoningRows();
-	const float Cols = GetZoningCols();
-
-	const float DistBetweenRows = Height / Rows;
-	const float DistBetweenCols = Width / Cols;
-
-	const float StartingX = -(Cols - 1) * Width / 2 / Cols;
-	const float StartingY = -(Rows - 1) * Height / 2 / Rows;
-
-	TArray<FVector> Locations;
-	const float Z = 300.0f;
-	for (int32 Col = 0; Col < Cols; ++Col)
-	{
-		for (int32 Row = 0; Row < Rows; ++Row)
-		{
-			const float X = StartingX + Col * DistBetweenCols;
-			const float Y = StartingY + Row * DistBetweenRows;
-			FVector Location = FVector(X, Y, Z);
-			Locations.Add(Location);
-		}
-	}
-	return Locations;
+	});
 }
 
 void AUptimeGameMode::OnEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
