@@ -26,7 +26,7 @@ namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
 	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
-	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
+	const float PercentageSpawnpointsOnWorkerBoundary = 0.05f;
 } // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
