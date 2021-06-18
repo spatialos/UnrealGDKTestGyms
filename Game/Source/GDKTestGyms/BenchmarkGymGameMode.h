@@ -133,6 +133,8 @@ protected:
 	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
 	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
 
+	virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics) override;
+
 private:
 
 	TArray<FBlackboardValues> PlayerRunPoints;
@@ -148,6 +150,21 @@ private:
 	int32 PlayersSpawned;
 	int32 NPCSToSpawn;
 
+	// Actor migration members
+	bool bHasActorMigrationCheckFailed;
+	int32 PreviousTickMigration;
+	typedef TTuple<int32, float> MigrationDeltaPair;
+	TQueue<MigrationDeltaPair> MigrationDeltaHistory;
+	int32 MigrationOfCurrentWorker;
+	float MigrationSeconds;
+	float MigrationCountSeconds;
+	float MigrationWindowSeconds;
+	TMap<FString, float> MapWorkerActorMigration;
+	float MinActorMigrationPerSecond;
+	FMetricTimer ActorMigrationReportTimer;
+	FMetricTimer ActorMigrationCheckTimer;
+	FMetricTimer ActorMigrationCheckDelay;
+
 	UPROPERTY()
 	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
 
@@ -158,8 +175,18 @@ private:
 	void ClearExistingSpawnPoints();
 	void TryStartCustomNPCSpawning();
 	void GenerateSpawnPoints();
+
+	void TickActorMigration(float DeltaSeconds);
+	void TickNPCSpawning();
+	void TickSimPlayerBlackboardValues();
+
 	void SpawnNPCs(int NumNPCs);
 	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
+
+	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
+
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	// Worker flag update delegate functions
 	UFUNCTION()

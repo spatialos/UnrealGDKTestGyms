@@ -11,6 +11,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
 class USpatialWorkerFlags;
+class USpatialMetrics;
 
 USTRUCT()
 struct FActorCount
@@ -82,14 +83,13 @@ protected:
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
 
 	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportMigration(const FString& WorkerID, const float Migration);
-
-	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+	virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics);
 
 	virtual void ReadCommandLineArgs(const FString& CommandLine);
 	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags);
@@ -104,6 +104,7 @@ protected:
 	int32 GetZoningRows() const { return ZoningRows; }
 	float GetZoneWidth() const { return ZoneWidth; }
 	float GetZoneHeight() const { return ZoneHeight; }
+	int32 GetUXAuthActorCount() const { return UXAuthActorCount; }
 
 private:
 
@@ -123,23 +124,8 @@ private:
 	bool bHasActorCountFailed;
 	// bActorCountFailureState will be true if the test has failed
 	bool bActorCountFailureState;
-
-	// For actor migration count
-	bool bHasActorMigrationCheckFailed;
-	int32 PreviousTickMigration;
-	typedef TTuple<int32, float> MigrationDeltaPair;
-	TQueue<MigrationDeltaPair> MigrationDeltaHistory;
 	int32 UXAuthActorCount;
-	int32 MigrationOfCurrentWorker;
-	float MigrationSeconds;
-	float MigrationCountSeconds;
-	float MigrationWindowSeconds;
-	TMap<FString, float> MapWorkerActorMigration;
-	float MinActorMigrationPerSecond;
-	FMetricTimer ActorMigrationReportTimer;
-	FMetricTimer ActorMigrationCheckTimer;
-	FMetricTimer ActorMigrationCheckDelay;
-	
+
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 	FMetricTimer TickActorCountTimer;
@@ -197,14 +183,12 @@ private:
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
-	void TickActorMigration(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTMS; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaMS; }
 	double GetRequiredPlayersValid() const { return !bHasRequiredPlayersCheckFailed ? 1.0 : 0.0; }
-	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
@@ -250,9 +234,6 @@ private:
 
 	UFUNCTION()
 	void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
-
-	UFUNCTION()
-	void OnMinActorMigrationFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION()
 	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);

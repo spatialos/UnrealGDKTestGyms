@@ -25,6 +25,8 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
 namespace
 {
+	const FString ActorMigrationValidMetricName = TEXT("UnrealActorMigration");
+
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
 	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
 
@@ -381,6 +383,15 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, PlayerDensity(-1) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
+	, bHasActorMigrationCheckFailed(false)
+	, PreviousTickMigration(0)
+	, MigrationOfCurrentWorker(0)
+	, MigrationCountSeconds(0.0)
+	, MigrationWindowSeconds(5 * 60.0f)
+	, MinActorMigrationPerSecond(-1.0f)
+	, ActorMigrationReportTimer(1)
+	, ActorMigrationCheckTimer(11 * 60) // 1-minute later then ActorMigrationCheckDelay + MigrationWindowSeconds to make sure all the workers had reported their migration	
+	, ActorMigrationCheckDelay(5 * 60)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -398,37 +409,126 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	TickActorMigration(DeltaSeconds);
+
 	if (HasAuthority())
 	{
 		TryStartCustomNPCSpawning();
 
-		if (NPCSToSpawn > 0)
+		TickNPCSpawning();
+		TickSimPlayerBlackboardValues();
+		TickActorMigration(DeltaSeconds);
+	}
+}
+
+void ABenchmarkGymGameMode::TickNPCSpawning()
+{
+	if (NPCSToSpawn > 0)
+	{
+		const int32 NPCIndex = TotalNPCs - NPCSToSpawn;
+		const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
+		if (SpawnPoint != nullptr)
 		{
-			const int32 NPCIndex = TotalNPCs - NPCSToSpawn;
-			const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
-			if (SpawnPoint != nullptr)
+			FVector SpawnLocation = SpawnPoint->GetActorLocation();
+			SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
+			NPCSToSpawn--;
+		}
+	}
+}
+
+void ABenchmarkGymGameMode::TickSimPlayerBlackboardValues()
+{
+	for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+	{
+		AController* Controller = AIControlledPlayers[i].Key.Get();
+		int InfoIndex = AIControlledPlayers[i].Value;
+
+		checkf(Controller, TEXT("Simplayer controller has been deleted."));
+		ACharacter* Character = Controller->GetCharacter();
+		checkf(Character, TEXT("Simplayer character does not exist."));
+		UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
+		checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
+
+		const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
+		Blackboard->ClientSetBlackboardAILocations(Points);
+	}
+	AIControlledPlayers.Empty();
+}
+
+void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
+{
+	if (bHasActorMigrationCheckFailed)
+	{
+		return;
+	}
+
+	const int32 AuthActorCount = GetUXAuthActorCount();
+
+	// This test respects the initial delay timer only for multiworker
+	if (ActorMigrationCheckDelay.HasTimerGoneOff())
+	{
+		// Count how many actors hand over authority in 1 tick
+		int Delta = FMath::Abs(AuthActorCount - PreviousTickMigration);
+		MigrationDeltaHistory.Enqueue(MigrationDeltaPair(Delta, DeltaSeconds));
+		bool bChanged = false;
+		if (MigrationCountSeconds > MigrationWindowSeconds)
+		{
+			MigrationDeltaPair OldestValue;
+			if (MigrationDeltaHistory.Dequeue(OldestValue))
 			{
-				FVector SpawnLocation = SpawnPoint->GetActorLocation();
-				SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
-				NPCSToSpawn--;
+				MigrationOfCurrentWorker -= OldestValue.Key;
+				MigrationSeconds -= OldestValue.Value;
 			}
 		}
+		MigrationOfCurrentWorker += Delta;
+		MigrationSeconds += DeltaSeconds;
+		PreviousTickMigration = AuthActorCount;
 
-		for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+		if (MigrationCountSeconds > MigrationWindowSeconds)
 		{
-			AController* Controller = AIControlledPlayers[i].Key.Get();
-			int InfoIndex = AIControlledPlayers[i].Value;
+			if (ActorMigrationReportTimer.HasTimerGoneOff())
+			{
+				// Only report AverageMigrationOfCurrentWorkerPerSecond to the worker which has authority
+				float AverageMigrationOfCurrentWorkerPerSecond = MigrationOfCurrentWorker / MigrationSeconds;
+				ReportMigration(GetGameInstance()->GetSpatialWorkerId(), AverageMigrationOfCurrentWorkerPerSecond);
+				ActorMigrationReportTimer.SetTimer(1);
+			}
 
-			checkf(Controller, TEXT("Simplayer controller has been deleted."));
-			ACharacter* Character = Controller->GetCharacter();
-			checkf(Character, TEXT("Simplayer character does not exist."));
-			UDeterministicBlackboardValues* Blackboard = Cast<UDeterministicBlackboardValues>(Character->FindComponentByClass(UDeterministicBlackboardValues::StaticClass()));
-			checkf(Blackboard, TEXT("Simplayer does not have a UDeterministicBlackboardValues component."));
-
-			const FBlackboardValues& Points = PlayerRunPoints[InfoIndex % PlayerRunPoints.Num()];
-			Blackboard->ClientSetBlackboardAILocations(Points);
+			if (HasAuthority() && ActorMigrationCheckTimer.HasTimerGoneOff())
+			{
+				float Migration = 0.0f;
+				for (const auto& KeyValue : MapWorkerActorMigration)
+				{
+					Migration += KeyValue.Value;
+				}
+				if (Migration < MinActorMigrationPerSecond)
+				{
+					bHasActorMigrationCheckFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Actor migration check failed. Migration=%.8f MinActorMigrationPerSecond=%.8f MigrationExactlyWindowSeconds=%.8f"),
+						*NFRFailureString, Migration, MinActorMigrationPerSecond, MigrationSeconds);
+				}
+				else
+				{
+					// Reset timer for next check after 10s
+					ActorMigrationCheckTimer.SetTimer(10);
+					UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Actor migration check TotalMigrations=%.8f MinActorMigrationPerSecond=%.8f MigrationExactlyWindowSeconds=%.8f"),
+						Migration, MinActorMigrationPerSecond, MigrationSeconds);
+				}
+			}
 		}
-		AIControlledPlayers.Empty();
+		MigrationCountSeconds += DeltaSeconds;
+	}
+}
+
+void ABenchmarkGymGameMode::AddSpatialMetrics(USpatialMetrics* SpatialMetrics)
+{
+	Super::AddSpatialMetrics(SpatialMetrics);
+
+	if (HasAuthority())
+	{
+		UserSuppliedMetric Delegate;
+		Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetTotalMigrationValid);
+		SpatialMetrics->SetCustomMetric(ActorMigrationValidMetricName, Delegate);
 	}
 }
 
@@ -493,7 +593,10 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 
 void ABenchmarkGymGameMode::TryStartCustomNPCSpawning()
 {
-	if (ExpectedPlayers == -1 || PlayerDensity == -1 || bHasCreatedSpawnPoints)
+	if (ExpectedPlayers == -1 ||
+		PlayerDensity == -1 ||
+		TotalNPCs != -1 ||
+		bHasCreatedSpawnPoints)
 	{
 		return;
 	}
@@ -503,6 +606,8 @@ void ABenchmarkGymGameMode::TryStartCustomNPCSpawning()
 
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
+	MinActorMigrationPerSecond = PercentageSpawnPointsOnWorkerBoundaries * (ExpectedPlayers + TotalNPCs) * 0.016f;
+
 	ClearExistingSpawnPoints();
 	GenerateSpawnPoints();
 
@@ -580,6 +685,14 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 	else
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Failed to find NPCSpawner."));
+	}
+}
+
+void ABenchmarkGymGameMode::ReportMigration_Implementation(const FString& WorkerID, const float Migration)
+{
+	if (HasAuthority())
+	{
+		MapWorkerActorMigration.Emplace(WorkerID, Migration);
 	}
 }
 
