@@ -380,7 +380,7 @@ void USpawnManager::CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClu
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	: PercentageSpawnPointsOnWorkerBoundaries(0.05f)
 	, bHasCreatedSpawnPoints(false)
-	, PlayerDensity(-1) // PlayerDensity is invalid until set via command line arg or worker flag.
+	, PlayerDensity(0) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
 	, bHasActorMigrationCheckFailed(false)
@@ -414,7 +414,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 	if (HasAuthority())
 	{
 		TryStartCustomNPCSpawning();
-
 		TickNPCSpawning();
 		TickSimPlayerBlackboardValues();
 		TickActorMigration(DeltaSeconds);
@@ -463,6 +462,7 @@ void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
 	}
 
 	const int32 AuthActorCount = GetUXAuthActorCount();
+	MinActorMigrationPerSecond = PercentageSpawnPointsOnWorkerBoundaries * (ExpectedPlayers + TotalNPCs) * 0.016f;
 
 	// This test respects the initial delay timer only for multiworker
 	if (ActorMigrationCheckDelay.HasTimerGoneOff())
@@ -593,21 +593,17 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 
 void ABenchmarkGymGameMode::TryStartCustomNPCSpawning()
 {
-	if (ExpectedPlayers == -1 ||
-		PlayerDensity == -1 ||
-		TotalNPCs != -1 ||
-		bHasCreatedSpawnPoints)
+	if (bHasCreatedSpawnPoints || ExpectedPlayers == 0 || PlayerDensity == 0)
 	{
 		return;
 	}
 
 	StartCustomNPCSpawning();
+	bHasCreatedSpawnPoints = true;
 }
 
 void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
-	MinActorMigrationPerSecond = PercentageSpawnPointsOnWorkerBoundaries * (ExpectedPlayers + TotalNPCs) * 0.016f;
-
 	ClearExistingSpawnPoints();
 	GenerateSpawnPoints();
 
@@ -620,8 +616,6 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 	GenerateTestScenarioLocations();
 
 	SpawnNPCs(TotalNPCs);
-
-	bHasCreatedSpawnPoints = true;
 }
 
 void ABenchmarkGymGameMode::BuildExpectedActorCounts()
