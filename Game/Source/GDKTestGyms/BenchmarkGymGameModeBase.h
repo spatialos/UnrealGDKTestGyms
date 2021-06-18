@@ -106,6 +106,8 @@ protected:
 	float GetZoneHeight() const { return ZoneHeight; }
 	int32 GetUXAuthActorCount() const { return UXAuthActorCount; }
 
+	const FString NFRFailureString = TEXT("NFR scenario failed");
+
 private:
 
 	int32 NumWorkers;

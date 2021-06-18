@@ -60,7 +60,6 @@ namespace
 	const FString MemReportFlag = TEXT("mem_report");
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
-	const FString NFRFailureString = TEXT("NFR scenario failed");
 
 } // anonymous namespace
 
