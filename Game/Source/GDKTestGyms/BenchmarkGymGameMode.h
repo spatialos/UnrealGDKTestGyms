@@ -135,6 +135,8 @@ protected:
 
 	virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics) override;
 
+	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) override;
+
 private:
 
 	TArray<FBlackboardValues> PlayerRunPoints;

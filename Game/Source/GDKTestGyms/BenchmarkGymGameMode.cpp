@@ -416,7 +416,6 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 		TryStartCustomNPCSpawning();
 		TickNPCSpawning();
 		TickSimPlayerBlackboardValues();
-		TickActorMigration(DeltaSeconds);
 	}
 }
 
@@ -606,16 +605,13 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 {
 	ClearExistingSpawnPoints();
 	GenerateSpawnPoints();
+	GenerateTestScenarioLocations();
 
 	const int32 NumSpawnPoints = SpawnManager->GetNumSpawnPoints();
 	if (NumSpawnPoints < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), NumSpawnPoints, ExpectedPlayers);
 	}
-
-	GenerateTestScenarioLocations();
-
-	SpawnNPCs(TotalNPCs);
 }
 
 void ABenchmarkGymGameMode::BuildExpectedActorCounts()
@@ -723,6 +719,12 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+void ABenchmarkGymGameMode::OnTotalNPCsUpdated_Implementation(int32 Value)
+{
+	Super::OnTotalNPCsUpdated_Implementation(Value);
+	SpawnNPCs(Value);
 }
 
 void ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate(const FString& FlagName, const FString& FlagValue)
