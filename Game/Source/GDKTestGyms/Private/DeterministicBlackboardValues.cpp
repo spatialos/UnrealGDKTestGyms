@@ -69,24 +69,25 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 
 		constexpr float Tolerance = 100.0f; // A tolerance to allow the point to snap to the nav mesh surfaces.
 
-		FNavLocation LocA(WorldLocation);
+		FNavLocation LocA;
 		{
 			FVector LocalRandomPoint = WorldLocation + BlackboardValues.TargetAValue;
 			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocA);
-			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
+			if (!bResult)
+			{
+				return;
+			}
 		}
 
-		FNavLocation LocB(WorldLocation);
+		FNavLocation LocB;
 		{
 			FVector LocalRandomPoint = WorldLocation + BlackboardValues.TargetBValue;
 			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocB);
-			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
+			if (!bResult)
+			{
+				return;
+			}
 		}
-
-		BlackboardValues.TargetAValue = LocA;
-		BlackboardValues.TargetBValue = LocB;
-		BlackboardValues.TargetStateIsA = true; // Set initial target to TargetA
-		BlackboardValues.bInitialised = true;
 
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
