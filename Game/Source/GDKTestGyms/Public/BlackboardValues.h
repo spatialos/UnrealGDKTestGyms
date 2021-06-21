@@ -17,8 +17,11 @@ struct GDKTESTGYMS_API FBlackboardValues
 	FVector TargetBValue;
 	UPROPERTY()
 	bool TargetStateIsA; // Keep track of current goal target, to continue towards it after handover. True for A, false for B
+	UPROPERTY()
+	bool bInitialised = false;
 
 	static FName TargetAName; // Bindings to the AI blackboard values
 	static FName TargetBName;
 	static FName TargetStateIsAName;
+	static FName InitialisedName;
 };

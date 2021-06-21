@@ -14,7 +14,6 @@ void UDeterministicBlackboardValues::GetLifetimeReplicatedProps(TArray<FLifetime
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(ThisClass, bBlackboardValuesInitialised, COND_ServerOnly);
 	DOREPLIFETIME_CONDITION(ThisClass, BlackboardValues, COND_ServerOnly);
 }
 
@@ -87,12 +86,12 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 		BlackboardValues.TargetAValue = LocA;
 		BlackboardValues.TargetBValue = LocB;
 		BlackboardValues.TargetStateIsA = true; // Set initial target to TargetA
+		BlackboardValues.bInitialised = true;
 
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
 		Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
-
-		bBlackboardValuesInitialised = true;
+		Blackboard->SetValueAsBool(BlackboardValues.InitialisedName, BlackboardValues.bInitialised);
 
 		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Setting points to run between as %s and %s for AI controller %s"), *LocA.Location.ToString(), *LocB.Location.ToString(), *Controller->GetName());
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
@@ -107,11 +106,6 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 
 void UDeterministicBlackboardValues::ApplyBlackboardValues()
 {
-	if (!bBlackboardValuesInitialised)
-	{
-		return;
-	}
-
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	if (AAIController* AIController = Cast<AAIController>(Pawn->GetController()))
 	{
@@ -120,6 +114,7 @@ void UDeterministicBlackboardValues::ApplyBlackboardValues()
 			Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 			Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
 			Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
+			Blackboard->SetValueAsBool(BlackboardValues.InitialisedName, BlackboardValues.bInitialised);
 		}
 	}
 }
