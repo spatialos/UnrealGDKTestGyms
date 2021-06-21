@@ -32,5 +32,8 @@ protected:
 	FTimerHandle TimerHandle;
 
 	UPROPERTY(Replicated)
+	bool bBlackboardValuesInitialised = false;
+
+	UPROPERTY(Replicated)
 	FBlackboardValues BlackboardValues;
 };
