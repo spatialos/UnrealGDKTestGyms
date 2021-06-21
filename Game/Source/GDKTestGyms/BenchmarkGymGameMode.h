@@ -28,7 +28,7 @@ public:
 	FVector WorldPosition;
 	float Width;
 	float Height;
-	int32 MaxSpawnPoints;
+	int32 NumSpawnPoints;
 	int32 MaxSupportedPlayersPerSpawnPoint;
 	float MinDistanceBetweenSpawnPoints;
 

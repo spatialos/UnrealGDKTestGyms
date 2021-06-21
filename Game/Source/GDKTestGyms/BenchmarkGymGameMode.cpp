@@ -125,7 +125,7 @@ namespace
 void USpawnArea::GenerateSpawnPointsActors()
 {
 	TArray<FVector> SpawnPoints;
-	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, MaxSpawnPoints, MinDistanceBetweenSpawnPoints, WorldPosition, SpawnPoints);
+	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, NumSpawnPoints, MinDistanceBetweenSpawnPoints, WorldPosition, SpawnPoints);
 	if (!bSuccefullyCreatedReducedGrid)
 	{
 		return;
@@ -141,11 +141,11 @@ void USpawnArea::GenerateSpawnPointsActors()
 	});
 
 	//Remove any excess areas
-	SpawnPoints.RemoveAt(MaxSpawnPoints, SpawnPoints.Num() - MaxSpawnPoints);
+	SpawnPoints.RemoveAt(NumSpawnPoints, SpawnPoints.Num() - NumSpawnPoints);
 
 	UWorld* World = GetWorld();
 
-	for (int32 i = 0; i < SpawnPoints.Num() && i < MaxSpawnPoints; ++i)
+	for (int32 i = 0; i < SpawnPoints.Num() && i < NumSpawnPoints; ++i)
 	{
 		const FVector& SpawnPoint = SpawnPoints[i];
 
@@ -168,17 +168,17 @@ void USpawnArea::GenerateSpawnPointsActors()
 
 AActor* USpawnArea::GetSpawnPointActorByIndex(const int32 Index) const
 {
-	const int32 NumSpawnPoints = SpawnPointActors.Num();
-	if (NumSpawnPoints == 0)
+	const int32 NumSpawnPointActors = SpawnPointActors.Num();
+	if (NumSpawnPointActors == 0)
 	{
 		return nullptr;
 	}
-	return SpawnPointActors[Index % NumSpawnPoints];
+	return SpawnPointActors[Index % NumSpawnPointActors];
 }
 
 int32 USpawnArea::GetTotalSupportedPlayers() const
 {
-	return MaxSupportedPlayersPerSpawnPoint * MaxSpawnPoints;
+	return MaxSupportedPlayersPerSpawnPoint * NumSpawnPoints;
 }
 
 // --- USpawnManager ---
@@ -276,7 +276,8 @@ void USpawnManager::GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoneCo
 				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoneCol ? MinDistanceBetweenSpawnPoints : SpawnAreaHeight;
 
 				const int32 MaxSpawnPoints = bIsZone ? MaxSpawnPointsPerZone : MaxSpawnPointsPerBoundary;
-				NewSpawnArea->MaxSpawnPoints = MaxSpawnPoints;
+				const int32 NumAreaSpawnPoints = MaxSpawnPoints < SpawnPointsToAdd ? MaxSpawnPoints : SpawnPointsToAdd;
+				NewSpawnArea->NumSpawnPoints = NumAreaSpawnPoints;
 
 				NewSpawnArea->MaxSupportedPlayersPerSpawnPoint = MaxSupportedPlayersPerSpawnPoint;
 				NewSpawnArea->MinDistanceBetweenSpawnPoints = MinDistanceBetweenSpawnPoints;
@@ -284,8 +285,8 @@ void USpawnManager::GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoneCo
 				NewSpawnArea->GenerateSpawnPointsActors();
 				SpawnAreas.Add(NewSpawnArea);
 
-				SpawnPointsToAdd -= MaxSpawnPoints;
-				TotalSupportedPlayers += MaxSpawnPoints * MaxSupportedPlayersPerSpawnPoint;
+				SpawnPointsToAdd -= NumAreaSpawnPoints;
+				TotalSupportedPlayers += NewSpawnArea->GetTotalSupportedPlayers();
 			}
 		}
 	}
