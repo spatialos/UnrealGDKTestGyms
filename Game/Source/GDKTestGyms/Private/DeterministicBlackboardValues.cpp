@@ -63,7 +63,7 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 			return;
 		}
 
-		FVector WorldLocation = ((AActor*)Controller)->GetActorLocation();
+		FVector WorldLocation = Pawn->GetActorLocation();
 
 		UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 
@@ -73,20 +73,14 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 		{
 			FVector LocalRandomPoint = WorldLocation + BlackboardValues.TargetAValue;
 			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocA);
-			if (!bResult)
-			{
-				return;
-			}
+			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
 		}
 
 		FNavLocation LocB;
 		{
 			FVector LocalRandomPoint = WorldLocation + BlackboardValues.TargetBValue;
 			bool bResult = NavSys->GetRandomPointInNavigableRadius(LocalRandomPoint, Tolerance, LocB);
-			if (!bResult)
-			{
-				return;
-			}
+			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
 		}
 
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
