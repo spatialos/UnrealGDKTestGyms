@@ -13,30 +13,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameMode, Log, All);
 using ControllerIntegerPair = TPair<TWeakObjectPtr<AController>, int>;
 
 UCLASS()
-class GDKTESTGYMS_API USpawnCluster : public UObject
-{
-	GENERATED_BODY()
-public:
-
-	~USpawnCluster();
-
-	FVector WorldPosition;
-	float Width;
-	float Height;
-	int32 MaxSpawnPoints;
-
-	void GenerateSpawnPoints();
-	const TArray<AActor*>& CreateSpawnPointActors();
-
-private:
-
-	TArray<FVector> SpawnPoints;
-
-	UPROPERTY()
-	TArray<AActor*> SpawnPointActors;
-};
-
-UCLASS()
 class GDKTESTGYMS_API USpawnArea : public UObject
 {
 	GENERATED_BODY()
@@ -52,18 +28,15 @@ public:
 	FVector WorldPosition;
 	float Width;
 	float Height;
-	int32 MaxClusters;
-	int32 MaxSpawnPointsPerCluster;
-	float MinDistanceBetweenClusters;
+	int32 MaxSpawnPoints;
+	int32 MaxSupportedPlayersPerSpawnPoint;
+	float MinDistanceBetweenSpawnPoints;
 
-	void GenerateSpawnClusters();
-	const TArray<AActor*>& CreateSpawnPointActors();
+	int32 GetTotalSupportedPlayers() const;
+	void GenerateSpawnPointsActors();
 	AActor* GetSpawnPointActorByIndex(const int32 Index) const;
 
 private:
-
-	UPROPERTY()
-	TArray<USpawnCluster*> SpawnClusters;
 
 	UPROPERTY()
 	TArray<AActor*> SpawnPointActors;
@@ -75,12 +48,16 @@ class GDKTESTGYMS_API USpawnManager: public UObject
 	GENERATED_BODY()
 public:
 
+	// Will create SpawnAreas for zones and boundaries for given parameters and add them to the member SpawnAreas.
+	// Each SpawnArea will be set up to only create a certain number of spawn points.
+	// This function should allow you to vary how many NPCs/Simplayers are spawned in the centre of zones or on boundaries.
+
 	void GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
-		const int32 ZoneClusters, const int32 BoundaryClusters,
-		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
+		const int32 ZoneSpawnPoints, const int32 BoundarySpawnPoints,
+		const int32 MaxSupportedPlayersPerSpawnPoint, const int32 MinDistanceBetweenSpawnPoints);
 
 	AActor* GetSpawnPointActorByIndex(const int32 Index) const;
-	int32 GetNumSpawnPoints() const;
+	int32 GetTotalSupportedPlayers() const;
 
 	void ClearSpawnPoints();
 
@@ -88,19 +65,10 @@ public:
 
 private:
 
-	// Will create SpawnAreas for zones and boundaries for given parameters and add them to the member SpawnAreas.
-	// Each SpawnArea will be set up to only create a certain number of spawn points.
-	// This function should allow you to vary how many NPCs/Simplayers are spawned in the centre of zones or on boundaries.
-	void GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
-		const int32 ZoneClusters, const int32 BoundaryClusters,
-		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
-	void CreateSpawnPointActors(int32 ZoneClusters, int32 BoundaryClusters, const int32 MaxSpawnPointsPerCluster);
+	int32 TotalSupportedPlayers;
 
 	UPROPERTY()
 	TArray<USpawnArea*> SpawnAreas;
-
-	UPROPERTY()
-	TArray<AActor*> SpawnPointActors;
 };
 
 UCLASS()
