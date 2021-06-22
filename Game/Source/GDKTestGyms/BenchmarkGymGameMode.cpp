@@ -350,6 +350,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, PlayerDensity(0) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
+	, bIsUsingZoning(false)
 	, bHasActorMigrationCheckFailed(false)
 	, PreviousTickMigration(0)
 	, MigrationOfCurrentWorker(0)
@@ -369,6 +370,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	bIsUsingZoning = USpatialStatics::IsSpatialNetworkingEnabled() && GetZoningRows() > 1 || GetZoningCols() > 1;
 	SpawnManager = NewObject<USpawnManager>(this);
 }
 
@@ -376,7 +378,7 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (GetZoningRows() > 1 || GetZoningCols() > 1)
+	if (bIsUsingZoning)
 	{
 		TickActorMigration(DeltaSeconds);
 	}

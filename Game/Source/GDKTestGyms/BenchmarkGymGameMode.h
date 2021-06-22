@@ -144,6 +144,7 @@ private:
 	int32 NPCSToSpawn;
 
 	// Actor migration members
+	bool bIsUsingZoning;
 	bool bHasActorMigrationCheckFailed;
 	int32 PreviousTickMigration;
 	typedef TTuple<int32, float> MigrationDeltaPair;
