@@ -25,8 +25,6 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
 namespace
 {
-	const float DistBetweenSpawnPoints = 300.0f;
-
 	const FString ActorMigrationValidMetricName = TEXT("UnrealActorMigration");
 
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
@@ -95,7 +93,7 @@ USpawnCluster::~USpawnCluster()
 {
 	// Spawn points 3m apart to avoid spawn collision issues.
 	TArray<FVector> SpawnPoints;
-	const bool bSuccefullyCreatedGrid = GenerateGridInArea(Width, Height, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
+	const bool bSuccefullyCreatedGrid = GenerateGridInArea(Width, Height, MaxSpawnPoints, MinDistanceBetweenSpawnPoints, WorldPosition, SpawnPoints);
 	if (!bSuccefullyCreatedGrid)
 	{
 		return false;
@@ -171,7 +169,7 @@ USpawnCluster::~USpawnCluster()
 			NewSpawnCluster->Width = MinDistanceBetweenClusters;
 			NewSpawnCluster->Height = MinDistanceBetweenClusters;
 			NewSpawnCluster->MaxSpawnPoints = MaxSpawnPointsPerCluster;
-			NewSpawnCluster->DistBetweenSpawnPoints = DistBetweenSpawnPoints;
+			NewSpawnCluster->MinDistanceBetweenSpawnPoints = MinDistanceBetweenSpawnPoints;
 
 			const TArray<AActor*>* ClusterSpawnPointActors = nullptr;		 
 			if (NewSpawnCluster->GenerateSpawnPoints(&ClusterSpawnPointActors))
@@ -232,7 +230,7 @@ void USpawnManager::ForEachZoneArea(TFunctionRef<void(USpawnArea& ZoneArea)> Pre
 
 void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCols, const int32 ZoneWidth, const int32 ZoneHeight,
 	const int32 ZoneClusters, const int32 BoundaryClusters,
-	const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters)
+	const int32 MaxSpawnPointsPerCluster, const float MinDistanceBetweenClusters, const float MinDistanceBetweenSpawnPoints)
 {
 	const float StartX = ZoneWidth * (1 - ZoneCols) / 2.0f;
 	const float StartY = ZoneHeight * (1 - ZoneRows) / 2.0f;
@@ -289,6 +287,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 
 				NewSpawnArea->MaxSpawnPointsPerCluster = MaxSpawnPointsPerCluster;
 				NewSpawnArea->MinDistanceBetweenClusters = MinDistanceBetweenClusters;
+				NewSpawnArea->MinDistanceBetweenSpawnPoints = MinDistanceBetweenSpawnPoints;
 
 				const TArray<AActor*>* AreaSpawnPointActors = nullptr;
 				if (NewSpawnArea->GenerateSpawnClusters(&AreaSpawnPointActors))
@@ -322,17 +321,18 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, ActorMigrationReportTimer(1)
 	, ActorMigrationCheckTimer(11 * 60) // 1-minute later then ActorMigrationCheckDelay + MigrationWindowSeconds to make sure all the workers had reported their migration	
 	, ActorMigrationCheckDelay(5 * 60)
+	, DistBetweenSpawnPoints(300.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
-	DistBetweenClusterCenters = FMath::Sqrt(Pawn->NetCullDistanceSquared) * 2.2f;
+	DistBetweenClusters = FMath::Sqrt(Pawn->NetCullDistanceSquared) * 2.2f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	bIsUsingZoning = USpatialStatics::IsSpatialNetworkingEnabled() && GetZoningRows() > 1 || GetZoningCols() > 1;
+	bIsUsingZoning = USpatialStatics::IsSpatialNetworkingEnabled() && (GetZoningRows() > 1 || GetZoningCols() > 1);
 	SpawnManager = NewObject<USpawnManager>(this);
 }
 
@@ -370,10 +370,10 @@ void ABenchmarkGymGameMode::TickNPCSpawning()
 
 void ABenchmarkGymGameMode::TickSimPlayerBlackboardValues()
 {
-	for (int i = AIControlledPlayers.Num() - 1; i >= 0; i--)
+	for (int32 i = AIControlledPlayers.Num() - 1; i >= 0; i--)
 	{
 		AController* Controller = AIControlledPlayers[i].Key.Get();
-		int InfoIndex = AIControlledPlayers[i].Value;
+		const int32 InfoIndex = AIControlledPlayers[i].Value;
 
 		checkf(Controller, TEXT("Simplayer controller has been deleted."));
 		ACharacter* Character = Controller->GetCharacter();
@@ -401,7 +401,7 @@ void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
 	if (ActorMigrationCheckDelay.HasTimerGoneOff())
 	{
 		// Count how many actors hand over authority in 1 tick
-		int Delta = FMath::Abs(AuthActorCount - PreviousTickMigration);
+		const int32 Delta = FMath::Abs(AuthActorCount - PreviousTickMigration);
 		MigrationDeltaHistory.Enqueue(MigrationDeltaPair(Delta, DeltaSeconds));
 		bool bChanged = false;
 		if (MigrationCountSeconds > MigrationWindowSeconds)
@@ -413,6 +413,7 @@ void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
 				MigrationSeconds -= OldestValue.Value;
 			}
 		}
+
 		MigrationOfCurrentWorker += Delta;
 		MigrationSeconds += DeltaSeconds;
 		PreviousTickMigration = AuthActorCount;
@@ -503,7 +504,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 	{
 		FRandomStream PlayerStream;
 		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
-		for (int i = 0; i < ExpectedPlayers; i++)
+		for (int32 i = 0; i < ExpectedPlayers; i++)
 		{
 			FVector PointA = PlayerStream.VRand()*RoamRadius;
 			FVector PointB = PlayerStream.VRand()*RoamRadius;
@@ -514,7 +515,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 	{
 		FRandomStream NPCStream;
 		NPCStream.Initialize(FCrc::MemCrc32(&TotalNPCs, sizeof(TotalNPCs)));
-		for (int i = 0; i < TotalNPCs; i++)
+		for (int32 i = 0; i < TotalNPCs; i++)
 		{
 			FVector PointA = NPCStream.VRand()*RoamRadius;
 			FVector PointB = NPCStream.VRand()*RoamRadius;
@@ -574,7 +575,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints()
 	const float Width = GetZoneWidth();
 	const float Height = GetZoneHeight();
 
-	SpawnManager->GenerateSpawnAreas(Rows, Cols, Width, Height, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
+	SpawnManager->GenerateSpawnAreas(Rows, Cols, Width, Height, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusters, DistBetweenSpawnPoints);
 }
 
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)

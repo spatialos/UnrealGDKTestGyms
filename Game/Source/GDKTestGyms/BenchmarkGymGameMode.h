@@ -24,7 +24,7 @@ public:
 	float Width;
 	float Height;
 	int32 MaxSpawnPoints;
-	float DistBetweenSpawnPoints;
+	float MinDistanceBetweenSpawnPoints;
 
 	bool GenerateSpawnPoints(const TArray<AActor*>** OutSpawnPointActors);
 
@@ -53,6 +53,7 @@ public:
 	int32 NumClusters;
 	int32 MaxSpawnPointsPerCluster;
 	float MinDistanceBetweenClusters;
+	float MinDistanceBetweenSpawnPoints;
 
 	bool GenerateSpawnClusters(const TArray<AActor*>** OutSpawnPointActors);
 	AActor* GetSpawnPointActorByIndex(const int32 Index) const;
@@ -77,7 +78,7 @@ public:
 	// This function should allow you to vary how many NPCs/Simplayers are spawned in the centre of zones or on boundaries.
 	void GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoningCols, const int32 ZoneWidth, const int32 ZoneHeight,
 		const int32 ZoneClusters, const int32 BoundaryClusters,
-		const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters);
+		const int32 MaxSpawnPointsPerCluster, const float MinDistanceBetweenClusters, const float MinDistanceBetweenSpawnPoints);
 
 	AActor* GetSpawnPointActorByIndex(const int32 Index) const;
 	int32 GetNumSpawnPoints() const;
@@ -113,7 +114,8 @@ protected:
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<AActor> DropCubeClass;
 
-	int DistBetweenClusterCenters;
+	float DistBetweenClusters;
+	float DistBetweenSpawnPoints;
 	float PercentageSpawnPointsOnWorkerBoundaries;
 
 	virtual void Tick(float DeltaSeconds) override;
