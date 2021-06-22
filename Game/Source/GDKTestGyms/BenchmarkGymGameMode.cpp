@@ -119,20 +119,29 @@ namespace
 	}
 } // anonymous namespace
 
+// --- USpawnCluster ---
 
-// --- USpawnArea ---
-
-void USpawnArea::GenerateSpawnPointsActors()
+USpawnCluster::~USpawnCluster()
 {
+	for (AActor* SpawnPointActor : SpawnPointActors)
+	{
+		SpawnPointActor->Destroy();
+	}
+}
+
+ bool USpawnCluster::GenerateSpawnPoints(const TArray<AActor*>** OutSpawnPointActors)
+{
+	// Spawn points 3m apart to avoid spawn collision issues.
+	const float DistBetweenSpawnPoints = 300.0f;
 	TArray<FVector> SpawnPoints;
-	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, NumSpawnPoints, MinDistanceBetweenSpawnPoints, WorldPosition, SpawnPoints);
+	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
 	if (!bSuccefullyCreatedReducedGrid)
 	{
-		return;
+		return false;
 	}
 
-	// Sort the clusters by "distance from centre of area" ascending.
-	// This ensures we iterate from closest to furthest cluster.
+	// Sort the spawn points by "distance from centre of cluster" ascending.
+	// This ensures we iterate from closest to furthest spawn point.
 	SpawnPoints.Sort([this](const FVector& Point1, const FVector& Point2)
 	{
 		const float DistanceSqr1 = FVector::DistSquared(Point1, WorldPosition);
@@ -140,12 +149,13 @@ void USpawnArea::GenerateSpawnPointsActors()
 		return DistanceSqr2 > DistanceSqr1;
 	});
 
-	//Remove any excess areas
-	SpawnPoints.RemoveAt(NumSpawnPoints, SpawnPoints.Num() - NumSpawnPoints);
+	//Remove any excess spawn points
+	SpawnPoints.RemoveAt(MaxSpawnPoints, SpawnPoints.Num() - MaxSpawnPoints);
 
 	UWorld* World = GetWorld();
 
-	for (int32 i = 0; i < SpawnPoints.Num() && i < NumSpawnPoints; ++i)
+	SpawnPointActors.Empty();
+	for (int i = 0; i < SpawnPoints.Num(); ++i)
 	{
 		const FVector& SpawnPoint = SpawnPoints[i];
 
@@ -153,17 +163,64 @@ void USpawnArea::GenerateSpawnPointsActors()
 		SpawnInfo.Owner = World->GetAuthGameMode();
 		SpawnInfo.bDeferConstruction = false;
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
 		// Swapping X and Y as GridBaseLBStrategy has the two reversed.
 		// Spawn actor is placed 3m off the ground to avoid spawning collisions.
 		FVector ModifiedSpawnPoint = SpawnPoint;
 		ModifiedSpawnPoint.X = SpawnPoint.Y;
 		ModifiedSpawnPoint.Y = SpawnPoint.X;
 		ModifiedSpawnPoint.Z = 300.0f;
-
 		UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Creating a new PlayerStart at location %s."), *ModifiedSpawnPoint.ToString());
 		SpawnPointActors.Add(World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), ModifiedSpawnPoint, FRotator::ZeroRotator, SpawnInfo));
 	}
+	*OutSpawnPointActors = &SpawnPointActors;
+	return true;
+}
+
+// --- USpawnArea ---
+
+ bool USpawnArea::GenerateSpawnClusters(const TArray<AActor*>** OutSpawnPointActors)
+{
+	TArray<FVector> ClusterPoints;
+	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, NumClusters, MinDistanceBetweenClusters, WorldPosition, ClusterPoints);
+	if (!bSuccefullyCreatedReducedGrid)
+	{
+		return false;
+	}
+
+	// Sort the clusters by "distance from centre of area" ascending.
+	// This ensures we iterate from closest to furthest cluster.
+	ClusterPoints.Sort([this](const FVector& Point1, const FVector& Point2)
+	{
+		const float DistanceSqr1 = FVector::DistSquared(Point1, WorldPosition);
+		const float DistanceSqr2 = FVector::DistSquared(Point2, WorldPosition);
+		return DistanceSqr2 > DistanceSqr1;
+	});
+
+	//Remove any excess areas
+	ClusterPoints.RemoveAt(NumClusters, ClusterPoints.Num() - NumClusters);
+
+	SpawnPointActors.Empty();
+	for (int32 i = 0; i < ClusterPoints.Num() && i < NumClusters; ++i)
+	{
+		const FVector& ClusterPoint = ClusterPoints[i];
+		USpawnCluster* NewSpawnCluster = NewObject<USpawnCluster>(this);
+		if (NewSpawnCluster != nullptr)
+		{
+			NewSpawnCluster->WorldPosition = ClusterPoint;
+			NewSpawnCluster->Width = MinDistanceBetweenClusters;
+			NewSpawnCluster->Height = MinDistanceBetweenClusters;
+			NewSpawnCluster->MaxSpawnPoints = MaxSpawnPointsPerCluster;
+
+			const TArray<AActor*>* ClusterSpawnPointActors = nullptr;		 
+			if (NewSpawnCluster->GenerateSpawnPoints(&ClusterSpawnPointActors))
+			{
+				SpawnPointActors += *ClusterSpawnPointActors;
+			}
+			SpawnClusters.Add(NewSpawnCluster);
+		}
+	}
+	*OutSpawnPointActors = &SpawnPointActors;
+	return true;
 }
 
 AActor* USpawnArea::GetSpawnPointActorByIndex(const int32 Index) const
@@ -176,38 +233,27 @@ AActor* USpawnArea::GetSpawnPointActorByIndex(const int32 Index) const
 	return SpawnPointActors[Index % NumSpawnPointActors];
 }
 
-int32 USpawnArea::GetTotalSupportedPlayers() const
-{
-	return MaxSupportedPlayersPerSpawnPoint * NumSpawnPoints;
-}
-
 // --- USpawnManager ---
 
 AActor* USpawnManager::GetSpawnPointActorByIndex(const int32 Index) const
 {
-	const int32 NewIndex = Index % TotalSupportedPlayers;
-	int32 IterSupportedPlayers = 0;
-	for (USpawnArea* SpawnArea : SpawnAreas)
+	const int32 NumSpawnPoints = GetNumSpawnPoints();
+	if (NumSpawnPoints == 0)
 	{
-		const int32  SupportedPlayers = SpawnArea->GetTotalSupportedPlayers();
-		if (NewIndex < IterSupportedPlayers + SupportedPlayers)
-		{
-			return SpawnArea->GetSpawnPointActorByIndex(NewIndex - IterSupportedPlayers);
-		}
-		IterSupportedPlayers += SupportedPlayers;
+		return nullptr;
 	}
-
-	return nullptr;
+	return SpawnPointActors[Index % NumSpawnPoints];
 }
 
-int32 USpawnManager::GetTotalSupportedPlayers() const
+int32 USpawnManager::GetNumSpawnPoints() const
 {
-	return TotalSupportedPlayers;
+	return SpawnPointActors.Num();
 }
 
 void USpawnManager::ClearSpawnPoints()
 {
 	SpawnAreas.Empty();
+	SpawnPointActors.Empty();
 }
 
 void USpawnManager::ForEachZoneArea(TFunctionRef<void(USpawnArea& ZoneArea)> Predicate)
@@ -222,25 +268,25 @@ void USpawnManager::ForEachZoneArea(TFunctionRef<void(USpawnArea& ZoneArea)> Pre
 	}
 }
 
-void USpawnManager::GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoneCols, const int32 ZoneWidth, const int32 ZoneHeight,
-	const int32 ZoneSpawnPoints, const int32 BoundarySpawnPoints,
-	const int32 MaxSupportedPlayersPerSpawnPoint, const int32 MinDistanceBetweenSpawnPoints)
+void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCols, const int32 ZoneWidth, const int32 ZoneHeight,
+	const int32 ZoneClusters, const int32 BoundaryClusters,
+	const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters)
 {
 	const float StartX = ZoneWidth / 2.0f - ZoneCols * ZoneWidth / 2.0f;
 	const float StartY = ZoneHeight / 2.0f - ZoneRows * ZoneHeight / 2.0f;
 	const int32 SpawnAreaRows = ZoneRows * 2 - 1;
 	const int32 SpawnAreaCols = ZoneCols * 2 - 1;
-	const int32 SpawnAreaWidth = ZoneWidth - MinDistanceBetweenSpawnPoints;
-	const int32 SpawnAreaHeight = ZoneHeight - MinDistanceBetweenSpawnPoints;
+	const int32 SpawnAreaWidth = ZoneWidth - MinDistanceBetweenClusters;
+	const int32 SpawnAreaHeight = ZoneHeight - MinDistanceBetweenClusters;
 
 	const int32 NumZones = ZoneRows * ZoneCols;
 	const int32 NumBoundaries = ZoneRows * (ZoneCols - 1) + ZoneCols * (ZoneRows - 1);
 
-	const int32 MaxSpawnPointsPerZone = FMath::CeilToInt(ZoneSpawnPoints / static_cast<float>(NumZones));
-	const int32 MaxSpawnPointsPerBoundary = NumBoundaries != 0 ? FMath::CeilToInt(BoundarySpawnPoints / static_cast<float>(NumBoundaries)) : 0;
+	const int32 ClustersPerZone = FMath::CeilToInt(ZoneClusters / static_cast<float>(NumZones));
+	const int32 ClustersPerBoundary = NumBoundaries != 0 ? FMath::CeilToInt(BoundaryClusters / static_cast<float>(NumBoundaries)) : 0;
 
-	int32 ZoneSpawnPointsToAdd = ZoneSpawnPoints;
-	int32 BoundarySpawnPointsToAdd = BoundarySpawnPoints;
+	int32 ZoneClustersToAdd = ZoneClusters;
+	int32 BoundaryClustersToAdd = BoundaryClusters;
 
 	for (int32 Row = 0; Row < SpawnAreaRows; ++Row)
 	{
@@ -256,8 +302,8 @@ void USpawnManager::GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoneCo
 
 			bool bIsZone = bZoneRow && bZoneCol;
 
-			int32& SpawnPointsToAdd = bIsZone ? ZoneSpawnPointsToAdd : BoundarySpawnPointsToAdd;
-			if (SpawnPointsToAdd <= 0)
+			int32& ClustersToAdd = bIsZone ? ZoneClustersToAdd : BoundaryClustersToAdd;
+			if (ClustersToAdd <= 0)
 			{
 				// Don't create new areas if we have already added enough clusters for area type.
 				continue;
@@ -272,21 +318,25 @@ void USpawnManager::GenerateSpawnPoints(const int32 ZoneRows, const int32 ZoneCo
 				const float Y = StartY + Row * ZoneHeight / 2.0f;
 				NewSpawnArea->WorldPosition = { X, Y, 0.0f };
 
-				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoneRow ? MinDistanceBetweenSpawnPoints : SpawnAreaWidth;
-				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoneCol ? MinDistanceBetweenSpawnPoints : SpawnAreaHeight;
+				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoneRow ? MinDistanceBetweenClusters : SpawnAreaWidth;
+				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoneCol ? MinDistanceBetweenClusters : SpawnAreaHeight;
 
-				const int32 MaxSpawnPoints = bIsZone ? MaxSpawnPointsPerZone : MaxSpawnPointsPerBoundary;
-				const int32 NumAreaSpawnPoints = MaxSpawnPoints < SpawnPointsToAdd ? MaxSpawnPoints : SpawnPointsToAdd;
-				NewSpawnArea->NumSpawnPoints = NumAreaSpawnPoints;
+				const int32 MaxSpawnPoints = bIsZone ? ClustersPerZone : ClustersPerBoundary;
+				const int32 NumAreaClusters = MaxSpawnPoints < ClustersToAdd ? MaxSpawnPoints : ClustersToAdd;
+				NewSpawnArea->NumClusters = NumAreaClusters;
 
-				NewSpawnArea->MaxSupportedPlayersPerSpawnPoint = MaxSupportedPlayersPerSpawnPoint;
-				NewSpawnArea->MinDistanceBetweenSpawnPoints = MinDistanceBetweenSpawnPoints;
+				NewSpawnArea->MaxSpawnPointsPerCluster = MaxSpawnPointsPerCluster;
+				NewSpawnArea->MinDistanceBetweenClusters = MinDistanceBetweenClusters;
 
-				NewSpawnArea->GenerateSpawnPointsActors();
+				const TArray<AActor*>* AreaSpawnPointActors = nullptr;
+				if (NewSpawnArea->GenerateSpawnClusters(&AreaSpawnPointActors))
+				{
+					SpawnPointActors += *AreaSpawnPointActors;
+				}
+
 				SpawnAreas.Add(NewSpawnArea);
 
-				SpawnPointsToAdd -= NumAreaSpawnPoints;
-				TotalSupportedPlayers += NewSpawnArea->GetTotalSupportedPlayers();
+				ClustersToAdd -= NumAreaClusters;
 			}
 		}
 	}
@@ -523,6 +573,12 @@ void ABenchmarkGymGameMode::StartCustomNPCSpawning()
 	ClearExistingSpawnPoints();
 	GenerateSpawnPoints();
 	GenerateTestScenarioLocations();
+
+	const int32 NumSpawnPoints = SpawnManager->GetNumSpawnPoints();
+	if (NumSpawnPoints < ExpectedPlayers) // SpawnPoints can be rounded up if ExpectedPlayers % NumClusters != 0
+	{
+		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error creating spawnpoints, number of created spawn points (%d) does not equal total players (%d)"), NumSpawnPoints, ExpectedPlayers);
+	}
 }
 
 void ABenchmarkGymGameMode::BuildExpectedActorCounts()
@@ -551,7 +607,7 @@ void ABenchmarkGymGameMode::GenerateSpawnPoints()
 	const float Width = GetZoneWidth();
 	const float Height = GetZoneHeight();
 
-	SpawnManager->GenerateSpawnPoints(Rows, Cols, Width, Height, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
+	SpawnManager->GenerateSpawnAreas(Rows, Cols, Width, Height, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusterCenters);
 }
 
 void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
@@ -599,7 +655,7 @@ void ABenchmarkGymGameMode::ReportMigration_Implementation(const FString& Worker
 
 AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	if (SpawnManager->GetTotalSupportedPlayers() == 0)
+	if (SpawnManager->GetNumSpawnPoints() == 0)
 	{
 		return Super::FindPlayerStart_Implementation(Player, IncomingName);
 	}
