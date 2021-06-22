@@ -307,7 +307,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 // --- ABenchmarkGymGameMode ---
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: PercentageSpawnPointsOnWorkerBoundaries(0.05f)
+	: PercentageSpawnPointsOnWorkerBoundaries(0.25f)
 	, bHasCreatedSpawnPoints(false)
 	, PlayerDensity(0) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
