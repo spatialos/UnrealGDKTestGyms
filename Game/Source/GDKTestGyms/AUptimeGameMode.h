@@ -38,7 +38,7 @@ private:
 	int32 CrossServerSize;
 	int32 CrossServerFrequency;
 
-	void SpawnCrossServerActors(int32 CrossServerPoint);
+	void SpawnCrossServerActors();
 
 	// Worker flag update delegate functions
 	UFUNCTION()

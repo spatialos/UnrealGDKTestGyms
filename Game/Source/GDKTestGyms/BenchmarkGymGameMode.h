@@ -24,6 +24,7 @@ public:
 	float Width;
 	float Height;
 	int32 MaxSpawnPoints;
+	float DistBetweenSpawnPoints;
 
 	bool GenerateSpawnPoints(const TArray<AActor*>** OutSpawnPointActors);
 

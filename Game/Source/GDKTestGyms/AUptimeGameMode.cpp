@@ -99,10 +99,10 @@ void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFla
 void AUptimeGameMode::StartCustomNPCSpawning()
 {
 	Super::StartCustomNPCSpawning();
-	SpawnCrossServerActors(GetNumWorkers());
+	SpawnCrossServerActors();
 }
 
-void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
+void AUptimeGameMode::SpawnCrossServerActors()
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)

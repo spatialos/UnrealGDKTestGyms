@@ -25,6 +25,8 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
 namespace
 {
+	const float DistBetweenSpawnPoints = 300.0f;
+
 	const FString ActorMigrationValidMetricName = TEXT("UnrealActorMigration");
 
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
@@ -37,9 +39,9 @@ namespace
 	//		- Have at minimum MinCells cells.
 	//		- All center positions will be CellSize apart.
 
-	bool GenerateMinimalGridInArea(const float GridMaxWidth, const float GridMaxHeight, const int32 MinCells, const float CellSize, const FVector& WorldPositon, TArray<FVector>& OutCellCenterPoints)
+	bool GenerateGridInArea(const float GridMaxWidth, const float GridMaxHeight, const int32 MinCells, const float CellSize, const FVector& WorldPositon, TArray<FVector>& OutCellCenterPoints)
 	{
-		if (CellSize == 0)
+		if (CellSize == 0.0f)
 		{
 			UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Trying to generate grid settings using invalid CellSize"));
 			return false;
@@ -58,51 +60,11 @@ namespace
 			return false;
 		}
 
-		const float MaxRowMaxColRatio = MaxRows / MaxCols;
-		auto EvaluateRowsAndColumns = [MinCells, MaxRowMaxColRatio](const int32 Rows, const int32 Cols, bool& bOutSatisfiesMinCells, float& OutRatioDiff)
-		{
-			bOutSatisfiesMinCells = Rows > 0 && Cols > 0 && Rows * Cols >= MinCells;
-			if (bOutSatisfiesMinCells)
-			{
-				const float RowColRatio = Rows / static_cast<float>(Cols);
-				OutRatioDiff = FMath::Abs(RowColRatio - MaxRowMaxColRatio);
-			}
-		};
-
-		while (true)
-		{
-			const int32 NextRows = Rows - 2;
-			const int32 NextCols = Cols - 2;
-
-			bool bNextRowsSatisfiesMinCells;
-			float NextRowsRowColRatioDiff = 0.0f;
-			EvaluateRowsAndColumns(NextRows, Cols, bNextRowsSatisfiesMinCells, NextRowsRowColRatioDiff);
-
-			bool bNextColsSatisfiesMinCells;
-			float NextColsRowColRatioDiff = 0.0f;
-			EvaluateRowsAndColumns(Rows, NextCols, bNextColsSatisfiesMinCells, NextColsRowColRatioDiff);
-
-			if (bNextRowsSatisfiesMinCells &&
-				(NextRowsRowColRatioDiff < NextColsRowColRatioDiff || !bNextColsSatisfiesMinCells))
-			{
-				Rows = NextRows;
-			}
-			else if (bNextColsSatisfiesMinCells &&
-				(NextRowsRowColRatioDiff >= NextColsRowColRatioDiff || !bNextRowsSatisfiesMinCells))
-			{
-				Cols = NextCols;
-			}
-			else
-			{
-				break;
-			}
-		}
-
 		const float GridWidth = Cols * CellSize;
 		const float GridHeight = Rows * CellSize;
 
-		const float StartX = WorldPositon.X - GridWidth / 2.0f + CellSize / 2.0f;
-		const float StartY = WorldPositon.Y - GridHeight / 2.0f + CellSize / 2.0f;
+		const float StartX = WorldPositon.X + (CellSize - GridWidth) / 2.0f;
+		const float StartY = WorldPositon.Y + (CellSize - GridHeight) / 2.0f;
 
 		OutCellCenterPoints.Empty();
 		for (int32 Row = 0; Row < Rows; ++Row)
@@ -132,10 +94,9 @@ USpawnCluster::~USpawnCluster()
  bool USpawnCluster::GenerateSpawnPoints(const TArray<AActor*>** OutSpawnPointActors)
 {
 	// Spawn points 3m apart to avoid spawn collision issues.
-	const float DistBetweenSpawnPoints = 300.0f;
 	TArray<FVector> SpawnPoints;
-	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
-	if (!bSuccefullyCreatedReducedGrid)
+	const bool bSuccefullyCreatedGrid = GenerateGridInArea(Width, Height, MaxSpawnPoints, DistBetweenSpawnPoints, WorldPosition, SpawnPoints);
+	if (!bSuccefullyCreatedGrid)
 	{
 		return false;
 	}
@@ -181,8 +142,8 @@ USpawnCluster::~USpawnCluster()
  bool USpawnArea::GenerateSpawnClusters(const TArray<AActor*>** OutSpawnPointActors)
 {
 	TArray<FVector> ClusterPoints;
-	const bool bSuccefullyCreatedReducedGrid = GenerateMinimalGridInArea(Width, Height, NumClusters, MinDistanceBetweenClusters, WorldPosition, ClusterPoints);
-	if (!bSuccefullyCreatedReducedGrid)
+	const bool bSuccefullyCreatedGrid = GenerateGridInArea(Width, Height, NumClusters, MinDistanceBetweenClusters, WorldPosition, ClusterPoints);
+	if (!bSuccefullyCreatedGrid)
 	{
 		return false;
 	}
@@ -210,6 +171,7 @@ USpawnCluster::~USpawnCluster()
 			NewSpawnCluster->Width = MinDistanceBetweenClusters;
 			NewSpawnCluster->Height = MinDistanceBetweenClusters;
 			NewSpawnCluster->MaxSpawnPoints = MaxSpawnPointsPerCluster;
+			NewSpawnCluster->DistBetweenSpawnPoints = DistBetweenSpawnPoints;
 
 			const TArray<AActor*>* ClusterSpawnPointActors = nullptr;		 
 			if (NewSpawnCluster->GenerateSpawnPoints(&ClusterSpawnPointActors))
@@ -272,8 +234,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 	const int32 ZoneClusters, const int32 BoundaryClusters,
 	const int32 MaxSpawnPointsPerCluster, const int32 MinDistanceBetweenClusters)
 {
-	const float StartX = ZoneWidth / 2.0f - ZoneCols * ZoneWidth / 2.0f;
-	const float StartY = ZoneHeight / 2.0f - ZoneRows * ZoneHeight / 2.0f;
+	const float StartX = ZoneWidth * (1 - ZoneCols) / 2.0f;
+	const float StartY = ZoneHeight * (1 - ZoneRows) / 2.0f;
 	const int32 SpawnAreaRows = ZoneRows * 2 - 1;
 	const int32 SpawnAreaCols = ZoneCols * 2 - 1;
 	const int32 SpawnAreaWidth = ZoneWidth - MinDistanceBetweenClusters;
@@ -356,7 +318,7 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, MigrationOfCurrentWorker(0)
 	, MigrationCountSeconds(0.0)
 	, MigrationWindowSeconds(5 * 60.0f)
-	, MinActorMigrationPerSecond(-1.0f)
+	, MinActorMigrationPerSecond(0.0f)
 	, ActorMigrationReportTimer(1)
 	, ActorMigrationCheckTimer(11 * 60) // 1-minute later then ActorMigrationCheckDelay + MigrationWindowSeconds to make sure all the workers had reported their migration	
 	, ActorMigrationCheckDelay(5 * 60)
@@ -399,7 +361,7 @@ void ABenchmarkGymGameMode::TickNPCSpawning()
 		const AActor* SpawnPoint = SpawnManager->GetSpawnPointActorByIndex(NPCIndex);
 		if (SpawnPoint != nullptr)
 		{
-			FVector SpawnLocation = SpawnPoint->GetActorLocation();
+			const FVector SpawnLocation = SpawnPoint->GetActorLocation();
 			SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
 			NPCSToSpawn--;
 		}
