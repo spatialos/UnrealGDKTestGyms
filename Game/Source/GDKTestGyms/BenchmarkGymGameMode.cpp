@@ -306,7 +306,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 // --- ABenchmarkGymGameMode ---
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
-	: PercentageSpawnPointsOnWorkerBoundaries(0.25f)
+	: DistBetweenSpawnPoints(300.0f)
+	, PercentageSpawnPointsOnWorkerBoundaries(0.25f)
 	, bHasCreatedSpawnPoints(false)
 	, PlayerDensity(0) // PlayerDensity is invalid until set via command line arg or worker flag.
 	, PlayersSpawned(0)
@@ -321,7 +322,6 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 	, ActorMigrationReportTimer(1)
 	, ActorMigrationCheckTimer(11 * 60) // 1-minute later then ActorMigrationCheckDelay + MigrationWindowSeconds to make sure all the workers had reported their migration	
 	, ActorMigrationCheckDelay(5 * 60)
-	, DistBetweenSpawnPoints(300.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
