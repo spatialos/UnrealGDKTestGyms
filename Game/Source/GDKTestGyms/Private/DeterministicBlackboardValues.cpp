@@ -83,6 +83,11 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 			checkf(bResult, TEXT("Could not find a point in nav mesh at %s"), *LocalRandomPoint.ToString());
 		}
 
+		BlackboardValues.TargetAValue = LocA;
+		BlackboardValues.TargetBValue = LocB;
+		BlackboardValues.TargetStateIsA = true; // Set initial target to TargetA
+		BlackboardValues.bInitialised = true;
+
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
 		Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
