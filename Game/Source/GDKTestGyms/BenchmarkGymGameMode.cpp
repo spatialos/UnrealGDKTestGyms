@@ -376,7 +376,10 @@ void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	TickActorMigration(DeltaSeconds);
+	if (GetZoningRows() > 1 || GetZoningCols() > 1)
+	{
+		TickActorMigration(DeltaSeconds);
+	}
 
 	if (HasAuthority())
 	{
