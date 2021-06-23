@@ -20,11 +20,32 @@ DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
 namespace
 {
-	const FString PlayerDensityWorkerFlag = TEXT("player_density");
+	const FString UptimePlayerDensityWorkerFlag = TEXT("player_density");
+	const FString UptimePlayerDensityCommandLineKey = TEXT("PlayerDensity=");
+
 	const FString UptimeSpawnColsWorkerFlag = TEXT("spawn_cols");
+	const FString UptimeSpawnColsCommandLineKey = TEXT("-SpawnCols=");
+	
 	const FString UptimeSpawnRowsWorkerFlag = TEXT("spawn_rows");
+	const FString UptimeSpawnRowsCommandLineKey = TEXT("-SpawnRows=");
+
 	const FString UptimeWorldWidthWorkerFlag = TEXT("zone_width");
+	const FString UptimeWorldWidthCommandLineKey = TEXT("-ZoneWidth=");
+
 	const FString UptimeWorldHeightWorkerFlag = TEXT("zone_height");
+	const FString UptimeWorldHeightCommandLineKey = TEXT("-ZoneHeight=");
+
+	const FString UptimeEgressSizeWorkerFlag = TEXT("egress_test_size");
+	const FString UptimeEgressSizeCommandLineKey = TEXT("-EgressTestSize=");
+	
+	const FString UptimeEgressFrequencyWorkerFlag = TEXT("egress_test_frequency");
+	const FString UptimeEgressFrequencyCommandLineKey = TEXT("-EgressTestFrequency=");
+	
+	const FString UptimeCrossServerSizeWorkerFlag = TEXT("cross_server_size");
+	const FString UptimeCrossServerSizeCommandLineKey = TEXT("-CrossServerSize=");
+
+	const FString UptimeCrossServerFrequencyWorkerFlag = TEXT("cross_server_frequency");
+	const FString UptimeCrossServerFrequencyCommandLineKey = TEXT("-CrossServerFrequency=");
 } // anonymous namespace
 
 AUptimeGameMode::AUptimeGameMode()
@@ -33,6 +54,10 @@ AUptimeGameMode::AUptimeGameMode()
 	, SpawnRows(1)
 	, ZoneWidth(1000000.0f)
 	, ZoneHeight(1000000.0f)
+	, TestDataSize(0)
+	, TestDataFrequency(0)
+	, CrossServerSize(0)
+	, CrossServerFrequency(0)
 	, NumPlayerClusters(1)
 	, PlayersSpawned(0)
 	, NPCSToSpawn(0)
@@ -96,6 +121,7 @@ void AUptimeGameMode::StartCustomNPCSpawning()
 	GenerateTestScenarioLocations();
 
 	SpawnNPCs(TotalNPCs);
+	SpawnCrossServerActors(GetNumWorkers());
 }
 
 void AUptimeGameMode::Tick(float DeltaSeconds)
@@ -140,7 +166,15 @@ void AUptimeGameMode::ParsePassedValues()
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, *UptimePlayerDensityCommandLineKey, PlayerDensity);
+		FParse::Value(*CommandLine, *UptimeSpawnColsCommandLineKey, SpawnCols);
+		FParse::Value(*CommandLine, *UptimeSpawnRowsCommandLineKey, SpawnRows);
+		FParse::Value(*CommandLine, *UptimeWorldWidthCommandLineKey, ZoneHeight);
+		FParse::Value(*CommandLine, *UptimeWorldHeightCommandLineKey, ZoneWidth);
+		FParse::Value(*CommandLine, *UptimeEgressSizeCommandLineKey, TestDataSize);
+		FParse::Value(*CommandLine, *UptimeEgressFrequencyCommandLineKey, TestDataFrequency);
+		FParse::Value(*CommandLine, *UptimeCrossServerSizeCommandLineKey, CrossServerSize);
+		FParse::Value(*CommandLine, *UptimeCrossServerFrequencyCommandLineKey, CrossServerFrequency);
 	}
 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -153,7 +187,7 @@ void AUptimeGameMode::ParsePassedValues()
 			if (ensure(SpatialWorkerFlags != nullptr))
 			{
 				FString PlayerDensityString;
-				if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+				if (SpatialWorkerFlags->GetWorkerFlag(UptimePlayerDensityWorkerFlag, PlayerDensityString))
 				{
 					PlayerDensity = FCString::Atoi(*PlayerDensityString);
 				}
@@ -163,13 +197,13 @@ void AUptimeGameMode::ParsePassedValues()
 	}
 	NumPlayerClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
 
-	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Density %d, Clusters %d"), PlayerDensity, NumPlayerClusters);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("Density %d, Clusters %d, SpawnCols %d, SpawnRows %d, ZoneHeight %d, ZoneWidth %d, TestDataSize %d, TestDataFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), PlayerDensity, NumPlayerClusters, SpawnCols, SpawnRows, ZoneHeight, ZoneWidth, TestDataSize, TestDataFrequency, CrossServerSize, CrossServerFrequency);
 }
 
 void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue)
 {
 	Super::OnAnyWorkerFlagUpdated(FlagName, FlagValue);
-	if (FlagName == PlayerDensityWorkerFlag)
+	if (FlagName == UptimePlayerDensityWorkerFlag)
 	{
 		PlayerDensity = FCString::Atoi(*FlagValue);
 	}
@@ -189,6 +223,22 @@ void AUptimeGameMode::OnAnyWorkerFlagUpdated(const FString& FlagName, const FStr
 	{
 		ZoneHeight = FCString::Atof(*FlagValue);
 	}
+	else if (FlagName == UptimeEgressSizeWorkerFlag)
+	{
+		TestDataSize = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeEgressFrequencyWorkerFlag)
+	{
+		TestDataFrequency = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeCrossServerSizeWorkerFlag)
+	{
+		CrossServerSize = FCString::Atoi(*FlagValue);
+	}
+	else if (FlagName == UptimeCrossServerFrequencyWorkerFlag)
+	{
+		CrossServerFrequency = FCString::Atoi(*FlagValue);
+	}
 }
 
 void AUptimeGameMode::BuildExpectedActorCounts()
@@ -197,7 +247,7 @@ void AUptimeGameMode::BuildExpectedActorCounts()
 
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f) + 2;
-	AddExpectedActorCount(DropCubeClass, TotalDropCubes, DropCubeCountVariance);
+	AddExpectedActorCount(DropCubeClass, TotalDropCubes - DropCubeCountVariance, TotalDropCubes + DropCubeCountVariance);
 }
 
 void AUptimeGameMode::ClearExistingSpawnPoints()
@@ -234,7 +284,7 @@ void AUptimeGameMode::GenerateSpawnPointClusters(int NumClusters)
 		MinRelativeX = FMath::RoundToInt(MinRelativeX + StartingX + (CurCols * DistBetweenCols) + (DistBetweenCols / 2.0f));
 		MinRelativeY = FMath::RoundToInt(MinRelativeY + StartingY + (CurRows * DistBetweenRows) + (DistBetweenRows / 2.0f));
 		++CurCols;
-	
+
 		UE_LOG(LogUptimeGymGameMode, Log, TEXT("Creating player cluster grid of %d rows by %d columns from location: %d , %d"), NumRows, NumCols, MinRelativeX, MinRelativeY);
 		for (int j = 0; j < ClusterCount; ++j)
 		{
@@ -379,4 +429,55 @@ AActor* AUptimeGameMode::FindPlayerStart_Implementation(AController* Player, con
 	PlayersSpawned++;
 
 	return ChosenSpawnPoint;
+}
+
+void AUptimeGameMode::SpawnCrossServerActors(int32 CrossServerPointNum)
+{
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		UE_LOG(LogUptimeGymGameMode, Error, TEXT("Error spawning, World is null"));
+		return;
+	}
+
+	TArray<FVector> Locations = GenerateCrossServerLoaction();
+	auto SizeOfLocations = Locations.Num();
+	for (auto i = 0; i < SizeOfLocations; ++i)
+	{
+		AUptimeCrossServerBeacon* Beacon = World->SpawnActor<AUptimeCrossServerBeacon>(CrossServerClass, Locations[i], FRotator::ZeroRotator, FActorSpawnParameters());
+		checkf(Beacon, TEXT("Beacon failed to spawn at %s"), *Locations[i].ToString());
+
+		SetCrossServerWorkerFlags(Beacon);
+	}
+}
+
+TArray<FVector> AUptimeGameMode::GenerateCrossServerLoaction()
+{
+	const float DistBetweenRows = ZoneHeight / SpawnRows;
+	const float DistBetweenCols = ZoneWidth / SpawnCols;
+	float StartingX = -(SpawnCols - 1) * ZoneWidth / 2 / SpawnCols;
+	float StartingY = -(SpawnRows - 1) * ZoneHeight / 2 / SpawnRows;
+	TArray<FVector> Locations;
+	const int Z = 300;
+	for (auto i = 0; i < SpawnCols; ++i)
+	{
+		auto TempStartingY = StartingY;
+		for (auto j = 0; j < SpawnRows; ++j)
+		{
+			const int Y = TempStartingY;
+			const int X = StartingX;
+			TempStartingY += DistBetweenRows;
+			FVector Location = FVector(X, Y, Z);
+			Locations.Add(Location);
+		}
+		StartingX += DistBetweenCols;
+	}
+	return Locations;
+}
+
+void AUptimeGameMode::SetCrossServerWorkerFlags(AUptimeCrossServerBeacon* Beacon) const
+{
+	Beacon->SetCrossServerSize(CrossServerSize);
+	Beacon->SetCrossServerFrequency(CrossServerFrequency);
+	UE_LOG(LogUptimeGymGameMode, Log, TEXT("cross server size:%d,cross server frequency:%d"), CrossServerSize, CrossServerFrequency);
 }
