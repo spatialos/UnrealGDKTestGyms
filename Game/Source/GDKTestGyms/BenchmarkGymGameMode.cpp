@@ -245,8 +245,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 	int32 ZoneClustersToAdd = ZoneClusters;
 	int32 BoundaryClustersToAdd = BoundaryClusters;
 
-	int32 NumZonesLeftToAdd = NumZones;
-	int32 NumBoundariesToAdd = NumBoundaries;
+	int32 NumZonesLeftToProcess = NumZones;
+	int32 NumBoundariesToProcess = NumBoundaries;
 
 	for (int32 Row = 0; Row < SpawnAreaRows; ++Row)
 	{
@@ -263,10 +263,11 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 			bool bIsZone = bZoneRow && bZoneCol;
 
 			int32& ClustersToAdd = bIsZone ? ZoneClustersToAdd : BoundaryClustersToAdd;
-			int32& AreasToAdd = bIsZone ? NumZonesLeftToAdd : NumBoundariesToAdd;
+			int32& AreasToProcess = bIsZone ? NumZonesLeftToProcess : NumBoundariesToProcess;
 			if (ClustersToAdd <= 0)
 			{
 				// Don't create new areas if we have already added enough clusters for area type.
+				AreasToProcess--;
 				continue;
 			}
 
@@ -282,7 +283,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoneRow ? MinDistanceBetweenClusters : SpawnAreaWidth;
 				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoneCol ? MinDistanceBetweenClusters : SpawnAreaHeight;
 
-				const int32 NumAreaClusters = FMath::CeilToInt(ClustersToAdd / static_cast<float>(AreasToAdd));
+				checkf(AreasToProcess != 0.0f, TEXT("Spawning point logic has gone wrong!"));
+				const int32 NumAreaClusters = FMath::CeilToInt(ClustersToAdd / static_cast<float>(AreasToProcess));
 				NewSpawnArea->NumClusters = NumAreaClusters;
 
 				NewSpawnArea->MaxSpawnPointsPerCluster = MaxSpawnPointsPerCluster;
@@ -298,8 +300,8 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 				SpawnAreas.Add(NewSpawnArea);
 
 				ClustersToAdd -= NumAreaClusters;
-				AreasToAdd--;
 			}
+			AreasToProcess--;
 		}
 	}
 }
