@@ -234,6 +234,12 @@ void ABenchmarkGymGameModeBase::FailActorCountDueToTimeout()
 
 void ABenchmarkGymGameModeBase::AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount)
 {
+	if (ActorClass == nullptr)
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("Null class passed in to AddExpectedActorCount"));
+		return;
+	}
+
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Adding NFR actor count expectation - ActorClass: %s, MinCount: %d, MaxCount: %d"), *ActorClass->GetName(), MinCount, MaxCount);
 	ExpectedActorCounts.Add(ActorClass, FExpectedActorCountConfig(MinCount, MaxCount));
 }

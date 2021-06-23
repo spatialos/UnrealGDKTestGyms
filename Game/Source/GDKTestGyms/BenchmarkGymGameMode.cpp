@@ -242,11 +242,11 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 	const int32 NumZones = ZoneRows * ZoneCols;
 	const int32 NumBoundaries = ZoneRows * (ZoneCols - 1) + ZoneCols * (ZoneRows - 1);
 
-	const int32 ClustersPerZone = FMath::CeilToInt(ZoneClusters / static_cast<float>(NumZones));
-	const int32 ClustersPerBoundary = NumBoundaries != 0 ? FMath::CeilToInt(BoundaryClusters / static_cast<float>(NumBoundaries)) : 0;
-
 	int32 ZoneClustersToAdd = ZoneClusters;
 	int32 BoundaryClustersToAdd = BoundaryClusters;
+
+	int32 NumZonesLeftToAdd = NumZones;
+	int32 NumBoundariesToAdd = NumBoundaries;
 
 	for (int32 Row = 0; Row < SpawnAreaRows; ++Row)
 	{
@@ -263,6 +263,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 			bool bIsZone = bZoneRow && bZoneCol;
 
 			int32& ClustersToAdd = bIsZone ? ZoneClustersToAdd : BoundaryClustersToAdd;
+			int32& AreasToAdd = bIsZone ? NumZonesLeftToAdd : NumBoundariesToAdd;
 			if (ClustersToAdd <= 0)
 			{
 				// Don't create new areas if we have already added enough clusters for area type.
@@ -281,8 +282,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 				NewSpawnArea->Width = bIsZone ? SpawnAreaWidth : bZoneRow ? MinDistanceBetweenClusters : SpawnAreaWidth;
 				NewSpawnArea->Height = bIsZone ? SpawnAreaHeight : bZoneCol ? MinDistanceBetweenClusters : SpawnAreaHeight;
 
-				const int32 MaxSpawnPoints = bIsZone ? ClustersPerZone : ClustersPerBoundary;
-				const int32 NumAreaClusters = MaxSpawnPoints < ClustersToAdd ? MaxSpawnPoints : ClustersToAdd;
+				const int32 NumAreaClusters = FMath::CeilToInt(ClustersToAdd / static_cast<float>(AreasToAdd));
 				NewSpawnArea->NumClusters = NumAreaClusters;
 
 				NewSpawnArea->MaxSpawnPointsPerCluster = MaxSpawnPointsPerCluster;
@@ -298,6 +298,7 @@ void USpawnManager::GenerateSpawnAreas(const int32 ZoneRows, const int32 ZoneCol
 				SpawnAreas.Add(NewSpawnArea);
 
 				ClustersToAdd -= NumAreaClusters;
+				AreasToAdd--;
 			}
 		}
 	}
