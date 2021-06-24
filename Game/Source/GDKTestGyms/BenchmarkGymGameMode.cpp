@@ -345,8 +345,10 @@ void ABenchmarkGymGameMode::TickNPCSpawning()
 		if (SpawnPoint != nullptr)
 		{
 			const FVector SpawnLocation = SpawnPoint->GetActorLocation();
-			SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]);
-			NPCSToSpawn--;
+			if (SpawnNPC(SpawnLocation, NPCRunPoints[NPCIndex % NPCRunPoints.Num()]))
+			{
+				NPCSToSpawn--;
+			}
 		}
 	}
 }
@@ -542,14 +544,14 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 
 void ABenchmarkGymGameMode::GenerateSpawnPoints()
 {
-	const int32 NumClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
-	const int32 BoundaryClusters = FMath::CeilToInt(NumClusters * PercentageSpawnPointsOnWorkerBoundaries);
-	const int32 ZoneClusters = NumClusters - BoundaryClusters;
-
 	const int32 Rows = GetZoningRows();
 	const int32 Cols = GetZoningCols();
 	const float Width = GetZoneWidth();
 	const float Height = GetZoneHeight();
+
+	const int32 NumClusters = FMath::CeilToInt(ExpectedPlayers / static_cast<float>(PlayerDensity));
+	const int32 BoundaryClusters = Rows > 1 || Cols > 1 ? FMath::CeilToInt(NumClusters * PercentageSpawnPointsOnWorkerBoundaries) : 0;
+	const int32 ZoneClusters = NumClusters - BoundaryClusters;
 
 	SpawnManager->GenerateSpawnAreas(Rows, Cols, Width, Height, ZoneClusters, BoundaryClusters, PlayerDensity, DistBetweenClusters, DistBetweenSpawnPoints);
 }
@@ -559,13 +561,13 @@ void ABenchmarkGymGameMode::SpawnNPCs(int NumNPCs)
 	NPCSToSpawn = NumNPCs;
 }
 
-void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
+bool ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)
 	{
 		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Error spawning NPC, World is null"));
-		return;
+		return false;
 	}
 
 	if (NPCSpawner == nullptr)
@@ -579,14 +581,14 @@ void ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		NPCSpawner = Spawner;
 	}
 
-	if (NPCSpawner != nullptr)
+	if (NPCSpawner == nullptr || !NPCSpawner->IsActorReady())
 	{
-		NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
+		UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Could not spawn NPC. Will retry."));
+		return false;
 	}
-	else
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Error, TEXT("Failed to find NPCSpawner."));
-	}
+
+	NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
+	return true;
 }
 
 void ABenchmarkGymGameMode::ReportMigration_Implementation(const FString& WorkerID, const float Migration)

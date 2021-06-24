@@ -177,7 +177,7 @@ private:
 	void TickSimPlayerBlackboardValues();
 
 	void SpawnNPCs(int NumNPCs);
-	void SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
+	bool SpawnNPC(const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
 	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 
