@@ -12,42 +12,43 @@ DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameMode, Log, All);
 
 using ControllerIntegerPair = TPair<TWeakObjectPtr<AController>, int>;
 
-UCLASS()
-class GDKTESTGYMS_API USpawnCluster : public UObject
+class APlayerStart;
+
+USTRUCT()
+struct FSpawnCluster
 {
-	GENERATED_BODY()
-public:
+	GENERATED_USTRUCT_BODY()
 
-	~USpawnCluster();
-
+	UWorld* World = nullptr;
 	FVector WorldPosition;
 	float Width;
 	float Height;
 	int32 MaxSpawnPoints;
 	float MinDistanceBetweenSpawnPoints;
 
-	bool GenerateSpawnPoints(const TArray<AActor*>** OutSpawnPointActors);
+	bool GenerateSpawnPoints();
+	const TArray<APlayerStart*>& GetSpawnPointActors() { return SpawnPointActors; };
 
 private:
 
-	UPROPERTY()
-	TArray<AActor*> SpawnPointActors;
+	TArray<APlayerStart*> SpawnPointActors;
 };
 
-UCLASS()
-class GDKTESTGYMS_API USpawnArea : public UObject
+USTRUCT()
+struct FSpawnArea
 {
-	GENERATED_BODY()
-public:
+	GENERATED_USTRUCT_BODY()
 
-	enum Type : uint8
+	enum AreaType : uint8
 	{
 		Zone,
-		Boundary
+		Boundary,
+		Count
 	};
 
-	Type Type;
+	UWorld* World = nullptr;
 	FVector WorldPosition;
+	AreaType Type;
 	float Width;
 	float Height;
 	int32 NumClusters;
@@ -55,16 +56,14 @@ public:
 	float MinDistanceBetweenClusters;
 	float MinDistanceBetweenSpawnPoints;
 
-	bool GenerateSpawnClusters(const TArray<AActor*>** OutSpawnPointActors);
+	bool GenerateSpawnClusters();
+	const TArray<APlayerStart*>& GetSpawnPointActors() { return SpawnPointActors; };
 	AActor* GetSpawnPointActorByIndex(const int32 Index) const;
 
 private:
 
-	UPROPERTY()
-	TArray<USpawnCluster*> SpawnClusters;
-
-	UPROPERTY()
-	TArray<AActor*> SpawnPointActors;
+	TArray<FSpawnCluster> SpawnClusters;
+	TArray<APlayerStart*> SpawnPointActors;
 };
 
 UCLASS()
@@ -85,15 +84,15 @@ public:
 
 	void ClearSpawnPoints();
 
-	void ForEachZoneArea(TFunctionRef<void(USpawnArea& ZoneArea)> Predicate);
+	void ForEachArea(TFunctionRef<void(FSpawnArea& ZoneArea)> Predicate, const FSpawnArea::AreaType AreaType = FSpawnArea::AreaType::Count);
 
 private:
 
 	UPROPERTY()
-	TArray<USpawnArea*> SpawnAreas;
+	TArray<FSpawnArea> SpawnAreas;
 
 	UPROPERTY()
-	TArray<AActor*> SpawnPointActors;
+	TArray<APlayerStart*> SpawnPointActors;
 };
 
 UCLASS()

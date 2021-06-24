@@ -117,7 +117,7 @@ void AUptimeGameMode::SpawnCrossServerActors()
 		return;
 	}
 
-	SpawnManager->ForEachZoneArea([this, World](USpawnArea& ZoneArea) {
+	SpawnManager->ForEachArea([this, World](FSpawnArea& ZoneArea) {
 		AActor* SpawnPointActor = ZoneArea.GetSpawnPointActorByIndex(0);
 		if (SpawnPointActor == nullptr)
 		{
@@ -132,7 +132,7 @@ void AUptimeGameMode::SpawnCrossServerActors()
 		Beacon->SetCrossServerSize(CrossServerSize);
 		Beacon->SetCrossServerFrequency(CrossServerFrequency);
 		UE_LOG(LogUptimeGymGameMode, Log, TEXT("cross server size: %d, cross server frequency: %d"), CrossServerSize, CrossServerFrequency);
-	});
+	}, FSpawnArea::AreaType::Zone);
 }
 
 void AUptimeGameMode::OnEgressSizeFlagUpdate(const FString& FlagName, const FString& FlagValue)
