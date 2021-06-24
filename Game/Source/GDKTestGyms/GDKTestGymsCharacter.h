@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "GDKTestGymsCharacter.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogSpatialGDKModule2, Log, All);
+
 UCLASS(config=Game, SpatialType)
 class AGDKTestGymsCharacter : public ACharacter
 {
@@ -69,5 +71,8 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	UFUNCTION(BlueprintCallable, Category = "Memory")
+	void PrintAllocateInfo();
 };
 

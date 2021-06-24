@@ -5,11 +5,17 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Engine/World.h"
+#include "EngineClasses/SpatialGameInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "Interop/Connection/SpatialConnectionManager.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
+#include "SpatialGDK/Public/SpatialGDKModule.h"
+
+DEFINE_LOG_CATEGORY(LogSpatialGDKModule2);
 
 //////////////////////////////////////////////////////////////////////////
 // AGDKTestGymsCharacter
@@ -131,3 +137,22 @@ void AGDKTestGymsCharacter::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
+
+void AGDKTestGymsCharacter::PrintAllocateInfo()
+{
+	FSpatialGDKModule& Mod = FModuleManager::GetModuleChecked<FSpatialGDKModule>(TEXT("SpatialGDK"));
+	Mod.PrintCustomAllocateInfo();
+
+	if (GetWorld()->GetNetDriver() != nullptr)
+	{
+		USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GetWorld()->GetNetDriver());
+		if (NetDriver != nullptr)
+		{
+			UE_LOG(LogSpatialGDKModule2, Log, TEXT("View.Num=%i. %s"), 
+				NetDriver->ConnectionManager->GetWorkerConnection()->GetView().Num(), 
+				*NetDriver->ConnectionManager->GetWorkerConnection()->GetViewDeltaInfo()
+			);
+		}
+	}
+}
+
