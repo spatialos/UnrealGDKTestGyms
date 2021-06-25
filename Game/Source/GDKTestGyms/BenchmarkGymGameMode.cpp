@@ -380,7 +380,7 @@ void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
 	}
 
 	const int32 AuthActorCount = GetUXAuthActorCount();
-	MinActorMigrationPerSecond = PercentageSpawnPointsOnWorkerBoundaries * (ExpectedPlayers + TotalNPCs) * 0.045f;
+	MinActorMigrationPerSecond = PercentageSpawnPointsOnWorkerBoundaries * (ExpectedPlayers + TotalNPCs) * 0.02f;
 
 	// This test respects the initial delay timer only for multiworker
 	if (ActorMigrationCheckDelay.HasTimerGoneOff())
