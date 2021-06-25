@@ -19,6 +19,7 @@
 #include "TimerManager.h"
 #include "UserExperienceComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Utils/SpatialActorUtils.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
 
@@ -139,6 +140,65 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	TryAddSpatialMetrics();
 
 	InitialiseActorCountCheckTimer();
+
+	FTimerHandle CountTimer;
+	GetWorld()->GetTimerManager().SetTimer(
+		CountTimer,
+		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+		{
+			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->NPCClass, NPCs);
+			AllCharacters = PlayerCharacters;
+			AllCharacters.Append(NPCs);
+
+			int TotalBucket1 = 0;
+			int TotalBucket2 = 0;
+			int TotalBucket3 = 0;
+			int TotalBucket4 = 0;
+			float NCD = 15000; // 150m
+
+			for (AActor* PlayerController : PlayerControllers)
+			{
+				int Bucket1 = 0;
+				int Bucket2 = 0;
+				int Bucket3 = 0;
+				int Bucket4 = 0;
+
+				FVector Pos = SpatialGDK::GetActorSpatialPosition(PlayerController);
+				for (AActor* Character : AllCharacters)
+				{
+					FVector OtherPos = SpatialGDK::GetActorSpatialPosition(Character);
+					float Dist = FVector::Distance(Pos, OtherPos);
+					if (Dist < NCD * 0.33)
+					{
+						++Bucket1;
+					}
+					else if (Dist < NCD * 0.66)
+					{
+						++Bucket2;
+					}
+					else if (Dist <= NCD)
+					{
+						++Bucket3;
+					}
+					else
+					{
+						++Bucket4;
+					}
+				}
+
+				UE_LOG(LogTemp, Warning, TEXT("Density: %d %d %d (%d) %d"), Bucket1, Bucket2, Bucket3, Bucket1+Bucket2+Bucket3, Bucket4);
+				TotalBucket1 += Bucket1;
+				TotalBucket2 += Bucket2;
+				TotalBucket3 += Bucket3;
+				TotalBucket4 += Bucket4;
+			}
+			UE_LOG(LogTemp, Warning, TEXT("Density for all: %d %d %d (%d) %d"), TotalBucket1, TotalBucket2, TotalBucket3, TotalBucket1+TotalBucket2+TotalBucket3, TotalBucket4);
+		}
+	}, 5.f, true );
 }
 
 void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
