@@ -181,8 +181,6 @@ private:
 	FMetricTimer MemReportIntervalTimer;
 #endif
 
-	virtual void BeginPlay() override;
-
 	void TryInitialiseExpectedActorCounts();
 
 	void TryBindWorkerFlagsDelegate();
