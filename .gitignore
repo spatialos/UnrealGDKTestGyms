@@ -23,6 +23,7 @@ build/
 Game/Plugins/UnrealGDK/
 spatial/schema
 spatial/snapshots
+spatial/tools
 Game/Content/Spatial/SchemaDatabase.uasset
 
 # Rider

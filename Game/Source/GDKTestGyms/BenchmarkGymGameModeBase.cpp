@@ -3,6 +3,7 @@
 #include "BenchmarkGymGameModeBase.h"
 
 #include "Engine/World.h"
+#include "EngineClasses/SpatialActorChannel.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "EngineClasses/SpatialPackageMapClient.h"
 #include "GameFramework/GameStateBase.h"
@@ -147,6 +148,8 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
 		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
 		{
+			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GameMode->GetNetDriver());
+
 			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
 			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
 			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
@@ -167,10 +170,12 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 				int Bucket3 = 0;
 				int Bucket4 = 0;
 
-				FVector Pos = SpatialGDK::GetActorSpatialPosition(PlayerController);
+				//FVector Pos = SpatialGDK::GetActorSpatialPosition(PlayerController);
+				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
 				for (AActor* Character : AllCharacters)
 				{
-					FVector OtherPos = SpatialGDK::GetActorSpatialPosition(Character);
+					//FVector OtherPos = SpatialGDK::GetActorSpatialPosition(Character);
+					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
 					float Dist = FVector::Distance(Pos, OtherPos);
 					if (Dist < NCD * 0.33)
 					{
