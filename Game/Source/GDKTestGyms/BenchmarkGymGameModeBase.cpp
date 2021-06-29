@@ -226,6 +226,7 @@ void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
 					}
 				},
 				FailActorCountTimeout, false);
+			GetMetrics("metric", ActorCountValidMetricName, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetActorCountValid);
 		}
 	}
 }
@@ -479,6 +480,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, *ActorCount);
 		}
+		GetMetrics("metric", ExpectedPlayersValidMetricName, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetRequiredPlayersValid);
 	}
 }
 
@@ -517,6 +519,8 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 		bHasFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Server FPS check. FPS: %.8f"), *NFRFailureString, FPS);
 	}
+
+	GetMetrics("metric", AverageFPSValid, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetFPSValid);
 }
 
 void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
@@ -551,6 +555,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 		bHasClientFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Client FPS check."), *NFRFailureString);
 	}
+	GetMetrics("metric", AverageClientFPSValid, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetClientFPSValid);
 }
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
@@ -593,7 +598,9 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	ClientUpdateTimeDeltaMS /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTMS = ClientRTTMS;
+	GetMetrics("metric", AverageClientRTTMetricName, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetClientRTT);
 	AveragedClientUpdateTimeDeltaMS = ClientUpdateTimeDeltaMS;
+	GetMetrics("metric", AverageClientUpdateTimeDeltaMetricName, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetClientUpdateTimeDelta);
 
 	const bool bUXMetricValid = AveragedClientRTTMS <= MaxClientRoundTripMS && AveragedClientUpdateTimeDeltaMS <= MaxClientUpdateTimeDeltaMS;
 	
@@ -983,6 +990,7 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 					ExpectedActorCount.MaxCount,
 					TotalActorCount);
 			}
+			GetMetrics("metric", ActorCountValidMetricName, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetActorCountValid);
 		}
 	}
 }
@@ -1041,6 +1049,7 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 		RecentPlayerAvgVelocity += Velocity;
 	}
 	RecentPlayerAvgVelocity /= (AvgVelocityHistory.Num() + 0.01f);
+	GetMetrics("metric", PlayerMovementMetricName, "improbable_engine_metrics", &ABenchmarkGymGameModeBase::GetPlayerMovement);
 
 	RequiredPlayerMovementCheckTimer.SetTimer(30);
 	
@@ -1196,4 +1205,14 @@ void ABenchmarkGymGameModeBase::OnMemReportFlagUpdate(const FString& FlagName, c
 #if	STATS
 	InitMemReportTimer(FlagValue);
 #endif
+}
+
+void ABenchmarkGymGameModeBase::GetMetrics(const FString& LeftLabel, const FString& RightLabel, const FString& MetricsName, ABenchmarkGymGameModeBase::FunctionPtrType Func)
+{
+	auto MetricsPtr = UMetricsBlueprintLibrary::GetMetric(MetricsName, TArray<FPrometheusLabel>{ TPair<FString, FString>(LeftLabel, RightLabel) });
+	if (MetricsPtr != nullptr)
+	{
+		auto Value = (this->*(Func))();
+		MetricsPtr->Set(Value);
+	}
 }
