@@ -608,6 +608,19 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
 	const FString& CommandLine = FCommandLine::Get();
+
+	//Move the profile feature outside to make it work when using worker flags
+#if	STATS
+	FString CPUProfileString;
+	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
+	InitStatTimer(CPUProfileString);
+#endif
+#if !UE_BUILD_SHIPPING
+	FString MemReportIntervalString;
+	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
+	InitMemReportTimer(MemReportIntervalString);
+#endif
+
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
 		ReadCommandLineArgs(CommandLine);
@@ -643,17 +656,6 @@ void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
 
 	FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripMS);
 	FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
-
-#if	STATS
-	FString CPUProfileString;
-	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
-	InitStatTimer(CPUProfileString);
-#endif
-#if !UE_BUILD_SHIPPING
-	FString MemReportIntervalString;
-	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-	InitMemReportTimer(MemReportIntervalString);
-#endif
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"),
 		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS);
