@@ -538,7 +538,7 @@ The late connecing client has validated the local state before sending the "Pass
   * The Gameplay Debugger does not track player movements across worker boundaries in manual tracking mode.
   * The Gameplay Debugger displays debug information accurately.
 * How to test:
-  * You will need a numpad on your keyboard to test this. If you don't have one, you can use the windows onscreen keyboard.
+  * You will need a numpad on your keyboard to test this. If you don't have one, you can use `Project Settings -> ( Engine ) Gameplay Debugger -> Input` to re-map the numpad keys.
   * Open `Content\Maps\GameplayDebugger\GameplayDebuggerManualTest.umap`
   * Click the `Play` button in the Unreal toolbar to start PIE session, uncheck the option for `SpatialOS networking`, and set `Number of players` to 1.
   * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards between the two servers.
