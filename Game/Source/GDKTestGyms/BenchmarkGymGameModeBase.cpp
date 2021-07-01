@@ -612,13 +612,28 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	//Move the profile feature outside to make it work when using worker flags
 #if	STATS
 	FString CPUProfileString;
-	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
-	InitStatTimer(CPUProfileString);
+	if (FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString))
+	{
+		InitStatTimer(CPUProfileString);
+	}
+	else 
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("The CPU profile duration and interval are not set. "));
+	}
+
+
 #endif
 #if !UE_BUILD_SHIPPING
 	FString MemReportIntervalString;
-	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-	InitMemReportTimer(MemReportIntervalString);
+	if (FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString))
+	{
+		InitMemReportTimer(MemReportIntervalString);
+	}
+	else 
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("The memreport interval is not set. "));
+	}
+
 #endif
 
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
