@@ -609,7 +609,7 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
 	const FString& CommandLine = FCommandLine::Get();
 
-	//Move the profile feature outside to make it work when using worker flags
+	// Always read profiling feature details from cmd line as it's not setup for worker flags
 #if	STATS
 	FString CPUProfileString;
 	if (FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString))
