@@ -608,6 +608,34 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 void ABenchmarkGymGameModeBase::ParsePassedValues()
 {
 	const FString& CommandLine = FCommandLine::Get();
+
+	// Always read profiling feature details from cmd line as it's not setup for worker flags
+#if	STATS
+	FString CPUProfileString;
+	if (FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString))
+	{
+		InitStatTimer(CPUProfileString);
+	}
+	else 
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("The CPU profile duration and interval are not set. "));
+	}
+
+
+#endif
+#if !UE_BUILD_SHIPPING
+	FString MemReportIntervalString;
+	if (FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString))
+	{
+		InitMemReportTimer(MemReportIntervalString);
+	}
+	else 
+	{
+		UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("The memreport interval is not set. "));
+	}
+
+#endif
+
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
 		ReadCommandLineArgs(CommandLine);
@@ -643,17 +671,6 @@ void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
 
 	FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripMS);
 	FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
-
-#if	STATS
-	FString CPUProfileString;
-	FParse::Value(*CommandLine, *StatProfileCommandLineKey, CPUProfileString);
-	InitStatTimer(CPUProfileString);
-#endif
-#if !UE_BUILD_SHIPPING
-	FString MemReportIntervalString;
-	FParse::Value(*CommandLine, *MemRemportIntervalKey, MemReportIntervalString);
-	InitMemReportTimer(MemReportIntervalString);
-#endif
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"),
 		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS);
