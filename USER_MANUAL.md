@@ -541,7 +541,7 @@ The late connecing client has validated the local state before sending the "Pass
   * You will need a numpad on your keyboard to test this. If you don't have one, you can use the windows onscreen keyboard.
   * Open `Content\Maps\GameplayDebugger\GameplayDebuggerManualTest.umap`
   * Click the `Play` button in the Unreal toolbar to start PIE session, uncheck the option for `SpatialOS networking`, and set `Number of players` to 1.
-  * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards between the two servers.
+  * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards.
   * While the camera is looking directly at the cube, press `'`(Apostrophe) to enable the gameplay debugger on the cube.
   * Observe in the gameplay debugger status panel that `Debug Actor` is set to `GameplayDebuggerGymCube`. If it is not, toggle the gameplay debugger off by pressing `'` and try again.
   * Observe there is no mention of the spatial multi worker specific additions for `server tracking modes` or `selecting servers` in the gameplay debugger status panel.
