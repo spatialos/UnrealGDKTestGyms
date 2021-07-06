@@ -65,6 +65,8 @@ namespace
 #endif
 	const FString MetricLeftLabel = TEXT("metric");
 	const FString MetricName = TEXT("improbable_engine_metrics");
+	const FString MetricEnginePlatformLeftLabel = TEXT("engine_platform");
+	const FString MetricEnginePlatformRightLabel = TEXT("UnrealWorker");
 
 	const bool bEnableDensityBucketOutput = false;
 
@@ -1215,7 +1217,7 @@ void ABenchmarkGymGameModeBase::OnMemReportFlagUpdate(const FString& FlagName, c
 
 void ABenchmarkGymGameModeBase::GetMetrics(const FString& LeftLabel, const FString& RightLabel, const FString& MetricsName, ABenchmarkGymGameModeBase::FunctionPtrType Func)
 {
-	auto MetricsPtr = UMetricsBlueprintLibrary::GetMetric(MetricsName, TArray<FPrometheusLabel>{ TPair<FString, FString>(LeftLabel, RightLabel) });
+	auto MetricsPtr = UMetricsBlueprintLibrary::GetMetric(MetricsName, TArray<FPrometheusLabel>{ TPair<FString, FString>(LeftLabel, RightLabel), TPair<FString,FString>(MetricEnginePlatformLeftLabel,MetricEnginePlatformRightLabel) });
 	if (MetricsPtr != nullptr)
 	{
 		auto Value = (this->*(Func))();
