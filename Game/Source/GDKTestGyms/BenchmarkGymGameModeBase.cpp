@@ -53,8 +53,6 @@ namespace
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
-	const FString NativeCommandLineKey = TEXT("-IsNative=");
-
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
@@ -93,7 +91,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
 	, UXAuthActorCount(0)
-	, bNativeScenario(false)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
 	, TickActorCountTimer(60) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
@@ -682,7 +679,6 @@ void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
 
 	FParse::Value(*CommandLine, *TotalPlayerCommandLineKey, ExpectedPlayers);
 	FParse::Value(*CommandLine, *RequiredPlayersCommandLineKey, RequiredPlayers);
-	FParse::Bool(*CommandLine, *NativeCommandLineKey, bNativeScenario);
 
 	int32 NumNPCs = 0;
 	FParse::Value(*CommandLine, *TotalNPCsCommandLineKey, NumNPCs);
@@ -1224,4 +1220,3 @@ void ABenchmarkGymGameModeBase::GetMetrics(const FString& LeftLabel, const FStri
 		MetricsPtr->Set(Value);
 	}
 }
-

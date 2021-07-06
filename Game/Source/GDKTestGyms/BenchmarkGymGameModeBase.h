@@ -129,8 +129,6 @@ private:
 	bool bActorCountFailureState;
 	int32 UXAuthActorCount;
 
-	bool bNativeScenario;
-
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
 	FMetricTimer TickActorCountTimer;
@@ -188,7 +186,6 @@ private:
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
-	void TryAddNativeMetrics();
 
 	void SetTotalNPCs(int32 Value);
 
