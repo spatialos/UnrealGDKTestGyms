@@ -17,8 +17,5 @@ void FGDKTestGymsFunctionalTestsModule::StartupModule()
    });
 }
 
-void FGDKTestGymsFunctionalTestsModule::ShutdownModule()
-{
-}
 
 #undef LOCTEXT_NAMESPACE
