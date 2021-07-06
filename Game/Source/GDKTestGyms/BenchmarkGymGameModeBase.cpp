@@ -130,68 +130,10 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 
 	InitialiseActorCountCheckTimer();
 
-	FTimerHandle CountTimer;
-	GetWorld()->GetTimerManager().SetTimer(
-		CountTimer,
-		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
-		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
-		{
-			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GameMode->GetNetDriver());
-
-			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
-			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
-			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
-			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->NPCClass, NPCs);
-			AllCharacters = PlayerCharacters;
-			AllCharacters.Append(NPCs);
-
-			int TotalBucket1 = 0;
-			int TotalBucket2 = 0;
-			int TotalBucket3 = 0;
-			int TotalBucket4 = 0;
-			float NCD = 15000; // 150m
-
-			for (AActor* PlayerController : PlayerControllers)
-			{
-				int Bucket1 = 0;
-				int Bucket2 = 0;
-				int Bucket3 = 0;
-				int Bucket4 = 0;
-
-				//FVector Pos = SpatialGDK::GetActorSpatialPosition(PlayerController);
-				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
-				for (AActor* Character : AllCharacters)
-				{
-					//FVector OtherPos = SpatialGDK::GetActorSpatialPosition(Character);
-					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
-					float Dist = FVector::Distance(Pos, OtherPos);
-					if (Dist < NCD * 0.33)
-					{
-						++Bucket1;
-					}
-					else if (Dist < NCD * 0.66)
-					{
-						++Bucket2;
-					}
-					else if (Dist <= NCD)
-					{
-						++Bucket3;
-					}
-					else
-					{
-						++Bucket4;
-					}
-				}
-
-				UE_LOG(LogTemp, Warning, TEXT("Density: %d %d %d (%d) %d"), Bucket1, Bucket2, Bucket3, Bucket1+Bucket2+Bucket3, Bucket4);
-				TotalBucket1 += Bucket1;
-				TotalBucket2 += Bucket2;
-				TotalBucket3 += Bucket3;
-				TotalBucket4 += Bucket4;
-			}
-			UE_LOG(LogTemp, Warning, TEXT("Density for all: %d %d %d (%d) %d"), TotalBucket1, TotalBucket2, TotalBucket3, TotalBucket1+TotalBucket2+TotalBucket3, TotalBucket4);
-		}
-	}, 5.f, true );
+	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	{
+		OutputPlayerDensity();
+	}
 }
 
 void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
@@ -1100,6 +1042,80 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, RecentPlayerAvgVelocity);
 		}
 	}
+}
+
+void ABenchmarkGymGameModeBase::OutputPlayerDensity()
+{
+	FTimerHandle CountTimer;
+	GetWorld()->GetTimerManager().SetTimer(
+		CountTimer,
+		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+		{
+			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GameMode->GetNetDriver());
+
+			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->NPCClass, NPCs);
+			AllCharacters = PlayerCharacters;
+			AllCharacters.Append(NPCs);
+
+			const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
+			TArray<float> NCDDistanceRatios;
+			NCDDistanceRatios.Push(SpatialGDKSettings->FullFrequencyNetCullDistanceRatio);
+			for (auto i : SpatialGDKSettings->InterestRangeFrequencyPairs)
+			{
+				NCDDistanceRatios.Push(i.DistanceRatio);
+			}
+			NCDDistanceRatios.Push(MAX_FLT);
+			NCDDistanceRatios.Sort();
+			TArray<int> TotalCountPerBucket;
+			TArray<int> CountPerBucket;
+			TotalCountPerBucket.Init(0, NCDDistanceRatios.Num());
+
+			for (AActor* PlayerController : PlayerControllers)
+			{
+				CountPerBucket.Init(0, NCDDistanceRatios.Num());
+
+				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
+				for (AActor* Character : AllCharacters)
+				{
+					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
+					float Dist = FVector::Distance(Pos, OtherPos);
+					float NCD = FMath::Sqrt(Character->NetCullDistanceSquared);
+					for (int i = 0; i < NCDDistanceRatios.Num(); ++i)
+					{
+						if (Dist < NCDDistanceRatios[i] * NCD)
+						{
+							CountPerBucket[i]++;
+							TotalCountPerBucket[i]++;
+							break;
+						}
+					}
+				}
+
+				int TotalCount = 0;
+				FString CountsAsString;
+				for (int Count : CountPerBucket)
+				{
+					CountsAsString += FString::Format(TEXT(" {0}"), { Count });
+					TotalCount += Count;
+				}
+
+				UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Density: %s (%d)"), *CountsAsString, TotalCount);
+			}
+
+			int TotalCount = 0;
+			FString CountsAsString;
+			for (int Count : TotalCountPerBucket)
+			{
+				CountsAsString += FString::Format(TEXT(" {0}"), { Count });
+				TotalCount += Count;
+			}
+			UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Density for all: %s (%d)"), *CountsAsString, TotalCount);
+		}
+	}, 5.f, true);
 }
 
 void ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue)
