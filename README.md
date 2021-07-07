@@ -15,7 +15,7 @@ To use this project, you must have followed the [Get started](https://docs.impro
 * Replace the Example Project repository link in the instructions with the Test Gyms Project repository link.
 
 #### How to use
-For instrtuctions on how to use this project please read the [user manual](http://github.com/spatialos/UnrealGDKTestGyms/USER_MANUAL.MD).
+For instrtuctions on how to use this project please read the [user manual](https://github.com/spatialos/UnrealGDKTestGyms/blob/master/USER_MANUAL.md).
 
 For more information, see the [SpatialOS GDK for Unreal documentation](https://docs.improbable.io/unreal/latest/).
 
