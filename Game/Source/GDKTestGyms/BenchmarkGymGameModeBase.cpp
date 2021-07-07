@@ -62,7 +62,7 @@ namespace
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
 
-	const bool bEnableDensityBucketOutput = true;
+	const bool bEnableDensityBucketOutput = false;
 
 } // anonymous namespace
 
@@ -1084,20 +1084,28 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 			const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
 			TArray<float> NCDDistanceRatios;
 			NCDDistanceRatios.Push(SpatialGDKSettings->FullFrequencyNetCullDistanceRatio);
+			
 			for (const auto& Pair : SpatialGDKSettings->InterestRangeFrequencyPairs)
 			{
 				NCDDistanceRatios.Push(Pair.DistanceRatio);
 			}
-			NCDDistanceRatios.Push(MAX_FLT); // Add max float to catch actors outside interest range
 			NCDDistanceRatios.Sort();
+
+			FString DistanceRatiosAsString(TEXT("Distance ratios to NCD: "));
+			for (float Ratio : NCDDistanceRatios)
+			{
+				DistanceRatiosAsString += FString::Format(TEXT(" {0}"), { Ratio });
+			}
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s"), *DistanceRatiosAsString);
 
 			TArray<int> TotalCountPerBucket;
 			TArray<int> CountPerBucket;
-			TotalCountPerBucket.Init(0, NCDDistanceRatios.Num());
+			const int NumBuckets = NCDDistanceRatios.Num() + 1; // Add extra bucket for actors outside interest
+			TotalCountPerBucket.Init(0, NumBuckets); 
 
 			for (const AActor* PlayerController : PlayerControllers)
 			{
-				CountPerBucket.Init(0, NCDDistanceRatios.Num());
+				CountPerBucket.Init(0, NumBuckets);
 
 				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
 				for (const AActor* Character : AllCharacters)
@@ -1105,15 +1113,17 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
 					float Dist = FVector::Distance(Pos, OtherPos);
 					float NCD = FMath::Sqrt(Character->NetCullDistanceSquared);
+					int Idx = NCDDistanceRatios.Num();
 					for (int i = 0; i < NCDDistanceRatios.Num(); ++i)
 					{
 						if (Dist < NCDDistanceRatios[i] * NCD)
 						{
-							CountPerBucket[i]++;
-							TotalCountPerBucket[i]++;
+							Idx = i;
 							break;
 						}
 					}
+					CountPerBucket[Idx]++;
+					TotalCountPerBucket[Idx]++;
 				}
 
 				int TotalCount = 0;
