@@ -25,7 +25,8 @@ DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 namespace
 {
 	const FString PlayerDensityWorkerFlag = TEXT("player_density");
-	const float PercentageSpawnpointsOnWorkerBoundary = 0.25f;
+	const FString BenchmarkPlayerDensityCommandLineKey = TEXT("PlayerDensity=");
+	const float PercentageSpawnpointsOnWorkerBoundary = 0.05f;
 } // anonymous namespace
 
 ABenchmarkGymGameMode::ABenchmarkGymGameMode()
@@ -137,7 +138,7 @@ void ABenchmarkGymGameMode::ParsePassedValues()
 	const FString& CommandLine = FCommandLine::Get();
 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
 	{
-		FParse::Value(*CommandLine, TEXT("PlayerDensity="), PlayerDensity);
+		FParse::Value(*CommandLine, *BenchmarkPlayerDensityCommandLineKey, PlayerDensity);
 	}
 	else if(GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -178,7 +179,7 @@ void ABenchmarkGymGameMode::BuildExpectedActorCounts()
 
 	const int32 TotalDropCubes = TotalNPCs + ExpectedPlayers;
 	const int32 DropCubeCountVariance = FMath::CeilToInt(TotalDropCubes * 0.1f) + 2;
-	AddExpectedActorCount(ExpectedDropCubeCount, DropCubeClass, TotalDropCubes, DropCubeCountVariance);
+	AddExpectedActorCount(DropCubeClass, TotalDropCubes - DropCubeCountVariance, TotalDropCubes + DropCubeCountVariance);
 }
 
 void ABenchmarkGymGameMode::ClearExistingSpawnPoints()

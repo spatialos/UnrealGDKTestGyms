@@ -1,6 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #include "GASTestActorBase.h"
+#include "Net/UnrealNetwork.h"
 
 AGASTestActorBase::AGASTestActorBase()
 {
@@ -22,6 +23,13 @@ void AGASTestActorBase::OnAuthorityGained()
 {
 	Super::OnAuthorityGained();
 	GrantInitialAbilitiesIfNeeded();
+}
+
+void AGASTestActorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ThisClass, bHasGrantedAbilities, COND_ServerOnly);
 }
 
 void AGASTestActorBase::GrantInitialAbilitiesIfNeeded()

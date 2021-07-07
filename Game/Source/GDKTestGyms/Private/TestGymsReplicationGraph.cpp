@@ -106,6 +106,18 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	{
 		// Game mode is replicated in spatial, ensure it is always replicated
 		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
+		// Add always replicated test actor. Use soft class path to work around module dependencies.
+		FSoftClassPath SoftActorClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestActorBase_RepGraphAlwaysReplicate'"));
+		if (UClass* Class = SoftActorClassPath.ResolveClass())
+		{
+			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
+		}
+		// Add always replicated test pawn. Use soft class path to work around module dependencies.
+		FSoftClassPath SoftPawnClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.TestPawnBase_RepGraphAlwaysReplicate'"));
+		if (UClass* Class = SoftPawnClassPath.ResolveClass())
+		{
+			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
+		}
 	}
 
 	TArray<UClass*> AllReplicatedClasses;
@@ -352,6 +364,12 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		break;
 	}
 
+	case EClassRepNodeMapping::AlwaysReplicate:
+	{
+		AlwaysRelevantNode->NotifyAddNetworkActor(ActorInfo);
+		break;
+	}
+
 	case EClassRepNodeMapping::RelevantAllConnections:
 	{
 		// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
@@ -396,6 +414,12 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 	{
 	case EClassRepNodeMapping::NotRouted:
 	{
+		break;
+	}
+
+	case EClassRepNodeMapping::AlwaysReplicate:
+	{
+		AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
 		break;
 	}
 

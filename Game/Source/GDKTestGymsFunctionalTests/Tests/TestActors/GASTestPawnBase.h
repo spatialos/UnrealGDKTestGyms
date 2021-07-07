@@ -27,6 +27,7 @@ public:
 	virtual void OnAuthorityGained() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
 	UAbilitySystemComponent* AbilitySystemComponent;
@@ -36,6 +37,6 @@ private:
 
 	void GrantInitialAbilitiesIfNeeded();
 
-	UPROPERTY(Handover)
+	UPROPERTY(Replicated)
 	bool bHasGrantedAbilities;
 };

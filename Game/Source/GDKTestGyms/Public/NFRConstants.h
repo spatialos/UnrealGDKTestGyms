@@ -40,6 +40,8 @@ public:
 
 	float GetMinServerFPS() const;
 	float GetMinClientFPS() const;
+
+	float GetMinPlayerAvgVelocity() const;
 	
 	static const UNFRConstants* Get(const UWorld* World);
 
@@ -54,4 +56,7 @@ private:
 
 	float MinServerFPS = 20.0f;
 	float MinClientFPS = 20.0f;
+
+	// Default value means don't report this metric to the nfr.
+	float MinPlayerAvgVelocity = -1.0f;
 };

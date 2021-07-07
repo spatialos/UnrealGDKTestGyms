@@ -20,6 +20,7 @@ enum class EClassRepNodeMapping : uint32
 {
 	NotRouted,						// Doesn't map to any node. Used for special case actors that handled by special case nodes (UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter)
 	RelevantAllConnections,			// Routes to an AlwaysRelevantNode or AlwaysRelevantStreamingLevelNode node
+	AlwaysReplicate,				// These actors are always considered for replication regardless of client views
 	
 	// ONLY SPATIALIZED Enums below here! See UTestGymsReplicationGraph::IsSpatialized
 
