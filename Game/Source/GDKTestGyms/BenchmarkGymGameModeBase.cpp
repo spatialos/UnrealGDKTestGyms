@@ -1125,7 +1125,7 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 					TotalCount += Count;
 				}
 
-				UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Density: %s (%d)"), *CountsAsString, TotalCount);
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density: %s (%d)"), *CountsAsString, TotalCount);
 			}
 
 			int TotalCount = 0;
@@ -1135,7 +1135,7 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 				CountsAsString += FString::Format(TEXT(" {0}"), { Count });
 				TotalCount += Count;
 			}
-			UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Density for all: %s (%d)"), *CountsAsString, TotalCount);
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density for all: %s (%d)"), *CountsAsString, TotalCount);
 		}
 	}, 5.f, true);
 }
