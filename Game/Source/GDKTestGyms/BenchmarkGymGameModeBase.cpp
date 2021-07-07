@@ -22,7 +22,6 @@
 #include "TimerManager.h"
 #include "UserExperienceComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Utils/SpatialActorUtils.h"
 #include "Utils/SpatialMetrics.h"
 #include "Utils/SpatialStatics.h"
 
@@ -63,7 +62,7 @@ namespace
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
 
-	const bool bEnableDensityBucketOutput = false;
+	const bool bEnableDensityBucketOutput = true;
 
 } // anonymous namespace
 
@@ -1085,23 +1084,23 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 			const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
 			TArray<float> NCDDistanceRatios;
 			NCDDistanceRatios.Push(SpatialGDKSettings->FullFrequencyNetCullDistanceRatio);
-			for (auto i : SpatialGDKSettings->InterestRangeFrequencyPairs)
+			for (const auto& Pair : SpatialGDKSettings->InterestRangeFrequencyPairs)
 			{
-				NCDDistanceRatios.Push(i.DistanceRatio);
+				NCDDistanceRatios.Push(Pair.DistanceRatio);
 			}
-			NCDDistanceRatios.Push(MAX_FLT);
+			NCDDistanceRatios.Push(MAX_FLT); // Add max float to catch actors outside interest range
 			NCDDistanceRatios.Sort();
 
 			TArray<int> TotalCountPerBucket;
 			TArray<int> CountPerBucket;
 			TotalCountPerBucket.Init(0, NCDDistanceRatios.Num());
 
-			for (AActor* PlayerController : PlayerControllers)
+			for (const AActor* PlayerController : PlayerControllers)
 			{
 				CountPerBucket.Init(0, NCDDistanceRatios.Num());
 
 				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
-				for (AActor* Character : AllCharacters)
+				for (const AActor* Character : AllCharacters)
 				{
 					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
 					float Dist = FVector::Distance(Pos, OtherPos);
