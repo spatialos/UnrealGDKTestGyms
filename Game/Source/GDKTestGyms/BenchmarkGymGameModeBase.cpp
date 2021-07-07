@@ -63,6 +63,8 @@ namespace
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
 
+	const bool bEnableDensityBucketOutput = false;
+
 } // anonymous namespace
 
 FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromCommandLine");
@@ -130,7 +132,7 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 
 	InitialiseActorCountCheckTimer();
 
-	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	if (bEnableDensityBucketOutput && GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		OutputPlayerDensity();
 	}
@@ -1046,6 +1048,8 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 
 void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 {
+	// Outputs the count that each NPC and Simulated Player falls into each of the QBI-F bucket types. This is not performant but
+	// is only used for debugging purposes currently and isn't enabled by default.
 	FTimerHandle CountTimer;
 	GetWorld()->GetTimerManager().SetTimer(
 		CountTimer,
@@ -1070,6 +1074,7 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 			}
 			NCDDistanceRatios.Push(MAX_FLT);
 			NCDDistanceRatios.Sort();
+
 			TArray<int> TotalCountPerBucket;
 			TArray<int> CountPerBucket;
 			TotalCountPerBucket.Init(0, NCDDistanceRatios.Num());
