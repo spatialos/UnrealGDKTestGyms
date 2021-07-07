@@ -3,6 +3,7 @@
 #include "BenchmarkGymGameModeBase.h"
 
 #include "Engine/World.h"
+#include "EngineClasses/SpatialActorChannel.h"
 #include "EngineClasses/SpatialNetDriver.h"
 #include "EngineClasses/SpatialPackageMapClient.h"
 #include "GameFramework/GameStateBase.h"
@@ -60,6 +61,8 @@ namespace
 	const FString MemReportFlag = TEXT("mem_report");
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
+
+	const bool bEnableDensityBucketOutput = false;
 
 } // anonymous namespace
 
@@ -127,6 +130,11 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	TryAddSpatialMetrics();
 
 	InitialiseActorCountCheckTimer();
+
+	if (bEnableDensityBucketOutput && GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	{
+		OutputPlayerDensity();
+	}
 }
 
 void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
@@ -1052,6 +1060,93 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s:Players' average velocity is too small. Current velocity=%.1f"), *NFRFailureString, RecentPlayerAvgVelocity);
 		}
 	}
+}
+
+void ABenchmarkGymGameModeBase::OutputPlayerDensity()
+{
+	// Outputs the count that each NPC and Simulated Player falls into each of the QBI-F bucket types. This is not performant but
+	// is only used for debugging purposes currently and isn't enabled by default.
+	FTimerHandle CountTimer;
+	GetWorld()->GetTimerManager().SetTimer(
+		CountTimer,
+		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+		{
+			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GameMode->GetNetDriver());
+
+			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
+			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->NPCClass, NPCs);
+			AllCharacters = PlayerCharacters;
+			AllCharacters.Append(NPCs);
+
+			const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
+			TArray<float> NCDDistanceRatios;
+			NCDDistanceRatios.Push(SpatialGDKSettings->FullFrequencyNetCullDistanceRatio);
+			
+			for (const auto& Pair : SpatialGDKSettings->InterestRangeFrequencyPairs)
+			{
+				NCDDistanceRatios.Push(Pair.DistanceRatio);
+			}
+			NCDDistanceRatios.Sort();
+
+			FString DistanceRatiosAsString(TEXT("Distance ratios to NCD: "));
+			for (float Ratio : NCDDistanceRatios)
+			{
+				DistanceRatiosAsString += FString::Format(TEXT(" {0}"), { Ratio });
+			}
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s"), *DistanceRatiosAsString);
+
+			TArray<int> TotalCountPerBucket;
+			TArray<int> CountPerBucket;
+			const int NumBuckets = NCDDistanceRatios.Num() + 1; // Add extra bucket for actors outside interest
+			TotalCountPerBucket.Init(0, NumBuckets); 
+
+			for (const AActor* PlayerController : PlayerControllers)
+			{
+				CountPerBucket.Init(0, NumBuckets);
+
+				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
+				for (const AActor* Character : AllCharacters)
+				{
+					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
+					float Dist = FVector::Distance(Pos, OtherPos);
+					float NCD = FMath::Sqrt(Character->NetCullDistanceSquared);
+					int Idx = NCDDistanceRatios.Num();
+					for (int i = 0; i < NCDDistanceRatios.Num(); ++i)
+					{
+						if (Dist < NCDDistanceRatios[i] * NCD)
+						{
+							Idx = i;
+							break;
+						}
+					}
+					CountPerBucket[Idx]++;
+					TotalCountPerBucket[Idx]++;
+				}
+
+				int TotalCount = 0;
+				FString CountsAsString;
+				for (int Count : CountPerBucket)
+				{
+					CountsAsString += FString::Format(TEXT(" {0}"), { Count });
+					TotalCount += Count;
+				}
+
+				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density: %s (%d)"), *CountsAsString, TotalCount);
+			}
+
+			int TotalCount = 0;
+			FString CountsAsString;
+			for (int Count : TotalCountPerBucket)
+			{
+				CountsAsString += FString::Format(TEXT(" {0}"), { Count });
+				TotalCount += Count;
+			}
+			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density for all: %s (%d)"), *CountsAsString, TotalCount);
+		}
+	}, 5.f, true);
 }
 
 void ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue)

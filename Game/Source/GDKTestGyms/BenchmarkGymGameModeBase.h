@@ -217,6 +217,7 @@ private:
 	void GetVelocityForMovementReport();
 	void GetPlayersVelocitySum(FVector2D& Velocity);
 	void CheckVelocityForPlayerMovement();
+	void OutputPlayerDensity();
 
 	// Worker flag update delegate functions
 	UFUNCTION()
