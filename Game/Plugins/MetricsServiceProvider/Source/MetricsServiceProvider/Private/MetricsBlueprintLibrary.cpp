@@ -23,15 +23,6 @@ static inline TArray<FAnalyticsEventAttribute> ConvertAttrs(const TArray<FMetric
 	return Converted;
 }
 
-void UMetricsBlueprintLibrary::ConvertToFMetricsEventAttr(const TArray<FAnalyticsEventAttribute>& InParams, TArray<FMetricsEventAttr>& OutParams)
-{
-	OutParams.Empty(InParams.Num());
-	for (const FAnalyticsEventAttribute& Attr : InParams)
-	{
-		OutParams.Emplace(Attr.GetName(), Attr.GetValue());
-	}
-}
-
 static inline FString EnumToString(EMetricsClass EventClass)
 {
 	FString Name = StaticEnum<EMetricsClass>()->GetValueAsString(EventClass);

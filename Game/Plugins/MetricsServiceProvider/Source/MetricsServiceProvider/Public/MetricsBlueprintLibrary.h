@@ -93,7 +93,6 @@ public:
 	static void SendBinaryFile(const FString& FullFile, const FString& FileName);
 
 	static void CacheProfileDetails(const FString& ProfileID, const FString& AccountID, const FString& ClientSessionID);
-	static void ConvertToFMetricsEventAttr(const TArray<FAnalyticsEventAttribute>& InParams, TArray<FMetricsEventAttr>& OutParams);
 
 	static TSharedPtr<FPrometheusMetric> GetMetric(const FString& Name, TArray<FPrometheusLabel> Labels);
 };
