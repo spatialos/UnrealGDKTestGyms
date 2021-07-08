@@ -1,5 +1,5 @@
 ---
-ci_version: &ci_version "${CI_VERSION:-1.4}"
+ci_version: &ci_version "${CI_VERSION:-0.14.0-rc}"
 common_env_vars: &common_env_vars
   BUILD_TYPE: "GDK"
   GDK_BRANCH: "${GDK_BRANCH:-match_branch_name_pref::0.14.0-rc}"
