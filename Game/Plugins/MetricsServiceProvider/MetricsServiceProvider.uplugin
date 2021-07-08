@@ -16,11 +16,6 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "MetricsServiceProviderEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "MetricsServiceProvider",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault",
