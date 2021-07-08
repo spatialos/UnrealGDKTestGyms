@@ -370,16 +370,7 @@ void FAnalyticsProviderMetrics::RecordEvent(const FString& EventName, const TArr
 		return;
 	}
 
-	if (EventName == TEXT("SendFile"))
-	{
-		const FAnalyticsEventAttribute FullFileAttributes = Attributes[0];
-		const FString& FullFileName = FullFileAttributes.GetValue();
-
-		const FAnalyticsEventAttribute FileAttributes = Attributes[1];
-		const FString& FileName = FileAttributes.GetValue();
-		SendBinaryFile(FullFileName, FileName);
-	}
-	else if (EventName.StartsWith(GEditorTelemetryPrefix))
+	if (EventName.StartsWith(GEditorTelemetryPrefix))
 	{
 		// custom handling for EditorTelemetry events because those are passed from the epic side
 		// and have no notion of the MetricsBlueprintLibrary event classes
@@ -656,13 +647,6 @@ FString FAnalyticsProviderMetrics::MetricsPayload::Stringify() const
 	{
 		Obj->SetStringField(TEXT("workerId"), WorkerID);
 	}
-
-	for (FAnalyticsEventAttribute Attribute : EventAttributes)
-	{
-		Attributes->SetStringField(Attribute.GetName(), Attribute.GetValue());
-	}
-
-	Obj->SetObjectField("eventAttributes", Attributes);
 
 	FString Output;
 	TSharedRef<TJsonWriter<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>> JsonWriter = TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Output);
