@@ -154,6 +154,7 @@ bool FAnalyticsProviderMetrics::Tick(float DeltaSeconds)
 	return true;
 }
 
+#if ENGINE_MINOR_VERSION >= 26
 TSharedRef<IHttpRequest, ESPMode::ThreadSafe> FAnalyticsProviderMetrics::CreateRequest()
 {
 	FHttpRetrySystem::FRetryVerbs Verbs;
@@ -164,11 +165,26 @@ TSharedRef<IHttpRequest, ESPMode::ThreadSafe> FAnalyticsProviderMetrics::CreateR
 	Codes.Add(502);	   // Bad Gateway
 	Codes.Add(503);	   // Service Unavailable
 	Codes.Add(504);	   // Gateway Timeout
-
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = HttpRetryManager->CreateRequest(RetryLimitCount, RetryLimitTime, Codes, Verbs);
 
 	return HttpRequest;
 }
+#else
+TSharedRef<IHttpRequest> FAnalyticsProviderMetrics::CreateRequest()
+{
+	FHttpRetrySystem::FRetryVerbs Verbs;
+	FHttpRetrySystem::FRetryResponseCodes Codes;
+
+	// Retry our POST Requests on various 5xx errors
+	Verbs.Add("POST");
+	Codes.Add(502);	   // Bad Gateway
+	Codes.Add(503);	   // Service Unavailable
+	Codes.Add(504);	   // Gateway Timeout
+	TSharedRef<IHttpRequest> HttpRequest = HttpRetryManager->CreateRequest(RetryLimitCount, RetryLimitTime, Codes, Verbs);
+
+	return HttpRequest;
+}
+#endif
 
 bool FAnalyticsProviderMetrics::StartSession(const TArray<FAnalyticsEventAttribute>& Attributes)
 {
@@ -183,47 +199,6 @@ bool FAnalyticsProviderMetrics::StartSession(const TArray<FAnalyticsEventAttribu
 		bHasSessionStarted = true;
 	}
 	return bHasSessionStarted;
-}
-
-void FAnalyticsProviderMetrics::SendBinaryFile(const FString& FullFile, const FString& FileName)
-{
-	if (BinaryEndpointURL.IsEmpty())
-	{
-		UE_LOG(LogAnalytics, Warning, TEXT("No BinaryEndpointURL found."));
-		return;
-	}
-	if (!Http)
-	{
-		UE_LOG(LogAnalytics, Warning, TEXT("No http found, trying to creating one"));
-		Http = &FHttpModule::Get();
-	}
-	if (GIsAutomationTesting)
-	{
-		UE_LOG(LogAnalytics, Log, TEXT("Skipping Event submission while running in automation tests"));
-		return;
-	}
-	if (!FPaths::FileExists(FullFile))
-	{
-		UE_LOG(LogAnalytics, Log, TEXT("Could not find file to send: %s"), *FullFile);
-		return;
-	}
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
-	// get data
-	TArray<uint8> UpFileRawData;
-	FFileHelper::LoadFileToArray(UpFileRawData, *FullFile);
-
-	Request->SetContent(UpFileRawData);
-	Request->SetURL(BinaryEndpointURL + "&name=" + FileName + "&path=" + FullFile + "&key=" + BinaryApiKey);
-
-	Request->SetVerb("POST");
-	Request->SetHeader("Content-Type", "application/octet-stream");
-	Request->OnProcessRequestComplete().BindRaw(this, &FAnalyticsProviderMetrics::HandleResponse);
-	Request->ProcessRequest();
-
-	if (!FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*FullFile))
-	{
-		UE_LOG(LogAnalytics, Warning, TEXT("Could Not Find and delete File %s"), *FullFile);
-	}
 }
 
 void FAnalyticsProviderMetrics::HandleResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful) const
@@ -272,7 +247,11 @@ void FAnalyticsProviderMetrics::FlushEvents()
 	// Don't send request if didn't set EndPointURL.
 	if (!EndPointURL.IsEmpty())
 	{
+#if ENGINE_MINOR_VERSION >= 26
 		TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = CreateRequest();
+#else
+		TSharedRef<IHttpRequest> Request = CreateRequest();
+#endif
 
 		const FString ContentString = GetStringifiedPayloads();
 		Request->SetURL(EndPointURL + "&session_id=" + SessionId + "&key=" + ApiKey);

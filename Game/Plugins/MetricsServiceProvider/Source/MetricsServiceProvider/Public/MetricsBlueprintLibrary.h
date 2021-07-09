@@ -88,10 +88,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Telemetry")
 	static void TelemetryEvent(EMetricsClass EventClass, const FString& EventName);
 
-	/**  Sends a raw file to the backend */
-	UFUNCTION(BlueprintCallable, Category = "Telemetry")
-	static void SendBinaryFile(const FString& FullFile, const FString& FileName);
-
 	static void CacheProfileDetails(const FString& ProfileID, const FString& AccountID, const FString& ClientSessionID);
 
 	static TSharedPtr<FPrometheusMetric> GetMetric(const FString& Name, TArray<FPrometheusLabel> Labels);

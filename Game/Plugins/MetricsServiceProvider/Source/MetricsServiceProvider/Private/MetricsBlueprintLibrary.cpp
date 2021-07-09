@@ -95,18 +95,6 @@ void UMetricsBlueprintLibrary::TelemetryEventWithAttributes(EMetricsClass EventC
 	}
 }
 
-void UMetricsBlueprintLibrary::SendBinaryFile(const FString& FullFile, const FString& FileName)
-{
-	if (FAnalyticsProviderMetrics::MetricsProvider.IsValid())
-	{
-		FAnalyticsProviderMetrics::MetricsProvider->SendBinaryFile(FullFile, FileName);
-	}
-	else
-	{
-		UE_LOG(LogPrometheusMetrics, Warning, TEXT("SendBinaryFile: MetricsProvider is not a valid pointer"));
-	}
-}
-
 TSharedPtr<FPrometheusMetric> UMetricsBlueprintLibrary::GetMetric(const FString& Name, TArray<FPrometheusLabel> Labels)
 {
 	if (FAnalyticsProviderMetrics::MetricsProvider.IsValid())

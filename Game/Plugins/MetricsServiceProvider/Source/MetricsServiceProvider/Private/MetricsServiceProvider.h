@@ -7,6 +7,7 @@
 #include "HttpRetrySystem.h"
 #include "Interfaces/IAnalyticsProvider.h"
 #include "PrometheusServer.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 class METRICSSERVICEPROVIDER_API FAnalyticsProviderMetrics : public IAnalyticsProvider, public FTickerObjectBase
 {
@@ -64,7 +65,6 @@ public:
 	virtual void RecordError(const FString& Error, const TArray<FAnalyticsEventAttribute>& EventAttrs) override;
 	virtual void RecordProgress(const FString& ProgressType, const FString& ProgressHierarchy, const TArray<FAnalyticsEventAttribute>& EventAttrs) override;
 
-	void SendBinaryFile(const FString& FullFile, const FString& FileName);
 	void HandleResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful) const;
 
 	void TelemetryClassEvent(const FString& EventClass, const FString& EventName, const FString& EventProfileID, const TArray<FAnalyticsEventAttribute>& Attributes);
@@ -126,7 +126,11 @@ private:
 	TMap<const FString, const FProfileDetails> CachedProfileDetails;
 
 	TSharedPtr<class FHttpRetrySystem::FManager> HttpRetryManager;
+#if ENGINE_MINOR_VERSION >= 26
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateRequest();
+#else
+	TSharedRef<IHttpRequest> CreateRequest();
+#endif
 
 	TSharedPtr<FPrometheusServer> Prometheus;
 	TSharedPtr<FPrometheusMetric> TelemetryReported;
