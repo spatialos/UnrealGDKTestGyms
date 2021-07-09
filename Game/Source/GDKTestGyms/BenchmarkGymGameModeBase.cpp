@@ -363,16 +363,23 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 #if !UE_BUILD_SHIPPING
 	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
 	{
-		FString Cmd = TEXT("memreport -full");
-		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 		{
-			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (ensure(SpatialDriver != nullptr))
+			FString Cmd = TEXT("memreport -full");
+			if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 			{
-				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
+				USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+				if (ensure(SpatialDriver != nullptr))
+				{
+					Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
+				}
 			}
+			GEngine->Exec(nullptr, *Cmd);
 		}
-		GEngine->Exec(nullptr, *Cmd);
+		// gc cmd
+		{
+			FString Cmd = TEXT("gc.DumpPoolStats");
+			GEngine->Exec(nullptr, *Cmd);
+		}
 		MemReportIntervalTimer.SetTimer(MemReportInterval);
 	}
 #endif
