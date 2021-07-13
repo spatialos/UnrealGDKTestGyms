@@ -973,8 +973,7 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 		{
 			// Check for test failure
 			const FExpectedActorCountConfig& ExpectedActorCount = ExpectedActorCounts[ActorClass];
-			bool bActorCountFailed = TotalActorCount < ExpectedActorCount.MinCount || TotalActorCount > ExpectedActorCount.MaxCount;
-			if (bActorCountFailed)
+			if (TotalActorCount < ExpectedActorCount.MinCount || TotalActorCount > ExpectedActorCount.MaxCount)
 			{
 				bActorCountFailureState = true;
 				if (!bHasActorCountFailed)
