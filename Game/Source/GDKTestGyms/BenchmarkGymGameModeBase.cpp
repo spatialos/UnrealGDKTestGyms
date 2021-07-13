@@ -959,6 +959,7 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("--- Actor Count Totals ---"));
 
+	bActorCountFailureState = false; // Reset check.
 	for (const auto& ActorCountPair : TempTotalActorCounts)
 	{
 		const TSubclassOf<AActor>& ActorClass = ActorCountPair.Key;
@@ -972,16 +973,20 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 		{
 			// Check for test failure
 			const FExpectedActorCountConfig& ExpectedActorCount = ExpectedActorCounts[ActorClass];
-			bActorCountFailureState = TotalActorCount < ExpectedActorCount.MinCount || TotalActorCount > ExpectedActorCount.MaxCount;
-			if (bActorCountFailureState && !bHasActorCountFailed)
+			bool bActorCountFailed = TotalActorCount < ExpectedActorCount.MinCount || TotalActorCount > ExpectedActorCount.MaxCount;
+			if (bActorCountFailed)
 			{
-				bHasActorCountFailed = true;
-				NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, MinCount %d, MaxCount %d, ActualCount %d"),
-					*NFRFailureString,
-					*ActorClass->GetName(),
-					ExpectedActorCount.MinCount,
-					ExpectedActorCount.MaxCount,
-					TotalActorCount);
+				bActorCountFailureState = true;
+				if (!bHasActorCountFailed)
+				{
+					bHasActorCountFailed = true;
+					NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Unreal actor count check. ObjectClass %s, MinCount %d, MaxCount %d, ActualCount %d"),
+						*NFRFailureString,
+						*ActorClass->GetName(),
+						ExpectedActorCount.MinCount,
+						ExpectedActorCount.MaxCount,
+						TotalActorCount);
+				}
 			}
 		}
 	}
