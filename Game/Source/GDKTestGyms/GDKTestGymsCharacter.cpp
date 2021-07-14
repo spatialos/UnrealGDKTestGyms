@@ -64,13 +64,6 @@ void AGDKTestGymsCharacter::PostInitializeComponents()
 	TestGymsMovementComponent->bClientAuthMovement = bClientAuthMovement;
 }
 
-void AGDKTestGymsCharacter::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
-{
-	//SetReplicatingMovement(true);
-	Super::PreReplication(ChangedPropertyTracker);
-	//SetReplicatingMovement(false);
-}
-
 void AGDKTestGymsCharacter::ClientAuthServerMove_Implementation(const FVector_NetQuantize100& ClientLocation, const FVector_NetQuantize10& ClientVelocity, const uint32 PackedPitchYaw)
 {
 	TestGymsMovementComponent->ClientAuthServerMove_Implementation(ClientLocation, ClientVelocity, PackedPitchYaw);

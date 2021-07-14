@@ -25,7 +25,6 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
-	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker);
 
 	UFUNCTION(Server, Unreliable)
 	void ClientAuthServerMove(const FVector_NetQuantize100& ClientLocation, const FVector_NetQuantize10& ClientVelocity, const uint32 PackedPitchYaw);
