@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "GDKTestGymsCharacter.generated.h"
 
+class UTestGymsCharacterMovementComp;
+
 UCLASS(config=Game, SpatialType)
 class AGDKTestGymsCharacter : public ACharacter
 {
@@ -22,6 +24,11 @@ public:
 	AGDKTestGymsCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker);
+
+	UFUNCTION(Server, Unreliable)
+	void ClientAuthServerMove(const FVector_NetQuantize100& ClientLocation, const FVector_NetQuantize10& ClientVelocity, const uint32 PackedPitchYaw);
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -30,6 +37,12 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bClientAuthMovement;
+
+	UPROPERTY()
+	UTestGymsCharacterMovementComp* TestGymsMovementComponent;
 
 protected:
 
