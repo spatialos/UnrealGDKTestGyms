@@ -17,6 +17,7 @@ void UTestGymsCharacterMovementComp::BeginPlay()
 			// want the ReplicatedMovement struct to be replicated to others.
 			if (TestGymsCharacterOwner->GetLocalRole() == ROLE_AutonomousProxy)
 			{
+				UE_LOG(LogTemp, Log, TEXT("Enabling client auth movement, disabling movement replication locally."));
 				TestGymsCharacterOwner->SetReplicateMovement(false);
 			}
 		}
