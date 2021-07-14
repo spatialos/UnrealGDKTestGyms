@@ -537,7 +537,6 @@ The late connecing client has validated the local state before sending the "Pass
   * The Gameplay Debugger tracks player movements across worker boundaries in player tracking mode.
   * The Gameplay Debugger does not track player movements across worker boundaries in manual tracking mode.
   * The Gameplay Debugger displays debug information accurately.
-  * The Gameplay Debugger tracks actors across interest boundaries.
 * How to test:
   * You will need a numpad on your keyboard to test this. If you don't have one, you can use the windows onscreen keyboard.
   * Open `Content\Maps\GameplayDebugger\GameplayDebuggerManualTest.umap`
@@ -570,10 +569,6 @@ The late connecing client has validated the local state before sending the "Pass
   * Observe that the "eqs debug spheres" are drawn and updated only within the tracked server.
   * Press `ctrl+numpad+` or `ctrl+numpad-` to cycle to the next server.
   * Observe that the "eqs debug spheres" are drawn and updated only within the newly selected server.
-  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
-  * Click the `Play` button in the Unreal toolbar to start PIE session, check the option for `SpatialOS networking`, and set `Number of players` to 1.
-  * Keeping the player within the server in which it started, before the `GameplayDebuggerGymCube` reaches the server boundary for the first time press `'`(Apostrophe) to enable the gameplay debugger whilst looking directly at the cube.
-  * Still keeping the player within the server in which it started, observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path, within the server boundary in which the player is positioned.
   * Click the `Stop` button in the Unreal toolbar to stop the PIE session
   
 -----
