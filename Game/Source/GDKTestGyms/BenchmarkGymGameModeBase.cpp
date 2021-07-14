@@ -784,6 +784,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 		const TSubclassOf<AActor>& ActorClass = Pair.Key;
 		if (!USpatialStatics::IsActorGroupOwnerForClass(World, ActorClass))
 		{
+			NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Not actor group owner for %s"), *ActorClass->GetName());
 			continue;
 		}
 
