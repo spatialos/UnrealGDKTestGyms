@@ -193,7 +193,7 @@ private:
 	double GetRequiredPlayersValid() const { return !bHasRequiredPlayersCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
-	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
+	double GetActorCountValid() const { return !bHasActorCountFailed ? 1.0 : 0.0; }
 	double GetPlayerMovement() const { return RecentPlayerAvgVelocity; }
 
 	void SetLifetime(int32 Lifetime);
