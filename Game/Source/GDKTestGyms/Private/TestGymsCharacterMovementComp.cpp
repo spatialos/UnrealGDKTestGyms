@@ -15,10 +15,20 @@ void UTestGymsCharacterMovementComp::BeginPlay()
 			// When running client auth movement, disable the local actor's movement replication so that 
 			// ServerMove RPCs won't be sent. We don't do this on the server though, because we still
 			// want the ReplicatedMovement struct to be replicated to others.
-			if (TestGymsCharacterOwner->GetLocalRole() == ROLE_AutonomousProxy)
+			const bool bAutonomousProxy = TestGymsCharacterOwner->GetLocalRole() == ROLE_AutonomousProxy;
+			const bool bLocallyController = TestGymsCharacterOwner->IsLocallyControlled();
+			if (bAutonomousProxy)
 			{
-				UE_LOG(LogTemp, Log, TEXT("Enabling client auth movement, disabling movement replication locally."));
+				UE_LOG(LogTemp, Log, TEXT("bClientAuthMovement : autonomous proxy"));
+			}
+			if (bLocallyController)
+			{
+				UE_LOG(LogTemp, Log, TEXT("bClientAuthMovement : locally controlled"));
+			}
+			if (bAutonomousProxy || bLocallyController)
+			{
 				TestGymsCharacterOwner->SetReplicateMovement(false);
+				UE_LOG(LogTemp, Log, TEXT("Enabling client auth movement, disabling movement replication locally."));
 			}
 		}
 	}
