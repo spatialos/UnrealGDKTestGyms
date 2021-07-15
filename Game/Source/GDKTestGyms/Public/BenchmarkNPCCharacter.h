@@ -17,6 +17,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void OnAuthorityGained() override;
 	virtual void OnAuthorityLost() override;
+	virtual void Tick(float Delta) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void SpawnDefaultController() override;
 };
