@@ -8,12 +8,12 @@ DEFINE_LOG_CATEGORY(LogBenchmarkNPCCharacter);
 void ABenchmarkNPCCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("OnAuthorityGained %s"), *GetName());
+	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("BeginPlay %s"), *GetName());
 }
 
 void ABenchmarkNPCCharacter::OnAuthorityGained()
 {
-	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("OnAuthorityGained %S"), *GetName());
+	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("OnAuthorityGained %S - %s"), *GetName(), *GetController()->GetName());
 }
 
 void ABenchmarkNPCCharacter::SpawnDefaultController()
@@ -54,7 +54,7 @@ void ABenchmarkNPCCharacter::SpawnDefaultController()
 void ABenchmarkNPCCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("OnAuthorityGained %S"), *GetName());
+	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("PossessedBy %S"), *GetName());
 }
 
 void ABenchmarkNPCCharacter::OnAuthorityLost()
