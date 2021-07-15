@@ -26,7 +26,8 @@ public class GDKTestGyms : ModuleRules
 				"SpatialGDK",
 				"ReplicationGraph",
 				"AIModule",
-				"NavigationSystem"
+				"NavigationSystem",
+				"MetricsServiceProvider"
 			});
 	}
 }
