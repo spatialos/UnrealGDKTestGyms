@@ -13,7 +13,8 @@ void ABenchmarkNPCCharacter::BeginPlay()
 
 void ABenchmarkNPCCharacter::OnAuthorityGained()
 {
-	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("OnAuthorityGained %S - %s"), *GetName(), *GetController()->GetName());
+	AController* ControllerS = GetController();
+	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("OnAuthorityGained %S - %s"), *GetName(), ControllerS ? *ControllerS->GetName(): TEXT("NOPE"));
 }
 
 void ABenchmarkNPCCharacter::SpawnDefaultController()
