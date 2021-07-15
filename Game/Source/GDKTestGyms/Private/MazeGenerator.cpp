@@ -3,7 +3,6 @@
 
 #include "MazeGenerator.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "SpatialGDK/Public/Utils/SpatialLatencyPayload.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetArrayLibrary.h"
 
