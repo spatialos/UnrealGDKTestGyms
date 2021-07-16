@@ -4,15 +4,17 @@
 
 #include "CoreMinimal.h"
 
+#include "LatencyPayload.h"
 #include "Containers/Map.h"
 #include "Containers/StaticArray.h"
 #include "Interop/Connection/SpatialEventTracer.h"
 #include "Interop/Connection/SpatialGDKSpanId.h"
 #include "SpatialConstants.h"
-#include "LatencyPayload.h"
 #include "Utils/GDKPropertyMacros.h"
 
 #include "LatencyTracer.generated.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogLatencyTracer, Log, All);
 
 class AActor;
 class UFunction;
@@ -23,30 +25,27 @@ namespace SpatialGDK
 struct FOutgoingMessage;
 } // namespace SpatialGDK
 
-/**
- * Enum that maps Unreal's log verbosity to allow use in settings.
- **/
-UENUM()
-namespace ETraceType
-{
-enum Type
-{
-	RPC,
-	Property,
-	Tagged
-};
-}
-
 UCLASS(BlueprintType)
 class ULatencyTracer : public UObject
 {
 	GENERATED_BODY()
-
 public:
 	ULatencyTracer();
 
-	UFUNCTION(BlueprintCallable, Category = "SpatialOS")
-	void Setup(const FString& WorkerName);
+	UFUNCTION(BlueprintCallable)
+	FUserSpanId BeginLatencyTrace(const FString& Type);
+
+	UFUNCTION(BlueprintCallable)
+	FUserSpanId ContinueLatencyTrace(const FString& Type, const FUserSpanId& Span);
+
+	UFUNCTION(BlueprintCallable)
+	void EndLatencyTrace(const FString& Type, const FUserSpanId& Span);
+
+
+
+
+
+#if 0
 
 	// Front-end exposed, allows users to register, start, continue, and end traces
 
@@ -88,8 +87,8 @@ public:
 private:
 	bool ContinueLatencyTrace_Internal(const AActor* Actor, const FString& Target, ETraceType::Type Type, const FString& TraceDesc,
 									   const FLatencyPayload& LatencyPayload, FLatencyPayload& OutLatencyPayload);
-
-	FSpatialGDKSpanId EmitTrace(FString EventType, FString Message, FSpatialGDKSpanId* Causes, uint32 NumCauses);
+#endif
+	FSpatialGDKSpanId EmitTrace(const FString& EventType, FSpatialGDKSpanId* Causes, uint32 NumCauses);
 
 	TSharedPtr<SpatialGDK::SpatialEventTracer> InternalTracer;
 	FString WorkerId;

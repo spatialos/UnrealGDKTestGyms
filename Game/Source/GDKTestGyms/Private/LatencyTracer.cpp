@@ -11,25 +11,64 @@
 #include "Utils/GDKPropertyMacros.h"
 #include "Utils/SchemaUtils.h"
 
-ULatencyTracer::ULatencyTracer()
+DEFINE_LOG_CATEGORY(LogLatencyTracer);
+
+namespace LatencyTracerInternal
 {
-	ResetWorkerId();
-	// TODO: Also remove references to TraceMetadata + LatencyGameMode metadata id (run id?)
+	FUserSpanId GDKSpanToUser(const FSpatialGDKSpanId& Span) // TODO: Expose the internal GDK versions of these
+	{
+		FUserSpanId UserSpan;
+		UserSpan.Data.SetNum(sizeof(Span));
+		memcpy(UserSpan.Data.GetData(), &Span, sizeof(FSpatialGDKSpanId));
+		return UserSpan;
+	}
+	FSpatialGDKSpanId UserSpanToGDK(const FUserSpanId& UserSpan) // TODO: Expose the internal GDK versions of these
+	{
+		if (ensure(sizeof(FSpatialGDKSpanId) == UserSpan.Data.Num()))
+		{
+			return FSpatialGDKSpanId((const Trace_SpanIdType*)UserSpan.Data.GetData());
+		}
+		UE_LOG(LogLatencyTracer, Warning, TEXT("Expected UserSpan size to equal sizeof(FSpatialGDKSpanId)"))
+		return {};
+	}
 }
 
-void ULatencyTracer::Setup(const FString& FallbackWorkerName)
+ULatencyTracer::ULatencyTracer()
 {
+	// TODO: Also remove references to TraceMetadata + LatencyGameMode metadata id (run id?)
 	const USpatialGDKSettings* Settings = GetDefault<USpatialGDKSettings>();
 	if (Settings->bEventTracingEnabled) // Use the tracing hooked up to GDK internals
 	{
 		// TODO
+		// TODO WorkerId
 	}
 	else
 	{
-		InternalTracer = MakeShared<SpatialGDK::SpatialEventTracer>(FallbackWorkerName);
+		WorkerId = FGuid::NewGuid().ToString();
+		InternalTracer = MakeShared<SpatialGDK::SpatialEventTracer>(WorkerId);
 	}
 }
 
+FUserSpanId ULatencyTracer::BeginLatencyTrace(const FString& Type)
+{
+	FSpatialGDKSpanId Span = EmitTrace(Type, nullptr, 0);
+	return LatencyTracerInternal::GDKSpanToUser(Span);
+}
+
+FUserSpanId ULatencyTracer::ContinueLatencyTrace(const FString& Type, const FUserSpanId& SpanIn)
+{
+	FSpatialGDKSpanId Cause = LatencyTracerInternal::UserSpanToGDK(SpanIn);
+	FSpatialGDKSpanId SpanOut = EmitTrace(Type, (FSpatialGDKSpanId*)&Cause, 1);
+	return LatencyTracerInternal::GDKSpanToUser(SpanOut);
+}
+
+void ULatencyTracer::EndLatencyTrace(const FString& Type, const FUserSpanId& SpanIn)
+{
+	FSpatialGDKSpanId Cause = LatencyTracerInternal::UserSpanToGDK(SpanIn);
+	EmitTrace(Type, (FSpatialGDKSpanId*)&Cause, 1);
+}
+
+#if 0
 void ULatencyTracer::RegisterProject(const FString& ProjectId)
 {
 	// TODO: Remove
@@ -97,12 +136,13 @@ bool ULatencyTracer::ContinueLatencyTrace_Internal(const AActor* Actor, const FS
 	OutLatencyPayload.SetSpan(Span);
 	return true;
 }
+#endif
 
-FSpatialGDKSpanId ULatencyTracer::EmitTrace(FString EventType, FString Message, FSpatialGDKSpanId* Causes, uint32 NumCauses)
+FSpatialGDKSpanId ULatencyTracer::EmitTrace(const FString& EventType, FSpatialGDKSpanId* Causes, uint32 NumCauses)
 {
 	if (InternalTracer != nullptr)
 	{
-		InternalTracer->TraceEvent(TCHAR_TO_ANSI(*EventType), TCHAR_TO_ANSI(*Message), (Trace_SpanIdType*)Causes, NumCauses,
+		InternalTracer->TraceEvent(TCHAR_TO_ANSI(*EventType), "", (Trace_SpanIdType*)Causes, NumCauses,
 								   [this](SpatialGDK::FSpatialTraceEventDataBuilder& Builder) {
 									   Builder.AddKeyValue("worker_id", WorkerId);
 								   });
