@@ -18,6 +18,7 @@ void ABenchmarkNPCCharacter::Tick(float Delta)
 
 void ABenchmarkNPCCharacter::OnAuthorityGained()
 {
+	Super::OnAuthorityGained();
 	if (Controller == nullptr)
 	{
 		SpawnDefaultController();
