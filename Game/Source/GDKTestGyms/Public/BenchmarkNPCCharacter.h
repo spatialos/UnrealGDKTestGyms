@@ -13,4 +13,5 @@ class GDKTESTGYMS_API ABenchmarkNPCCharacter : public ACharacter
 
 public:
 	virtual void OnAuthorityLost() override;
+
 };
