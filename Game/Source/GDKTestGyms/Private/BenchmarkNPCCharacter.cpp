@@ -36,7 +36,7 @@ void ABenchmarkNPCCharacter::SpawnDefaultController()
 {
 	if (Controller != nullptr || GetNetMode() == NM_Client)
 	{
-		UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController NM_Client %S"), *GetName());
+		UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController NM_Client %s"), *GetName());
 		return;
 	}
 
@@ -52,25 +52,25 @@ void ABenchmarkNPCCharacter::SpawnDefaultController()
 		{
 			// if successful will result in setting this->Controller 
 			// as part of possession mechanics
-			UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController Possess %S"), *GetName());
+			UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController Possess %s"), *GetName());
 			NewController->Possess(this);
 		}
 		else
 		{
-			UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController NewController == nullptr %S"), *GetName());
+			UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController NewController == nullptr %s"), *GetName());
 		}
 	}
 	else
 	{
-		UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController AIControllerClass == nullptr %S"), *GetName());
+		UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController AIControllerClass == nullptr %s"), *GetName());
 	}
-	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController %S"), *GetName());
+	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("SpawnDefaultController %s"), *GetName());
 }
 
 void ABenchmarkNPCCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("PossessedBy %S"), *GetName());
+	UE_LOG(LogBenchmarkNPCCharacter, Log, TEXT("PossessedBy %s"), *GetName());
 }
 
 void ABenchmarkNPCCharacter::OnAuthorityLost()
