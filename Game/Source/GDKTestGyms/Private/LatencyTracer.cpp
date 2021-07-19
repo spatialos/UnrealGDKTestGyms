@@ -35,9 +35,13 @@ namespace LatencyTracerInternal
 
 ULatencyTracer::ULatencyTracer()
 {
+}
+
+void ULatencyTracer::InitTracer()
+{
 	// TODO: Also remove references to TraceMetadata + LatencyGameMode metadata id (run id?)
 	const USpatialGDKSettings* Settings = GetDefault<USpatialGDKSettings>();
-	if (Settings->bEventTracingEnabled) // Use the tracing hooked up to GDK internals
+	if (FParse::Param(FCommandLine::Get(), TEXT("--full-tracing-enabled")) && USpatialStatics::IsSpatialNetworkingEnabled()) // Use the tracing hooked up to GDK internals
 	{
 		// TODO
 		// TODO WorkerId
@@ -45,7 +49,10 @@ ULatencyTracer::ULatencyTracer()
 	else
 	{
 		WorkerId = FGuid::NewGuid().ToString();
-		InternalTracer = MakeShared<SpatialGDK::SpatialEventTracer>(WorkerId);
+		SpatialGDK::TraceQueries Queries;
+		Queries.EventPreFilter = "true";
+		Queries.EventPostFilter = "true";
+		InternalTracer = MakeShared<SpatialGDK::SpatialEventTracer>(WorkerId, Queries);
 	}
 }
 
@@ -142,7 +149,7 @@ FSpatialGDKSpanId ULatencyTracer::EmitTrace(const FString& EventType, FSpatialGD
 {
 	if (InternalTracer != nullptr)
 	{
-		InternalTracer->TraceEvent(TCHAR_TO_ANSI(*EventType), "", (Trace_SpanIdType*)Causes, NumCauses,
+		return InternalTracer->TraceEvent(TCHAR_TO_ANSI(*EventType), "", (Trace_SpanIdType*)Causes, NumCauses,
 								   [this](SpatialGDK::FSpatialTraceEventDataBuilder& Builder) {
 									   Builder.AddKeyValue("worker_id", WorkerId);
 								   });

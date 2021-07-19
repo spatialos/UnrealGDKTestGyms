@@ -33,6 +33,9 @@ public:
 	ULatencyTracer();
 
 	UFUNCTION(BlueprintCallable)
+	void InitTracer();
+
+	UFUNCTION(BlueprintCallable)
 	FUserSpanId BeginLatencyTrace(const FString& Type);
 
 	UFUNCTION(BlueprintCallable)
