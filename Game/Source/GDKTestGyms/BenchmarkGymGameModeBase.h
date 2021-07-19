@@ -124,9 +124,8 @@ private:
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
 	bool bHasClientFpsFailed;
-	bool bHasActorCountFailed;
-	// bActorCountFailureState will be true if the test has failed
-	bool bActorCountFailureState;
+	bool bHasActorCountFailed;	// Stores if the actor count check has ever failed.
+	bool bActorCountFailureState; // Stores the *current* failure state of the Actor Count checks.
 	int32 UXAuthActorCount;
 
 	FMetricTimer PrintMetricsTimer;
