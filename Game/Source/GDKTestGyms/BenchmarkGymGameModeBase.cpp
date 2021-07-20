@@ -86,6 +86,7 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, bHasClientFpsFailed(false)
 	, bHasActorCountFailed(false)
 	, bActorCountFailureState(false)
+	, bHasPlayerMovementFailed(false)
 	, UXAuthActorCount(0)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
@@ -378,7 +379,7 @@ void ABenchmarkGymGameModeBase::AddSpatialMetrics(USpatialMetrics* SpatialMetric
 		}
 		{
 			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovement);
+			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovementVaild);
 			SpatialMetrics->SetCustomMetric(PlayerMovementMetricName, Delegate);
 		}
 	}
@@ -1045,7 +1046,8 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 		RecentPlayerAvgVelocity += Velocity;
 	}
 	RecentPlayerAvgVelocity /= (AvgVelocityHistory.Num() + 0.01f);
-
+	static const float ZERO = 1e-6;
+	bHasPlayerMovementFailed = RecentPlayerAvgVelocity > ZERO ? false : true;
 	RequiredPlayerMovementCheckTimer.SetTimer(30);
 	
 	// Extra step for native scenario.

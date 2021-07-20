@@ -125,6 +125,7 @@ private:
 	bool bHasClientFpsFailed;
 	bool bHasActorCountFailed;	// Stores if the actor count check has ever failed.
 	bool bActorCountFailureState; // Stores the *current* failure state of the Actor Count checks.
+	bool bHasPlayerMovementFailed; // Stores if the players stop moving
 	int32 UXAuthActorCount;
 
 	FMetricTimer PrintMetricsTimer;
@@ -193,7 +194,7 @@ private:
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
-	double GetPlayerMovement() const { return RecentPlayerAvgVelocity; }
+	double GetPlayerMovementVaild() const { return !bHasPlayerMovementFailed ? 1.0 : 0.0; }
 
 	void SetLifetime(int32 Lifetime);
 #if	STATS
