@@ -861,6 +861,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement_Implementation
 	}
 
 	CurrentPlayerAvgVelocity = TotalVelocity / TotalPlayers;
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Total velocity:%f, total players:%f"), TotalVelocity, TotalPlayers);
 }
 
 #if	STATS
