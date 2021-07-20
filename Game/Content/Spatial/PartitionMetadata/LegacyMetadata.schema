@@ -1,0 +1,20 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+package gdk.loadbalancing;
+
+import "improbable/standard_library.schema";
+
+component VirtualWorkerAssignment {
+     id = 190500;
+     uint32 virtual_worker_id = 1;
+}
+
+component Layer {
+     id = 190501;
+     uint32 layer = 1;
+}
+
+component GridCell {
+     id = 190502;
+     improbable.Coordinates center = 1;
+     improbable.EdgeLength edge_length = 2;
+}
