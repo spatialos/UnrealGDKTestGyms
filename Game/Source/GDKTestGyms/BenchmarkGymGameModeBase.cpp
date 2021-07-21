@@ -1217,8 +1217,8 @@ void ABenchmarkGymGameModeBase::OnMemReportFlagUpdate(const FString& FlagName, c
 
 void ABenchmarkGymGameModeBase::GetMetrics(const FString& LeftLabel, const FString& RightLabel, const FString& MetricsName, ABenchmarkGymGameModeBase::FunctionPtrType Func)
 {
-	auto MetricsPtr = UMetricsBlueprintLibrary::GetMetric(MetricsName, TArray<FPrometheusLabel>{ TPair<FString, FString>(LeftLabel, RightLabel), TPair<FString,FString>(MetricEnginePlatformLeftLabel,MetricEnginePlatformRightLabel) });
-	if (MetricsPtr != nullptr)
+	TSharedPtr<FPrometheusMetric> MetricsPtr = UMetricsBlueprintLibrary::GetMetric(MetricsName, TArray<FPrometheusLabel>{ TPair<FString, FString>(LeftLabel, RightLabel), TPair<FString,FString>(MetricEnginePlatformLeftLabel,MetricEnginePlatformRightLabel) });
+	if (MetricsPtr.IsValid())
 	{
 		auto Value = (this->*(Func))();
 		MetricsPtr->Set(Value);
