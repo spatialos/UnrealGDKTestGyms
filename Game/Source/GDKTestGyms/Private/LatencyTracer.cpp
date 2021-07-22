@@ -52,7 +52,7 @@ void ULatencyTracer::InitTracer()
 {
 	// TODO: Also remove references to TraceMetadata + LatencyGameMode metadata id (run id?)
 	const USpatialGDKSettings* Settings = GetDefault<USpatialGDKSettings>();
-	if (Settings->bEventTracingEnabled && USpatialStatics::IsSpatialNetworkingEnabled()) // Use the tracing hooked up to GDK internals
+	if (Settings->GetEventTracingEnabled() && USpatialStatics::IsSpatialNetworkingEnabled()) // Use the tracing hooked up to GDK internals
 	{
 		InternalTracer = LatencyTracerInternal::GetEventTracerFromWorld(GetWorld());
 		if (InternalTracer == nullptr)
@@ -63,10 +63,12 @@ void ULatencyTracer::InitTracer()
 	else
 	{
 		WorkerId = FGuid::NewGuid().ToString();
-		SpatialGDK::TraceQueries Queries;
-		Queries.EventPreFilter = "true";
-		Queries.EventPostFilter = "true";
-		LocalTracer = MakeUnique<SpatialGDK::SpatialEventTracer>(WorkerId, Queries);
+		
+		UEventTracingSamplingSettings SamplingSettings;
+		SamplingSettings.SamplingProbability = 1.0f;
+		SamplingSettings.GDKEventPreFilter = TEXT("true");
+		SamplingSettings.GDKEventPostFilter = TEXT("true");
+		LocalTracer = MakeUnique<SpatialGDK::SpatialEventTracer>(WorkerId, &SamplingSettings);
 		InternalTracer = LocalTracer.Get();
 	}
 }
