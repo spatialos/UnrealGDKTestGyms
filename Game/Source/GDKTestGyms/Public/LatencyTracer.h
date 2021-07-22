@@ -93,6 +93,7 @@ private:
 #endif
 	FSpatialGDKSpanId EmitTrace(const FString& EventType, FSpatialGDKSpanId* Causes, uint32 NumCauses);
 
-	TSharedPtr<SpatialGDK::SpatialEventTracer> InternalTracer;
+	TUniquePtr<SpatialGDK::SpatialEventTracer> LocalTracer;
+	SpatialGDK::SpatialEventTracer* InternalTracer = nullptr;
 	FString WorkerId;
 };
