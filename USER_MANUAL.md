@@ -262,25 +262,24 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller.
 * To test the scenario follow these steps:
-	1. Select `Play` on the Unreal toolbar.
-	2. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
+ 1. Select `Play` on the Unreal toolbar.
+ 1. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
 	   "MultipleOwnershipCube has no owner"
 	   "MultipleOwnershipCube2 has no owner"
 	   At this point in the test the player controller doesn't posses a pawn. This is why hitting `Enter` results in no server logs, and in client logs suggesting that no pawn is owned by the player controller.
-	3. Press `Space` once to possess one of the pawns.
-	4. Press `Enter` and check the logs printed. They should say the following:
+1. Press `Space` once to possess one of the pawns.
+1. Press `Enter` and check the logs printed. They should say the following:
 	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
 	   "RPC successfully called on MultipleOwnershipCube"
 	   "MultipleOwnershipCube2 has no owner"
 	   Pressing `Space` switched the possession between the two cubes in the gym.
-	5. Press `Space` a second time to possess the second pawn.
-	6. Press enter and check the logs printed. They should say the following:
+1. Press `Space` a second time to possess the second pawn.
+1. Press enter and check the logs printed. They should say the following:
 	   "MultipleOwnershipCube2 is owned by MultipleOwnershipController"
 	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
 	   "RPC successfully called on MultipleOwnershipCube2"
 	   "RPC successfully called on MultipleOwnershipCube"
-
-	Note: the order of the logs should not matter.
+<br>Note: the order of the logs should not matter.
 
 ##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
@@ -473,7 +472,7 @@ The late connecing client has validated the local state before sending the "Pass
   * Shut down the deployment if this doesn't happen automatically.
 * These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
 
-####RPCTimeoutTestGym
+##### RPCTimeoutTestGym
 * Demonstrate that:
   * RPC parameters holding references to loadable assets are able to be resolved without timing out.
 * NOTE: This gym can only be run manually (It requires tweaking settings and running in separate processes).
@@ -529,5 +528,53 @@ The late connecing client has validated the local state before sending the "Pass
   * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
   * The files should successfully load and display expected logs. The contents of two log files should be offset by the time delta between the two recordings.
 
+##### Gameplay Debugger gym
+* Tests that:
+  * The Gameplay Debugger works like native Unreal with spatial networking disabled.
+  * The Gameplay Debugger can be toggled between player and manual server tracking modes.
+  * The Gameplay Debugger can be cycled through servers in manual server tracking mode.
+  * The Gameplay Debugger hides server cycling key prompts whilst in player tracking mode.
+  * The Gameplay Debugger tracks player movements across worker boundaries in player tracking mode.
+  * The Gameplay Debugger does not track player movements across worker boundaries in manual tracking mode.
+  * The Gameplay Debugger displays debug information accurately.
+  * The Gameplay Debugger tracks actors across interest boundaries.
+* How to test:
+  * You will need a numpad on your keyboard to test this. If you don't have one, you can use the windows onscreen keyboard.
+  * Open `Content\Maps\GameplayDebugger\GameplayDebuggerManualTest.umap`
+  * Click the `Play` button in the Unreal toolbar to start PIE session, uncheck the option for `SpatialOS networking`, and set `Number of players` to 1.
+  * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards.
+  * While the camera is looking directly at the cube, press `'`(Apostrophe) to enable the gameplay debugger on the cube.
+  * Observe in the gameplay debugger status panel that `Debug Actor` is set to `GameplayDebuggerGymCube`. If it is not, toggle the gameplay debugger off by pressing `'` and try again.
+  * Observe there is no mention of the spatial multi worker specific additions for `server tracking modes` or `selecting servers` in the gameplay debugger status panel.
+  * Press `numpad4` to enable the gameplay debugger EQS output.
+  * Observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path.
+  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
+  * Click the `Play` button in the Unreal toolbar to start PIE session, check the option for `SpatialOS networking`, and set `Number of players` to 1.
+  * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards between two servers.
+  * While the camera is looking directly at the cube, press `'`(Apostrophe) to enable the gameplay debugger on the cube.
+  * Observe `Server tracking mode` is shown in the top left of the gameplay debugger status panel, with the default value of `Player`
+  * Press `ctrl+numpad*` to cycle through server tracking modes `Player` and `Manual`.
+  * Select the `Manual` server tracking mode.
+  * Observe `Server: <workerid>` is shown top right of the gameplay debugger status panel, plus key prompts to cycle the server.
+  * Press `ctrl+numpad+` or `ctrl+numpad-` to cycle forwards and backwards through available servers.
+  * Select the `Player` server tracking mode.
+  * Observe `Server: <workerid>` is shown top right of the gameplay debugger status panel, with no key prompts to cycle the server.
+  * Move the player between the two servers, and observe that the tracked server shown in the top right of the gameplay debugger panel changes when you cross the boundary.
+  * Select the `Manual` server tracking mode.
+  * Move the player between the two servers, and observe that the tracked server shown in the top right of the gameplay debugger panel does not change when you cross the boundary.
+  * Select the `Player` server tracking mode.
+  * Press `numpad4` to enable the gameplay debugger EQS output.
+  * Observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path, within the server boundary in which the player is positioned.
+  * Observe that as the player moves between servers, the "eqs debug spheres" are drawn and updated only within the server in which the player is positioned. When the cube crosses the boundary into the server not containing the player, the "EQS debug spheres" will remain on the boundary until the cube returns to that server.
+  * Select the `Manual` server tracking mode.
+  * Observe that the "eqs debug spheres" are drawn and updated only within the tracked server.
+  * Press `ctrl+numpad+` or `ctrl+numpad-` to cycle to the next server.
+  * Observe that the "eqs debug spheres" are drawn and updated only within the newly selected server.
+  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
+  * Click the `Play` button in the Unreal toolbar to start PIE session, check the option for `SpatialOS networking`, and set `Number of players` to 1.
+  * Keeping the player within the server in which it started, before the `GameplayDebuggerGymCube` reaches the server boundary for the first time press `'`(Apostrophe) to enable the gameplay debugger whilst looking directly at the cube.
+  * Still keeping the player within the server in which it started, observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path, within the server boundary in which the player is positioned.
+  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
+  
 -----
 2019-11-15: Page added with editorial review

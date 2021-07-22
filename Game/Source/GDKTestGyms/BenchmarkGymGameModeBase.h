@@ -10,30 +10,56 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
+class USpatialWorkerFlags;
+class USpatialMetrics;
+
+USTRUCT()
+struct FActorCount
+{
+	GENERATED_BODY()
+
+	explicit FActorCount() {}
+	explicit FActorCount(const TSubclassOf<AActor>& InActorClass, int32 InCount)
+		: ActorClass(InActorClass)
+		, Count(InCount)
+	{}
+
+	UPROPERTY()
+	TSubclassOf<AActor> ActorClass;
+
+	UPROPERTY()
+	int32 Count;
+};
+
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkGymGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
+
+	struct FExpectedActorCountConfig
+	{
+		explicit FExpectedActorCountConfig(int32 InMinCount, int32 InMaxCount)
+			: MinCount(InMinCount)
+			, MaxCount(InMaxCount)
+		{}
+
+		explicit FExpectedActorCountConfig()
+			: MinCount(0)
+			, MaxCount(0)
+		{}
+
+		int32 MinCount;
+		int32 MaxCount;
+	};
+
+	using ActorCountMap = TMap<TSubclassOf<AActor>, int32>;
+
 public:
 	ABenchmarkGymGameModeBase();
 
 protected:
 
 	static FString ReadFromCommandLineKey;
-
-	struct FExpectedActorCount
-	{
-		explicit FExpectedActorCount(TSubclassOf<AActor> InActorClass, int32 InExpectedCount, int32 InVariance)
-			: ActorClass(InActorClass)
-			, ExpectedCount(InExpectedCount)
-			, Variance(InVariance)
-		{}
-		explicit FExpectedActorCount() :ExpectedCount(0), Variance(0) {}
-
-		TSubclassOf<AActor> ActorClass;
-		int32 ExpectedCount;
-		int32 Variance;
-	};
 
 	// Total number of players that will attempt to connect.
 	int32 ExpectedPlayers;
@@ -50,40 +76,45 @@ protected:
 	TSubclassOf<APawn> NPCClass;
 
 	virtual void BuildExpectedActorCounts();
-	void AddExpectedActorCount(FExpectedActorCount& Actor, TSubclassOf<AActor> ActorClass, int32 ExpectedCount, int32 Variance);
-
-	int32 GetActorClassCount(TSubclassOf<AActor> ActorClass) const;
-
-	virtual void ParsePassedValues();
-
-	UFUNCTION()
-	virtual void OnAnyWorkerFlagUpdated(const FString& FlagName, const FString& FlagValue);
+	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnTotalNPCsUpdated(int32 Value);
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
 
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
+
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativePlayers(const FString& WorkerID, const int AuthoritativePlayers);
+	virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics);
 
-	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportMigration(const FString& WorkerID, const float Migration);
-
-	UFUNCTION(CrossServer, Reliable)
-	virtual void ReportAuthoritativeNPCs(const FString& WorkerID, const UWorld* World, int32 ActualCount);
-
-	int32 GetNumWorkers() const { return NumWorkers; }
-	int32 GetNumSpawnZones() const { return NumSpawnZones; }
+	virtual void ReadCommandLineArgs(const FString& CommandLine);
+	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags);
+	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags);
 
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
 
+	int32 GetNumWorkers() const { return NumWorkers; }
+	int32 GetZoningCols() const { return ZoningCols; }
+	int32 GetZoningRows() const { return ZoningRows; }
+	float GetZoneWidth() const { return ZoneWidth; }
+	float GetZoneHeight() const { return ZoneHeight; }
+	int32 GetUXAuthActorCount() const { return UXAuthActorCount; }
+
+	const FString NFRFailureString = TEXT("NFR scenario failed");
+
 private:
-	// Test scenarios
+
+	int32 NumWorkers;
+	int32 ZoningCols;
+	int32 ZoningRows;
+	float ZoneWidth;
+	float ZoneHeight;
 
 	double AveragedClientRTTMS; // The stored average of all the client RTTs
 	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
@@ -92,42 +123,26 @@ private:
 	bool bHasUxFailed;
 	bool bHasFpsFailed;
 	bool bHasClientFpsFailed;
-	bool bHasActorCountFailed;
-	// bActorCountFailureState will be true if the test has failed
-	bool bActorCountFailureState;
-	bool bExpectedActorCountsInitialised;
-
-	// For actor migration count
-	bool bHasActorMigrationCheckFailed;
-	int32 PreviousTickMigration;
-	typedef TTuple<int32, float> MigrationDeltaPair;
-	TQueue<MigrationDeltaPair> MigrationDeltaHistory;
+	bool bHasActorCountFailed;	// Stores if the actor count check has ever failed.
+	bool bActorCountFailureState; // Stores the *current* failure state of the Actor Count checks.
 	int32 UXAuthActorCount;
-	int32 MigrationOfCurrentWorker;
-	float MigrationSeconds;
-	float MigrationCountSeconds;
-	float MigrationWindowSeconds;
-	TMap<FString, float> MapWorkerActorMigration;
-	float MinActorMigrationPerSecond;
-	FMetricTimer ActorMigrationReportTimer;
-	FMetricTimer ActorMigrationCheckTimer;
-	FMetricTimer ActorMigrationCheckDelay;
-	
+
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
+	FMetricTimer TickActorCountTimer;
 
-	FExpectedActorCount ExpectedSimPlayersCount;
-	TMap<FString, int>	MapAuthoritativePlayers;
-	TMap<FString, int>  MapAuthoritativeSimPlayers;
-	FExpectedActorCount ExpectedNPCsCount;
-	TMap<FString, int> MapAuthoritatuvaNPCs;
+	UPROPERTY(ReplicatedUsing = OnActorCountReportIdx)
+	int32 ActorCountReportIdx;
+
+	TMap<FString, int32> ActorCountReportedIdxs;
+
+	float TimeSinceLastCheckedTotalActorCounts;
+	ActorCountMap TotalActorCounts;
+	TMap<FString, ActorCountMap> WorkerActorCounts;
+	TMap<TSubclassOf<AActor>, FExpectedActorCountConfig> ExpectedActorCounts;
 
 	// For total player
 	bool bHasRequiredPlayersCheckFailed;
-	float SmoothedTotalAuthPlayers;
-	float SmoothedTotalAuthNPCs;
-	float SmoothedTotalAuthSimPlayers;
-	FMetricTimer RequiredPlayerReportTimer;
 	FMetricTimer RequiredPlayerCheckTimer;
 	FMetricTimer DeploymentValidTimer;
 
@@ -138,60 +153,93 @@ private:
 	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
-	
-	int32 NumWorkers;
-	int32 NumSpawnZones;
+
 #if	STATS
 	// For stat profile
 	int32 CPUProfileInterval;
 	FMetricTimer StatStartFileTimer;
 	FMetricTimer StatStopFileTimer;
+#endif
+#if !UE_BUILD_SHIPPING
 	//For MemReport profile
 	int32 MemReportInterval;
 	FMetricTimer MemReportIntervalTimer;
 #endif
 
-	virtual void BeginPlay() override;
-
-	void TryInitialiseExpectedActorCounts();
-
-	void TryBindWorkerFlagsDelegate();
+	void GatherWorkerConfiguration();
+	void ParsePassedValues();
 	void TryAddSpatialMetrics();
+	void TryBindWorkerFlagsDelegates();
+
+	FTimerHandle FailActorCountTimeoutTimerHandle;
+	FTimerHandle UpdateActorCountCheckTimerHandle;
+	const float UpdateActorCountCheckPeriodInSeconds = 10.0f;
+	const float UpdateActorCountCheckInitialDelayInSeconds = 60.0f;
+	void InitialiseActorCountCheckTimer();
+	void UpdateActorCountCheck();
+	void FailActorCountDueToTimeout();
 
 	void TickPlayersConnectedCheck(float DeltaSeconds);
 	void TickPlayersMovementCheck(float DeltaSeconds);
 	void TickServerFPSCheck(float DeltaSeconds);
 	void TickClientFPSCheck(float DeltaSeconds);
 	void TickUXMetricCheck(float DeltaSeconds);
-	void TickActorCountCheck(float DeltaSeconds);
-	void TickActorMigration(float DeltaSeconds);
 
 	void SetTotalNPCs(int32 Value);
 
 	double GetClientRTT() const { return AveragedClientRTTMS; }
 	double GetClientUpdateTimeDelta() const { return AveragedClientUpdateTimeDeltaMS; }
 	double GetRequiredPlayersValid() const { return !bHasRequiredPlayersCheckFailed ? 1.0 : 0.0; }
-	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 	double GetFPSValid() const { return !bHasFpsFailed ? 1.0 : 0.0; }
 	double GetClientFPSValid() const { return !bHasClientFpsFailed ? 1.0 : 0.0; }
 	double GetActorCountValid() const { return !bActorCountFailureState ? 1.0 : 0.0; }
 	double GetPlayerMovement() const { return RecentPlayerAvgVelocity; }
 
 	void SetLifetime(int32 Lifetime);
-	int32 GetPlayerControllerCount() const;
 #if	STATS
 	void InitStatTimer(const FString& CPUProfileString);
+#endif
+#if !UE_BUILD_SHIPPING
 	void InitMemReportTimer(const FString& MemReportIntervalString);
 #endif
 
 	UFUNCTION()
 	void OnRepTotalNPCs();
 
-	void GenerateTotalNumsForActors(const FString& WorkerID, const UWorld* World,
-		const FExpectedActorCount& ExpectedCount, TMap<FString, int>& MapAuthoritative,
-		float& TotalCount, int32 ActualCount, bool IsNPCs);
+	UFUNCTION()
+	void OnActorCountReportIdx();
+
+	void UpdateAndReportActorCounts();
+	void UpdateAndCheckTotalActorCounts();
+	void GetActorCount(const TSubclassOf<AActor>& ActorClass, int32& OutTotalCount, int32& OutAuthCount) const;
 
 	void GetVelocityForMovementReport();
 	void GetPlayersVelocitySum(FVector2D& Velocity);
 	void CheckVelocityForPlayerMovement();
+	void OutputPlayerDensity();
+
+	// Worker flag update delegate functions
+	UFUNCTION()
+	void OnExpectedPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnRequiredPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnTotalNPCsFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMaxRoundTripFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMaxUpdateTimeDeltaFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
 };
