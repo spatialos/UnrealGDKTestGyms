@@ -370,6 +370,7 @@ These test whether key trace events have the appropriate cause events. They can 
 ##### Multiworker World Composition gym
 * Tests that servers without authoritive player controllers are still able to replicate relevant actors.
 * Please note that when you run this test gym, you man notice the cubes moving discontinuously (that is, juddering or stuttering rather than moving smoothly). This is expected and should not be considered a defect. This occurs because, by default, with Replication Graph turned on, actors are only updated every third tick.
+* Do also note that you may run into the location of where the cubes were located before crossing servers, and experience glitchy movement. This is expected, as the cubes are bNetLoadOnClient and the servers have 0 interest.
 * Manual steps:
   * Before booting the Unreal Editor, open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and uncomment the `ReplicationDriverClassName` option by deleing the `;`.
   * Boot the Unreal Editor.
