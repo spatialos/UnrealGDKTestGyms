@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "HttpRouteHandle.h"
@@ -33,10 +33,10 @@ public:
 	};
 
 	void Set(double Value);
-	void Set(double Value, FDateTime Timestamp);
+	void Set(double Value, const FDateTime& Timestamp);
 
 	void Increment(double Amount);
-	void Increment(double Amount, FDateTime Timestamp);
+	void Increment(double Amount, const FDateTime& Timestamp);
 
 private:
 	double Value = 0.0;

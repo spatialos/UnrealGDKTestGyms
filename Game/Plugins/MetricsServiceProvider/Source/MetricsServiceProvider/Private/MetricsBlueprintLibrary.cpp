@@ -39,36 +39,34 @@ void UMetricsBlueprintLibrary::TelemetryEventForPlayer(const UObject* WorldConte
 
 void UMetricsBlueprintLibrary::TelemetryEventForPlayerWithAttributesWithClientOverride(const UObject* WorldContextObject, EMetricsClass EventClass, const FString& EventName, const APlayerState* PlayerState, const TArray<FMetricsEventAttr>& Attributes, const bool OverrideClientGuard /*= false*/)
 {
-	if (FAnalyticsProviderMetrics::MetricsProvider.IsValid())
+	if (!FAnalyticsProviderMetrics::MetricsProvider.IsValid())
 	{
-		FString MetricClass = EnumToString(EventClass);
-		UWorld* World = WorldContextObject->GetWorld();
+		UE_LOG(LogPrometheusMetrics, Warning, TEXT("RecordEventForPlayer: MetricsProvider is not a valid pointer"));
+		return;
+	}
 
-		// Only report metrics when we are on the server(and have a playerstate) or if this is a native call with a by pass
-		if (PlayerState && World && (OverrideClientGuard || World->GetNetMode() != NM_Client) && PlayerState->GetUniqueId().IsValid())
+	FString MetricClass = EnumToString(EventClass);
+	const UWorld* World = WorldContextObject->GetWorld();
+
+	// Only report metrics when we are on the server(and have a playerstate) or if this is a native call with a by pass
+	if (PlayerState && World != nullptr && (OverrideClientGuard || World->GetNetMode() != NM_Client) && PlayerState->GetUniqueId().IsValid())
+	{
+		TArray<FAnalyticsEventAttribute> AnalyticsAttributes = ConvertAttrs(Attributes);
+		AnalyticsAttributes.Add(FAnalyticsEventAttribute("Map", World->GetMapName()));
+
+		const APawn* Pawn = PlayerState->GetPawn();
+		if (Pawn != nullptr)
 		{
-			TArray<FAnalyticsEventAttribute> AnalyticsAttributes = ConvertAttrs(Attributes);
-			AnalyticsAttributes.Add(FAnalyticsEventAttribute("Map", World->GetMapName()));
-
-			APawn* Pawn = PlayerState->GetPawn();
-			if (Pawn)
-			{
-				FVector pos = Pawn->GetActorLocation();
-				AnalyticsAttributes.Add(FAnalyticsEventAttribute("PX", pos.X));
-				AnalyticsAttributes.Add(FAnalyticsEventAttribute("PY", pos.Y));
-				AnalyticsAttributes.Add(FAnalyticsEventAttribute("PZ", pos.Z));
-			}
-
-			FAnalyticsProviderMetrics::MetricsProvider->TelemetryClassEvent(MetricClass, EventName, PlayerState->GetUniqueId()->ToString(), AnalyticsAttributes);
+			const FVector& Pos = Pawn->GetActorLocation();
+			const FString Position = FString::Printf(TEXT("%s, %s, %s"), Pos.X, Pos.Y, Pos.Z);
+			AnalyticsAttributes.Add(FAnalyticsEventAttribute("Position", Position));
 		}
-		else
-		{
-			UE_LOG(LogPrometheusMetrics, Log, TEXT("Attempting to record event for player as client or NULL playerstate, or no world: %s: %s"), *MetricClass, *EventName);
-		}
+
+		FAnalyticsProviderMetrics::MetricsProvider->TelemetryClassEvent(MetricClass, EventName, PlayerState->GetUniqueId()->ToString(), AnalyticsAttributes);
 	}
 	else
 	{
-		UE_LOG(LogPrometheusMetrics, Warning, TEXT("RecordEventForPlayer: MetricsProvider is not a valid pointer"));
+		UE_LOG(LogPrometheusMetrics, Log, TEXT("Attempting to record event for player as client or NULL playerstate, or no world: %s: %s"), *MetricClass, *EventName);
 	}
 }
 void UMetricsBlueprintLibrary::TelemetryEventForPlayerWithAttributes(const UObject* WorldContextObject, EMetricsClass EventClass, const FString& EventName, const APlayerState* PlayerState, const TArray<FMetricsEventAttr>& Attributes)
@@ -95,7 +93,7 @@ void UMetricsBlueprintLibrary::TelemetryEventWithAttributes(EMetricsClass EventC
 	}
 }
 
-TSharedPtr<FPrometheusMetric> UMetricsBlueprintLibrary::GetMetric(const FString& Name, TArray<FPrometheusLabel> Labels)
+TSharedPtr<FPrometheusMetric> UMetricsBlueprintLibrary::GetMetric(const FString& Name, const TArray<FPrometheusLabel>& Labels)
 {
 	if (FAnalyticsProviderMetrics::MetricsProvider.IsValid())
 	{

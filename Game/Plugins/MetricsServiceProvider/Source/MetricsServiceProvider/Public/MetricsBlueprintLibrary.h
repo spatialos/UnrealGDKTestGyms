@@ -22,7 +22,7 @@ struct FMetricsEventAttr
 	{
 	}
 
-	FMetricsEventAttr(FString InputName, FString InputValue) :
+	FMetricsEventAttr(const FString& InputName, const FString& InputValue) :
 		Name(InputName),
 		Value(InputValue)
 	{
@@ -90,5 +90,5 @@ public:
 
 	static void CacheProfileDetails(const FString& ProfileID, const FString& AccountID, const FString& ClientSessionID);
 
-	static TSharedPtr<FPrometheusMetric> GetMetric(const FString& Name, TArray<FPrometheusLabel> Labels);
+	static TSharedPtr<FPrometheusMetric> GetMetric(const FString& Name, const TArray<FPrometheusLabel>& Labels);
 };

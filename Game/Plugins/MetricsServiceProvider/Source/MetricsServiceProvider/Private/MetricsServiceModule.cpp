@@ -26,42 +26,49 @@ IMPLEMENT_MODULE(FAnalyticsMetricsServiceModule, MetricsServiceProvider)
 TSharedPtr<IAnalyticsProvider> FAnalyticsProviderMetrics::Provider;
 TSharedPtr<FAnalyticsProviderMetrics> FAnalyticsProviderMetrics::MetricsProvider;
 
-const FString GEditorTelemetryPrefix = "MetricsEditorTelemetry_";
-FString ConvertToCamelCase(FString& Input)
+// Provider
+const FString FAnalyticsProviderMetrics::InvalidUserId = TEXT("User Not Set");
+namespace
 {
-	if (Input.Len() == 0)
+	const FString GEditorTelemetryPrefix = "MetricsEditorTelemetry_";
+
+	// The maximum number of retries we will attempt.
+	const uint32 RetryLimitCount = 10;
+	// The maximum number of seconds we will try to retry inside of.
+	const uint32 RetryLimitTime = 60;
+
+	void ConvertFromPascalToCamelCase(FString& Input)
 	{
-		return Input;
+		if (Input.Len() == 0)
+		{
+			return;
+		}
+
+		Input[0] = Input.Left(1).ToLower().GetCharArray()[0];
 	}
 
-	Input[0] = Input.Left(1).ToLower().GetCharArray()[0];
-	return Input;
-}
-
-static FString GetEventSource()
-{
-#if WITH_EDITOR
-	return "editor";
-#else
-	if (GWorld)
+	static FString GetEventSource()
 	{
-		switch (GWorld->GetNetMode())
+#if WITH_EDITOR
+		return "editor";
+#else
+		if (GWorld != nullptr)
 		{
+			switch (GWorld->GetNetMode())
+			{
 			case NM_Client:
 				return "client";
 			case NM_Standalone:
 				return "standalone";
 			default:
 				return "server";
+			}
 		}
-	}
-	else
-	{
 		// If we don't have a world, we are neither client or server
 		// so standalone makes the most sense(and can be the case on client shutdown)
 		return "standalone";
-	}
 #endif
+	}
 }
 
 void FAnalyticsMetricsServiceModule::StartupModule()
@@ -97,15 +104,7 @@ TSharedPtr<IAnalyticsProvider> FAnalyticsMetricsServiceModule::CreateAnalyticsPr
 	return FAnalyticsProviderMetrics::Create(Key, ApiEndpoint, BinaryKey, BinaryEndpoint, BatchSize, MaxAge);
 }
 
-// Provider
-const FString FAnalyticsProviderMetrics::InvalidUserId = TEXT("User Not Set");
-
-// The maximum number of retries we will attempt.
-const uint32 RetryLimitCount = 10;
-// The maximum number of seconds we will try to retry inside of.
-const uint32 RetryLimitTime = 60;
-
-FAnalyticsProviderMetrics::FAnalyticsProviderMetrics(const FString& Key, const FString& ApiEndpoint, const FString& BinaryKey, const FString& BinaryEndpoint, const int32 BatchSize, const float MaxAge) :
+FAnalyticsProviderMetrics::FAnalyticsProviderMetrics(const FString& Key, const FString& ApiEndpoint, const FString& BinaryKey, const FString& BinaryEndpoint, const int32 BatchSize, const float FlushPeriod) :
 	ApiKey(Key),
 	BinaryApiKey(BinaryKey),
 	EndPointURL(ApiEndpoint),
@@ -113,7 +112,7 @@ FAnalyticsProviderMetrics::FAnalyticsProviderMetrics(const FString& Key, const F
 	BatchSizeThreshold(BatchSize),
 	EngineVersion(*FEngineVersion::Current().ToString()),
 	EventEnvironment(LexToString(FApp::GetBuildConfiguration())),
-	MaxAgeThresholdSeconds(MaxAge)
+	FlushPeriodThresholdSeconds(FlushPeriod)
 {
 	HttpRetryManager = MakeShared<FHttpRetrySystem::FManager>(
 		FHttpRetrySystem::FRetryLimitCountSetting(),
@@ -124,11 +123,11 @@ FAnalyticsProviderMetrics::FAnalyticsProviderMetrics(const FString& Key, const F
 	Prometheus = MakeShared<FPrometheusServer>();
 	Prometheus->Initialize();
 
-	DeltaSecondsSinceFlush = 0;
+	DeltaSecondsSinceFlush = 0.0f;
 
 	TelemetryReported = Prometheus->GetMetric(TEXT("telemetry_events"), TArray<FPrometheusLabel>{});
 
-	TelemetryClassEvent(TEXT("session"), TEXT("Metrics Started"), ProfileId, TArray<FAnalyticsEventAttribute>());
+	TelemetryClassEvent(TEXT("session"), TEXT("Metrics Started"), ProfileId);
 }
 
 FAnalyticsProviderMetrics::~FAnalyticsProviderMetrics()
@@ -137,7 +136,7 @@ FAnalyticsProviderMetrics::~FAnalyticsProviderMetrics()
 	{
 		EndSession();
 	}
-	TelemetryClassEvent(TEXT("session"), TEXT("Metrics Destructed"), ProfileId, TArray<FAnalyticsEventAttribute>());
+	TelemetryClassEvent(TEXT("session"), TEXT("Metrics Destructed"), ProfileId);
 }
 
 bool FAnalyticsProviderMetrics::Tick(float DeltaSeconds)
@@ -145,10 +144,10 @@ bool FAnalyticsProviderMetrics::Tick(float DeltaSeconds)
 	HttpRetryManager->Update();
 
 	DeltaSecondsSinceFlush += DeltaSeconds;
-	if (DeltaSecondsSinceFlush >= MaxAgeThresholdSeconds)
+	if (DeltaSecondsSinceFlush >= FlushPeriodThresholdSeconds)
 	{
 		FlushEvents();
-		DeltaSecondsSinceFlush = 0;
+		DeltaSecondsSinceFlush = 0.0f;
 	}
 
 	return true;
@@ -219,7 +218,7 @@ void FAnalyticsProviderMetrics::EndSession()
 {
 	if (bHasSessionStarted)
 	{
-		TelemetryClassEvent(TEXT("session"), TEXT("SessionEnd"), ProfileId, TArray<FAnalyticsEventAttribute>());
+		TelemetryClassEvent(TEXT("session"), TEXT("SessionEnd"), ProfileId);
 
 		FlushEvents();
 		bHasSessionStarted = false;
@@ -269,11 +268,12 @@ FString FAnalyticsProviderMetrics::GetStringifiedPayloads() const
 {
 	FString Payload = TEXT("[");
 	const int32 NumberOfEvents = EventPayloads.Num();
-	for (int32 Index = 0; Index < NumberOfEvents; ++Index)
+	const int32 MaxEnentIndex = NumberOfEvents - 1;
+	for (int32 Index = 0; Index <= MaxEnentIndex; ++Index)
 	{
-		const MetricsPayload CurrentEvent = EventPayloads[Index];
+		const MetricsPayload& CurrentEvent = EventPayloads[Index];
 		Payload += CurrentEvent.Stringify();
-		Payload += Index == (NumberOfEvents - 1) ? TEXT("]") : TEXT(",");
+		Payload += Index == MaxEnentIndex ? TEXT("]") : TEXT(",");
 	}
 	return Payload;
 }
@@ -308,17 +308,6 @@ void FAnalyticsProviderMetrics::SetAge(const int32 InAge)
 	UE_LOG(LogAnalytics, Display, TEXT("Metrics::SetAge(%d) - currently not supported"), InAge);
 }
 
-void FAnalyticsProviderMetrics::SetLocation(const FString& InLocation)
-{
-	FString Lat, Long;
-	InLocation.Split(TEXT(","), &Lat, &Long);
-
-	const double Latitude = FCString::Atod(*Lat);
-	const double Longitude = FCString::Atod(*Long);
-
-	UE_LOG(LogAnalytics, Display, TEXT("Parsed \"lat, long\" string in Metrics::SetLocation(%s) as \"%f, %f\" - currently not supported"), *InLocation, Latitude, Longitude);
-}
-
 FString FAnalyticsProviderMetrics::GetSessionID() const
 {
 	UE_LOG(LogAnalytics, Display, TEXT("Metrics::GetSessionID - returning the id as '%s'"), *SessionId);
@@ -328,7 +317,7 @@ FString FAnalyticsProviderMetrics::GetSessionID() const
 
 bool FAnalyticsProviderMetrics::SetSessionID(const FString& InSessionID)
 {
-	TArray<FAnalyticsEventAttribute> Attributes = TArray<FAnalyticsEventAttribute>();
+	TArray<FAnalyticsEventAttribute> Attributes{};
 	const FAnalyticsEventAttribute OldIdAttribute = FAnalyticsEventAttribute(TEXT("OldSessionId"), SessionId);
 	SessionId = InSessionID;
 
@@ -358,12 +347,12 @@ void FAnalyticsProviderMetrics::RecordEvent(const FString& EventName, const TArr
 		// this is cribbed from MetricsBlueprintLibrary::EnumToString
 		FString EventClass = StaticEnum<EMetricsClass>()->GetValueAsString(EMetricsClass::MetricsClass_EditorTelemetry);
 		EventClass.RemoveFromStart("EMetricsClass::MetricsClass_");
-		ConvertToCamelCase(EventClass);
+		ConvertFromPascalToCamelCase(EventClass);
 
 		// the current format from epic -> io for editor telemetry is MetricsEditorTelemetry_EventName
-		FString ParsedEventName = FString::Printf(TEXT("%s"), *EventName);
+		FString ParsedEventName = EventName;
 		ParsedEventName.RemoveFromStart(GEditorTelemetryPrefix);
-		ConvertToCamelCase(ParsedEventName);
+		ConvertFromPascalToCamelCase(ParsedEventName);
 
 		// use the windows login name; this should be internal only reporting
 		const FString ProfileID = UKismetSystemLibrary::GetPlatformUserName();
@@ -387,10 +376,12 @@ void FAnalyticsProviderMetrics::AugmentPayloadWithSessionDetails(MetricsPayload&
 			PayloadData.ProfileID = ProfileID;
 			PayloadData.AccountID = ProfileDetails->AccountID;
 			PayloadData.ClientSessionID = ProfileDetails->ClientSessionID;
+			return true;
 		}
+		return false;
 	};
 
-	if (GWorld)
+	if (GWorld != nullptr)
 	{
 		switch (GWorld->GetNetMode())
 		{
@@ -406,13 +397,7 @@ void FAnalyticsProviderMetrics::AugmentPayloadWithSessionDetails(MetricsPayload&
 			// While we are in the main menu, before connecting as a client.  We have an account ID, but no profile id for part of this flow.
 			// So if we can't find the cached profile details we skip the profile ID data and just use the account ID
 			case NM_Standalone:
-				if (const FProfileDetails* ProfileDetails = CachedProfileDetails.Find(EventProfileID))
-				{
-					PayloadData.ProfileID = EventProfileID;
-					PayloadData.AccountID = ProfileDetails->AccountID;
-					PayloadData.ClientSessionID = ProfileDetails->ClientSessionID;
-				}
-				else
+				if (!AugmentClientDetailsFromProfile(EventProfileID))
 				{
 					PayloadData.ClientSessionID = SessionId;
 					PayloadData.AccountID = EventProfileID;
@@ -443,9 +428,9 @@ void FAnalyticsProviderMetrics::AugmentPayloadWithSessionDetails(MetricsPayload&
 	}
 }
 
-void FAnalyticsProviderMetrics::TelemetryClassEvent(const FString& EventClass, const FString& EventName, const FString& EventProfileID, const TArray<FAnalyticsEventAttribute>& Attributes)
+void FAnalyticsProviderMetrics::TelemetryClassEvent(const FString& EventClass, const FString& EventName, const FString& EventProfileID, const TArray<FAnalyticsEventAttribute>& Attributes /* = {} */)
 {
-	EventId++;
+	++EventId;
 	MetricsPayload PayloadData;
 
 	PayloadData.WorkerID = WorkerId;
@@ -605,27 +590,19 @@ FString FAnalyticsProviderMetrics::MetricsPayload::Stringify() const
 
 	Obj->SetStringField(TEXT("versionId"), EngineVersion);
 
-	if (!AccountID.IsEmpty())
-	{
-		Obj->SetStringField(TEXT("accountId"), AccountID);
-	}
-	if (!ProfileID.IsEmpty())
-	{
-		Obj->SetStringField(TEXT("profileId"), ProfileID);
-	}
-	if (!ServerSessionID.IsEmpty())
-	{
-		Obj->SetStringField(TEXT("serverSessionId"), ServerSessionID);
-	}
-	if (!ClientSessionID.IsEmpty())
-	{
-		Obj->SetStringField(TEXT("clientSessionId"), ClientSessionID);
-	}
+	auto EmptyCheckToSetField = [Obj](const FString& CheckID, const FString& SetField) {
+		if (!CheckID.IsEmpty())
+		{
+			Obj->SetStringField(SetField, CheckID);
+		}
+	};
 
-	if (!WorkerID.IsEmpty())
-	{
-		Obj->SetStringField(TEXT("workerId"), WorkerID);
-	}
+	// If ID not empty, set the field to Obj
+	EmptyCheckToSetField(AccountID, TEXT("accountId"));
+	EmptyCheckToSetField(ProfileID, TEXT("profileId"));
+	EmptyCheckToSetField(ServerSessionID, TEXT("serverSessionId"));
+	EmptyCheckToSetField(ClientSessionID, TEXT("clientSessionId"));
+	EmptyCheckToSetField(WorkerID, TEXT("workerId"));
 
 	FString Output;
 	TSharedRef<TJsonWriter<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>> JsonWriter = TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Output);

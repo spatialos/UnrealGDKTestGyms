@@ -56,7 +56,6 @@ public:
 	virtual void RecordCurrencyGiven(const FString& GameCurrencyType, int GameCurrencyAmount) override;
 
 	virtual void SetGender(const FString& InGender) override;
-	virtual void SetLocation(const FString& InLocation) override;
 	virtual void SetAge(const int32 InAge) override;
 
 	virtual void RecordItemPurchase(const FString& ItemId, int ItemQuantity, const TArray<FAnalyticsEventAttribute>& EventAttrs) override;
@@ -67,7 +66,7 @@ public:
 
 	void HandleResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful) const;
 
-	void TelemetryClassEvent(const FString& EventClass, const FString& EventName, const FString& EventProfileID, const TArray<FAnalyticsEventAttribute>& Attributes);
+	void TelemetryClassEvent(const FString& EventClass, const FString& EventName, const FString& EventProfileID, const TArray<FAnalyticsEventAttribute>& Attributes = {});
 
 	void CacheProfileDetails(const FString& ProfileID, const FString& AccountID, const FString& ClientSessionID);
 
@@ -112,7 +111,7 @@ private:
 
 	const FString EventEnvironment;
 
-	const float MaxAgeThresholdSeconds;
+	const float FlushPeriodThresholdSeconds;
 
 	float DeltaSecondsSinceFlush;
 

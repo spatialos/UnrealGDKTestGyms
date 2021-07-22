@@ -60,7 +60,7 @@ bool FPrometheusServer::Initialize()
 
 FPrometheusServer::~FPrometheusServer()
 {
-	if (Router)
+	if (Router != nullptr)
 	{
 		Router->UnbindRoute(MetricsHandle);
 		MetricsHandle.Reset();
@@ -161,7 +161,7 @@ void FPrometheusMetric::Set(double InValue)
 	Set(InValue, FDateTime::UtcNow());
 }
 
-void FPrometheusMetric::Set(double InValue, FDateTime InTimestamp)
+void FPrometheusMetric::Set(double InValue, const FDateTime& InTimestamp)
 {
 	Value = InValue;
 	Timestamp = UnixTimestampMS(InTimestamp);
@@ -172,7 +172,7 @@ void FPrometheusMetric::Increment(double Amount)
 	Increment(Amount, FDateTime::UtcNow());
 }
 
-void FPrometheusMetric::Increment(double Amount, FDateTime InTimestamp)
+void FPrometheusMetric::Increment(double Amount, const FDateTime& InTimestamp)
 {
 	Value += Amount;
 	Timestamp = UnixTimestampMS(InTimestamp);
