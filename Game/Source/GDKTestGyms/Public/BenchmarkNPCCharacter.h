@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "BenchmarkNPCCharacter.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkNPCCharacter, Log, All);
+
 UCLASS()
 class GDKTESTGYMS_API ABenchmarkNPCCharacter : public ACharacter
 {
