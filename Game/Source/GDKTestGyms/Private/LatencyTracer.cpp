@@ -64,11 +64,11 @@ void ULatencyTracer::InitTracer()
 	{
 		WorkerId = FGuid::NewGuid().ToString();
 		
-		UEventTracingSamplingSettings SamplingSettings;
-		SamplingSettings.SamplingProbability = 1.0f;
-		SamplingSettings.GDKEventPreFilter = TEXT("true");
-		SamplingSettings.GDKEventPostFilter = TEXT("true");
-		LocalTracer = MakeUnique<SpatialGDK::SpatialEventTracer>(WorkerId, &SamplingSettings);
+		UEventTracingSamplingSettings* SamplingSettings = NewObject<UEventTracingSamplingSettings>();
+		SamplingSettings->SamplingProbability = 1.0f;
+		SamplingSettings->GDKEventPreFilter = TEXT("true");
+		SamplingSettings->GDKEventPostFilter = TEXT("true");
+		LocalTracer = MakeUnique<SpatialGDK::SpatialEventTracer>(WorkerId, SamplingSettings);
 		InternalTracer = LocalTracer.Get();
 	}
 }
