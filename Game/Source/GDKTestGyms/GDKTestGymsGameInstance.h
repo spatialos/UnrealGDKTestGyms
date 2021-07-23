@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
 #include "Containers/Ticker.h"
+#include "LatencyTracer.h"
 
 #include "GDKTestGymsGameInstance.generated.h"
 
@@ -33,6 +34,7 @@ public:
 	void NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
 	const UNFRConstants* GetNFRConstants() const { return NFRConstants; }
+	ULatencyTracer* GetTracer() { return Tracer; }
 private:
 	using FPSTimePoint = TPair<int64, int64>; // Real, FrameDelta
 	int64 TickWindowTotal;
@@ -46,6 +48,9 @@ private:
 
 	UPROPERTY()
 	UNFRConstants* NFRConstants;
+
+	UPROPERTY()
+	ULatencyTracer* Tracer;
 
 	float AverageFPS = 60.0f;
 	float SecondsSinceFPSLog = 10.0f;

@@ -11,6 +11,7 @@
 #include "GeneralProjectSettings.h"
 #include "EngineMinimal.h"
 #include "Engine/Engine.h"
+#include "LatencyTracer.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -24,6 +25,9 @@ void UGDKTestGymsGameInstance::Init()
 	NFRConstants->InitWithWorld(GetWorld());
 
 	OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
+
+	Tracer = NewObject<ULatencyTracer>(this);
+	Tracer->InitTracer();
 }
 
 void UGDKTestGymsGameInstance::SpatialConnected()

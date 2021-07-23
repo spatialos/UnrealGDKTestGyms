@@ -4,12 +4,8 @@
 
 #include "Async/Async.h"
 #include "Engine/World.h"
-#include "EngineClasses/SpatialGameInstance.h"
 #include "GeneralProjectSettings.h"
-#include "Interop/Connection/OutgoingMessages.h"
 #include "SpatialGDKSettings.h"
-#include "Utils/GDKPropertyMacros.h"
-#include "Utils/SchemaUtils.h"
 
 DEFINE_LOG_CATEGORY(LogLatencyTracer);
 
@@ -46,6 +42,25 @@ namespace LatencyTracerInternal
 
 ULatencyTracer::ULatencyTracer()
 {
+}
+
+ULatencyTracer* ULatencyTracer::GetOrCreateLatencyTracer(UObject* WorldContextObject)
+{
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull);
+	if (World == nullptr)
+	{
+		World = GWorld;
+	}
+
+	if (UGDKTestGymsGameInstance* GameInstance = World->GetGameInstance<UGDKTestGymsGameInstance>())
+	{
+		if (GameInstance->GetTracer() != nullptr)
+		{
+			return GameInstance->GetTracer();
+		}
+	}
+	UE_LOG(LogLatencyTracer, Error, TEXT("Unable to get the game instance tracer object, creating a new one but results may not be as expected."));
+	return NewObject<ULatencyTracer>();
 }
 
 void ULatencyTracer::InitTracer()

@@ -3,10 +3,6 @@
 #pragma once
 
 #include "Containers/Array.h"
-#include "CoreMinimal.h"
-#include "Hash/CityHash.h"
-#include "Interop/Connection/SpatialGDKSpanId.h"
-#include "SpatialCommonTypes.h"
 
 #include "LatencyPayload.generated.h"
 
