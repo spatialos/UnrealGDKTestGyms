@@ -34,6 +34,12 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	{
 		ReplicatedBPClass = ReplicatedBP.Class;
 	}
+
+	static ConstructorHelpers::FClassFinder<AActor> OffloadedCube(TEXT("/Game/Benchmark/OffloadedDropCube_BP"));
+	if (OffloadedCube.Class != nullptr)
+	{
+		OffloadedDropCubeBPClass = OffloadedCube.Class;
+	}
 }
 
 void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize, float ServerMaxTickRate)
@@ -101,6 +107,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+	AddInfo(OffloadedDropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);		// Drop
 
 	if (bUsingSpatial)
 	{

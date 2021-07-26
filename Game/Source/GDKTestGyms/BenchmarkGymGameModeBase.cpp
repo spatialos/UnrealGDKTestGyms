@@ -782,6 +782,11 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 	for (auto const& Pair : ExpectedActorCounts)
 	{
 		const TSubclassOf<AActor>& ActorClass = Pair.Key;
+		if (!USpatialStatics::IsActorGroupOwnerForClass(World, ActorClass))
+		{
+			continue;
+		}
+
 		const FExpectedActorCountConfig& Config = Pair.Value;
 		if (Config.MinCount > 0)
 		{
