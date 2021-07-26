@@ -77,7 +77,10 @@ void ULatencyTracer::InitTracer()
 	}
 	else
 	{
-		WorkerId = FGuid::NewGuid().ToString();
+		ENetMode NetMode = GetWorld()->GetNetMode();
+		bool bIsClient = NetMode == NM_Client || NetMode == NM_Standalone;
+
+		WorkerId = (bIsClient ? "UnrealClient" : "UnrealWorker") + FGuid::NewGuid().ToString();
 		
 		UEventTracingSamplingSettings* SamplingSettings = NewObject<UEventTracingSamplingSettings>();
 		SamplingSettings->SamplingProbability = 1.0f;
