@@ -66,6 +66,10 @@
 		{
 			"Name": "MLSDK",
 			"Enabled": false
+		},
+		{
+			"Name": "SpatialGDK",
+			"Enabled": true
 		}
 	]
 }
