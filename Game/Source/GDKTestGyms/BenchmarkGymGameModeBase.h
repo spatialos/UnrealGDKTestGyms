@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
 #include "NFRConstants.h"
+#include "MetricsBlueprintLibrary.h"
 #include "BenchmarkGymGameModeBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
@@ -242,4 +243,7 @@ private:
 
 	UFUNCTION()
 	void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
+	// Metrics
+	typedef double (ABenchmarkGymGameModeBase::* FunctionPtrType)(void) const;
+	void GetMetrics(const FString& LeftLabel, const FString& RightLabel, const FString& MetricsName, ABenchmarkGymGameModeBase::FunctionPtrType Func);
 };
