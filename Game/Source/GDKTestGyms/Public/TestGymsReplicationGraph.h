@@ -63,9 +63,6 @@ public:
 	TSubclassOf<AActor> ReplicatedBPClass;
 
 	UPROPERTY()
-	TSubclassOf<AActor> OffloadedDropCubeBPClass;
-
-	UPROPERTY()
 	UReplicationGraphNode_ActorList* AlwaysRelevantNode;
 
 	TMap<FName, FActorRepListRefView> AlwaysRelevantStreamingLevelActors;
