@@ -15,5 +15,5 @@ class GDKTESTGYMS_API ADisco387GameStateBase : public AGameStateBase
 	GENERATED_BODY()
 	
 public:
-	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 };

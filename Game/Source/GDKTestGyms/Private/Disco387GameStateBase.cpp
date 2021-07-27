@@ -5,9 +5,9 @@
 
 #include "SpatialGDKSettings.h"
 
-void ADisco387GameStateBase::BeginPlay()
+void ADisco387GameStateBase::PostInitializeComponents()
 {
-	Super::BeginPlay();
+	Super::PostInitializeComponents();
 
 	// Modify settings here that are desired for this scenario. We modify them here so that it's possible
 	// to run a single assembly against multiple scenarios. This might not actually be necessary, in which
