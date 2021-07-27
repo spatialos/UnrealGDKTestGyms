@@ -126,10 +126,11 @@ private:
 
 	TSharedPtr<class FHttpRetrySystem::FManager> HttpRetryManager;
 #if ENGINE_MINOR_VERSION >= 26
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateRequest();
+	using HttpRequest = TSharedRef<IHttpRequest, ESPMode::ThreadSafe>;
 #else
-	TSharedRef<IHttpRequest> CreateRequest();
+	using HttpRequest = TSharedRef<IHttpRequest>;
 #endif
+	HttpRequest CreateRequest();
 
 	TSharedPtr<FPrometheusServer> Prometheus;
 	TSharedPtr<FPrometheusMetric> TelemetryReported;

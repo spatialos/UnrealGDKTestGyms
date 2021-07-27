@@ -49,7 +49,7 @@ void UMetricsBlueprintLibrary::TelemetryEventForPlayerWithAttributesWithClientOv
 	const UWorld* World = WorldContextObject->GetWorld();
 
 	// Only report metrics when we are on the server(and have a playerstate) or if this is a native call with a by pass
-	if (PlayerState && World != nullptr && (OverrideClientGuard || World->GetNetMode() != NM_Client) && PlayerState->GetUniqueId().IsValid())
+	if (PlayerState != nullptr && World != nullptr && (OverrideClientGuard || World->GetNetMode() != NM_Client) && PlayerState->GetUniqueId().IsValid())
 	{
 		TArray<FAnalyticsEventAttribute> AnalyticsAttributes = ConvertAttrs(Attributes);
 		AnalyticsAttributes.Add(FAnalyticsEventAttribute("Map", World->GetMapName()));

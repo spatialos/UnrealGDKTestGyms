@@ -153,8 +153,7 @@ bool FAnalyticsProviderMetrics::Tick(float DeltaSeconds)
 	return true;
 }
 
-#if ENGINE_MINOR_VERSION >= 26
-TSharedRef<IHttpRequest, ESPMode::ThreadSafe> FAnalyticsProviderMetrics::CreateRequest()
+FAnalyticsProviderMetrics::HttpRequest FAnalyticsProviderMetrics::CreateRequest()
 {
 	FHttpRetrySystem::FRetryVerbs Verbs;
 	FHttpRetrySystem::FRetryResponseCodes Codes;
@@ -164,26 +163,9 @@ TSharedRef<IHttpRequest, ESPMode::ThreadSafe> FAnalyticsProviderMetrics::CreateR
 	Codes.Add(502);	   // Bad Gateway
 	Codes.Add(503);	   // Service Unavailable
 	Codes.Add(504);	   // Gateway Timeout
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = HttpRetryManager->CreateRequest(RetryLimitCount, RetryLimitTime, Codes, Verbs);
-
-	return HttpRequest;
+	HttpRequest Request = HttpRetryManager->CreateRequest(RetryLimitCount, RetryLimitTime, Codes, Verbs);
+	return Request;
 }
-#else
-TSharedRef<IHttpRequest> FAnalyticsProviderMetrics::CreateRequest()
-{
-	FHttpRetrySystem::FRetryVerbs Verbs;
-	FHttpRetrySystem::FRetryResponseCodes Codes;
-
-	// Retry our POST Requests on various 5xx errors
-	Verbs.Add("POST");
-	Codes.Add(502);	   // Bad Gateway
-	Codes.Add(503);	   // Service Unavailable
-	Codes.Add(504);	   // Gateway Timeout
-	TSharedRef<IHttpRequest> HttpRequest = HttpRetryManager->CreateRequest(RetryLimitCount, RetryLimitTime, Codes, Verbs);
-
-	return HttpRequest;
-}
-#endif
 
 bool FAnalyticsProviderMetrics::StartSession(const TArray<FAnalyticsEventAttribute>& Attributes)
 {
@@ -246,11 +228,7 @@ void FAnalyticsProviderMetrics::FlushEvents()
 	// Don't send request if didn't set EndPointURL.
 	if (!EndPointURL.IsEmpty())
 	{
-#if ENGINE_MINOR_VERSION >= 26
-		TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = CreateRequest();
-#else
-		TSharedRef<IHttpRequest> Request = CreateRequest();
-#endif
+		FAnalyticsProviderMetrics::HttpRequest Request = CreateRequest();
 
 		const FString ContentString = GetStringifiedPayloads();
 		Request->SetURL(EndPointURL + "&session_id=" + SessionId + "&key=" + ApiKey);
