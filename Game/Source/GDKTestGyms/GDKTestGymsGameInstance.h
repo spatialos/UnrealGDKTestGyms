@@ -26,6 +26,7 @@ class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
 
 public:
 	virtual void Init() override;
+	virtual void Shutdown() override;
 
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
