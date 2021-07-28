@@ -66,7 +66,7 @@ namespace
 	const FString MetricEnginePlatformLeftLabel = TEXT("engine_platform");
 	const FString MetricEnginePlatformRightLabel = TEXT("UnrealWorker");
 
-	const bool bEnableDensityBucketOutput = false;
+	const bool bEnableDensityBucketOutput = true;
 
 } // anonymous namespace
 
