@@ -114,12 +114,6 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
 
-	// Add NFR BPs that should always be replicated, to mitigate problems with them not being relevant to any client connections
-	ensureAlways(DropCubeBPClass != nullptr);
-	ensureAlways(BenchmarkNpcBPClass != nullptr);
-	AddInfo(DropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);
-	AddInfo(BenchmarkNpcBPClass, EClassRepNodeMapping::RelevantAllConnections);
-
 	if (bUsingSpatial)
 	{
 		// Game mode is replicated in spatial, ensure it is always replicated
@@ -136,6 +130,14 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
 		}
+
+		// Add NFR BPs that should always be replicated, to mitigate problems with them not being relevant to any client connections.
+		// Only do this in Spatial, since this only dictates that they get replicated to the Runtime, not that they get replicated
+		// down to the clients. So native bandwidth/CPU shouldn't suffer for Spatial's sins.
+		ensureAlways(DropCubeBPClass != nullptr);
+		ensureAlways(BenchmarkNpcBPClass != nullptr);
+		AddInfo(DropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);
+		AddInfo(BenchmarkNpcBPClass, EClassRepNodeMapping::RelevantAllConnections);
 	}
 
 	TArray<UClass*> AllReplicatedClasses;
