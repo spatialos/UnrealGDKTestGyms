@@ -34,6 +34,18 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	{
 		ReplicatedBPClass = ReplicatedBP.Class;
 	}
+
+	static ConstructorHelpers::FClassFinder<AActor> DropCubeBP(TEXT("/Game/Benchmark/DropCube_BP"));
+	if (DropCubeBP.Class != nullptr)
+	{
+		DropCubeBPClass = DropCubeBP.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<AActor> BenchmarkNpcBP(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
+	if (BenchmarkNpcBP.Class != nullptr)
+	{
+		BenchmarkNpcBPClass = BenchmarkNpcBP.Class;
+	}
 }
 
 void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize, float ServerMaxTickRate)
@@ -101,6 +113,12 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+
+	// Add NFR BPs that should always be replicated, to mitigate problems with them not being relevant to any client connections
+	ensureAlways(DropCubeBPClass != nullptr);
+	ensureAlways(BenchmarkNpcBPClass != nullptr);
+	AddInfo(DropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);
+	AddInfo(BenchmarkNpcBPClass, EClassRepNodeMapping::RelevantAllConnections);
 
 	if (bUsingSpatial)
 	{
