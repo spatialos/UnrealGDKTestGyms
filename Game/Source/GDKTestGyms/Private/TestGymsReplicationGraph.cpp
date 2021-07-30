@@ -136,8 +136,8 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		// down to the clients. So native bandwidth/CPU shouldn't suffer for Spatial's sins.
 		ensureAlways(DropCubeBPClass != nullptr);
 		ensureAlways(BenchmarkNpcBPClass != nullptr);
-		AddInfo(DropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);
-		AddInfo(BenchmarkNpcBPClass, EClassRepNodeMapping::RelevantAllConnections);
+		//AddInfo(DropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);
+		//AddInfo(BenchmarkNpcBPClass, EClassRepNodeMapping::RelevantAllConnections);
 	}
 
 	TArray<UClass*> AllReplicatedClasses;
