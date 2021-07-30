@@ -30,7 +30,7 @@ int32 UCounterComponent::GetActorClassCount(TSubclassOf<AActor> ActorClass) cons
 	const int32* CachedCount = CachedClassCounts.Find(ActorClass);
 	if (CachedCount == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not get actor class count for class %s"), *ActorClass->GetName());
+		UE_LOG(LogCounterComponent, Warning, TEXT("Could not get actor class count for class %s"), *ActorClass->GetName());
 		return -1;
 	}
 
