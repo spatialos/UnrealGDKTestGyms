@@ -34,18 +34,6 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	{
 		ReplicatedBPClass = ReplicatedBP.Class;
 	}
-
-	static ConstructorHelpers::FClassFinder<AActor> DropCubeBP(TEXT("/Game/Benchmark/DropCube_BP"));
-	if (DropCubeBP.Class != nullptr)
-	{
-		DropCubeBPClass = DropCubeBP.Class;
-	}
-
-	static ConstructorHelpers::FClassFinder<AActor> BenchmarkNpcBP(TEXT("/Game/Characters/SimulatedPlayers/BenchmarkNPC_BP"));
-	if (BenchmarkNpcBP.Class != nullptr)
-	{
-		BenchmarkNpcBPClass = BenchmarkNpcBP.Class;
-	}
 }
 
 void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize, float ServerMaxTickRate)
@@ -130,14 +118,6 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
 		}
-
-		// Add NFR BPs that should always be replicated, to mitigate problems with them not being relevant to any client connections.
-		// Only do this in Spatial, since this only dictates that they get replicated to the Runtime, not that they get replicated
-		// down to the clients. So native bandwidth/CPU shouldn't suffer for Spatial's sins.
-		ensureAlways(DropCubeBPClass != nullptr);
-		ensureAlways(BenchmarkNpcBPClass != nullptr);
-		AddInfo(DropCubeBPClass, EClassRepNodeMapping::RelevantAllConnections);
-		AddInfo(BenchmarkNpcBPClass, EClassRepNodeMapping::RelevantAllConnections);
 	}
 
 	TArray<UClass*> AllReplicatedClasses;
