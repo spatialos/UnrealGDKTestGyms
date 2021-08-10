@@ -5,6 +5,8 @@
 
 #include "SpatialGDKSettings.h"
 
+DEFINE_LOG_CATEGORY(LogDisco387GameStateBase);
+
 void ADisco387GameStateBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -17,7 +19,7 @@ void ADisco387GameStateBase::PostInitializeComponents()
 		GDKSettings->bEnableNetCullDistanceFrequency = false;
 
 		// Loudly output this information to help prevent tripping people up.
-		UE_LOG(LogTemp, Warning, TEXT("Explicit disco config overrides:"));
-		UE_LOG(LogTemp, Warning, TEXT("bEnableNetCullDistanceFrequency is %s."), GDKSettings->bEnableNetCullDistanceFrequency ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("Explicit disco config overrides:"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bEnableNetCullDistanceFrequency is %s."), GDKSettings->bEnableNetCullDistanceFrequency ? TEXT("enabled") : TEXT("disabled"));
 	}
 }

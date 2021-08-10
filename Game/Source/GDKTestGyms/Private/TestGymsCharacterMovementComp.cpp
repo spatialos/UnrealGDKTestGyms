@@ -2,7 +2,7 @@
 
 
 #include "TestGymsCharacterMovementComp.h"
-#include "../GDKTestGymsCharacter.h"
+#include "GDKTestGyms/GDKTestGymsCharacter.h"
 
 void UTestGymsCharacterMovementComp::BeginPlay()
 {

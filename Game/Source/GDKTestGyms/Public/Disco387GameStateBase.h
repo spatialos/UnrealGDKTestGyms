@@ -6,9 +6,8 @@
 #include "GameFramework/GameStateBase.h"
 #include "Disco387GameStateBase.generated.h"
 
-/**
- * 
- */
+DECLARE_LOG_CATEGORY_EXTERN(LogDisco387GameStateBase, Log, All);
+
 UCLASS()
 class GDKTESTGYMS_API ADisco387GameStateBase : public AGameStateBase
 {
