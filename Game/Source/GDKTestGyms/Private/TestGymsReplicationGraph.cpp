@@ -193,6 +193,10 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			AddInfo(Class, EClassRepNodeMapping::RelevantAllConnections);
 		}
+		else if (bUsingSpatial && ActorCDO->GetIsReplicated())
+		{
+			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
+		}
 		else
 		{
 			UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("Not adding info for class %s."), *GetLegacyDebugStr(ActorCDO));

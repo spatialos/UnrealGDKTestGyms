@@ -63,7 +63,7 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 			return;
 		}
 
-		FVector WorldLocation = ((AActor*)Controller)->GetActorLocation();
+		FVector WorldLocation = Pawn->GetActorLocation();
 
 		UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 
@@ -86,10 +86,12 @@ void UDeterministicBlackboardValues::InitialApplyBlackboardValues() // Repeats u
 		BlackboardValues.TargetAValue = LocA;
 		BlackboardValues.TargetBValue = LocB;
 		BlackboardValues.TargetStateIsA = true; // Set initial target to TargetA
+		BlackboardValues.bInitialised = true;
 
 		Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 		Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
 		Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
+		Blackboard->SetValueAsBool(BlackboardValues.InitialisedName, BlackboardValues.bInitialised);
 
 		UE_LOG(LogDeterministicBlackboardValues, Log, TEXT("Setting points to run between as %s and %s for AI controller %s"), *LocA.Location.ToString(), *LocB.Location.ToString(), *Controller->GetName());
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
@@ -112,6 +114,7 @@ void UDeterministicBlackboardValues::ApplyBlackboardValues()
 			Blackboard->SetValueAsVector(BlackboardValues.TargetAName, BlackboardValues.TargetAValue);
 			Blackboard->SetValueAsVector(BlackboardValues.TargetBName, BlackboardValues.TargetBValue);
 			Blackboard->SetValueAsBool(BlackboardValues.TargetStateIsAName, BlackboardValues.TargetStateIsA);
+			Blackboard->SetValueAsBool(BlackboardValues.InitialisedName, BlackboardValues.bInitialised);
 		}
 	}
 }
