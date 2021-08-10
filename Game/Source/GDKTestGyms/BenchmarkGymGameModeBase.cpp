@@ -53,6 +53,12 @@ namespace
 	const FString TotalNPCsCommandLineKey = TEXT("-TotalNPCs=");
 	const FString RequiredPlayersCommandLineKey = TEXT("-RequiredPlayers=");
 
+	const FString CubeRespawnBaseTimeWorkerFlag = TEXT("cube_base_respawn_time");
+	const FString CubeRespawnBaseTimeCommandLineKey = TEXT("-CubeBaseRespawnTime=");
+
+	const FString CubeRespawnRandomRangeTimeWorkerFlag = TEXT("cube_random_range_respawn_time");
+	const FString CubeRespawnRandomRangeCommandLineKey = TEXT("-CubeRandomRangeRespawnTime=");
+
 #if	STATS
 	const FString StatProfileWorkerFlag = TEXT("stat_profile");
 	const FString StatProfileCommandLineKey = TEXT("-StatProfile=");
@@ -102,6 +108,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, RecentPlayerAvgVelocity(0.0f)
 	, RequiredPlayerMovementReportTimer(5 * 60)
 	, RequiredPlayerMovementCheckTimer(6 * 60)
+	, CubeRespawnBaseTime(10.0f)
+	, CubeRespawnRandomRangeTime(10.0f)
 #if	STATS
 	, StatStartFileTimer(60 * 60 * 24)
 	, StatStopFileTimer(60)
@@ -312,6 +320,16 @@ void ABenchmarkGymGameModeBase::BindWorkerFlagDelegates(USpatialWorkerFlags* Spa
 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnTestLiftimeFlagUpdate);
 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TestLiftimeWorkerFlag, WorkerFlagDelegate);
+	}
+	{
+		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnCubeRespawnBaseTimeFlagUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CubeRespawnBaseTimeWorkerFlag, WorkerFlagDelegate);
+	}
+	{
+		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnCubeRespawnRandomRangeTimeUpdate);
+		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CubeRespawnRandomRangeTimeWorkerFlag, WorkerFlagDelegate);
 	}
 #if	STATS
 	{
@@ -691,14 +709,17 @@ void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
 	FParse::Value(*CommandLine, *MaxRoundTripCommandLineKey, MaxClientRoundTripMS);
 	FParse::Value(*CommandLine, *MaxUpdateTimeDeltaCommandLineKey, MaxClientUpdateTimeDeltaMS);
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"),
-		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS);
+	FParse::Value(*CommandLine, *CubeRespawnBaseTimeCommandLineKey, CubeRespawnBaseTime);
+	FParse::Value(*CommandLine, *CubeRespawnRandomRangeCommandLineKey, CubeRespawnRandomRangeTime);
+
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, CubeRespawnBaseTime %f, CubeRespawnRandomRangeTime %f"),
+		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, CubeRespawnBaseTime, CubeRespawnRandomRangeTime);
 }
 
 void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
 {
 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-	FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, NumWorkersString;
+	FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, NumWorkersString, CubeRespawnBaseTimeString, CubeRespawnRandomRangeTimeString;
 
 	if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
 	{
@@ -730,6 +751,16 @@ void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* Spatia
 		SetLifetime(FCString::Atoi(*LifetimeString));
 	}
 
+	if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnBaseTimeWorkerFlag, CubeRespawnBaseTimeString))
+	{
+		CubeRespawnBaseTime = FCString::Atof(*CubeRespawnBaseTimeString);
+	}
+
+	if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnRandomRangeTimeWorkerFlag, CubeRespawnRandomRangeTimeString))
+	{
+		CubeRespawnRandomRangeTime = FCString::Atof(*CubeRespawnRandomRangeTimeString);
+	}
+
 #if	STATS
 	FString CPUProfileString;
 	if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
@@ -744,8 +775,8 @@ void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* Spatia
 	}
 #endif
 
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d"),
-		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS);
+	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, CubeRespawnBaseTime %f, CubeRespawnRandomRangeTime %f"),
+		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, CubeRespawnBaseTime, CubeRespawnRandomRangeTime);
 }
 
 void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
@@ -1194,6 +1225,16 @@ void ABenchmarkGymGameModeBase::OnMaxUpdateTimeDeltaFlagUpdate(const FString& Fl
 void ABenchmarkGymGameModeBase::OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue)
 {
 	SetLifetime(FCString::Atoi(*FlagValue));
+}
+
+void ABenchmarkGymGameModeBase::OnCubeRespawnBaseTimeFlagUpdate(const FString& FlagName, const FString& FlagValue)
+{
+	CubeRespawnBaseTime = FCString::Atof(*FlagValue);
+}
+
+void ABenchmarkGymGameModeBase::OnCubeRespawnRandomRangeTimeUpdate(const FString& FlagName, const FString& FlagValue)
+{
+	CubeRespawnRandomRangeTime = FCString::Atof(*FlagValue);
 }
 
 void ABenchmarkGymGameModeBase::OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue)
