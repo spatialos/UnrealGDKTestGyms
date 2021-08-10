@@ -59,9 +59,9 @@ void UTestGymsCharacterMovementComp::ReplicateMoveToServer(float DeltaTime, cons
 
 	if (CurrentWorldTime > (LastMoveWorldTime + (1.f/ClientMoveFrequency)))
 	{
-		FVector ClientLocation = TestGymsCharacterOwner->GetActorLocation();
-		FVector ClientVelocity = Velocity;
-		uint32 PackedPitchYaw = UCharacterMovementComponent::PackYawAndPitchTo32(TestGymsCharacterOwner->GetActorRotation().Yaw, TestGymsCharacterOwner->GetActorRotation().Pitch);
+		const FVector ClientLocation = TestGymsCharacterOwner->GetActorLocation();
+		const FVector ClientVelocity = Velocity;
+		const uint32 PackedPitchYaw = UCharacterMovementComponent::PackYawAndPitchTo32(TestGymsCharacterOwner->GetActorRotation().Yaw, TestGymsCharacterOwner->GetActorRotation().Pitch);
 
 		TestGymsCharacterOwner->ClientAuthServerMove(ClientLocation, ClientVelocity, PackedPitchYaw);
 		LastMoveWorldTime = CurrentWorldTime;
