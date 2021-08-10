@@ -16,7 +16,7 @@ void ADisco387GameStateBase::PostInitializeComponents()
 	{
 		GDKSettings->bEnableNetCullDistanceFrequency = false;
 
-		// Loudly output this information so help prevent tripping people up.
+		// Loudly output this information to help prevent tripping people up.
 		UE_LOG(LogTemp, Warning, TEXT("Explicit disco config overrides:"));
 		UE_LOG(LogTemp, Warning, TEXT("bEnableNetCullDistanceFrequency is %s."), GDKSettings->bEnableNetCullDistanceFrequency ? TEXT("enabled") : TEXT("disabled"));
 	}
