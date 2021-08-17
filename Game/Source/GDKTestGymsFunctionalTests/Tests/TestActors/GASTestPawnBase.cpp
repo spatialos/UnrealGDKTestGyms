@@ -1,6 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #include "GASTestPawnBase.h"
+#include "Net/UnrealNetwork.h"
 
 AGASTestPawnBase::AGASTestPawnBase()
 {
@@ -49,4 +50,11 @@ void AGASTestPawnBase::OnRep_Controller()
 {
 	Super::OnRep_Controller();
 	AbilitySystemComponent->RefreshAbilityActorInfo();
+}
+
+void AGASTestPawnBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ThisClass, bHasGrantedAbilities, COND_ServerOnly);
 }
