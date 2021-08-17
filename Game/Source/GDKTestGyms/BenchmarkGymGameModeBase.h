@@ -19,7 +19,11 @@ struct FActorCount
 {
 	GENERATED_BODY()
 
-	explicit FActorCount() {}
+	explicit FActorCount()
+		: ActorClass()
+		, Count()
+	{}
+
 	explicit FActorCount(const TSubclassOf<AActor>& InActorClass, int32 InCount)
 		: ActorClass(InActorClass)
 		, Count(InCount)
