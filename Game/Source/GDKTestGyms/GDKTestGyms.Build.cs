@@ -24,6 +24,7 @@ public class GDKTestGyms : ModuleRules
 				"PhysXVehicles",
 				"Slate",
 				"SpatialGDK",
+				"ScavengersHubGameFramework",
 				"ReplicationGraph",
 				"AIModule",
 				"NavigationSystem",
