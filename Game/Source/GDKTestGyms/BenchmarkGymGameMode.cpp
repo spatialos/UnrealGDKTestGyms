@@ -613,18 +613,19 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		return SpawnManager->GetSpawnPointActorByIndex(PlayersSpawned);
 	}
 
-	// Use custom spawning with density controls
-	const int32 PlayerUniqueID = Player->GetUniqueID();
-	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
-	if (SpawnPoint != nullptr)
-	{
-		return *SpawnPoint;
-	}
+// 	// Use custom spawning with density controls
+// 	const int32 PlayerUniqueID = Player->GetUniqueID();
+// 	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
+// 	if (SpawnPoint != nullptr)
+// 	{
+// 		return *SpawnPoint;
+// 	}
 
 	AActor* ChosenSpawnPoint = SpawnManager->GetSpawnPointActorByIndex(PlayersSpawned);
-	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
+	//PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	//UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayersSpawned, *ChosenSpawnPoint->GetActorLocation().ToString());
 	
 	if (Player->GetIsSimulated())
 	{
