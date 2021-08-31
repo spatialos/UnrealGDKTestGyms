@@ -162,9 +162,6 @@ private:
 	FMetricTimer ActorMigrationCheckDelay;
 
 	UPROPERTY()
-	TMap<int32, AActor*> PlayerIdToSpawnPointMap;
-
-	UPROPERTY()
 	ABenchmarkGymNPCSpawner* NPCSpawner;
 
 	void GenerateTestScenarioLocations();
