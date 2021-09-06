@@ -283,11 +283,13 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 {
+#if ENGINE_MINOR_VERSION < 27
 	// Preallocate some replication lists.
 	PreAllocateRepList(3, 12);
 	PreAllocateRepList(6, 12);
 	PreAllocateRepList(128, 64);
 	PreAllocateRepList(512, 16);
+#endif
 
 	// -----------------------------------------------
 	//	Spatial Actors
