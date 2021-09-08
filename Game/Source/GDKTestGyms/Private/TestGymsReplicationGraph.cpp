@@ -283,7 +283,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 {
-#if ENGINE_MINOR_VERSION < 27
+#if ENGINE_MINOR_VERSION == 4 && ENGINE_MINOR_VERSION < 27
 	// Preallocate some replication lists.
 	PreAllocateRepList(3, 12);
 	PreAllocateRepList(6, 12);
