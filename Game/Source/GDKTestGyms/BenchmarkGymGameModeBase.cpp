@@ -102,8 +102,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, TickActorCountTimer(60) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
 	, TimeSinceLastCheckedTotalActorCounts(0.0f)
 	, bHasRequiredPlayersCheckFailed(false)
-	, RequiredPlayerCheckTimer(17*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
-	, DeploymentValidTimer(18*60) // 16-minute window to check between
+	, RequiredPlayerCheckTimer(17*60) // all clients should have joined by this point
+	, DeploymentValidTimer(38*60) // finish RequiredPlayerCheckTimer time then, to allow workers to disconnect without failing test
 	, CurrentPlayerAvgVelocity(0.0f)
 	, RecentPlayerAvgVelocity(0.0f)
 	, RequiredPlayerMovementReportTimer(5 * 60)
