@@ -99,7 +99,6 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, UXAuthActorCount(0)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
-	, TickActorCountTimer(60) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
 	, TimeSinceLastCheckedTotalActorCounts(0.0f)
 	, bHasRequiredPlayersCheckFailed(false)
 	, RequiredPlayerCheckTimer(17*60) // all clients should have joined by this point

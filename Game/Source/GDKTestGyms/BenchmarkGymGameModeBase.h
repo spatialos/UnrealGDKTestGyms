@@ -140,7 +140,6 @@ private:
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
-	FMetricTimer TickActorCountTimer;
 
 	UPROPERTY(ReplicatedUsing = OnActorCountReportIdx)
 	int32 ActorCountReportIdx;
