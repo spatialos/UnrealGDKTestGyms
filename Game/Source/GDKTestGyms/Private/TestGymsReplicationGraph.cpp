@@ -34,6 +34,12 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	{
 		ReplicatedBPClass = ReplicatedBP.Class;
 	}
+
+	static ConstructorHelpers::FClassFinder<APlayerState> NonAlwaysRelevantPlayerStateBP(TEXT("/Game/Benchmark/Disco387PlayerState"));
+	if (NonAlwaysRelevantPlayerStateBP.Class != nullptr)
+	{
+		NonAlwaysRelevantPlayerStateClass = NonAlwaysRelevantPlayerStateBP.Class;
+	}
 }
 
 void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize, float ServerMaxTickRate)
@@ -105,7 +111,8 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	if (bUsingSpatial)
 	{
 		// Game mode is replicated in spatial, ensure it is always replicated
-		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
+		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::AlwaysReplicate);
+
 		// Add always replicated test actor. Use soft class path to work around module dependencies.
 		FSoftClassPath SoftActorClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestActorBase_RepGraphAlwaysReplicate'"));
 		if (UClass* Class = SoftActorClassPath.ResolveClass())
@@ -224,6 +231,14 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	PlayerStateRepInfo.DistancePriorityScale = 0.f;
 	PlayerStateRepInfo.ActorChannelFrameTimeout = 0;
 	SetClassInfo(APlayerState::StaticClass(), PlayerStateRepInfo);
+
+	// Special case non-always relevant player state
+	if (NonAlwaysRelevantPlayerStateClass != nullptr)
+	{
+		FClassReplicationInfo ClassInfo;
+		InitClassReplicationInfo(ClassInfo, NonAlwaysRelevantPlayerStateClass, true, NetDriver->NetServerMaxTickRate);
+		GlobalActorReplicationInfoMap.SetClassInfo(NonAlwaysRelevantPlayerStateClass, ClassInfo);
+	}
 
 	UReplicationGraphNode_ActorListFrequencyBuckets::DefaultSettings.ListSize = 12;
 

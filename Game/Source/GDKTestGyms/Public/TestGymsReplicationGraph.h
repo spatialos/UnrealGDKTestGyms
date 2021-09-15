@@ -63,6 +63,9 @@ public:
 	TSubclassOf<AActor> ReplicatedBPClass;
 
 	UPROPERTY()
+	TSubclassOf<APlayerState> NonAlwaysRelevantPlayerStateClass;
+
+	UPROPERTY()
 	UReplicationGraphNode_ActorList* AlwaysRelevantNode;
 
 	TMap<FName, FActorRepListRefView> AlwaysRelevantStreamingLevelActors;
