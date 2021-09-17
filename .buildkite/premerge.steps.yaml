@@ -1,8 +1,8 @@
 ---
-ci_version: &ci_version "${CI_VERSION:-0.14.0}"
+ci_version: &ci_version "${CI_VERSION:-0.14.1}"
 common_env_vars: &common_env_vars
   BUILD_TYPE: "GDK"
-  GDK_BRANCH: "${GDK_BRANCH:-match_branch_name_pref::0.14.0}"
+  GDK_BRANCH: "${GDK_BRANCH:-match_branch_name_pref::0.14.1}"
   PROJECT_BRANCH: "main_branch::${BUILDKITE_BRANCH}"
   USE_FASTBUILD: "${USE_FASTBUILD:-True}"
   IS_BUILDKITE_BUILD: "${IS_BUILDKITE_BUILD:-True}"
@@ -25,7 +25,7 @@ steps:
       message: "testgyms-4.26 ${BUILDKITE_MESSAGE}"
       env: 
         <<: *common_env_vars
-        ENGINE_BRANCH: "${ENGINE_BRANCH_426:-match_branch_name_pref_engine::4.26-SpatialOSUnrealGDK-0.14.0}"
+        ENGINE_BRANCH: "${ENGINE_BRANCH_426:-match_branch_name_pref_engine::4.26-SpatialOSUnrealGDK-0.14.1}"
         ENGINE_MAJOR: "4.26"
 
   # Trigger a 4.25 build
@@ -37,5 +37,5 @@ steps:
       message: "testgyms-4.25 ${BUILDKITE_MESSAGE}"
       env: 
         <<: *common_env_vars
-        ENGINE_BRANCH: "${ENGINE_BRANCH_425:-match_branch_name_pref_engine::4.25-SpatialOSUnrealGDK-0.14.0}"
+        ENGINE_BRANCH: "${ENGINE_BRANCH_425:-match_branch_name_pref_engine::4.25-SpatialOSUnrealGDK-0.14.1}"
         ENGINE_MAJOR: "4.25"
