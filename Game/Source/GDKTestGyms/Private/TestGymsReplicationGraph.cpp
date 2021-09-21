@@ -103,10 +103,10 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 	auto AddInfo = [&](UClass* Class, EClassRepNodeMapping Mapping) { ClassRepNodePolicies.Set(Class, Mapping); };
 
-	AddInfo(APlayerState::StaticClass(), EClassRepNodeMapping::NotRouted);				// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
-	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
-	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
-	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+	AddInfo(APlayerState::StaticClass(), EClassRepNodeMapping::NotRouted);					// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
+	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);	// Not supported
+	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);			// Non spatialized, relevant to all
+	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);					// Add our replicated base class to ensure we don't miss out-of-memory bp classes
 
 	if (bUsingSpatial)
 	{
@@ -330,9 +330,9 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	// -----------------------------------------------
 	//	Player State specialization. This will return a rolling subset of the player states to replicate
 	// -----------------------------------------------
-	UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter* PlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter>();
-	PlayerStateNode->SetProcessOnSpatialConnectionOnly();
-	AddGlobalGraphNode(PlayerStateNode);
+	//UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter* PlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter>();
+	//PlayerStateNode->SetProcessOnSpatialConnectionOnly();
+	//AddGlobalGraphNode(PlayerStateNode);
 
 	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -503,6 +503,8 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherClientInt
 			}
 		}
 	}
+
+	Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
 
 	UTestGymsReplicationGraph* TestGymsGraph = CastChecked<UTestGymsReplicationGraph>(GetOuter());
 	TMap<FName, FActorRepListRefView>& AlwaysRelevantStreamingLevelActors = TestGymsGraph->AlwaysRelevantStreamingLevelActors;
