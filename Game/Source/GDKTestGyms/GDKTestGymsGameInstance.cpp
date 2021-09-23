@@ -71,7 +71,7 @@ void UGDKTestGymsGameInstance::SpatialConnected()
 					{
 						for (const auto& Bucket : Metric.Value.Buckets)
 						{
-							UE_LOG(LogTemp, Verbose, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), Bucket.Key, Bucket.Value);
+							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), Bucket.Key, Bucket.Value);
 						}
 					}
 				}
