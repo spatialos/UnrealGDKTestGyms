@@ -11,6 +11,7 @@
 #include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 #include "Runtime/Launch/Resources/Version.h"
+#include "Misc/EngineVersionComparison.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/GameModeBase.h"
@@ -283,7 +284,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 {
-#if ENGINE_MINOR_VERSION == 4 && ENGINE_MINOR_VERSION < 27
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 	// Preallocate some replication lists.
 	PreAllocateRepList(3, 12);
 	PreAllocateRepList(6, 12);
