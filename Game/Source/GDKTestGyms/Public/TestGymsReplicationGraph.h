@@ -27,6 +27,8 @@ enum class EClassRepNodeMapping : uint32
 	Spatialize_Static,				// Routes to GridNode: these actors don't move and don't need to be updated every frame.
 	Spatialize_Dynamic,				// Routes to GridNode: these actors mode frequently and are updated once per frame.
 	Spatialize_Dormancy,			// Routes to GridNode: While dormant we treat as static. When flushed/not dormant dynamic. Note this is for things that "move while not dormant".
+
+	NearestNPlayers,
 };
 
 /** TestGyms Replication Graph implementation. Based on UShooterReplicationGraph */
@@ -60,10 +62,16 @@ public:
 	UReplicationGraphNode_GridSpatialization2D* GridNode;
 
 	UPROPERTY()
+	UTestGymsReplicationGraphNode_NearestPlayers* NearestPlayerNode;
+
+	UPROPERTY()
 	TSubclassOf<AActor> ReplicatedBPClass;
 
 	UPROPERTY()
 	TSubclassOf<APlayerState> NonAlwaysRelevantPlayerStateClass;
+
+	UPROPERTY()
+	TSubclassOf<AActor> PlayerCharacterClass;
 
 	UPROPERTY()
 	UReplicationGraphNode_ActorList* AlwaysRelevantNode;
@@ -107,7 +115,8 @@ private:
 
 	TArray<FName, TInlineAllocator<64> > AlwaysRelevantStreamingLevelsNeedingReplication;
 
-	FActorRepListRefView ReplicationActorList;
+	FActorRepListRefView ReplicationActorList;	
+	FActorRepListRefView InterestedActorList;
 
 	UPROPERTY()
 	AActor* LastPawn = nullptr;
@@ -162,4 +171,51 @@ class UTestGymsReplicationGraphNode_GlobalViewTarget : public UReplicationGraphN
 private:
 
 	FActorRepListRefView ReplicationActorList;
+};
+
+/**  */
+UCLASS()
+class UTestGymsReplicationGraphNode_NearestPlayers : public UReplicationGraphNode
+{
+	GENERATED_BODY()
+
+public:
+
+	UTestGymsReplicationGraphNode_NearestPlayers() { if (!HasAnyFlags(RF_ClassDefaultObject)) { ReplicationActorList.Reset(4); } }
+
+	virtual void NotifyAddNetworkActor(const FNewReplicatedActorInfo& Actor) override;
+
+	virtual bool NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound = true) override;
+
+	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
+
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+
+	virtual bool GetInterestDirty(UNetReplicationGraphConnection* ConnectionManager, FString& Cause) override;
+
+	int32 MaxNearestActors;
+
+private:
+
+	FActorRepListRefView ReplicationActorList;
+	FActorRepListRefView InterestedActorList;
+
+	struct FDistanceSortedActor
+	{
+		FDistanceSortedActor() { }
+		FDistanceSortedActor(AActor* InActor, int32 InDistanceToViewer, FGlobalActorReplicationInfo* InGlobal, FConnectionReplicationActorInfo* InConnection)
+			: Actor(InActor), DistanceToViewer(InDistanceToViewer), GlobalInfo(InGlobal), ConnectionInfo(InConnection) { }
+
+		bool operator<(const FDistanceSortedActor& Other) const { return DistanceToViewer < Other.DistanceToViewer; }
+
+		UPROPERTY()
+		AActor* Actor = nullptr;
+
+		float DistanceToViewer = 0.f;
+
+		FGlobalActorReplicationInfo* GlobalInfo = nullptr;
+		FConnectionReplicationActorInfo* ConnectionInfo = nullptr;
+	};
+
+	TArray<FDistanceSortedActor> SortedActors;
 };

@@ -19,6 +19,8 @@
 #include "GameFramework/Pawn.h"
 #include "Engine/LevelScriptActor.h"
 
+#include "BenchmarkNPCCharacter.h"
+
 DEFINE_LOG_CATEGORY(LogTestGymsReplicationGraph);
 
 int32 CVar_TestGymsRepGraph_DisableSpatialRebuilds = 1;
@@ -39,6 +41,12 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	if (NonAlwaysRelevantPlayerStateBP.Class != nullptr)
 	{
 		NonAlwaysRelevantPlayerStateClass = NonAlwaysRelevantPlayerStateBP.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<AActor> PlayerCharacterBP(TEXT("/Game/Characters/PlayerCharacter_BP"));
+	if (PlayerCharacterBP.Class != nullptr)
+	{
+		PlayerCharacterClass = PlayerCharacterBP.Class;
 	}
 }
 
@@ -107,6 +115,8 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);	// Not supported
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);			// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);					// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+	AddInfo(PlayerCharacterClass, EClassRepNodeMapping::NearestNPlayers);
+	AddInfo(ABenchmarkNPCCharacter::StaticClass(), EClassRepNodeMapping::NearestNPlayers);
 
 	if (bUsingSpatial)
 	{
@@ -320,6 +330,12 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	GridNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(GridNode);
 
+	// Neartest n node
+	NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestPlayers>();
+	NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
+	AddGlobalGraphNode(NearestPlayerNode);
+	NearestPlayerNode->MaxNearestActors = 16;
+
 	// -----------------------------------------------
 	//	Always Relevant (to everyone) Actors
 	// -----------------------------------------------
@@ -405,6 +421,12 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		break;
 	}
 
+	case EClassRepNodeMapping::NearestNPlayers:
+	{
+		NearestPlayerNode->NotifyAddNetworkActor(ActorInfo);
+		break;
+	}
+
 	case EClassRepNodeMapping::Spatialize_Static:
 	{
 		GridNode->AddActor_Static(ActorInfo, GlobalInfo);
@@ -439,6 +461,12 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 	case EClassRepNodeMapping::AlwaysReplicate:
 	{
 		AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::NearestNPlayers:
+	{
+		NearestPlayerNode->NotifyRemoveNetworkActor(ActorInfo);
 		break;
 	}
 
@@ -489,8 +517,8 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::ResetGameWorldS
 
 void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
 {
-	FActorRepListRefView InterestedActorList;
-
+	InterestedActorList.Reset();
+	InterestedActorList.PrepareForWrite();
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
 		InterestedActorList.ConditionalAdd(CurViewer.InViewer);
@@ -893,3 +921,89 @@ FAutoConsoleCommandWithWorldAndArgs ChangeFrequencyBucketsCmd(TEXT("TestGymsRepG
 		Node->SetNonStreamingCollectionSize(Buckets);
 	}
 }));
+
+void UTestGymsReplicationGraphNode_NearestPlayers::NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo)
+{
+	ReplicationActorList.Add(ActorInfo.Actor);
+}
+
+bool UTestGymsReplicationGraphNode_NearestPlayers::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound /*= true*/)
+{
+	bool bRemovedSomething = false;
+	bRemovedSomething = ReplicationActorList.RemoveFast(ActorInfo.Actor);
+	return bRemovedSomething;
+}
+
+void UTestGymsReplicationGraphNode_NearestPlayers::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
+{
+	// Return all actors for replication
+	if (ReplicationActorList.Num() > 0)
+	{
+		FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
+
+		// Cache actor location
+		for (FActorRepListType& Actor : ReplicationActorList)
+		{
+			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
+			const FVector Location3D = Actor->GetActorLocation();
+			ActorRepInfo.WorldLocation = Location3D;
+		}
+
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
+}
+
+void UTestGymsReplicationGraphNode_NearestPlayers::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	// Return nearest MaxNearestActors for Interest
+	const int32 ActorCount = ReplicationActorList.Num();
+	FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
+
+	if (ActorCount > MaxNearestActors)
+	{
+		SortedActors.Reset(ActorCount);
+
+		ensure(Params.Viewers.Num() == 1);	// Don't support multiple viewers for interest calculation
+		const FNetViewer& Viewer = Params.Viewers[0];
+
+		for (AActor* Actor : ReplicationActorList)
+		{
+			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
+
+			constexpr float ActorNCD = 15000.f * 15000.f;
+			float DistanceToViewer = (Viewer.ViewLocation - ActorRepInfo.WorldLocation).SizeSquared();	// check for max size?
+
+			if (DistanceToViewer < ActorNCD)
+			{
+				SortedActors.Emplace(Actor, DistanceToViewer, nullptr, nullptr);
+			}
+		}
+
+		if (SortedActors.Num() > MaxNearestActors)
+		{
+			SortedActors.Sort();
+			SortedActors.SetNum(MaxNearestActors, false);
+		}
+
+		if (SortedActors.Num() > 0)
+		{
+			InterestedActorList.Reset(SortedActors.Num());
+			InterestedActorList.PrepareForWrite();
+			for (const FDistanceSortedActor& Item : SortedActors)
+			{
+				InterestedActorList.Add(Item.Actor);
+			}
+
+			Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
+		}
+	}
+	else if (ActorCount > 0)
+	{
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
+}
+
+bool UTestGymsReplicationGraphNode_NearestPlayers::GetInterestDirty(UNetReplicationGraphConnection* ConnectionManager, FString& Cause)
+{
+	return (GraphGlobals->ReplicationGraph->GetReplicationGraphFrame() % 10 == 0);
+}
