@@ -28,7 +28,8 @@ enum class EClassRepNodeMapping : uint32
 	Spatialize_Dynamic,				// Routes to GridNode: these actors mode frequently and are updated once per frame.
 	Spatialize_Dormancy,			// Routes to GridNode: While dormant we treat as static. When flushed/not dormant dynamic. Note this is for things that "move while not dormant".
 
-	NearestNPlayers,
+	NearestPlayers,
+	NearestPlayerStates,
 };
 
 /** TestGyms Replication Graph implementation. Based on UShooterReplicationGraph */
@@ -62,7 +63,10 @@ public:
 	UReplicationGraphNode_GridSpatialization2D* GridNode;
 
 	UPROPERTY()
-	UTestGymsReplicationGraphNode_NearestPlayers* NearestPlayerNode;
+	UTestGymsReplicationGraphNode_NearestActors* NearestPlayerNode;
+
+	UPROPERTY()
+	UTestGymsReplicationGraphNode_NearestActors* NearestPlayerStateNode;
 
 	UPROPERTY()
 	TSubclassOf<AActor> ReplicatedBPClass;
@@ -175,13 +179,13 @@ private:
 
 /**  */
 UCLASS()
-class UTestGymsReplicationGraphNode_NearestPlayers : public UReplicationGraphNode
+class UTestGymsReplicationGraphNode_NearestActors : public UReplicationGraphNode
 {
 	GENERATED_BODY()
 
 public:
 
-	UTestGymsReplicationGraphNode_NearestPlayers() { if (!HasAnyFlags(RF_ClassDefaultObject)) { ReplicationActorList.Reset(4); } }
+	UTestGymsReplicationGraphNode_NearestActors() { if (!HasAnyFlags(RF_ClassDefaultObject)) { ReplicationActorList.Reset(4); } }
 
 	virtual void NotifyAddNetworkActor(const FNewReplicatedActorInfo& Actor) override;
 
@@ -203,18 +207,14 @@ private:
 	struct FDistanceSortedActor
 	{
 		FDistanceSortedActor() { }
-		FDistanceSortedActor(AActor* InActor, int32 InDistanceToViewer, FGlobalActorReplicationInfo* InGlobal, FConnectionReplicationActorInfo* InConnection)
-			: Actor(InActor), DistanceToViewer(InDistanceToViewer), GlobalInfo(InGlobal), ConnectionInfo(InConnection) { }
+		FDistanceSortedActor(AActor* InActor, int32 InDistanceToViewer)
+			: Actor(InActor), DistanceToViewer(InDistanceToViewer) { }
 
 		bool operator<(const FDistanceSortedActor& Other) const { return DistanceToViewer < Other.DistanceToViewer; }
 
-		UPROPERTY()
 		AActor* Actor = nullptr;
 
 		float DistanceToViewer = 0.f;
-
-		FGlobalActorReplicationInfo* GlobalInfo = nullptr;
-		FConnectionReplicationActorInfo* ConnectionInfo = nullptr;
 	};
 
 	TArray<FDistanceSortedActor> SortedActors;

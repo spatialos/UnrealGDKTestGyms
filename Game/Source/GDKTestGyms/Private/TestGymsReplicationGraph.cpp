@@ -115,8 +115,9 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);	// Not supported
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);			// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);					// Add our replicated base class to ensure we don't miss out-of-memory bp classes
-	AddInfo(PlayerCharacterClass, EClassRepNodeMapping::NearestNPlayers);
-	AddInfo(ABenchmarkNPCCharacter::StaticClass(), EClassRepNodeMapping::NearestNPlayers);
+	AddInfo(PlayerCharacterClass, EClassRepNodeMapping::NearestPlayers);
+	AddInfo(ABenchmarkNPCCharacter::StaticClass(), EClassRepNodeMapping::NearestPlayers);
+	AddInfo(NonAlwaysRelevantPlayerStateClass, EClassRepNodeMapping::NearestPlayerStates);
 
 	if (bUsingSpatial)
 	{
@@ -330,11 +331,16 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	GridNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(GridNode);
 
-	// Neartest n node
-	NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestPlayers>();
+	// Nearest N nodes
+	NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
 	NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(NearestPlayerNode);
 	NearestPlayerNode->MaxNearestActors = 16;
+
+	NearestPlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
+	NearestPlayerStateNode->SetProcessOnSpatialConnectionOnly();
+	AddGlobalGraphNode(NearestPlayerStateNode);
+	NearestPlayerStateNode->MaxNearestActors = 16;
 
 	// -----------------------------------------------
 	//	Always Relevant (to everyone) Actors
@@ -421,9 +427,15 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		break;
 	}
 
-	case EClassRepNodeMapping::NearestNPlayers:
+	case EClassRepNodeMapping::NearestPlayers:
 	{
 		NearestPlayerNode->NotifyAddNetworkActor(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::NearestPlayerStates:
+	{
+		NearestPlayerStateNode->NotifyAddNetworkActor(ActorInfo);
 		break;
 	}
 
@@ -464,12 +476,6 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 		break;
 	}
 
-	case EClassRepNodeMapping::NearestNPlayers:
-	{
-		NearestPlayerNode->NotifyRemoveNetworkActor(ActorInfo);
-		break;
-	}
-
 	case EClassRepNodeMapping::RelevantAllConnections:
 	{
 		// When running in Spatial, we don't need to handle per-connection level relevancy, as the runtime takes care of interest management for us
@@ -485,6 +491,18 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 				UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("Actor %s was not found in AlwaysRelevantStreamingLevelActors list. LevelName: %s"), *GetActorRepListTypeDebugString(ActorInfo.Actor), *ActorInfo.StreamingLevelName.ToString());
 			}
 		}
+		break;
+	}
+
+	case EClassRepNodeMapping::NearestPlayers:
+	{
+		NearestPlayerNode->NotifyRemoveNetworkActor(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::NearestPlayerStates:
+	{
+		NearestPlayerStateNode->NotifyRemoveNetworkActor(ActorInfo);
 		break;
 	}
 
@@ -870,6 +888,93 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::LogNode(FReplicationGraphDe
 	DebugInfo.PopIndent();
 }
 
+
+void UTestGymsReplicationGraphNode_NearestActors::NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo)
+{
+	ReplicationActorList.Add(ActorInfo.Actor);
+}
+
+bool UTestGymsReplicationGraphNode_NearestActors::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound /*= true*/)
+{
+	bool bRemovedSomething = false;
+	bRemovedSomething = ReplicationActorList.RemoveFast(ActorInfo.Actor);
+	return bRemovedSomething;
+}
+
+void UTestGymsReplicationGraphNode_NearestActors::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
+{
+	// Return all actors for replication
+	if (ReplicationActorList.Num() > 0)
+	{
+		FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
+
+		// Cache actor location
+		for (FActorRepListType& Actor : ReplicationActorList)
+		{
+			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
+			const FVector Location3D = Actor->GetActorLocation();
+			ActorRepInfo.WorldLocation = Location3D;
+		}
+
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
+}
+
+void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	// Return nearest MaxNearestActors for Interest
+	const int32 ActorCount = ReplicationActorList.Num();
+	constexpr float ActorNCD = 15000.f * 15000.f;
+	FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
+
+	if (ActorCount > MaxNearestActors)
+	{
+		SortedActors.Reset(ActorCount);
+
+		ensure(Params.Viewers.Num() == 1);	// Don't support multiple viewers for interest calculation
+		const FNetViewer& Viewer = Params.Viewers[0];
+
+		for (AActor* Actor : ReplicationActorList)
+		{
+			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
+
+			float DistanceToViewer = (Viewer.ViewLocation - ActorRepInfo.WorldLocation).SizeSquared();	// check for max size?
+
+			if (DistanceToViewer < ActorNCD)
+			{
+				SortedActors.Emplace(Actor, DistanceToViewer);
+			}
+		}
+
+		if (SortedActors.Num() > MaxNearestActors)
+		{
+			SortedActors.Sort();
+			SortedActors.SetNum(MaxNearestActors, false);
+		}
+
+		if (SortedActors.Num() > 0)
+		{
+			InterestedActorList.Reset(SortedActors.Num());
+			InterestedActorList.PrepareForWrite();
+			for (const FDistanceSortedActor& Item : SortedActors)
+			{
+				InterestedActorList.Add(Item.Actor);
+			}
+
+			Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
+		}
+	}
+	else if (ActorCount > 0)
+	{
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
+}
+
+bool UTestGymsReplicationGraphNode_NearestActors::GetInterestDirty(UNetReplicationGraphConnection* ConnectionManager, FString& Cause)
+{
+	return (GraphGlobals->ReplicationGraph->GetReplicationGraphFrame() % 10 == ConnectionManager->ConnectionOrderNum % 10);
+}
+
 // ------------------------------------------------------------------------------
 
 void UTestGymsReplicationGraph::PrintRepNodePolicies()
@@ -922,88 +1027,21 @@ FAutoConsoleCommandWithWorldAndArgs ChangeFrequencyBucketsCmd(TEXT("TestGymsRepG
 	}
 }));
 
-void UTestGymsReplicationGraphNode_NearestPlayers::NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo)
+FAutoConsoleCommandWithWorldAndArgs ChangeDensityCmd(TEXT("TestGymsRepGraph.AlterNearestN"), TEXT("Alters nearest actor density"),
+	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 {
-	ReplicationActorList.Add(ActorInfo.Actor);
-}
-
-bool UTestGymsReplicationGraphNode_NearestPlayers::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound /*= true*/)
-{
-	bool bRemovedSomething = false;
-	bRemovedSomething = ReplicationActorList.RemoveFast(ActorInfo.Actor);
-	return bRemovedSomething;
-}
-
-void UTestGymsReplicationGraphNode_NearestPlayers::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
-{
-	// Return all actors for replication
-	if (ReplicationActorList.Num() > 0)
+	int32 Density = -1;
+	if (Args.Num() > 0)
 	{
-		FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
-
-		// Cache actor location
-		for (FActorRepListType& Actor : ReplicationActorList)
-		{
-			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
-			const FVector Location3D = Actor->GetActorLocation();
-			ActorRepInfo.WorldLocation = Location3D;
-		}
-
-		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+		LexTryParseString<int32>(Density, *Args[0]);
 	}
-}
 
-void UTestGymsReplicationGraphNode_NearestPlayers::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
-{
-	// Return nearest MaxNearestActors for Interest
-	const int32 ActorCount = ReplicationActorList.Num();
-	FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
-
-	if (ActorCount > MaxNearestActors)
+	if (Density >= 0)
 	{
-		SortedActors.Reset(ActorCount);
-
-		ensure(Params.Viewers.Num() == 1);	// Don't support multiple viewers for interest calculation
-		const FNetViewer& Viewer = Params.Viewers[0];
-
-		for (AActor* Actor : ReplicationActorList)
+		for (TObjectIterator<UTestGymsReplicationGraphNode_NearestActors> It; It; ++It)
 		{
-			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
-
-			constexpr float ActorNCD = 15000.f * 15000.f;
-			float DistanceToViewer = (Viewer.ViewLocation - ActorRepInfo.WorldLocation).SizeSquared();	// check for max size?
-
-			if (DistanceToViewer < ActorNCD)
-			{
-				SortedActors.Emplace(Actor, DistanceToViewer, nullptr, nullptr);
-			}
-		}
-
-		if (SortedActors.Num() > MaxNearestActors)
-		{
-			SortedActors.Sort();
-			SortedActors.SetNum(MaxNearestActors, false);
-		}
-
-		if (SortedActors.Num() > 0)
-		{
-			InterestedActorList.Reset(SortedActors.Num());
-			InterestedActorList.PrepareForWrite();
-			for (const FDistanceSortedActor& Item : SortedActors)
-			{
-				InterestedActorList.Add(Item.Actor);
-			}
-
-			Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
+			It->MaxNearestActors = Density;
 		}
 	}
-	else if (ActorCount > 0)
-	{
-		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
-	}
-}
-
-bool UTestGymsReplicationGraphNode_NearestPlayers::GetInterestDirty(UNetReplicationGraphConnection* ConnectionManager, FString& Cause)
-{
-	return (GraphGlobals->ReplicationGraph->GetReplicationGraphFrame() % 10 == 0);
-}
+})
+);
