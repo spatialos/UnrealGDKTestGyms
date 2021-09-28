@@ -335,12 +335,12 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
 	NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(NearestPlayerNode);
-	NearestPlayerNode->MaxNearestActors = 16;
+	NearestPlayerNode->MaxNearestActors = 32;
 
 	NearestPlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
 	NearestPlayerStateNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(NearestPlayerStateNode);
-	NearestPlayerStateNode->MaxNearestActors = 16;
+	NearestPlayerStateNode->MaxNearestActors = 32;
 
 	// -----------------------------------------------
 	//	Always Relevant (to everyone) Actors
