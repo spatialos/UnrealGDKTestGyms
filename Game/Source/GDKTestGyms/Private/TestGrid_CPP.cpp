@@ -86,7 +86,11 @@ void ATestGrid_CPP::BeginPlay()
 void ATestGrid_CPP::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME( ATestGrid_CPP, Material );
 	DOREPLIFETIME( ATestGrid_CPP, MaterialArray );
+	DOREPLIFETIME( ATestGrid_CPP, SoftMaterial );
+	DOREPLIFETIME( ATestGrid_CPP, SoftMaterialArray );
+
 }
 
 void ATestGrid_CPP::OnRepSoftMaterial()
