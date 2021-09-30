@@ -27,15 +27,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	ATestGrid_CPP* TestGrid;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> Material1;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> Material2;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> Material3;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSoftObjectPtr<UMaterial> Material4;
 };
