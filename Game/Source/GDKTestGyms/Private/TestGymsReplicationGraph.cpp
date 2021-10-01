@@ -11,6 +11,7 @@
 #include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 #include "Runtime/Launch/Resources/Version.h"
+#include "Misc/EngineVersionComparison.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/GameModeBase.h"
@@ -309,11 +310,13 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 {
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 	// Preallocate some replication lists.
 	PreAllocateRepList(3, 12);
 	PreAllocateRepList(6, 12);
 	PreAllocateRepList(128, 64);
 	PreAllocateRepList(512, 16);
+#endif
 
 	// -----------------------------------------------
 	//	Spatial Actors
