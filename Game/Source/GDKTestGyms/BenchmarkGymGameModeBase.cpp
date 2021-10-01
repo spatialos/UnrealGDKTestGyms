@@ -610,18 +610,17 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 		}
 	}	
 
-	if (!HasAuthority())
-	{
-		return;
-	}
-
 	ClientRTTMS /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
 	ClientUpdateTimeDeltaMS /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTMS = ClientRTTMS;
-	GetMetrics(MetricLeftLabel, AverageClientRTTMetricName, MetricName, &ABenchmarkGymGameModeBase::GetClientRTT);
 	AveragedClientUpdateTimeDeltaMS = ClientUpdateTimeDeltaMS;
-	GetMetrics(MetricLeftLabel, AverageClientUpdateTimeDeltaMetricName, MetricName, &ABenchmarkGymGameModeBase::GetClientUpdateTimeDelta);
+
+	if (HasAuthority())
+	{
+		GetMetrics(MetricLeftLabel, AverageClientRTTMetricName, MetricName, &ABenchmarkGymGameModeBase::GetClientRTT);
+		GetMetrics(MetricLeftLabel, AverageClientUpdateTimeDeltaMetricName, MetricName, &ABenchmarkGymGameModeBase::GetClientUpdateTimeDelta);
+	}
 
 	const bool bUXMetricValid = AveragedClientRTTMS <= MaxClientRoundTripMS && AveragedClientUpdateTimeDeltaMS <= MaxClientUpdateTimeDeltaMS;
 	
@@ -629,7 +628,8 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	check(Constants);
 	if (!bHasUxFailed &&
 		!bUXMetricValid &&
-		Constants->UXMetricDelay.HasTimerGoneOff())
+		Constants->UXMetricDelay.HasTimerGoneOff() &&
+		HasAuthority())
 	{
 		bHasUxFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: UX metric check. RTT: %.8f, UpdateDelta: %.8f"), *NFRFailureString, AveragedClientRTTMS, AveragedClientUpdateTimeDeltaMS);
