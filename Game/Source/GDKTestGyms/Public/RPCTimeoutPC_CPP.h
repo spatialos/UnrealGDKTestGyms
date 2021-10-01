@@ -17,21 +17,27 @@ class GDKTESTGYMS_API ARPCTimeoutPC_CPP : public APlayerController
 
 	public:
 	ARPCTimeoutPC_CPP();
+	virtual void Tick(float DeltaTime) override;
 
-	private:
+private:
+	UFUNCTION(Client,Reliable)
 	void OnSetMaterial(UMaterial* PlayerMaterial);
 
 	void OnPossess(APawn* InPawn) override;
 
+	UFUNCTION(Client,Reliable)
 	void CheckMaterialLoaded();
 
 	void HasValidCharacter();
 
-	FTimerHandle MaterialTimerHandle;
+	void SetMaterialAfterDelay();
 
+	FTimerHandle HasValidCharacterTimer;
+	FTimerHandle MaterialSetDelay;
 
-
-
+	UPROPERTY()
+	UMaterial* RedMaterialAsset;
+;
 	
 	
 };

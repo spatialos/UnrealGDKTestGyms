@@ -9,18 +9,11 @@ AMaterialArray_CPP::AMaterialArray_CPP()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	// Material1 = CreateDefaultSubobject<UMaterial>("Material1");
-	static ConstructorHelpers::FObjectFinder<UMaterial>Green1MaterialFinder(TEXT("Material'/Game/SoftReferenceTest/Green1.Green1'"));
-	Material1 = Green1MaterialFinder.Object;
-
-	static ConstructorHelpers::FObjectFinder<UMaterial>Green2MaterialFinder(TEXT("Material'/Game/SoftReferenceTest/Green2.Green2'"));
-	Material2 = Green2MaterialFinder.Object;
-
-	static ConstructorHelpers::FObjectFinder<UMaterial>Green3MaterialFinder(TEXT("Material'/Game/SoftReferenceTest/Green3.Green3'"));
-	Material3 = Green3MaterialFinder.Object;
-
-	static ConstructorHelpers::FObjectFinder<UMaterial>Green4MaterialFinder(TEXT("Material'/Game/SoftReferenceTest/Green4.Green4'"));
-	Material4 = Green4MaterialFinder.Object;
-
+	
+	Material1 = TSoftObjectPtr<UMaterial>(FSoftObjectPath(TEXT("Material'/Game/SoftReferenceTest/Green1.Green1'")));
+	Material2 = TSoftObjectPtr<UMaterial>(FSoftObjectPath(TEXT("Material'/Game/SoftReferenceTest/Green2.Green2'")));
+	Material3 = TSoftObjectPtr<UMaterial>(FSoftObjectPath(TEXT("Material'/Game/SoftReferenceTest/Green3.Green3'")));
+	Material4 = TSoftObjectPtr<UMaterial>(FSoftObjectPath(TEXT("Material'/Game/SoftReferenceTest/Green4.Green4'")));
 }
 
 // Called when the game starts or when spawned
