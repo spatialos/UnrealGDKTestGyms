@@ -110,6 +110,9 @@ protected:
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
 
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportUserExperience(const FString& WorkerID, float RTTime, float UpdateTime);
+
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetZoningCols() const { return ZoningCols; }
 	int32 GetZoningRows() const { return ZoningRows; }
@@ -127,8 +130,14 @@ private:
 	float ZoneWidth;
 	float ZoneHeight;
 
-	double AveragedClientRTTMS; // The stored average of all the client RTTs
-	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
+	struct UX
+	{
+		float RTT;
+		float UpdateTime;
+	};
+	TMap<FString, UX> LatestClientUXMap;	// <worker id, UX>
+	float AveragedClientRTTMS; // The stored average of all the client RTTs
+	float AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
 	int32 MaxClientRoundTripMS; // Maximum allowed roundtrip
 	int32 MaxClientUpdateTimeDeltaMS;
 	bool bHasUxFailed;
