@@ -612,11 +612,16 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	ClientRTTMS /= static_cast<float>(ValidRTTCount) + 0.00001f; // Avoid div 0
 	ClientUpdateTimeDeltaMS /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
 
+	if (PrintMetricsTimer.HasTimerGoneOff())
+	{
+		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d)"), ClientRTTMS, ValidRTTCount, ClientUpdateTimeDeltaMS, ValidUpdateTimeDeltaCount);
+	}
+
 	if (PrintMetricsTimer.HasTimerGoneOff() || HasAuthority())
 	{
 		ReportUserExperience(GetGameInstance()->GetSpatialWorkerId(), ClientRTTMS, ClientUpdateTimeDeltaMS);
-		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("UX metric values. RTT: %.8f(%d), UpdateDelta: %.8f(%d)"), ClientRTTMS, ValidRTTCount, ClientUpdateTimeDeltaMS, ValidUpdateTimeDeltaCount);
 	}
+
 }
 
 void ABenchmarkGymGameModeBase::ParsePassedValues()
