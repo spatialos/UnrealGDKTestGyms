@@ -56,7 +56,8 @@ void ARPCTimeoutPC_CPP::OnPossess(APawn* InPawn)
 void ARPCTimeoutPC_CPP::HasValidCharacter()
 {
 	ACharacter* MyCharacter = Cast<ACharacter>(GetPawn());
-
+	// MyCharacter->GetMesh()->SetSkeletalMesh()
+	
 	if(MyCharacter)
 	{
 		TArray<AActor*> MaterialArrays;
