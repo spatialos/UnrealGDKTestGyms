@@ -32,10 +32,11 @@ void UUserExperienceComponent::StartRoundtrip()
 {
 	if (OpenRPCs.Contains(RequestKey))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("UserExperience failure: Previous round trip didn't complete in time (%d)."), RequestKey);
 		EndRoundtrip(RequestKey);
 	}
 	int32 NewRPC = ++RequestKey;
-	OpenRPCs.Add(NewRPC, FDateTime::Now().GetTicks() );
+	OpenRPCs.Add(NewRPC, FDateTime::Now().GetTicks());
 	ServerRTT(NewRPC);
 }
 

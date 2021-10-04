@@ -418,8 +418,7 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	
 	// PrintMetricsTimer needs to be reset at the the end of ABenchmarkGymGameModeBase::Tick.
 	// This is so that the above function have a chance to run logic dependant on PrintMetricsTimer.HasTimerGoneOff().
-	if (HasAuthority() &&
-		PrintMetricsTimer.HasTimerGoneOff())
+	if (PrintMetricsTimer.HasTimerGoneOff())
 	{
 		PrintMetricsTimer.SetTimer(10);
 	}
