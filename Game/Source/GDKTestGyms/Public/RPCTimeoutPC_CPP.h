@@ -18,7 +18,7 @@ class GDKTESTGYMS_API ARPCTimeoutPC_CPP : public APlayerController
 	public:
 	ARPCTimeoutPC_CPP();
 	virtual void Tick(float DeltaTime) override;
-
+	
 private:
 	UFUNCTION(Client,Reliable)
 	void OnSetMaterial(UMaterial* PlayerMaterial);
@@ -36,9 +36,10 @@ private:
 	FTimerHandle MaterialSetDelay;
 
 	UPROPERTY()
-	UMaterial* RedMaterialAsset;
-;
-	
+	UMaterial* FailedMaterialAsset;
+
+	UPROPERTY(VisibleAnywhere)
+	TSoftObjectPtr<UMaterial> SoftMaterialPtr;
 	
 };
 

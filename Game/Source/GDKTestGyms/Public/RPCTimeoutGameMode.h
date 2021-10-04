@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/GameModeBase.h"
 #include "RPCTimeoutGameMode.generated.h"
 
@@ -19,11 +18,3 @@ class GDKTESTGYMS_API ARPCTimeoutGameMode : public AGameModeBase
 	ARPCTimeoutGameMode();
 };
 
-// UCLASS()
-// class GDKTESTGYMS_API ARPCTimeoutCharacter : public ACharacter
-// {
-// 	GENERATED_BODY()
-//
-// 	public:
-// 	ARPCTimeoutCharacter();
-// };

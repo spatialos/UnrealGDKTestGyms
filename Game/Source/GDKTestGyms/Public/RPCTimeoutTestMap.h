@@ -17,6 +17,7 @@ class GDKTESTGYMS_API URPCTimeoutTestMap : public UGeneratedTestMap
 	public:
 	URPCTimeoutTestMap();
 
+
 	protected:
 	virtual void CreateCustomContentForMap() override;
 };

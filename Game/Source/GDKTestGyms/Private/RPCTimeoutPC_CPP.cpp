@@ -3,14 +3,17 @@
 
 #include "RPCTimeoutPC_CPP.h"
 
-#include "MaterialArray_CPP.h"
 #include "Chaos/PhysicalMaterials.h"
+#include "Components/TextRenderComponent.h"
+#include "Engine/StreamableManager.h"
 #include "GameFramework/Character.h"
 
 ARPCTimeoutPC_CPP::ARPCTimeoutPC_CPP()
 {
-	static ConstructorHelpers::FObjectFinder<UMaterial>RedMaterialFinder(TEXT("Material'/Game/SoftReferenceTest/Red.Red'"));
-	RedMaterialAsset = RedMaterialFinder.Object;
+	static ConstructorHelpers::FObjectFinder<UMaterial>FailedMaterialFinder(TEXT("Material'/Engine/Tutorial/SubEditors/TutorialAssets/TutorialMaterial.TutorialMaterial'"));
+	FailedMaterialAsset = FailedMaterialFinder.Object;
+	
+	SoftMaterialPtr = TSoftObjectPtr<UMaterial>(FSoftObjectPath(TEXT("Material'/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Mat.TutorialTPP_Mat'")));
 }
 
 void ARPCTimeoutPC_CPP::Tick(float DeltaTime)
@@ -31,7 +34,7 @@ void ARPCTimeoutPC_CPP::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
 		}
 		else
 		{
-			MyCharacter->GetMesh()->SetMaterial(0,RedMaterialAsset );
+			MyCharacter->GetMesh()->SetMaterial(0,FailedMaterialAsset);
 		}
 	}
 }
@@ -42,47 +45,32 @@ void ARPCTimeoutPC_CPP::CheckMaterialLoaded_Implementation()
 
 }
 
-
 void ARPCTimeoutPC_CPP::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	CheckMaterialLoaded();
-	UE_LOG(LogTemp,Warning,TEXT("start timer"));
-	
 	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay,this, &ARPCTimeoutPC_CPP::SetMaterialAfterDelay, 2.f,false);
-
 }
 
 void ARPCTimeoutPC_CPP::HasValidCharacter()
 {
 	ACharacter* MyCharacter = Cast<ACharacter>(GetPawn());
-	// MyCharacter->GetMesh()->SetSkeletalMesh()
 	
 	if(MyCharacter)
 	{
-		TArray<AActor*> MaterialArrays;
-		UGameplayStatics::GetAllActorsOfClass(this, AMaterialArray_CPP::StaticClass(),MaterialArrays);
+		UMaterial* Material1 = SoftMaterialPtr.Get();
+		if(Material1)
+		{
+			FTransform Transform = FTransform::Identity;
+			Transform.SetRotation(FRotator(0.f,0.f,0.f).Quaternion());
 
-		if(MaterialArrays.Num() > 0){
-			if(AMaterialArray_CPP* MaterialArray = Cast<AMaterialArray_CPP>(MaterialArrays[0]))
+			UTextRenderComponent* TRC = Cast<UTextRenderComponent>(
+				MyCharacter->AddComponentByClass(UTextRenderComponent::StaticClass(),false,Transform,false));
+
+			if (TRC)
 			{
-				// Not sure how to load this
-				UMaterial* Material1 = MaterialArray->Material1.Get();
-				if(Material1)
-				{
-					FTransform Transform = FTransform::Identity;
-					Transform.SetRotation(FRotator(0.f,0.f,180.f).Quaternion());
-
-					//not sure what bDeferredFinish is
-					UTextRenderComponent* TRC = Cast<UTextRenderComponent>(
-						MyCharacter->AddComponentByClass(UTextRenderComponent::StaticClass(),false,Transform,false));
-
-					if (TRC)
-					{
-						TRC->SetText(TEXT("ERROR : Material already loaded on client, test is invalid"));
-						TRC->SetTextRenderColor(FColor(255,255,255,255));
-					}
-				}
+				TRC->SetText(TEXT("ERROR : Material already loaded on client, test is invalid"));
+				TRC->SetTextRenderColor(FColor(255,0,0,255));
 			}
 		}
 	}
@@ -94,19 +82,7 @@ void ARPCTimeoutPC_CPP::HasValidCharacter()
 
 void ARPCTimeoutPC_CPP::SetMaterialAfterDelay()
 {
-
-	TArray<AActor*> MaterialArrays;
-	UGameplayStatics::GetAllActorsOfClass(this, AMaterialArray_CPP::StaticClass(),MaterialArrays);
-	if(MaterialArrays.Num() > 0)
-	{
-		if(AMaterialArray_CPP* MaterialArray = Cast<AMaterialArray_CPP>(MaterialArrays[0]))
-		{
-			// UMaterial* PlayerMaterial = MaterialArray->Material1.LoadSynchronous();
-			UMaterial* PlayerMaterial = MaterialArray->Material1.LoadSynchronous();
-			OnSetMaterial(PlayerMaterial);
-		}
-	}
-	
+	UMaterial* PlayerMaterial = SoftMaterialPtr.LoadSynchronous();
+	OnSetMaterial(PlayerMaterial);
 }
-
 
