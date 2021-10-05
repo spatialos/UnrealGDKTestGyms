@@ -103,9 +103,9 @@ float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
 void UUserExperienceComponent::CheckPosition()
 {
 	FVector CurrPos = GetOwner()->GetActorLocation();
-	if (FVector::PointsAreNear(PreviousPos, CurrPos, 1.f))
+	if (FVector::PointsAreNear(PreviousPos, CurrPos, 0.5f))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UserExperience failure: Client position not updating (%s:%s)."), *PreviousPos.ToString(), *CurrPos.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("UserExperience failure: Client position not updating (%s:%s). Vel %s"), *PreviousPos.ToString(), *CurrPos.ToString(), *GetOwner()->GetVelocity().ToString());
 	}
 	PreviousPos = CurrPos;
 }
