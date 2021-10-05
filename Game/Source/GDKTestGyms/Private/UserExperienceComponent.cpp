@@ -77,10 +77,13 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 void UUserExperienceComponent::OnClientOwnershipGained()
 {
 	Super::OnClientOwnershipGained();
+
 	FTimerHandle Timer;
-	FTimerDelegate Delegate;
-	Delegate.BindUObject(this, &UUserExperienceComponent::StartRoundtrip);
-	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
+	GetWorld()->GetTimerManager().SetTimer(Timer, this, &UUserExperienceComponent::StartRoundtrip, 1.0f, true);
+
+	FTimerHandle PositionCheckTimer;
+	GetWorld()->GetTimerManager().SetTimer(PositionCheckTimer, this, &UUserExperienceComponent::CheckPosition, 10.0f, true, 10.0f);
+	PreviousPos = GetOwner()->GetActorLocation();
 }
 
 float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
@@ -95,6 +98,16 @@ float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
 	}
 	Avg /= static_cast<float>(UpdateRate.Num()) + 0.00001f;
 	return Avg;
+}
+
+void UUserExperienceComponent::CheckPosition()
+{
+	FVector CurrPos = GetOwner()->GetActorLocation();
+	if (FVector::PointsAreNear(PreviousPos, CurrPos, 1.f))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UserExperience failure: Client position not updating (%s:%s)."), *PreviousPos.ToString(), *CurrPos.ToString());
+	}
+	PreviousPos = CurrPos;
 }
 
 // Called every frame

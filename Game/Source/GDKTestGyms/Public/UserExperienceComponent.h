@@ -64,6 +64,9 @@ public:
 
 	float CalculateAverageUpdateTimeDelta() const;
 
+	void CheckPosition();
+	FVector PreviousPos;
+
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
 	int64 ClientTimeTicks; // Replicated from server
 
