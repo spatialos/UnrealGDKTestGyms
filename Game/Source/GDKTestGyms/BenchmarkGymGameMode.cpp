@@ -488,6 +488,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
 	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
 	const float RoamRadius = FMath::Sqrt(Pawn->NetCullDistanceSquared) / 2.0f;
+	const float MinDistanceSq = 100.f * 100.f;	// Move To threshold used in behaviour tree
 	{
 		FRandomStream PlayerStream;
 		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
@@ -496,6 +497,10 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			FVector PointA = PlayerStream.VRand()*RoamRadius;
 			FVector PointB = PlayerStream.VRand()*RoamRadius;
 			PointA.Z = PointB.Z = 0.0f;
+			if (FVector::DistSquared2D(PointA, PointB) < MinDistanceSq)
+			{
+				PointA *= -1.f;
+			}
 			PlayerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
@@ -507,6 +512,10 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			FVector PointA = NPCStream.VRand()*RoamRadius;
 			FVector PointB = NPCStream.VRand()*RoamRadius;
 			PointA.Z = PointB.Z = 0.0f;
+			if (FVector::DistSquared2D(PointA, PointB) < MinDistanceSq)
+			{
+				PointA *= -1.f;
+			}
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
