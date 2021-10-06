@@ -424,7 +424,9 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		else
 		{
 			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 			RepList.PrepareForWrite();
+#endif
 			RepList.ConditionalAdd(ActorInfo.Actor);
 		}
 		break;
@@ -489,7 +491,11 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 		else
 		{
 			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindChecked(ActorInfo.StreamingLevelName);
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 			if (RepList.Remove(ActorInfo.Actor) == false)
+#else
+			if (RepList.RemoveFast(ActorInfo.Actor) == false)
+#endif
 			{
 				UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("Actor %s was not found in AlwaysRelevantStreamingLevelActors list. LevelName: %s"), *GetActorRepListTypeDebugString(ActorInfo.Actor), *ActorInfo.StreamingLevelName.ToString());
 			}
@@ -760,7 +766,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 
 	ReplicationActorLists.AddDefaulted();
 	FActorRepListRefView* CurrentList = &ReplicationActorLists[0];
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 	CurrentList->PrepareForWrite();
+#endif
 
 	ClientInterestList.Reset();
 	ClientInterestList.PrepareForWrite();
@@ -780,7 +788,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 		{
 			ReplicationActorLists.AddDefaulted();
 			CurrentList = &ReplicationActorLists.Last();
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 			CurrentList->PrepareForWrite();
+#endif
 		}
 
 		CurrentList->Add(PS);
