@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/StreamableManager.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "RPCTimeoutPC_CPP.generated.h"
 
 /**
@@ -19,34 +17,29 @@ class GDKTESTGYMS_API ARPCTimeoutPC_CPP : public APlayerController
 	public:
 	ARPCTimeoutPC_CPP();
 	virtual void Tick(float DeltaTime) override;
-
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 private:
 	UFUNCTION(Client,Reliable)
 	void OnSetMaterial(UMaterial* PlayerMaterial);
-
-	void OnPossess(APawn* InPawn) override;
-
+	
 	UFUNCTION(Client,Reliable)
 	void CheckMaterialLoaded();
-
+	
+	void OnPossess(APawn* InPawn) override;
+	
 	void HasValidCharacter();
 
 	void SetMaterialAfterDelay();
-
-	FTimerHandle HasValidCharacterTimer;
-	FTimerHandle MaterialSetDelay;
 
 	UPROPERTY()
 	UMaterial* FailedMaterialAsset;
 
 	TSoftObjectPtr<UMaterial> SoftMaterialPtr;
-	TSharedPtr<FStreamableHandle> SharedMaterialHandle;
-
+	
 	FSoftObjectPath SoftMaterialPath;
+
+	FTimerHandle HasValidCharacterTimer;
 	
-	FStreamableManager StreamableManager;
-	
+	FTimerHandle MaterialSetDelay;
 };
 
