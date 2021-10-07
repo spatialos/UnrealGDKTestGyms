@@ -4,21 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "RPCTimeoutPC_CPP.generated.h"
+#include "RPCTimeoutPC.generated.h"
 
 /**
- * 
- */
+* 
+*/
 UCLASS()
-class GDKTESTGYMS_API ARPCTimeoutPC_CPP : public APlayerController
+class GDKTESTGYMS_API ARPCTimeoutPC: public APlayerController
 {
 	GENERATED_BODY()
 
 	public:
-	ARPCTimeoutPC_CPP();
+	ARPCTimeoutPC();
 	virtual void Tick(float DeltaTime) override;
 	
-private:
+	private:
 	UFUNCTION(Client,Reliable)
 	void OnSetMaterial(UMaterial* PlayerMaterial);
 	

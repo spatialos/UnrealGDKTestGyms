@@ -1,7 +1,8 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 
-#include "RPCTimeoutPC_CPP.h"
+#include "RPCTimeoutPC.h"
+
 
 #include "Chaos/PhysicalMaterials.h"
 #include "Components/TextRenderComponent.h"
@@ -9,7 +10,7 @@
 #include "GameFramework/Character.h"
 #include "UObject/ConstructorHelpers.h"
 
-ARPCTimeoutPC_CPP::ARPCTimeoutPC_CPP()
+ARPCTimeoutPC::ARPCTimeoutPC()
 {
 	static ConstructorHelpers::FObjectFinder<UMaterial>FailedMaterialFinder(TEXT("Material'/Engine/EngineDebugMaterials/VertexColorViewMode_RedOnly.VertexColorViewMode_RedOnly'"));
 	FailedMaterialAsset = FailedMaterialFinder.Object;
@@ -18,13 +19,13 @@ ARPCTimeoutPC_CPP::ARPCTimeoutPC_CPP()
 	SoftMaterialPtr = TSoftObjectPtr<UMaterial>(SoftMaterialPath);
 }
 
-void ARPCTimeoutPC_CPP::Tick(float DeltaTime)
+void ARPCTimeoutPC::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
 
-void ARPCTimeoutPC_CPP::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
+void ARPCTimeoutPC::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
 {
 	ACharacter* MyCharacter = Cast<ACharacter>(GetPawn());
 
@@ -42,19 +43,19 @@ void ARPCTimeoutPC_CPP::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
 	}
 }
 
-void ARPCTimeoutPC_CPP::CheckMaterialLoaded_Implementation()
+void ARPCTimeoutPC::CheckMaterialLoaded_Implementation()
 {
-	GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC_CPP::HasValidCharacter, 0.001,false);
+	GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC::HasValidCharacter, 0.001,false);
 }
 
-void ARPCTimeoutPC_CPP::OnPossess(APawn* InPawn)
+void ARPCTimeoutPC::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	CheckMaterialLoaded();
-	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay,this, &ARPCTimeoutPC_CPP::SetMaterialAfterDelay, 2.f,false);
+	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay,this, &ARPCTimeoutPC::SetMaterialAfterDelay, 2.f,false);
 }
 
-void ARPCTimeoutPC_CPP::HasValidCharacter()
+void ARPCTimeoutPC::HasValidCharacter()
 {
 	ACharacter* MyCharacter = Cast<ACharacter>(GetPawn());
 	
@@ -78,11 +79,11 @@ void ARPCTimeoutPC_CPP::HasValidCharacter()
 	}
 	else
 	{
-		GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC_CPP::HasValidCharacter, 0.001,false);
+		GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC::HasValidCharacter, 0.001,false);
 	}
 }
 
-void ARPCTimeoutPC_CPP::SetMaterialAfterDelay()
+void ARPCTimeoutPC::SetMaterialAfterDelay()
 {
 	UMaterial* PlayerMaterial = SoftMaterialPtr.LoadSynchronous();
 	OnSetMaterial(PlayerMaterial);

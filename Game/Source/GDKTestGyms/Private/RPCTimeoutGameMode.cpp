@@ -4,11 +4,11 @@
 #include "RPCTimeoutGameMode.h"
 
 #include "RPCTimeoutCharacter.h"
-#include "RPCTimeoutPC_CPP.h"
+#include "RPCTimeoutPC.h"
 
 ARPCTimeoutGameMode::ARPCTimeoutGameMode()
 	: Super()
 {
-	PlayerControllerClass = ARPCTimeoutPC_CPP::StaticClass();
+	PlayerControllerClass = ARPCTimeoutPC::StaticClass();
 	DefaultPawnClass = ARPCTimeoutCharacter::StaticClass();
 }
