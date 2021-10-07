@@ -12,6 +12,8 @@
 
 ARPCTimeoutPC::ARPCTimeoutPC()
 {
+	//Choose materials which belong to the Engine. This is in anticipation of the possibility of moving this test to the UnrealGDK plugin in the future.
+	
 	static ConstructorHelpers::FObjectFinder<UMaterial>FailedMaterialFinder(TEXT("Material'/Engine/EngineDebugMaterials/VertexColorViewMode_RedOnly.VertexColorViewMode_RedOnly'"));
 	FailedMaterialAsset = FailedMaterialFinder.Object;
 	
