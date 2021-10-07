@@ -24,23 +24,11 @@ void ARPCTimeoutPC::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-
-void ARPCTimeoutPC::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
+void ARPCTimeoutPC::OnPossess(APawn* InPawn)
 {
-	ACharacter* MyCharacter = Cast<ACharacter>(GetPawn());
-
-	if(MyCharacter)
-	{
-		if(PlayerMaterial)
-		{
-			
-			MyCharacter->GetMesh()->SetMaterial(0,PlayerMaterial);
-		}
-		else
-		{
-			MyCharacter->GetMesh()->SetMaterial(0,FailedMaterialAsset);
-		}
-	}
+	Super::OnPossess(InPawn);
+	CheckMaterialLoaded();
+	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay,this, &ARPCTimeoutPC::SetMaterialAfterDelay, 2.f,false);
 }
 
 void ARPCTimeoutPC::CheckMaterialLoaded_Implementation()
@@ -48,11 +36,10 @@ void ARPCTimeoutPC::CheckMaterialLoaded_Implementation()
 	GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC::HasValidCharacter, 0.001,false);
 }
 
-void ARPCTimeoutPC::OnPossess(APawn* InPawn)
+void ARPCTimeoutPC::SetMaterialAfterDelay()
 {
-	Super::OnPossess(InPawn);
-	CheckMaterialLoaded();
-	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay,this, &ARPCTimeoutPC::SetMaterialAfterDelay, 2.f,false);
+	UMaterial* PlayerMaterial = SoftMaterialPtr.LoadSynchronous();
+	OnSetMaterial(PlayerMaterial);
 }
 
 void ARPCTimeoutPC::HasValidCharacter()
@@ -83,8 +70,20 @@ void ARPCTimeoutPC::HasValidCharacter()
 	}
 }
 
-void ARPCTimeoutPC::SetMaterialAfterDelay()
+void ARPCTimeoutPC::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
 {
-	UMaterial* PlayerMaterial = SoftMaterialPtr.LoadSynchronous();
-	OnSetMaterial(PlayerMaterial);
+	ACharacter* MyCharacter = Cast<ACharacter>(GetPawn());
+
+	if(MyCharacter)
+	{
+		if(PlayerMaterial)
+		{
+			
+			MyCharacter->GetMesh()->SetMaterial(0,PlayerMaterial);
+		}
+		else
+		{
+			MyCharacter->GetMesh()->SetMaterial(0,FailedMaterialAsset);
+		}
+	}
 }
