@@ -477,7 +477,6 @@ The late connecing client has validated the local state before sending the "Pass
   * RPC parameters holding references to loadable assets are able to be resolved without timing out.
 * NOTE: This gym can only be run manually (It requires tweaking settings and running in separate processes).
 * Pre-test steps:
-  * Generate schema
   * In the Unreal Editor's SpatialGDK runtime settings, set Replication->"Wait Time Before Processing Received RPC With Unresolved Refs" to 0
   * In Unreal's advanced play settings, set "Run Under One Process" to false
   * Set the number of players to 2
