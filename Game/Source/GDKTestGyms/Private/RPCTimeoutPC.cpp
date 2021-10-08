@@ -14,12 +14,12 @@ ARPCTimeoutPC::ARPCTimeoutPC()
 {
 	//Choose materials which belong to the Engine. This is in anticipation of the possibility of moving this test to the UnrealGDK plugin in the future.
 
-	TCHAR* FailedMaterialPathString = TEXT("Material'/Engine/EngineDebugMaterials/VertexColorViewMode_RedOnly.VertexColorViewMode_RedOnly'");
+	const TCHAR* FailedMaterialPathString = TEXT("Material'/Engine/EngineDebugMaterials/VertexColorViewMode_RedOnly.VertexColorViewMode_RedOnly'");
 	static ConstructorHelpers::FObjectFinder<UMaterial>FailedMaterialFinder(FailedMaterialPathString);
 	FailedMaterialAsset = FailedMaterialFinder.Object;
 	checkf(IsValid(FailedMaterialAsset), TEXT("Could not find failed material asset %ls"), FailedMaterialPathString);
 	
-	TCHAR* SoftMaterialPathString = TEXT("Material'/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Mat.TutorialTPP_Mat'");
+	const TCHAR* SoftMaterialPathString = TEXT("Material'/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Mat.TutorialTPP_Mat'");
 	SoftMaterialPath = FSoftObjectPath(SoftMaterialPathString);
 	SoftMaterialPtr = TSoftObjectPtr<UMaterial>(SoftMaterialPath);
 }
