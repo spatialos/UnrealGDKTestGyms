@@ -54,7 +54,7 @@ void ARPCTimeoutPC::HasValidCharacter()
 		if(Material1)
 		{
 			FTransform Transform = FTransform::Identity;
-			Transform.SetRotation(FRotator(0.f,0.f,0.f).Quaternion());
+			Transform.SetRotation(FRotator::ZeroRotator.Quaternion());
 
 			UTextRenderComponent* TRC = Cast<UTextRenderComponent>(
 				MyCharacter->AddComponentByClass(UTextRenderComponent::StaticClass(),false,Transform,false));
