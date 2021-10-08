@@ -30,12 +30,12 @@ void ARPCTimeoutPC::OnPossess(APawn* InPawn)
 	CheckMaterialLoaded();
 
 	//Delay set material, let CheckMaterialLoaded() check if it's already loaded in memory
-	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay,this, &ARPCTimeoutPC::SetMaterialAfterDelay, 2.f,false);
+	GetWorld()->GetTimerManager().SetTimer(MaterialSetDelay, this, &ARPCTimeoutPC::SetMaterialAfterDelay, 2.f, false);
 }
 
 void ARPCTimeoutPC::CheckMaterialLoaded_Implementation()
 {
-	GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC::CheckValidCharacter, 0.001,false);
+	GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer, this, &ARPCTimeoutPC::CheckValidCharacter, 0.001,false);
 }
 
 void ARPCTimeoutPC::SetMaterialAfterDelay()
@@ -65,7 +65,7 @@ void ARPCTimeoutPC::CheckValidCharacter()
 	}
 	else
 	{
-		GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer,this, &ARPCTimeoutPC::CheckValidCharacter, 0.001,false);
+		GetWorld()->GetTimerManager().SetTimer(HasValidCharacterTimer, this, &ARPCTimeoutPC::CheckValidCharacter, 0.001, false);
 	}
 }
 
@@ -75,11 +75,11 @@ void ARPCTimeoutPC::OnSetMaterial_Implementation(UMaterial* PlayerMaterial)
 	{
 		if(PlayerMaterial)
 		{
-			TestCharacter->GetMesh()->SetMaterial(0,PlayerMaterial);
+			TestCharacter->GetMesh()->SetMaterial(0, PlayerMaterial);
 		}
 		else
 		{
-			TestCharacter->GetMesh()->SetMaterial(0,FailedMaterialAsset);
+			TestCharacter->GetMesh()->SetMaterial(0, FailedMaterialAsset);
 		}
 	}
 }
