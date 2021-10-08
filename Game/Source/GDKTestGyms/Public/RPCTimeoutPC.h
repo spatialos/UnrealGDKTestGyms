@@ -16,7 +16,6 @@ class GDKTESTGYMS_API ARPCTimeoutPC: public APlayerController
 
 	public:
 	ARPCTimeoutPC();
-	virtual void Tick(float DeltaTime) override;
 	
 	private:
 	UFUNCTION(Client,Reliable)
@@ -24,10 +23,10 @@ class GDKTESTGYMS_API ARPCTimeoutPC: public APlayerController
 	
 	UFUNCTION(Client,Reliable)
 	void CheckMaterialLoaded();
+
+	virtual void OnPossess(APawn* InPawn) override;
 	
-	void OnPossess(APawn* InPawn) override;
-	
-	void HasValidCharacter();
+	void CheckValidCharacter();
 
 	void SetMaterialAfterDelay();
 

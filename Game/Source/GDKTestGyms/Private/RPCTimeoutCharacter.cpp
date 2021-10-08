@@ -13,5 +13,4 @@ ARPCTimeoutCharacter::ARPCTimeoutCharacter()
 	USkeletalMesh* DefaultSkeletalMesh = DefaultSkeletalMeshFinder.Object;
 
 	GetMesh()->SetSkeletalMesh(DefaultSkeletalMesh);
-	
 }
