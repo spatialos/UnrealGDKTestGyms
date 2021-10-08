@@ -62,7 +62,7 @@ void ARPCTimeoutPC::HasValidCharacter()
 			if (TRC)
 			{
 				TRC->SetText(FText::FromString("ERROR : Material already loaded on client, test is invalid"));
-				TRC->SetTextRenderColor(FColor(255,0,0,255));
+				TRC->SetTextRenderColor(FColor::Red);
 			}
 		}
 	}
