@@ -9,8 +9,10 @@ ARPCTimeoutCharacter::ARPCTimeoutCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh>DefaultSkeletalMeshFinder(TEXT("SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
+	const TCHAR* DefaultSkeletalMeshPathString = TEXT("SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'");
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>DefaultSkeletalMeshFinder(DefaultSkeletalMeshPathString);
 	USkeletalMesh* DefaultSkeletalMesh = DefaultSkeletalMeshFinder.Object;
+	checkf(IsValid(DefaultSkeletalMesh), TEXT("Could not find failed material asset %ls"), DefaultSkeletalMeshPathString);
 
 	GetMesh()->SetSkeletalMesh(DefaultSkeletalMesh);
 }
