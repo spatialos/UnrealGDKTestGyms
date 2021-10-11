@@ -73,7 +73,7 @@ void ARPCTimeoutPlayerController::OnSetMaterial_Implementation(UMaterial* Player
 {
 	if(ACharacter* TestCharacter = Cast<ACharacter>(GetPawn()))
 	{
-		if(PlayerMaterial)
+		if (PlayerMaterial)
 		{
 			TestCharacter->GetMesh()->SetMaterial(0, PlayerMaterial);
 		}
