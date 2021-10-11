@@ -21,7 +21,7 @@ class GDKTESTGYMS_API ARPCTimeoutPlayerController: public APlayerController
 	UFUNCTION(Client, Reliable)
 	void OnSetMaterial(UMaterial* PlayerMaterial);
 	
-	UFUNCTION(Client,Reliable)
+	UFUNCTION(Client, Reliable)
 	void CheckMaterialLoaded();
 
 	virtual void OnPossess(APawn* InPawn) override;
