@@ -483,7 +483,7 @@ The late connecing client has validated the local state before sending the "Pass
 * Testing : 
   * Press play.
   * Two clients should connect, at least one outside of the editor process.
-  * Controlled character should turn green after 2 sec.
+  * Controlled character should turn yellow after 2 sec.
   * If characters turn red, the test has failed.
   * If there is a red text reading : "ERROR : Material already loaded on client, test is invalid", check that this only happens on the client launched from within the editor
   * Clients connected from a separate process, or running the test from a fresh editor instance should not display this error message.
