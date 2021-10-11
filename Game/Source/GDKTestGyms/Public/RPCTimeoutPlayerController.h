@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "RPCTimeoutPC.generated.h"
+#include "RPCTimeoutPlayerController.generated.h"
 
 /**
 * 
 */
 UCLASS()
-class GDKTESTGYMS_API ARPCTimeoutPC: public APlayerController
+class GDKTESTGYMS_API ARPCTimeoutPlayerController: public APlayerController
 {
 	GENERATED_BODY()
 
 	public:
-	ARPCTimeoutPC();
+	ARPCTimeoutPlayerController();
 	
 	private:
 	UFUNCTION(Client,Reliable)
