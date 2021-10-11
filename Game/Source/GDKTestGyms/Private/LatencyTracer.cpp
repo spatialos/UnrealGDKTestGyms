@@ -40,10 +40,6 @@ namespace LatencyTracerInternal
 	}
 }
 
-ULatencyTracer::ULatencyTracer()
-{
-}
-
 ULatencyTracer* ULatencyTracer::GetOrCreateLatencyTracer(UObject* WorldContextObject)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull);
