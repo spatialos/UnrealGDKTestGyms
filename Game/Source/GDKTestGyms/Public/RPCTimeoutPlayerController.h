@@ -18,7 +18,7 @@ class GDKTESTGYMS_API ARPCTimeoutPlayerController: public APlayerController
 	ARPCTimeoutPlayerController();
 	
 	private:
-	UFUNCTION(Client,Reliable)
+	UFUNCTION(Client, Reliable)
 	void OnSetMaterial(UMaterial* PlayerMaterial);
 	
 	UFUNCTION(Client,Reliable)
