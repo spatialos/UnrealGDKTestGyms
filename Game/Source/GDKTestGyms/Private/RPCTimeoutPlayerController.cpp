@@ -20,7 +20,7 @@ ARPCTimeoutPlayerController::ARPCTimeoutPlayerController()
 	checkf(IsValid(FailedMaterialAsset), TEXT("Could not find failed material asset %ls"), FailedMaterialPathString);
 	
 	const TCHAR* SoftMaterialPathString = TEXT("Material'/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Mat.TutorialTPP_Mat'");
-	SoftMaterialPath = FSoftObjectPath(SoftMaterialPathString);
+	const FSoftObjectPath SoftMaterialPath = FSoftObjectPath(SoftMaterialPathString);
 	SoftMaterialPtr = TSoftObjectPtr<UMaterial>(SoftMaterialPath);
 }
 

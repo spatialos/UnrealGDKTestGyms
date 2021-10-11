@@ -35,8 +35,6 @@ class GDKTESTGYMS_API ARPCTimeoutPlayerController: public APlayerController
 
 	TSoftObjectPtr<UMaterial> SoftMaterialPtr;
 	
-	FSoftObjectPath SoftMaterialPath;
-
 	FTimerHandle HasValidCharacterTimer;
 	
 	FTimerHandle MaterialSetDelay;
