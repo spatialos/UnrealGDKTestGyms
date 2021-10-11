@@ -18,8 +18,7 @@ class ULatencyTracer : public UObject
 {
 	GENERATED_BODY()
 public:
-	ULatencyTracer();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "SpatialOS", meta = (WorldContext = "WorldContextObject"))
 	static ULatencyTracer* GetOrCreateLatencyTracer(UObject* WorldContextObject);
 

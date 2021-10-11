@@ -2,9 +2,7 @@
 
 #include "LatencyTracer.h"
 
-#include "Async/Async.h"
 #include "Engine/World.h"
-#include "GeneralProjectSettings.h"
 #include "SpatialGDKSettings.h"
 
 DEFINE_LOG_CATEGORY(LogLatencyTracer);
