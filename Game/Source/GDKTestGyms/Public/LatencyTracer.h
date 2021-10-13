@@ -4,10 +4,8 @@
 
 #include "CoreMinimal.h"
 
-#include "LatencyPayload.h"
 #include "Interop/Connection/SpatialEventTracer.h"
 #include "Interop/Connection/SpatialGDKSpanId.h"
-#include "Utils/GDKPropertyMacros.h"
 
 #include "LatencyTracer.generated.h"
 

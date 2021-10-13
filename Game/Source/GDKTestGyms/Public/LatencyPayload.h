@@ -10,8 +10,8 @@ USTRUCT(BlueprintType)
 struct FLatencyPayload
 {
 	GENERATED_BODY()
-
-	FLatencyPayload() {}
+	
+	FLatencyPayload() {} // To keep reflection happy
 
 	FLatencyPayload(TArray<uint8>&& Data)
 		: Data(MoveTemp(Data))
@@ -20,14 +20,6 @@ struct FLatencyPayload
 
 	UPROPERTY()
 	TArray<uint8> Data;
-
-	// Required for TMap hash
-	bool operator==(const FLatencyPayload& Other) const { return Data == Other.Data; }
-
-	friend uint32 GetTypeHash(const FLatencyPayload& Obj) // TODO: Why is this needed?
-	{
-		return CityHash32((const char*)Obj.Data.GetData(), Obj.Data.Num());
-	}
 
 	void SetSpan(const FSpatialGDKSpanId& SpanId)
 	{

@@ -27,7 +27,7 @@ namespace LatencyTracerInternal
 		return {};
 	}
 
-	SpatialGDK::SpatialEventTracer* GetEventTracerFromWorld(const UWorld* World)
+	SpatialGDK::SpatialEventTracer* GetEventTracerFromNetDriver(const UWorld* World)
 	{
 		if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver()))
 		{
@@ -63,7 +63,7 @@ void ULatencyTracer::InitTracer()
 	const USpatialGDKSettings* Settings = GetDefault<USpatialGDKSettings>();
 	if (Settings->GetEventTracingEnabled() && USpatialStatics::IsSpatialNetworkingEnabled()) // Use the tracing hooked up to GDK internals
 	{
-		InternalTracer = LatencyTracerInternal::GetEventTracerFromWorld(GetWorld());
+		InternalTracer = LatencyTracerInternal::GetEventTracerFromNetDriver(GetWorld());
 		if (InternalTracer == nullptr)
 		{
 			UE_LOG(LogLatencyTracer, Warning, TEXT("Full tracing enabled but tracer is not available."));
