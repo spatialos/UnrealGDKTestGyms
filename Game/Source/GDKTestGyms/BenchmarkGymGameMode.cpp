@@ -488,7 +488,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
 	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
 	const float RoamRadius = FMath::Sqrt(Pawn->NetCullDistanceSquared) / 2.0f;
-	const float MinDistanceSq = 100.f * 100.f;	// Move To threshold used in behaviour tree
+	const float MinDistanceSq = 500.f * 500.f;	// Move To threshold used in behaviour tree
 	{
 		FRandomStream PlayerStream;
 		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs

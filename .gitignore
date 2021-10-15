@@ -30,6 +30,4 @@ Game/Content/Spatial/SchemaDatabase.uasset
 .idea/
 Game/Plugins/Developer/RiderLink
 
-
 spatial/workers/unreal/spatialos.RoutingWorker.worker.json
-spatial/workers/unreal/spatialos.StrategyWorker.worker.json
