@@ -17,9 +17,11 @@ void ADisco387GameStateBase::PostInitializeComponents()
 	if (USpatialGDKSettings* GDKSettings = GetMutableDefault<USpatialGDKSettings>())
 	{
 		GDKSettings->bEnableNetCullDistanceFrequency = false;
+		GDKSettings->bWorkerFlushAfterOutgoingNetworkOp = false;
 
 		// Loudly output this information to help prevent tripping people up.
 		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("Explicit disco config overrides:"));
 		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bEnableNetCullDistanceFrequency is %s."), GDKSettings->bEnableNetCullDistanceFrequency ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bWorkerFlushAfterOutgoingNetworkOp is %s."), GDKSettings->bWorkerFlushAfterOutgoingNetworkOp ? TEXT("enabled") : TEXT("disabled"));
 	}
 }
