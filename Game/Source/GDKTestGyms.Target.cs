@@ -7,10 +7,12 @@ using System.Collections.Generic;
 public class GDKTestGymsTarget : TargetRules
 {
 	public GDKTestGymsTarget(TargetInfo Target) : base(Target)
-	{
+	{	
 		Type = TargetType.Game;
 		ExtraModuleNames.Add("GDKTestGyms");
 
+		bWithPushModel = true;
+		
 		if (Environment.GetEnvironmentVariable("ImprobableNFRShipping") != null)
 		{
 			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;

@@ -11,6 +11,8 @@ public class GDKTestGymsClientTarget : TargetRules
 		Type = TargetType.Client;
 		ExtraModuleNames.Add("GDKTestGyms");
 
+		bWithPushModel = true;
+
 		if (Environment.GetEnvironmentVariable("ImprobableNFRShipping") != null)
 		{
 			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
