@@ -27,7 +27,8 @@ public class GDKTestGyms : ModuleRules
 				"ReplicationGraph",
 				"AIModule",
 				"NavigationSystem",
-				"MetricsServiceProvider"
+				"MetricsServiceProvider",
+				"NetCore",
 			});
 	}
 }

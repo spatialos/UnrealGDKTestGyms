@@ -125,11 +125,7 @@ private:
 	TMap<const FString, const FProfileDetails> CachedProfileDetails;
 
 	TSharedPtr<class FHttpRetrySystem::FManager> HttpRetryManager;
-#if ENGINE_MINOR_VERSION >= 26
 	using HttpRequest = TSharedRef<IHttpRequest, ESPMode::ThreadSafe>;
-#else
-	using HttpRequest = TSharedRef<IHttpRequest>;
-#endif
 	HttpRequest CreateRequest();
 
 	TSharedPtr<FPrometheusServer> Prometheus;
