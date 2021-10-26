@@ -9,7 +9,9 @@
 #include "PrometheusServer.h"
 #include "Runtime/Launch/Resources/Version.h"
 
+PRAGMA_DISABLE_DEPRECATION_WARNINGS // FTickerObjectBase is deprecated in favor of FTSTicker
 class METRICSSERVICEPROVIDER_API FAnalyticsProviderMetrics : public IAnalyticsProvider, public FTickerObjectBase
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
 {
 #if WITH_DEV_AUTOMATION_TESTS
 	friend class FMetricsBlueprintLibrarySpec;

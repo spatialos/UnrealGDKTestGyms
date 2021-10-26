@@ -20,7 +20,7 @@ void UGDKTestGymsGameInstance::Init()
 	Super::Init();
 
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UGDKTestGymsGameInstance::Tick);
-	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(TickDelegate);
+	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(TickDelegate);
 	TickWindowTotal = 0;
 	GetEngine()->NetworkFailureEvent.AddUObject(this, &UGDKTestGymsGameInstance::NetworkFailureEventCallback);
 	NFRConstants = NewObject<UNFRConstants>(this);

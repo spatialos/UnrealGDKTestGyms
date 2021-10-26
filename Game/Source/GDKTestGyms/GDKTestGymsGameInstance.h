@@ -49,7 +49,7 @@ private:
 	UFUNCTION()
 	void SpatialConnected();
 	FTickerDelegate TickDelegate;
-	FDelegateHandle TickDelegateHandle;
+	FTSTicker::FDelegateHandle TickDelegateHandle;
 
 	UPROPERTY()
 	UNFRConstants* NFRConstants;

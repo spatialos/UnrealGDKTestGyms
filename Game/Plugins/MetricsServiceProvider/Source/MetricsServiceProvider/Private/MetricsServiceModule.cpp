@@ -104,6 +104,7 @@ TSharedPtr<IAnalyticsProvider> FAnalyticsMetricsServiceModule::CreateAnalyticsPr
 	return FAnalyticsProviderMetrics::Create(Key, ApiEndpoint, BinaryKey, BinaryEndpoint, BatchSize, MaxAge);
 }
 
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
 FAnalyticsProviderMetrics::FAnalyticsProviderMetrics(const FString& Key, const FString& ApiEndpoint, const FString& BinaryKey, const FString& BinaryEndpoint, const int32 BatchSize, const float FlushPeriod) :
 	ApiKey(Key),
 	BinaryApiKey(BinaryKey),
@@ -138,6 +139,7 @@ FAnalyticsProviderMetrics::~FAnalyticsProviderMetrics()
 	}
 	TelemetryClassEvent(TEXT("session"), TEXT("Metrics Destructed"), ProfileId);
 }
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 bool FAnalyticsProviderMetrics::Tick(float DeltaSeconds)
 {
