@@ -11,9 +11,40 @@
 #include "TestGymsCharacterMovementComp.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "Net/UnrealNetwork.h"
+
+APawn* AGDKTestGymsGameModeBase::SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform)
+{
+	FActorSpawnParameters SpawnInfo;
+	SpawnInfo.Instigator = GetInstigator();
+	SpawnInfo.ObjectFlags |= RF_Transient;	// We never want to save default player pawns into a map
+	UClass* PawnClass = GetDefaultPawnClassForController(NewPlayer);
+	APawn* ResultPawn = GetWorld()->SpawnActorDeferred<APawn>(PawnClass, SpawnTransform, nullptr, GetInstigator());
+	if (!ResultPawn)
+	{
+		UE_LOG(LogGameMode, Warning, TEXT("SpawnDefaultPawnAtTransform: Couldn't spawn Pawn of type %s at %s"), *GetNameSafe(PawnClass), *SpawnTransform.ToHumanReadableString());
+	}
+	if (AGDKTestGymsCharacter* Character = Cast< AGDKTestGymsCharacter>(ResultPawn))
+	{
+		Character->HackTestMethod();
+	}
+	UGameplayStatics::FinishSpawningActor(ResultPawn, SpawnTransform);
+
+	return ResultPawn;
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // AGDKTestGymsCharacter
+
+void AGDKTestGymsCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
+	DOREPLIFETIME_WITH_PARAMS(ThisClass, TestPushModelArray, Params);
+}
 
 AGDKTestGymsCharacter::AGDKTestGymsCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UTestGymsCharacterMovementComp>(ACharacter::CharacterMovementComponentName))

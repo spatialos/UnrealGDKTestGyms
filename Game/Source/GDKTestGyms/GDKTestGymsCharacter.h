@@ -4,7 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/GameModeBase.h"
 #include "GDKTestGymsCharacter.generated.h"
+
+UCLASS()
+class AGDKTestGymsGameModeBase : public AGameModeBase
+{
+	GENERATED_BODY()
+
+	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
+};
 
 class UTestGymsCharacterMovementComp;
 
@@ -12,6 +21,9 @@ UCLASS(config=Game, SpatialType)
 class AGDKTestGymsCharacter : public ACharacter
 {
 	GENERATED_BODY()
+public:
+		UFUNCTION(BlueprintImplementableEvent)
+		void HackTestMethod();
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -23,8 +35,13 @@ class AGDKTestGymsCharacter : public ACharacter
 public:
 	AGDKTestGymsCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	TArray<UObject*> TestPushModelArray;
+
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(Server, Unreliable)
 	void ClientAuthServerMove(const FVector_NetQuantize100& ClientLocation, const FVector_NetQuantize10& ClientVelocity, const uint32 PackedPitchYaw);
