@@ -12,9 +12,13 @@ IMPLEMENT_GAME_MODULE(FGDKTestGymsFunctionalTestsModule, GDKTestGymsFunctionalTe
 
 void FGDKTestGymsFunctionalTestsModule::StartupModule()
 {
-   FCoreDelegates::OnFEngineLoopInitComplete.AddLambda([]() {
-	   SpatialGDK::TestMapGeneration::GenerateTestMaps();
-   });
+	// Ensure that when running with multiple-processes, only the Editor process generates the test maps
+	if (GIsEditor)
+	{
+		FCoreDelegates::OnFEngineLoopInitComplete.AddLambda([]() {
+			SpatialGDK::TestMapGeneration::GenerateTestMaps();
+			});
+	}
 }
 
 
