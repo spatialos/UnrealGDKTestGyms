@@ -195,8 +195,6 @@ public:
 
 	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
 
-	virtual bool GetInterestDirty(UNetReplicationGraphConnection* ConnectionManager, FString& Cause) override;
-
 	int32 MaxNearestActors;
 
 private:

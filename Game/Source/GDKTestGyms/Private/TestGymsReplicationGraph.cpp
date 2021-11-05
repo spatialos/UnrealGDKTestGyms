@@ -983,11 +983,6 @@ void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(c
 	}
 }
 
-bool UTestGymsReplicationGraphNode_NearestActors::GetInterestDirty(UNetReplicationGraphConnection* ConnectionManager, FString& Cause)
-{
-	return (GraphGlobals->ReplicationGraph->GetReplicationGraphFrame() % 10 == ConnectionManager->ConnectionOrderNum % 10);
-}
-
 // ------------------------------------------------------------------------------
 
 void UTestGymsReplicationGraph::PrintRepNodePolicies()
