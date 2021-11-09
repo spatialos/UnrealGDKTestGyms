@@ -35,7 +35,7 @@ ULatencyTracer* ULatencyTracer::GetOrCreateLatencyTracer(UObject* WorldContextOb
 			return GameInstance->GetTracer();
 		}
 	}
-	UE_LOG(LogLatencyTracer, Error, TEXT("Unable to get the game instance tracer object, creating a new one but results may not be as expected."));
+	UE_LOG(LogLatencyTracer, Log, TEXT("Unable to get the game instance tracer object, creating a new one but results may not be as expected."));
 	return NewObject<ULatencyTracer>();
 }
 
@@ -56,7 +56,7 @@ void ULatencyTracer::InitTracer()
 		ENetMode NetMode = GetWorld()->GetNetMode();
 		bool bIsClient = NetMode == NM_Client || NetMode == NM_Standalone;
 
-		WorkerId = (bIsClient ? "UnrealClient" : "UnrealWorker") + FGuid::NewGuid().ToString();
+		WorkerId = (bIsClient ? TEXT("UnrealClient") : TEXT("UnrealWorker")) + FGuid::NewGuid().ToString();
 		
 		UEventTracingSamplingSettings* SamplingSettings = NewObject<UEventTracingSamplingSettings>();
 		SamplingSettings->SamplingProbability = 1.0f;
@@ -76,7 +76,7 @@ FUserSpanId ULatencyTracer::BeginLatencyTrace(const FString& Type)
 FUserSpanId ULatencyTracer::ContinueLatencyTrace(const FString& Type, const FUserSpanId& SpanIn)
 {
 	FSpatialGDKSpanId Cause = FSpatialGDKSpanId::FromUserSpan(SpanIn);
-	FSpatialGDKSpanId SpanOut = EmitTrace(Type, (FSpatialGDKSpanId*)&Cause, 1);
+	FSpatialGDKSpanId SpanOut = EmitTrace(Type, &Cause, 1);
 	return FSpatialGDKSpanId::ToUserSpan(SpanOut);
 }
 
