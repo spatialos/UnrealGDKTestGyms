@@ -8,7 +8,6 @@
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
 #include "Containers/Ticker.h"
-#include "LatencyTracer.h"
 
 #include "GDKTestGymsGameInstance.generated.h"
 
@@ -19,6 +18,8 @@
 #else
 #define NFR_LOG(...) 0
 #endif
+
+class ULatencyTracer;
 
 UCLASS()
 class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance

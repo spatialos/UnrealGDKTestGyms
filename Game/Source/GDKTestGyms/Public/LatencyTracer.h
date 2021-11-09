@@ -32,6 +32,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EndLatencyTrace(const FString& Type, const FUserSpanId& Span);
 
+private:
 	FSpatialGDKSpanId EmitTrace(const FString& EventType, FSpatialGDKSpanId* Causes, uint32 NumCauses);
 
 	TUniquePtr<SpatialGDK::SpatialEventTracer> LocalTracer;

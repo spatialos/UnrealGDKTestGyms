@@ -9,24 +9,6 @@ DEFINE_LOG_CATEGORY(LogLatencyTracer);
 
 namespace LatencyTracerInternal
 {
-	FUserSpanId GDKSpanToUser(const FSpatialGDKSpanId& Span) // TODO: Expose the internal GDK versions of these
-	{
-		FUserSpanId UserSpan;
-		UserSpan.Data.SetNum(sizeof(Span));
-		memcpy(UserSpan.Data.GetData(), &Span, sizeof(FSpatialGDKSpanId));
-		return UserSpan;
-	}
-
-	FSpatialGDKSpanId UserSpanToGDK(const FUserSpanId& UserSpan) // TODO: Expose the internal GDK versions of these
-	{
-		if (ensure(sizeof(FSpatialGDKSpanId) == UserSpan.Data.Num()))
-		{
-			return FSpatialGDKSpanId((const Trace_SpanIdType*)UserSpan.Data.GetData());
-		}
-		UE_LOG(LogLatencyTracer, Warning, TEXT("Expected UserSpan size to equal sizeof(FSpatialGDKSpanId)"))
-		return {};
-	}
-
 	SpatialGDK::SpatialEventTracer* GetEventTracerFromNetDriver(const UWorld* World)
 	{
 		if (USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver()))
@@ -88,19 +70,19 @@ void ULatencyTracer::InitTracer()
 FUserSpanId ULatencyTracer::BeginLatencyTrace(const FString& Type)
 {
 	FSpatialGDKSpanId Span = EmitTrace(Type, nullptr, 0);
-	return LatencyTracerInternal::GDKSpanToUser(Span);
+	return FSpatialGDKSpanId::ToUserSpan(Span);
 }
 
 FUserSpanId ULatencyTracer::ContinueLatencyTrace(const FString& Type, const FUserSpanId& SpanIn)
 {
-	FSpatialGDKSpanId Cause = LatencyTracerInternal::UserSpanToGDK(SpanIn);
+	FSpatialGDKSpanId Cause = FSpatialGDKSpanId::FromUserSpan(SpanIn);
 	FSpatialGDKSpanId SpanOut = EmitTrace(Type, (FSpatialGDKSpanId*)&Cause, 1);
-	return LatencyTracerInternal::GDKSpanToUser(SpanOut);
+	return FSpatialGDKSpanId::ToUserSpan(SpanOut);
 }
 
 void ULatencyTracer::EndLatencyTrace(const FString& Type, const FUserSpanId& SpanIn)
 {
-	FSpatialGDKSpanId Cause = LatencyTracerInternal::UserSpanToGDK(SpanIn);
+	FSpatialGDKSpanId Cause= FSpatialGDKSpanId::FromUserSpan(SpanIn);
 	EmitTrace(Type, (FSpatialGDKSpanId*)&Cause, 1);
 }
 
