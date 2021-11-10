@@ -13,7 +13,7 @@ namespace UnrealBuildTool.Rules
 					"Core",
 					"CoreUObject",
 					"Engine",
-					"Http",
+					"HTTP",
 					"HTTPServer",
 					"Json",
 					"JsonUtilities"
