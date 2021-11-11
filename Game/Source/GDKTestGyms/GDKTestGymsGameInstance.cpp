@@ -13,6 +13,7 @@
 #include "GeneralProjectSettings.h"
 #include "EngineMinimal.h"
 #include "Engine/Engine.h"
+#include "LatencyTracer.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -27,6 +28,8 @@ void UGDKTestGymsGameInstance::Init()
 
 	OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
 
+	Tracer = NewObject<ULatencyTracer>(this);
+	Tracer->InitTracer();
 	// init metric provider & record start metric
 	TSharedPtr<IAnalyticsProvider> Provider = FAnalytics::Get().GetDefaultConfiguredProvider();
 	if (Provider.IsValid())
