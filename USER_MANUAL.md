@@ -136,16 +136,6 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   1. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   1. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
-##### Net reference test gym
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
-* This gym tests that references to replicated actors are stable when actors go in and out of relevance.
-* Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
-* Manual steps:
-  1. Cubes in a grid pattern hold references to their neighbours on replicated properties.
-  1. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
-  1. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
-  1. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
-
 ##### ReplicatedStartupActor gym
 * KNOWN ISSUE: The automated version of this test does not function: [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305)
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
