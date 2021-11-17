@@ -148,6 +148,14 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	}
 }
 
+void ABenchmarkGymGameModeBase::OnAuthorityLost()
+{
+	// ABenchmarkGymGameModeBase doesn't support authority transfer
+	Super::OnAuthorityLost();
+
+	ensure(false);
+}
+
 void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();

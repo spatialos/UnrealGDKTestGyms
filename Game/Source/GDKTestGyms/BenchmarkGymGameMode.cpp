@@ -317,6 +317,17 @@ void ABenchmarkGymGameMode::BeginPlay()
 	Super::BeginPlay();
 	bIsUsingZoning = USpatialStatics::IsSpatialNetworkingEnabled() && (GetZoningRows() > 1 || GetZoningCols() > 1);
 	SpawnManager = NewObject<USpawnManager>(this);
+
+#if WITH_EDITOR
+	if (ExpectedPlayers == 0)
+	{
+		ExpectedPlayers = 4;
+	}
+	if (PlayerDensity == 0)
+	{
+		PlayerDensity = 2;
+	}
+#endif // WITH_EDITOR
 }
 
 void ABenchmarkGymGameMode::Tick(float DeltaSeconds)
@@ -614,7 +625,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	if (SpawnManager->GetNumSpawnPoints() == 0)
 	{
-		return Super::FindPlayerStart_Implementation(Player, IncomingName);
+		return nullptr;
 	}
 
 	if (Player == nullptr) // Work around for load balancing passing nullptr Player

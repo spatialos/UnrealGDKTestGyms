@@ -545,7 +545,6 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::ResetGameWorldS
 void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
 {
 	InterestedActorList.Reset();
-	InterestedActorList.PrepareForWrite();
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
 		InterestedActorList.ConditionalAdd(CurViewer.InViewer);
@@ -771,7 +770,6 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 #endif
 
 	ClientInterestList.Reset();
-	ClientInterestList.PrepareForWrite();
 
 	// We rebuild our lists of player states each frame. This is not as efficient as it could be but its the simplest way
 	// to handle players disconnecting and keeping the lists compact. If the lists were persistent we would need to defrag them as players left.
@@ -968,7 +966,6 @@ void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(c
 		if (SortedActors.Num() > 0)
 		{
 			InterestedActorList.Reset(SortedActors.Num());
-			InterestedActorList.PrepareForWrite();
 			for (const FDistanceSortedActor& Item : SortedActors)
 			{
 				InterestedActorList.Add(Item.Actor);
