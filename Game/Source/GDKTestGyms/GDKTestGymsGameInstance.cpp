@@ -47,7 +47,6 @@ ULatencyTracer* UGDKTestGymsGameInstance::GetOrCreateLatencyTracer()
 		Tracer = NewObject<ULatencyTracer>(this);
 		Tracer->InitTracer();
 	}
-
 	return Tracer;
 }
 
