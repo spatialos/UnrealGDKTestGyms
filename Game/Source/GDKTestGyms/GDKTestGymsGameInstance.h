@@ -36,7 +36,10 @@ public:
 	void NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
 	const UNFRConstants* GetNFRConstants() const { return NFRConstants; }
-	ULatencyTracer* GetTracer() { return Tracer; }
+
+	UFUNCTION(BlueprintCallable, Category = "SpatialOS")
+	ULatencyTracer* GetOrCreateLatencyTracer();
+
 private:
 	using FPSTimePoint = TPair<int64, int64>; // Real, FrameDelta
 	int64 TickWindowTotal;
