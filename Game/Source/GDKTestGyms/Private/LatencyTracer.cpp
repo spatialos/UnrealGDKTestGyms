@@ -26,25 +26,6 @@ namespace LatencyTracerInternal
 	}
 }
 
-ULatencyTracer* ULatencyTracer::GetOrCreateLatencyTracer(UObject* WorldContextObject)
-{
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull);
-	if (World == nullptr)
-	{
-		World = GWorld;
-	}
-
-	if (UGDKTestGymsGameInstance* GameInstance = World->GetGameInstance<UGDKTestGymsGameInstance>())
-	{
-		if (GameInstance->GetTracer() != nullptr)
-		{
-			return GameInstance->GetTracer();
-		}
-	}
-	UE_LOG(LogLatencyTracer, Log, TEXT("Unable to get the game instance tracer object, creating a new one but results may not be as expected."));
-	return NewObject<ULatencyTracer>();
-}
-
 void ULatencyTracer::InitTracer()
 {
 	// TODO: Also remove references to TraceMetadata + LatencyGameMode metadata id (run id?)

@@ -28,8 +28,6 @@ void UGDKTestGymsGameInstance::Init()
 
 	OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
 
-	Tracer = NewObject<ULatencyTracer>(this);
-	Tracer->InitTracer();
 	// init metric provider & record start metric
 	TSharedPtr<IAnalyticsProvider> Provider = FAnalytics::Get().GetDefaultConfiguredProvider();
 	if (Provider.IsValid())
@@ -41,6 +39,15 @@ void UGDKTestGymsGameInstance::Init()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("StartSession: Failed to get the default analytics provider. Double check your [Analytics] configuration in your INI"));
 	}
+}
+ULatencyTracer* UGDKTestGymsGameInstance::GetOrCreateLatencyTracer()
+{
+	if (Tracer == nullptr)
+	{
+		Tracer = NewObject<ULatencyTracer>(this);
+		Tracer->InitTracer();
+	}
+	return Tracer;
 }
 
 void UGDKTestGymsGameInstance::Shutdown()
