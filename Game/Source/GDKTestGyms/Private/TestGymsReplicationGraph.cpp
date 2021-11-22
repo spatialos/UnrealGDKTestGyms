@@ -20,6 +20,8 @@
 #include "GameFramework/Pawn.h"
 #include "Engine/LevelScriptActor.h"
 
+#include "BenchmarkNPCCharacter.h"
+
 DEFINE_LOG_CATEGORY(LogTestGymsReplicationGraph);
 
 int32 CVar_TestGymsRepGraph_DisableSpatialRebuilds = 1;
@@ -34,6 +36,18 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	if (ReplicatedBP.Class != nullptr)
 	{
 		ReplicatedBPClass = ReplicatedBP.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<APlayerState> NonAlwaysRelevantPlayerStateBP(TEXT("/Game/Benchmark/Disco387PlayerState"));
+	if (NonAlwaysRelevantPlayerStateBP.Class != nullptr)
+	{
+		NonAlwaysRelevantPlayerStateClass = NonAlwaysRelevantPlayerStateBP.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<AActor> PlayerCharacterBP(TEXT("/Game/Characters/PlayerCharacter_BP"));
+	if (PlayerCharacterBP.Class != nullptr)
+	{
+		PlayerCharacterClass = PlayerCharacterBP.Class;
 	}
 }
 
@@ -92,21 +106,32 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 	const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
 
+	const USpatialGDKSettings* GDKSettings = GetDefault<USpatialGDKSettings>();
+	bCustomPerformanceScenario = GDKSettings->bRunStrategyWorker && GDKSettings->bUseClientEntityInterestQueries && GDKSettings->bUserSpaceServerInterest;
+
 	// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Programatically build the rules.
 	// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	auto AddInfo = [&](UClass* Class, EClassRepNodeMapping Mapping) { ClassRepNodePolicies.Set(Class, Mapping); };
 
-	AddInfo(APlayerState::StaticClass(), EClassRepNodeMapping::NotRouted);				// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
-	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);				// Not supported
-	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);	// Non spatialized, relevant to all
-	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);		// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+	AddInfo(APlayerState::StaticClass(), EClassRepNodeMapping::NotRouted);					// Special cased via UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter
+	AddInfo(AReplicationGraphDebugActor::StaticClass(), EClassRepNodeMapping::NotRouted);	// Not supported
+	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);			// Non spatialized, relevant to all
+	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);					// Add our replicated base class to ensure we don't miss out-of-memory bp classes
+
+	if (bCustomPerformanceScenario)
+	{
+		AddInfo(PlayerCharacterClass, EClassRepNodeMapping::NearestPlayers);
+		AddInfo(ABenchmarkNPCCharacter::StaticClass(), EClassRepNodeMapping::NearestPlayers);
+		AddInfo(NonAlwaysRelevantPlayerStateClass, EClassRepNodeMapping::NearestPlayerStates);
+	}
 
 	if (bUsingSpatial)
 	{
 		// Game mode is replicated in spatial, ensure it is always replicated
-		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);
+		AddInfo(AGameModeBase::StaticClass(), EClassRepNodeMapping::AlwaysReplicate);
+
 		// Add always replicated test actor. Use soft class path to work around module dependencies.
 		FSoftClassPath SoftActorClassPath(TEXT("Class'/Script/SpatialGDKFunctionalTests.ReplicatedTestActorBase_RepGraphAlwaysReplicate'"));
 		if (UClass* Class = SoftActorClassPath.ResolveClass())
@@ -226,6 +251,14 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	PlayerStateRepInfo.ActorChannelFrameTimeout = 0;
 	SetClassInfo(APlayerState::StaticClass(), PlayerStateRepInfo);
 
+	// Special case non-always relevant player state
+	if (NonAlwaysRelevantPlayerStateClass != nullptr)
+	{
+		FClassReplicationInfo ClassInfo;
+		InitClassReplicationInfo(ClassInfo, NonAlwaysRelevantPlayerStateClass, true, NetDriver->NetServerMaxTickRate);
+		GlobalActorReplicationInfoMap.SetClassInfo(NonAlwaysRelevantPlayerStateClass, ClassInfo);
+	}
+
 	UReplicationGraphNode_ActorListFrequencyBuckets::DefaultSettings.ListSize = 12;
 
 	// Set FClassReplicationInfo based on legacy settings from all replicated classes
@@ -308,19 +341,37 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	GridNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(GridNode);
 
+	if (bCustomPerformanceScenario)
+	{
+		// -----------------------------------------------
+		//	Nearest N replication. This will return the closest N of an actor group.
+		// -----------------------------------------------
+		NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
+		NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
+		AddGlobalGraphNode(NearestPlayerNode);
+		NearestPlayerNode->MaxNearestActors = 1024;
+
+		NearestPlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
+		NearestPlayerStateNode->SetProcessOnSpatialConnectionOnly();
+		AddGlobalGraphNode(NearestPlayerStateNode);
+		NearestPlayerStateNode->MaxNearestActors = 1024;
+	}
+	else
+	{
+		// -----------------------------------------------
+		//	Player State specialization. This will return a rolling subset of the player states to replicate
+		// -----------------------------------------------
+		UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter* PlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter>();
+		PlayerStateNode->SetProcessOnSpatialConnectionOnly();
+		AddGlobalGraphNode(PlayerStateNode);
+	}
+
 	// -----------------------------------------------
 	//	Always Relevant (to everyone) Actors
 	// -----------------------------------------------
 	AlwaysRelevantNode = CreateNewNode<UReplicationGraphNode_ActorList>();
 	AlwaysRelevantNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(AlwaysRelevantNode);
-
-	// -----------------------------------------------
-	//	Player State specialization. This will return a rolling subset of the player states to replicate
-	// -----------------------------------------------
-	UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter* PlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter>();
-	PlayerStateNode->SetProcessOnSpatialConnectionOnly();
-	AddGlobalGraphNode(PlayerStateNode);
 
 	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
@@ -395,6 +446,20 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		break;
 	}
 
+	case EClassRepNodeMapping::NearestPlayers:
+	{
+		ensure(bCustomPerformanceScenario);
+		NearestPlayerNode->NotifyAddNetworkActor(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::NearestPlayerStates:
+	{
+		ensure(bCustomPerformanceScenario);
+		NearestPlayerStateNode->NotifyAddNetworkActor(ActorInfo);
+		break;
+	}
+
 	case EClassRepNodeMapping::Spatialize_Static:
 	{
 		GridNode->AddActor_Static(ActorInfo, GlobalInfo);
@@ -454,6 +519,20 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 		break;
 	}
 
+	case EClassRepNodeMapping::NearestPlayers:
+	{
+		ensure(bCustomPerformanceScenario);
+		NearestPlayerNode->NotifyRemoveNetworkActor(ActorInfo);
+		break;
+	}
+
+	case EClassRepNodeMapping::NearestPlayerStates:
+	{
+		ensure(bCustomPerformanceScenario);
+		NearestPlayerStateNode->NotifyRemoveNetworkActor(ActorInfo);
+		break;
+	}
+
 	case EClassRepNodeMapping::Spatialize_Static:
 	{
 		GridNode->RemoveActor_Static(ActorInfo);
@@ -479,6 +558,45 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::ResetGameWorldState()
 {
 	AlwaysRelevantStreamingLevelsNeedingReplication.Empty();
+}
+
+void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	InterestedActorList.Reset();
+	for (const FNetViewer& CurViewer : Params.Viewers)
+	{
+		InterestedActorList.ConditionalAdd(CurViewer.InViewer);
+		InterestedActorList.ConditionalAdd(CurViewer.ViewTarget);
+		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
+		{
+			if (APlayerState* PS = PC->PlayerState)
+			{
+				InterestedActorList.ConditionalAdd(PS);
+			}
+		}
+	}
+
+	Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
+
+	UTestGymsReplicationGraph* TestGymsGraph = CastChecked<UTestGymsReplicationGraph>(GetOuter());
+	TMap<FName, FActorRepListRefView>& AlwaysRelevantStreamingLevelActors = TestGymsGraph->AlwaysRelevantStreamingLevelActors;
+
+	for (int32 Idx = AlwaysRelevantStreamingLevelsNeedingReplication.Num() - 1; Idx >= 0; --Idx)
+	{
+		const FName& StreamingLevel = AlwaysRelevantStreamingLevelsNeedingReplication[Idx];
+
+		FActorRepListRefView* Ptr = AlwaysRelevantStreamingLevelActors.Find(StreamingLevel);
+		if (Ptr == nullptr)
+		{
+			continue;
+		}
+
+		FActorRepListRefView& RepList = *Ptr;
+		if (RepList.Num() > 0)
+		{
+			Params.OutGatheredReplicationLists.AddReplicationActorList(RepList);
+		}
+	}
 }
 
 void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
@@ -669,6 +787,8 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 	CurrentList->PrepareForWrite();
 #endif
 
+	ClientInterestList.Reset();
+
 	// We rebuild our lists of player states each frame. This is not as efficient as it could be but its the simplest way
 	// to handle players disconnecting and keeping the lists compact. If the lists were persistent we would need to defrag them as players left.
 
@@ -690,6 +810,7 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 		}
 
 		CurrentList->Add(PS);
+		ClientInterestList.Add(PS);
 	}
 }
 
@@ -697,6 +818,16 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GatherActorLists
 {
 	const int32 ListIdx = Params.ReplicationFrameNum % ReplicationActorLists.Num();
 	Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorLists[ListIdx]);
+
+	if (ForceNetUpdateReplicationActorList.Num() > 0)
+	{
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ForceNetUpdateReplicationActorList);
+	}
+}
+
+void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	Params.OutGatheredReplicationLists.AddReplicationActorList(ClientInterestList);
 
 	if (ForceNetUpdateReplicationActorList.Num() > 0)
 	{
@@ -749,12 +880,122 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 	Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
 }
 
+void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	ReplicationActorList.Reset();
+
+	for (const FNetViewer& CurViewer : Params.Viewers)
+	{
+		if (CurViewer.InViewer)
+		{
+			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
+		}
+		if (CurViewer.ViewTarget)
+		{
+			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
+		}
+		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
+		{
+			if (ACharacter* Pawn = Cast<ACharacter>(PC->GetPawn()))
+			{
+				if (Pawn != CurViewer.ViewTarget)
+				{
+					ReplicationActorList.ConditionalAdd(Pawn);
+				}
+			}
+		}
+	}
+
+	Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+}
+
 void UTestGymsReplicationGraphNode_GlobalViewTarget::LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const
 {
 	DebugInfo.Log(NodeName);
 	DebugInfo.PushIndent();
 	LogActorRepList(DebugInfo, NodeName, ReplicationActorList);
 	DebugInfo.PopIndent();
+}
+
+
+void UTestGymsReplicationGraphNode_NearestActors::NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo)
+{
+	ReplicationActorList.Add(ActorInfo.Actor);
+}
+
+bool UTestGymsReplicationGraphNode_NearestActors::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound /*= true*/)
+{
+	bool bRemovedSomething = false;
+	bRemovedSomething = ReplicationActorList.RemoveFast(ActorInfo.Actor);
+	return bRemovedSomething;
+}
+
+void UTestGymsReplicationGraphNode_NearestActors::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
+{
+	// Return all actors for replication
+	if (ReplicationActorList.Num() > 0)
+	{
+		FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
+
+		// Cache actor location
+		for (FActorRepListType& Actor : ReplicationActorList)
+		{
+			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
+			const FVector Location3D = Actor->GetActorLocation();
+			ActorRepInfo.WorldLocation = Location3D;
+		}
+
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
+}
+
+void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params)
+{
+	// Return nearest MaxNearestActors for Interest
+	const int32 ActorCount = ReplicationActorList.Num();
+	constexpr float ActorNCD = 15000.f * 15000.f;
+	FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
+
+	if (ActorCount > MaxNearestActors)
+	{
+		SortedActors.Reset(ActorCount);
+
+		ensure(Params.Viewers.Num() == 1);	// Don't support multiple viewers for interest calculation
+		const FNetViewer& Viewer = Params.Viewers[0];
+
+		for (AActor* Actor : ReplicationActorList)
+		{
+			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
+
+			float DistanceToViewer = (Viewer.ViewLocation - ActorRepInfo.WorldLocation).SizeSquared();	// check for max size?
+
+			if (DistanceToViewer < ActorNCD)
+			{
+				SortedActors.Emplace(Actor, DistanceToViewer);
+			}
+		}
+
+		if (SortedActors.Num() > MaxNearestActors)
+		{
+			SortedActors.Sort();
+			SortedActors.SetNum(MaxNearestActors, false);
+		}
+
+		if (SortedActors.Num() > 0)
+		{
+			InterestedActorList.Reset(SortedActors.Num());
+			for (const FDistanceSortedActor& Item : SortedActors)
+			{
+				InterestedActorList.Add(Item.Actor);
+			}
+
+			Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
+		}
+	}
+	else if (ActorCount > 0)
+	{
+		Params.OutGatheredReplicationLists.AddReplicationActorList(ReplicationActorList);
+	}
 }
 
 // ------------------------------------------------------------------------------
@@ -808,3 +1049,22 @@ FAutoConsoleCommandWithWorldAndArgs ChangeFrequencyBucketsCmd(TEXT("TestGymsRepG
 		Node->SetNonStreamingCollectionSize(Buckets);
 	}
 }));
+
+FAutoConsoleCommandWithWorldAndArgs ChangeDensityCmd(TEXT("TestGymsRepGraph.AlterNearestN"), TEXT("Alters nearest actor density"),
+	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+{
+	int32 Density = -1;
+	if (Args.Num() > 0)
+	{
+		LexTryParseString<int32>(Density, *Args[0]);
+	}
+
+	if (Density >= 0)
+	{
+		for (TObjectIterator<UTestGymsReplicationGraphNode_NearestActors> It; It; ++It)
+		{
+			It->MaxNearestActors = Density;
+		}
+	}
+})
+);
