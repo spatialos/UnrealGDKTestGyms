@@ -87,6 +87,12 @@ protected:
 	void OnTotalNPCsUpdated(int32 Value);
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
 
+	UFUNCTION(BlueprintCallable)
+	float GetCubeRespawnBaseTime() const { return CubeRespawnBaseTime; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetCubeRespawnRandomRangeTime() const { return CubeRespawnRandomRangeTime; }
+
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
@@ -158,6 +164,8 @@ private:
 	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
+	float CubeRespawnBaseTime;
+	float CubeRespawnRandomRangeTime;
 
 #if	STATS
 	// For stat profile
@@ -241,6 +249,12 @@ private:
 
 	UFUNCTION()
 	void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnCubeRespawnBaseTimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnCubeRespawnRandomRangeTimeUpdate(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION()
 	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
