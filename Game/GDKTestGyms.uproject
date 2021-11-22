@@ -68,6 +68,10 @@
 			"Enabled": false
 		},
 		{
+			"Name": "MetricsServiceProvider",
+			"Enabled": true
+		},
+		{
 			"Name": "SpatialGDK",
 			"Enabled": true
 		}

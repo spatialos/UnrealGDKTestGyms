@@ -61,6 +61,10 @@ namespace
 	const FString MemReportFlag = TEXT("mem_report");
 	const FString MemRemportIntervalKey = TEXT("-MemReportInterval=");
 #endif
+	const FString MetricLeftLabel = TEXT("metric");
+	const FString MetricName = TEXT("improbable_engine_metrics");
+	const FString MetricEnginePlatformLeftLabel = TEXT("engine_platform");
+	const FString MetricEnginePlatformRightLabel = TEXT("UnrealWorker");
 
 	const bool bEnableDensityBucketOutput = false;
 
@@ -226,6 +230,7 @@ void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
 					}
 				},
 				FailActorCountTimeout, false);
+			GetMetrics(MetricLeftLabel, ActorCountValidMetricName, MetricName, &ABenchmarkGymGameModeBase::GetActorCountValid);
 		}
 	}
 }
@@ -479,6 +484,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 			// This log is used by the NFR pipeline to indicate if a client failed to connect
 			NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Client connection dropped. Required %d, got %d"), *NFRFailureString, RequiredPlayers, *ActorCount);
 		}
+		GetMetrics(MetricLeftLabel, ExpectedPlayersValidMetricName, MetricName, &ABenchmarkGymGameModeBase::GetRequiredPlayersValid);
 	}
 }
 
@@ -517,6 +523,8 @@ void ABenchmarkGymGameModeBase::TickServerFPSCheck(float DeltaSeconds)
 		bHasFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Server FPS check. FPS: %.8f"), *NFRFailureString, FPS);
 	}
+
+	GetMetrics(MetricLeftLabel, AverageFPSValid, MetricName, &ABenchmarkGymGameModeBase::GetFPSValid);
 }
 
 void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
@@ -551,6 +559,7 @@ void ABenchmarkGymGameModeBase::TickClientFPSCheck(float DeltaSeconds)
 		bHasClientFpsFailed = true;
 		NFR_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s: Client FPS check."), *NFRFailureString);
 	}
+	GetMetrics(MetricLeftLabel, AverageClientFPSValid, MetricName, &ABenchmarkGymGameModeBase::GetClientFPSValid);
 }
 
 void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
@@ -593,7 +602,9 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 	ClientUpdateTimeDeltaMS /= static_cast<float>(ValidUpdateTimeDeltaCount) + 0.00001f; // Avoid div 0
 
 	AveragedClientRTTMS = ClientRTTMS;
+	GetMetrics(MetricLeftLabel, AverageClientRTTMetricName, MetricName, &ABenchmarkGymGameModeBase::GetClientRTT);
 	AveragedClientUpdateTimeDeltaMS = ClientUpdateTimeDeltaMS;
+	GetMetrics(MetricLeftLabel, AverageClientUpdateTimeDeltaMetricName, MetricName, &ABenchmarkGymGameModeBase::GetClientUpdateTimeDelta);
 
 	const bool bUXMetricValid = AveragedClientRTTMS <= MaxClientRoundTripMS && AveragedClientUpdateTimeDeltaMS <= MaxClientUpdateTimeDeltaMS;
 	
@@ -771,11 +782,6 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 	for (auto const& Pair : ExpectedActorCounts)
 	{
 		const TSubclassOf<AActor>& ActorClass = Pair.Key;
-		if (!USpatialStatics::IsActorGroupOwnerForClass(World, ActorClass))
-		{
-			continue;
-		}
-
 		const FExpectedActorCountConfig& Config = Pair.Value;
 		if (Config.MinCount > 0)
 		{
@@ -987,6 +993,7 @@ void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 						TotalActorCount);
 				}
 			}
+			GetMetrics(MetricLeftLabel, ActorCountValidMetricName, MetricName, &ABenchmarkGymGameModeBase::GetActorCountValid);
 		}
 	}
 }
@@ -1045,6 +1052,7 @@ void ABenchmarkGymGameModeBase::CheckVelocityForPlayerMovement()
 		RecentPlayerAvgVelocity += Velocity;
 	}
 	RecentPlayerAvgVelocity /= (AvgVelocityHistory.Num() + 0.01f);
+	GetMetrics(MetricLeftLabel, PlayerMovementMetricName, MetricName, &ABenchmarkGymGameModeBase::GetPlayerMovement);
 
 	RequiredPlayerMovementCheckTimer.SetTimer(30);
 	
@@ -1200,4 +1208,14 @@ void ABenchmarkGymGameModeBase::OnMemReportFlagUpdate(const FString& FlagName, c
 #if	STATS
 	InitMemReportTimer(FlagValue);
 #endif
+}
+
+void ABenchmarkGymGameModeBase::GetMetrics(const FString& LeftLabel, const FString& RightLabel, const FString& MetricsName, ABenchmarkGymGameModeBase::FunctionPtrType Func)
+{
+	TSharedPtr<FPrometheusMetric> MetricsPtr = UMetricsBlueprintLibrary::GetMetric(MetricsName, TArray<FPrometheusLabel>{ TPair<FString, FString>(LeftLabel, RightLabel), TPair<FString,FString>(MetricEnginePlatformLeftLabel,MetricEnginePlatformRightLabel) });
+	if (MetricsPtr.IsValid())
+	{
+		auto Value = (this->*(Func))();
+		MetricsPtr->Set(Value);
+	}
 }

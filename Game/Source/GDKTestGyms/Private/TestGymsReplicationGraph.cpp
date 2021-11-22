@@ -11,6 +11,7 @@
 #include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 #include "Runtime/Launch/Resources/Version.h"
+#include "Misc/EngineVersionComparison.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/GameModeBase.h"
@@ -193,6 +194,10 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		{
 			AddInfo(Class, EClassRepNodeMapping::RelevantAllConnections);
 		}
+		else if (bUsingSpatial && ActorCDO->GetIsReplicated())
+		{
+			AddInfo(Class, EClassRepNodeMapping::AlwaysReplicate);
+		}
 		else
 		{
 			UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("Not adding info for class %s."), *GetLegacyDebugStr(ActorCDO));
@@ -279,11 +284,13 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 {
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 	// Preallocate some replication lists.
 	PreAllocateRepList(3, 12);
 	PreAllocateRepList(6, 12);
 	PreAllocateRepList(128, 64);
 	PreAllocateRepList(512, 16);
+#endif
 
 	// -----------------------------------------------
 	//	Spatial Actors
@@ -380,7 +387,9 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 		else
 		{
 			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 			RepList.PrepareForWrite();
+#endif
 			RepList.ConditionalAdd(ActorInfo.Actor);
 		}
 		break;
@@ -433,7 +442,11 @@ void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplica
 		else
 		{
 			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindChecked(ActorInfo.StreamingLevelName);
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 			if (RepList.Remove(ActorInfo.Actor) == false)
+#else
+			if (RepList.RemoveFast(ActorInfo.Actor) == false)
+#endif
 			{
 				UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("Actor %s was not found in AlwaysRelevantStreamingLevelActors list. LevelName: %s"), *GetActorRepListTypeDebugString(ActorInfo.Actor), *ActorInfo.StreamingLevelName.ToString());
 			}
@@ -652,7 +665,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 
 	ReplicationActorLists.AddDefaulted();
 	FActorRepListRefView* CurrentList = &ReplicationActorLists[0];
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 	CurrentList->PrepareForWrite();
+#endif
 
 	// We rebuild our lists of player states each frame. This is not as efficient as it could be but its the simplest way
 	// to handle players disconnecting and keeping the lists compact. If the lists were persistent we would need to defrag them as players left.
@@ -669,7 +684,9 @@ void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplic
 		{
 			ReplicationActorLists.AddDefaulted();
 			CurrentList = &ReplicationActorLists.Last();
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
 			CurrentList->PrepareForWrite();
+#endif
 		}
 
 		CurrentList->Add(PS);

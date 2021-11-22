@@ -136,16 +136,6 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   1. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   1. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
-##### Net reference test gym
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
-* This gym tests that references to replicated actors are stable when actors go in and out of relevance.
-* Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
-* Manual steps:
-  1. Cubes in a grid pattern hold references to their neighbours on replicated properties.
-  1. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
-  1. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
-  1. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
-
 ##### ReplicatedStartupActor gym
 * KNOWN ISSUE: The automated version of this test does not function: [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305)
 * NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
@@ -369,7 +359,7 @@ These test whether key trace events have the appropriate cause events. They can 
 
 ##### Multiworker World Composition gym
 * Tests that servers without authoritive player controllers are still able to replicate relevant actors.
-* Please note that when you run this test gym, you man notice the cubes moving discontinuously (that is, juddering or stuttering rather than moving smoothly). This is expected and should not be considered a defect. This occurs because, by default, with Replication Graph turned on, actors are only updated every third tick.
+* Please note that when you run this test gym, you may notice the cubes moving discontinuously (that is, juddering or stuttering rather than moving smoothly). This is expected and should not be considered a defect. This is a visual artefact likely caused by a framerate mismatch; the Gyms have a server tick rate of 30 FPS and the editor plays at 60 FPS by default. This juddering effect can be fixed by capping the client FPS by running the console command `t.MaxFPS 30`.
 * Manual steps:
   * Before booting the Unreal Editor, open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and uncomment the `ReplicationDriverClassName` option by deleing the `;`.
   * Boot the Unreal Editor.
@@ -483,7 +473,7 @@ The late connecing client has validated the local state before sending the "Pass
 * Testing : 
   * Press play.
   * Two clients should connect, at least one outside of the editor process.
-  * Controlled character should turn green after 2 sec.
+  * Controlled character should turn yellow after 2 sec.
   * If characters turn red, the test has failed.
   * If there is a red text reading : "ERROR : Material already loaded on client, test is invalid", check that this only happens on the client launched from within the editor
   * Clients connected from a separate process, or running the test from a fresh editor instance should not display this error message.

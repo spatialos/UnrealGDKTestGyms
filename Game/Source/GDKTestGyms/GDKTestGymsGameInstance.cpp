@@ -2,6 +2,8 @@
 
 #include "GDKTestGymsGameInstance.h"
 
+#include "Analytics.h"
+#include "Interfaces/IAnalyticsProvider.h"
 #include "Interop/Connection/SpatialConnectionManager.h"
 
 #include "NFRConstants.h"
@@ -11,6 +13,7 @@
 #include "GeneralProjectSettings.h"
 #include "EngineMinimal.h"
 #include "Engine/Engine.h"
+#include "LatencyTracer.h"
 
 void UGDKTestGymsGameInstance::Init()
 {
@@ -24,7 +27,38 @@ void UGDKTestGymsGameInstance::Init()
 	NFRConstants->InitWithWorld(GetWorld());
 
 	OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
+
+	Tracer = NewObject<ULatencyTracer>(this);
+	Tracer->InitTracer();
+	// init metric provider & record start metric
+	TSharedPtr<IAnalyticsProvider> Provider = FAnalytics::Get().GetDefaultConfiguredProvider();
+	if (Provider.IsValid())
+	{
+		Provider->RecordEvent(TEXT("MetricsServiceEditorLoaded"), TArray<FAnalyticsEventAttribute>());
+		Provider->StartSession();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StartSession: Failed to get the default analytics provider. Double check your [Analytics] configuration in your INI"));
+	}
 }
+
+void UGDKTestGymsGameInstance::Shutdown()
+{
+	// record shutdown metric
+	TSharedPtr<IAnalyticsProvider> Provider = FAnalytics::Get().GetDefaultConfiguredProvider();
+	if (Provider.IsValid())
+	{
+		Provider->RecordEvent(TEXT("MetricsServiceEditorClosed"), TArray<FAnalyticsEventAttribute>());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StopSession: Failed to get the default analytics provider. Double check your [Analytics] configuration in your INI"));
+	}
+	
+	Super::Shutdown();
+}
+
 
 void UGDKTestGymsGameInstance::SpatialConnected()
 {
