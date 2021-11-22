@@ -81,7 +81,8 @@ FString ABenchmarkGymGameModeBase::ReadFromCommandLineKey = TEXT("ReadFromComman
 ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	: ExpectedPlayers(0) // ExpectedPlayers is invalid until set via command line arg or worker flag.
 	, RequiredPlayers(4096)
-	, TotalNPCs(0) // ExpectedPlayers is invalid until set via command line arg or worker flag.
+	, TotalNPCs(0) // TotalNPCs is invalid until set via command line arg or worker flag.
+	, bLongFormScenario(false)
 	, NumWorkers(1)
 	, ZoningCols(1)
 	, ZoningRows(1)
@@ -99,11 +100,10 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, UXAuthActorCount(0)
 	, PrintMetricsTimer(10)
 	, TestLifetimeTimer(0)
-	, TickActorCountTimer(60) // 1-minutes to allow workers to get setup and the deployment to get into a stable state
 	, TimeSinceLastCheckedTotalActorCounts(0.0f)
 	, bHasRequiredPlayersCheckFailed(false)
-	, RequiredPlayerCheckTimer(11*60) // 1-minute later then RequiredPlayerReportTimer to make sure all the workers had reported their migration
-	, DeploymentValidTimer(16*60) // 16-minute window to check between
+	, RequiredPlayerCheckTimer(11*60) // all clients should have joined by this point
+	, DeploymentValidTimer(16*60) // finish RequiredPlayerCheckTimer time then, to allow workers to disconnect without failing test
 	, CurrentPlayerAvgVelocity(0.0f)
 	, RecentPlayerAvgVelocity(0.0f)
 	, RequiredPlayerMovementReportTimer(5 * 60)
@@ -146,6 +146,15 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	if (bEnableDensityBucketOutput && GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		OutputPlayerDensity();
+	}
+
+	if (bLongFormScenario)
+	{
+		// Extend timers to handle longer expected deployment lifetime (required for current long form disco performance test)
+		RequiredPlayerCheckTimer.SetTimer(17 * 60);
+		DeploymentValidTimer.SetTimer(38 * 60);
+		UNFRConstants* NFRConstants = const_cast<UNFRConstants*>(UNFRConstants::Get(GetWorld()));
+		NFRConstants->ActorCheckDelay.SetTimer(16*60);
 	}
 }
 

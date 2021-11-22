@@ -80,6 +80,9 @@ protected:
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<APawn> NPCClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game Mode")
+	bool bLongFormScenario;
+
 	virtual void BuildExpectedActorCounts();
 	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount);
 
