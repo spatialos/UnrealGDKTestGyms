@@ -614,7 +614,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	if (SpawnManager->GetNumSpawnPoints() == 0)
 	{
-		return Super::FindPlayerStart_Implementation(Player, IncomingName);
+		return nullptr;
 	}
 
 	if (Player == nullptr) // Work around for load balancing passing nullptr Player

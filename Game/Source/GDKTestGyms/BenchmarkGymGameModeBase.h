@@ -97,6 +97,7 @@ protected:
 	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
 	virtual void BeginPlay() override;
+	virtual void OnAuthorityLost() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
@@ -109,6 +110,9 @@ protected:
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
+
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportUserExperience(const FString& WorkerID, float RTTime, float UpdateTime);
 
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetZoningCols() const { return ZoningCols; }
@@ -127,8 +131,14 @@ private:
 	float ZoneWidth;
 	float ZoneHeight;
 
-	double AveragedClientRTTMS; // The stored average of all the client RTTs
-	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
+	struct UX
+	{
+		float RTT;
+		float UpdateTime;
+	};
+	TMap<FString, UX> LatestClientUXMap;	// <worker id, UX>
+	float AveragedClientRTTMS; // The stored average of all the client RTTs
+	float AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
 	int32 MaxClientRoundTripMS; // Maximum allowed roundtrip
 	int32 MaxClientUpdateTimeDeltaMS;
 	bool bHasUxFailed;
@@ -140,7 +150,6 @@ private:
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
-	FMetricTimer TickActorCountTimer;
 
 	UPROPERTY(ReplicatedUsing = OnActorCountReportIdx)
 	int32 ActorCountReportIdx;
