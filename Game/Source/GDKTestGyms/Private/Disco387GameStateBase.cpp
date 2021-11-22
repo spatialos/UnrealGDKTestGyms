@@ -17,9 +17,18 @@ void ADisco387GameStateBase::PostInitializeComponents()
 	if (USpatialGDKSettings* GDKSettings = GetMutableDefault<USpatialGDKSettings>())
 	{
 		GDKSettings->bEnableNetCullDistanceFrequency = false;
+		GDKSettings->bWorkerFlushAfterOutgoingNetworkOp = false;
+
+		GDKSettings->bUseClientEntityInterestQueries = true;
+		GDKSettings->bUseNarrowPhaseNCDInterestCulling = true;
+		GDKSettings->bUserSpaceServerInterest = true;
 
 		// Loudly output this information to help prevent tripping people up.
 		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("Explicit disco config overrides:"));
 		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bEnableNetCullDistanceFrequency is %s."), GDKSettings->bEnableNetCullDistanceFrequency ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bWorkerFlushAfterOutgoingNetworkOp is %s."), GDKSettings->bWorkerFlushAfterOutgoingNetworkOp ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bUseClientEntityInterestQueries is %s."), GDKSettings->bUseClientEntityInterestQueries ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bUseNarrowPhaseNCDInterestCulling is %s."), GDKSettings->bUseNarrowPhaseNCDInterestCulling ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogDisco387GameStateBase, Warning, TEXT("bUserSpaceServerInterest is %s."), GDKSettings->bUserSpaceServerInterest ? TEXT("enabled") : TEXT("disabled"));
 	}
 }
