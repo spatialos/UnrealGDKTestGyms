@@ -991,10 +991,8 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 	}
 }
 
-void ABenchmarkGymGameModeBase::PostInitializeComponents()
+void ABenchmarkGymGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
-	Super::PostInitializeComponents();
-
 	if (USpatialGDKSettings* GDKSettings = GetMutableDefault<USpatialGDKSettings>())
 	{
 		GDKSettings->bEnableNetCullDistanceFrequency = false;
@@ -1013,6 +1011,8 @@ void ABenchmarkGymGameModeBase::PostInitializeComponents()
 		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bUseNarrowPhaseNCDInterestCulling is %s."), GDKSettings->bUseNarrowPhaseNCDInterestCulling ? TEXT("enabled") : TEXT("disabled"));
 		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bUserSpaceServerInterest is %s."), GDKSettings->bUserSpaceServerInterest ? TEXT("enabled") : TEXT("disabled"));
 	}
+
+	Super::InitGame(MapName, Options, ErrorMessage);
 }
 
 void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
