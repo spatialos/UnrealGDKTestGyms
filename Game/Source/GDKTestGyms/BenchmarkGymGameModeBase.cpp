@@ -911,7 +911,9 @@ void ABenchmarkGymGameModeBase::ReportUserExperience_Implementation(const FStrin
 	AveragedClientRTTMS = 0.f;
 	AveragedClientUpdateTimeDeltaMS = 0.f;
 
-	for (auto& Entry : LatestClientUXMap)
+	// To extend this functionality to multi-worker, we store each server's averaged client UX metrics individually, and then iterate through
+	// each averaged value identifying the worst/max UX metric. We then check that worse averaged value against the failure threshold.
+	for (const auto& Entry : LatestClientUXMap)
 	{
 		AveragedClientRTTMS = FMath::Max(AveragedClientRTTMS, Entry.Value.RTT);
 		AveragedClientUpdateTimeDeltaMS = FMath::Max(AveragedClientUpdateTimeDeltaMS, Entry.Value.UpdateTime);

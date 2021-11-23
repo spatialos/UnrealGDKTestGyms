@@ -855,12 +855,12 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
-		if (CurViewer.InViewer)
+		if (CurViewer.InViewer != nullptr)
 		{
 			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
 		}
 
-		if (CurViewer.ViewTarget)
+		if (CurViewer.ViewTarget != nullptr)
 		{
 			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
 		}
@@ -886,11 +886,11 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherClientInterestedActor
 
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
-		if (CurViewer.InViewer)
+		if (CurViewer.InViewer != nullptr)
 		{
 			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
 		}
-		if (CurViewer.ViewTarget)
+		if (CurViewer.ViewTarget != nullptr)
 		{
 			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
 		}

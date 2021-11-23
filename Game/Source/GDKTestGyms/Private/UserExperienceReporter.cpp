@@ -10,7 +10,6 @@
 #include "UserExperienceComponent.h"
 #include "Interop/Connection/SpatialWorkerConnection.h"
 #include "Utils/SpatialMetrics.h"
-#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceReporter);
 
