@@ -991,6 +991,30 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(con
 	}
 }
 
+void ABenchmarkGymGameModeBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (USpatialGDKSettings* GDKSettings = GetMutableDefault<USpatialGDKSettings>())
+	{
+		GDKSettings->bEnableNetCullDistanceFrequency = false;
+		GDKSettings->bWorkerFlushAfterOutgoingNetworkOp = false;
+
+		GDKSettings->bRunStrategyWorker = true;
+		GDKSettings->bUseClientEntityInterestQueries = true;
+		GDKSettings->bUseNarrowPhaseNCDInterestCulling = true;
+		GDKSettings->bUserSpaceServerInterest = true;
+
+		// Loudly output this information to help prevent tripping people up.
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("Explicit disco config overrides:"));
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bEnableNetCullDistanceFrequency is %s."), GDKSettings->bEnableNetCullDistanceFrequency ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bWorkerFlushAfterOutgoingNetworkOp is %s."), GDKSettings->bWorkerFlushAfterOutgoingNetworkOp ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bUseClientEntityInterestQueries is %s."), GDKSettings->bUseClientEntityInterestQueries ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bUseNarrowPhaseNCDInterestCulling is %s."), GDKSettings->bUseNarrowPhaseNCDInterestCulling ? TEXT("enabled") : TEXT("disabled"));
+		UE_LOG(LogBenchmarkGymGameModeBase, Warning, TEXT("bUserSpaceServerInterest is %s."), GDKSettings->bUserSpaceServerInterest ? TEXT("enabled") : TEXT("disabled"));
+	}
+}
+
 void ABenchmarkGymGameModeBase::UpdateAndCheckTotalActorCounts()
 {
 	// Clear the failure timer as we are able to calculate actor count totals.
