@@ -19,6 +19,7 @@ void ADisco387GameStateBase::PostInitializeComponents()
 		GDKSettings->bEnableNetCullDistanceFrequency = false;
 		GDKSettings->bWorkerFlushAfterOutgoingNetworkOp = false;
 
+		GDKSettings->bRunStrategyWorker = true;
 		GDKSettings->bUseClientEntityInterestQueries = true;
 		GDKSettings->bUseNarrowPhaseNCDInterestCulling = true;
 		GDKSettings->bUserSpaceServerInterest = true;

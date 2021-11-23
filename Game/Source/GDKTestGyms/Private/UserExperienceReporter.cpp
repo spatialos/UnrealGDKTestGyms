@@ -100,7 +100,7 @@ void UUserExperienceReporter::ReportMetrics()
 				bFrameRateValid = false;
 				if (const USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GameInstance->GetWorld()->GetNetDriver()))
 				{
-					UE_LOG(LogTemp, Error, TEXT("Client %s failed with fps %f below min threshold %f"), *NetDriver->Connection->GetWorkerId(), GameInstance->GetAveragedFPS(), Constants->GetMinClientFPS());
+					NFR_LOG(LogTemp, Error, TEXT("Client %s failed with fps %f below min threshold %f"), *NetDriver->Connection->GetWorkerId(), GameInstance->GetAveragedFPS(), Constants->GetMinClientFPS());
 				}
 			}
 		}
