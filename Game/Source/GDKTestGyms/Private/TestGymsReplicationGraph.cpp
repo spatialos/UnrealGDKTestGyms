@@ -914,7 +914,13 @@ void UTestGymsReplicationGraphNode_NearestActors::NotifyAddNetworkActor(const FN
 
 bool UTestGymsReplicationGraphNode_NearestActors::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound /*= true*/)
 {
-	return ReplicationActorList.RemoveFast(ActorInfo.Actor);
+	bool bRemovedSomething = false;
+	bRemovedSomething = ReplicationActorList.RemoveFast(ActorInfo.Actor);
+	if (!bRemovedSomething && bWarnIfNotFound)
+	{
+		UE_LOG(LogTestGymsReplicationGraph, Warning, TEXT("Attempted to remove %s from list %s but it was not found."), *GetActorRepListTypeDebugString(ActorInfo.Actor), *GetFullName());
+	}
+	return bRemovedSomething;
 }
 
 void UTestGymsReplicationGraphNode_NearestActors::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
