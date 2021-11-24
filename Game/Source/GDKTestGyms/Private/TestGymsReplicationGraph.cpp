@@ -108,6 +108,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 
 	const USpatialGDKSettings* GDKSettings = GetDefault<USpatialGDKSettings>();
 	bCustomPerformanceScenario = GDKSettings->bRunStrategyWorker && GDKSettings->bUseClientEntityInterestQueries && GDKSettings->bUserSpaceServerInterest;
+	UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("TestGyms bCustomPerformanceScenario is %s"), bCustomPerformanceScenario ? TEXT("enabled") : TEXT("disabled"));
 
 	// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Programatically build the rules.
