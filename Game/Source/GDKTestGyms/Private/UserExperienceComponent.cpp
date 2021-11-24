@@ -28,6 +28,18 @@ void UUserExperienceComponent::InitializeComponent()
 	SetIsReplicated(true);
 }
 
+void UUserExperienceComponent::BeginDestroy()
+{
+	if (UWorld* World = GetWorld())
+	{
+		FTimerManager& TimerManager = World->GetTimerManager();
+		TimerManager.ClearTimer(RoundTripTimer);
+		TimerManager.ClearTimer(PositionCheckTimer);
+	}
+
+	Super::BeginDestroy();
+}
+
 void UUserExperienceComponent::StartRoundtrip()
 {
 	if (OpenRPCs.Contains(RequestKey))
@@ -78,11 +90,9 @@ void UUserExperienceComponent::OnClientOwnershipGained()
 {
 	Super::OnClientOwnershipGained();
 
-	FTimerHandle Timer;
-	GetWorld()->GetTimerManager().SetTimer(Timer, this, &UUserExperienceComponent::StartRoundtrip, 1.0f, true);
-
-	FTimerHandle PositionCheckTimer;
-	GetWorld()->GetTimerManager().SetTimer(PositionCheckTimer, this, &UUserExperienceComponent::CheckPosition, 10.0f, true, 10.0f);
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.SetTimer(RoundTripTimer, this, &UUserExperienceComponent::StartRoundtrip, 1.0f, true);
+	TimerManager.SetTimer(PositionCheckTimer, this, &UUserExperienceComponent::CheckPosition, 10.0f, true, 10.0f);
 	PreviousPos = GetOwner()->GetActorLocation();
 }
 

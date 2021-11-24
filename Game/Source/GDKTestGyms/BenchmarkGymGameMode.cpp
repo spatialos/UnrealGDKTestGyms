@@ -499,6 +499,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			PointA.Z = PointB.Z = 0.0f;
 			if (FVector::DistSquared2D(PointA, PointB) < MinDistanceSq)
 			{
+				// If points are too close, invert the VRand vector returned for A to ensure they're far apart.
 				PointA *= -1.f;
 			}
 			PlayerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
@@ -514,6 +515,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			PointA.Z = PointB.Z = 0.0f;
 			if (FVector::DistSquared2D(PointA, PointB) < MinDistanceSq)
 			{
+				// If points are too close, invert the VRand vector returned for A to ensure they're far apart.
 				PointA *= -1.f;
 			}
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
@@ -614,6 +616,7 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	if (SpawnManager->GetNumSpawnPoints() == 0)
 	{
+		// Don't allow non-auth servers to return a valid player start back to the spawner.
 		return nullptr;
 	}
 

@@ -855,15 +855,8 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherActorListsForConnecti
 
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
-		if (CurViewer.InViewer != nullptr)
-		{
-			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
-		}
-
-		if (CurViewer.ViewTarget != nullptr)
-		{
-			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
-		}
+		ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
+		ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
 
 		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
 		{
@@ -886,14 +879,9 @@ void UTestGymsReplicationGraphNode_GlobalViewTarget::GatherClientInterestedActor
 
 	for (const FNetViewer& CurViewer : Params.Viewers)
 	{
-		if (CurViewer.InViewer != nullptr)
-		{
-			ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
-		}
-		if (CurViewer.ViewTarget != nullptr)
-		{
-			ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
-		}
+		ReplicationActorList.ConditionalAdd(CurViewer.InViewer);
+		ReplicationActorList.ConditionalAdd(CurViewer.ViewTarget);
+
 		if (APlayerController* PC = Cast<APlayerController>(CurViewer.InViewer))
 		{
 			if (ACharacter* Pawn = Cast<ACharacter>(PC->GetPawn()))
@@ -925,9 +913,7 @@ void UTestGymsReplicationGraphNode_NearestActors::NotifyAddNetworkActor(const FN
 
 bool UTestGymsReplicationGraphNode_NearestActors::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound /*= true*/)
 {
-	bool bRemovedSomething = false;
-	bRemovedSomething = ReplicationActorList.RemoveFast(ActorInfo.Actor);
-	return bRemovedSomething;
+	return ReplicationActorList.RemoveFast(ActorInfo.Actor);
 }
 
 void UTestGymsReplicationGraphNode_NearestActors::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
@@ -938,7 +924,7 @@ void UTestGymsReplicationGraphNode_NearestActors::GatherActorListsForConnection(
 		FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
 
 		// Cache actor location
-		for (FActorRepListType& Actor : ReplicationActorList)
+		for (const FActorRepListType& Actor : ReplicationActorList)
 		{
 			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
 			const FVector Location3D = Actor->GetActorLocation();
@@ -967,7 +953,7 @@ void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(c
 		{
 			FGlobalActorReplicationInfo& ActorRepInfo = GlobalMap.Get(Actor);
 
-			float DistanceToViewer = (Viewer.ViewLocation - ActorRepInfo.WorldLocation).SizeSquared();	// check for max size?
+			const float DistanceToViewer = (Viewer.ViewLocation - ActorRepInfo.WorldLocation).SizeSquared();	// check for max size?
 
 			if (DistanceToViewer < ActorNCD)
 			{

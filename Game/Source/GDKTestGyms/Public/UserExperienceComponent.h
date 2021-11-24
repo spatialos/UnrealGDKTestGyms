@@ -38,6 +38,7 @@ public:
 	static constexpr int NumWindowSamples = 100;
 
 	virtual void InitializeComponent() override;
+	virtual void BeginDestroy() override;
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -49,6 +50,8 @@ public:
 
 	TArray<UpdateInfo> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
+	FTimerHandle RoundTripTimer;
+	FTimerHandle PositionCheckTimer;
 	
 	bool bHadClientTimeRep;
 

@@ -102,8 +102,8 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 	, TestLifetimeTimer(0)
 	, TimeSinceLastCheckedTotalActorCounts(0.0f)
 	, bHasRequiredPlayersCheckFailed(false)
-	, RequiredPlayerCheckTimer(11*60) // all clients should have joined by this point
-	, DeploymentValidTimer(16*60) // finish RequiredPlayerCheckTimer time then, to allow workers to disconnect without failing test
+	, RequiredPlayerCheckTimer(11*60) // all clients should have joined by this point (seconds)
+	, DeploymentValidTimer(16*60) // time to finish RequiredPlayerCheckTimer, to allow workers to disconnect without failing test (seconds)
 	, CurrentPlayerAvgVelocity(0.0f)
 	, RecentPlayerAvgVelocity(0.0f)
 	, RequiredPlayerMovementReportTimer(5 * 60)
@@ -160,10 +160,9 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 
 void ABenchmarkGymGameModeBase::OnAuthorityLost()
 {
-	// ABenchmarkGymGameModeBase doesn't support authority transfer
 	Super::OnAuthorityLost();
 
-	ensure(false);
+	ensureMsgf(false, TEXT("ABenchmarkGymGameModeBase doesn't support authority transfer"));
 }
 
 void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
