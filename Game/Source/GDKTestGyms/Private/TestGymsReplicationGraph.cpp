@@ -132,7 +132,7 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 		AddInfo(NonAlwaysRelevantPlayerStateClass, EClassRepNodeMapping::NearestPlayerStates);
 	}
 #else
-	ensure(!bCustomPerformanceScenario, TEXT("Due to blueprint versioning issues, performance scenario is only available on 4.27 or later."));
+	ensureMsgf(!bCustomPerformanceScenario, TEXT("Due to blueprint versioning restrictions, performance scenario is only available on 4.27 or later."));
 #endif
 
 	if (bUsingSpatial)
