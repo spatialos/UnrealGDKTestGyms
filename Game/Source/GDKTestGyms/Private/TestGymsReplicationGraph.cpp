@@ -38,6 +38,8 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 		ReplicatedBPClass = ReplicatedBP.Class;
 	}
 
+// These assets have been saved on 4.27, so don't attempt to load them in early UE versions
+#if UE_VERSION_NEWER_THAN(4, 27, -1)
 	static ConstructorHelpers::FClassFinder<APlayerState> NonAlwaysRelevantPlayerStateBP(TEXT("/Game/Benchmark/Disco387PlayerState"));
 	if (NonAlwaysRelevantPlayerStateBP.Class != nullptr)
 	{
@@ -49,6 +51,7 @@ UTestGymsReplicationGraph::UTestGymsReplicationGraph()
 	{
 		PlayerCharacterClass = PlayerCharacterBP.Class;
 	}
+#endif
 }
 
 void InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize, float ServerMaxTickRate)
@@ -121,12 +124,16 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 	AddInfo(AInfo::StaticClass(), EClassRepNodeMapping::RelevantAllConnections);			// Non spatialized, relevant to all
 	AddInfo(ReplicatedBPClass, EClassRepNodeMapping::Spatialize_Dynamic);					// Add our replicated base class to ensure we don't miss out-of-memory bp classes
 
+#if UE_VERSION_NEWER_THAN(4, 27, -1)
 	if (bCustomPerformanceScenario)
 	{
 		AddInfo(PlayerCharacterClass, EClassRepNodeMapping::NearestPlayers);
 		AddInfo(ABenchmarkNPCCharacter::StaticClass(), EClassRepNodeMapping::NearestPlayers);
 		AddInfo(NonAlwaysRelevantPlayerStateClass, EClassRepNodeMapping::NearestPlayerStates);
 	}
+#else
+	ensure(!bCustomPerformanceScenario, TEXT("Due to blueprint versioning issues, performance scenario is only available on 4.27 or later."));
+#endif
 
 	if (bUsingSpatial)
 	{
