@@ -14,8 +14,6 @@ AShutdownPreparationGameMode::AShutdownPreparationGameMode()
 #if UE_VERSION_NEWER_THAN(4, 27, -1)
 	static ConstructorHelpers::FClassFinder<AActor> PawnClassFinder(TEXT("/Game/Characters/PlayerCharacter_BP"));
 	DefaultPawnClass = PawnClassFinder.Class;
-#elif
-	DefaultPawnClass = APawn::StaticClass();
 #endif
 }
 
