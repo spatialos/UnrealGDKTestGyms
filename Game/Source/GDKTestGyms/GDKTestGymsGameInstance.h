@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
 #include "Containers/Ticker.h"
+#include "Misc/EngineVersionComparison.h"
 
 #include "GDKTestGymsGameInstance.generated.h"
 
@@ -49,7 +50,11 @@ private:
 	UFUNCTION()
 	void SpatialConnected();
 	FTickerDelegate TickDelegate;
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+	FDelegateHandle TickDelegateHandle;
+#else
 	FTSTicker::FDelegateHandle TickDelegateHandle;
+#endif
 
 	UPROPERTY()
 	UNFRConstants* NFRConstants;

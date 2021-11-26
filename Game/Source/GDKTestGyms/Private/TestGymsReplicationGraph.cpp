@@ -615,7 +615,11 @@ void UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorList
 
 	ReplicationActorList.Reset();
 
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+	auto ResetActorCullDistance = [&](AActor* ActorToSet, AActor*& LastActor) {
+#else
 	auto ResetActorCullDistance = [&](AActor* ActorToSet, TObjectPtr<AActor>& LastActor) {
+#endif
 
 		if (ActorToSet != LastActor)
 		{
