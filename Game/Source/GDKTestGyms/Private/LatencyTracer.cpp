@@ -3,7 +3,13 @@
 #include "LatencyTracer.h"
 
 #include "Engine/World.h"
+
+#include "EngineClasses/SpatialNetDriver.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 #include "SpatialGDKSettings.h"
+#include "Utils/SpatialStatics.h"
+
+#include "GDKTestGyms/GDKTestGymsGameInstance.h"
 
 DEFINE_LOG_CATEGORY(LogLatencyTracer);
 
