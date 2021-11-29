@@ -17,10 +17,10 @@ struct FActorDistribution
 	TSubclassOf<AActor> ActorClass;
 
 	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
-	int NumberToSpawn;
+	int NumberToSpawn = 0;
 
 	UPROPERTY(BlueprintReadOnly, EditInstanceOnly)
-	FVector LocalOffset;
+	FVector LocalOffset = FVector(EForceInit::ForceInit);
 
 	FActorDistribution() = default;
 };

@@ -23,7 +23,7 @@ public:
 	void ClientAuthServerMove_Implementation(const FVector_NetQuantize100& ClientLocation, const FVector_NetQuantize10& ClientVelocity, const uint32 PackedPitchYaw);
 	
 	bool bClientAuthMovement = false;
-	int32 ClientMoveFrequency = 10; // Send client position updates to server at this frequency
+	int32 ClientMoveFrequency = 30; // Send client position updates to server at this frequency
 	float LastMoveWorldTime = 0.f;
 
 	UPROPERTY()
