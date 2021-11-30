@@ -198,12 +198,13 @@ public:
 
 	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
 
-	int32 MaxNearestActors;
+	int32 MaxNearestFullActors;
 
 private:
 
 	FActorRepListRefView ReplicationActorList;
-	FActorRepListRefView InterestedActorList;
+	FActorRepListRefView InterestedFullActorList;
+	FActorRepListRefView InterestedLightweightActorList;
 
 	struct FDistanceSortedActor
 	{

@@ -357,12 +357,12 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 		NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
 		NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
 		AddGlobalGraphNode(NearestPlayerNode);
-		NearestPlayerNode->MaxNearestActors = 1024;
+		NearestPlayerNode->MaxNearestFullActors = 1024;
 
 		NearestPlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
 		NearestPlayerStateNode->SetProcessOnSpatialConnectionOnly();
 		AddGlobalGraphNode(NearestPlayerStateNode);
-		NearestPlayerStateNode->MaxNearestActors = 1024;
+		NearestPlayerStateNode->MaxNearestFullActors = 1024;
 	}
 	else
 	{
@@ -956,7 +956,7 @@ void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(c
 	constexpr float ActorNCD = 15000.f * 15000.f;
 	FGlobalActorReplicationInfoMap& GlobalMap = *GraphGlobals->GlobalActorReplicationInfoMap;
 
-	if (ActorCount > MaxNearestActors)
+	if (ActorCount > MaxNearestFullActors)
 	{
 		SortedActors.Reset(ActorCount);
 
@@ -975,21 +975,40 @@ void UTestGymsReplicationGraphNode_NearestActors::GatherClientInterestedActors(c
 			}
 		}
 
-		if (SortedActors.Num() > MaxNearestActors)
+		const int32 MaxLightweightActors = 100; // TODO: move somewhere, make configurable
+		const int32 MaxNearestTotalActors = MaxNearestFullActors + MaxLightweightActors;
+		if (SortedActors.Num() > MaxNearestFullActors)
 		{
 			SortedActors.Sort();
-			SortedActors.SetNum(MaxNearestActors, false);
+
+			if (SortedActors.Num() > MaxNearestTotalActors)
+			{
+				SortedActors.SetNum(MaxNearestTotalActors, false);
+			}
 		}
 
 		if (SortedActors.Num() > 0)
 		{
-			InterestedActorList.Reset(SortedActors.Num());
-			for (const FDistanceSortedActor& Item : SortedActors)
+			const int32 FullInterestActors = FMath::Min(SortedActors.Num(), MaxNearestFullActors);
+			const int32 LightweightInterestActors = SortedActors.Num() - FullInterestActors;
+
+			InterestedFullActorList.Reset(FullInterestActors);
+			for (int32 Index = 0; Index < FullInterestActors; Index++)
 			{
-				InterestedActorList.Add(Item.Actor);
+				InterestedFullActorList.Add(SortedActors[Index].Actor);
 			}
 
-			Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedActorList);
+			InterestedLightweightActorList.Reset(LightweightInterestActors);
+			for (int32 Index = FullInterestActors; Index < SortedActors.Num(); Index++)
+			{
+				InterestedLightweightActorList.Add(SortedActors[Index].Actor);
+			}
+
+			Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedFullActorList);
+			if (LightweightInterestActors > 0)
+			{
+				Params.OutGatheredReplicationLists.AddReplicationActorList(InterestedLightweightActorList, EActorRepListTypeFlags::Lightweight);
+			}
 		}
 	}
 	else if (ActorCount > 0)
@@ -1063,7 +1082,7 @@ FAutoConsoleCommandWithWorldAndArgs ChangeDensityCmd(TEXT("TestGymsRepGraph.Alte
 	{
 		for (TObjectIterator<UTestGymsReplicationGraphNode_NearestActors> It; It; ++It)
 		{
-			It->MaxNearestActors = Density;
+			It->MaxNearestFullActors = Density;
 		}
 	}
 })
