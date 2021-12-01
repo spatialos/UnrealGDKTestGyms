@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "NFRConstants.h"
 #include "EngineClasses/SpatialGameInstance.h"
+#include "NFRConstants.h"
 
+#include "Containers/Ticker.h"
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
-#include "Containers/Ticker.h"
 
 #include "GDKTestGymsGameInstance.generated.h"
 
@@ -20,6 +20,27 @@
 #endif
 
 class ULatencyTracer;
+
+UCLASS(Blueprintable)
+class AWorkingSetsActor : public AActor
+{
+	GENERATED_BODY()
+};
+
+UCLASS(Blueprintable)
+class AGDKPlayerController : public APlayerController
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(Server, Reliable)
+	void CallServerWorkingSetCommand(const TArray<FString>& Args);
+
+	UFUNCTION(Server, Reliable)
+	void CallServerLockingCommand(const TArray<FString>& Args);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContextObject = Context))
+	static int GetPieIndex(UObject* Context);
+};
 
 UCLASS()
 class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance

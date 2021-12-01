@@ -6,14 +6,164 @@
 #include "Interfaces/IAnalyticsProvider.h"
 #include "Interop/Connection/SpatialConnectionManager.h"
 
-#include "NFRConstants.h"
 #include "EngineClasses/SpatialNetDriver.h"
+#include "NFRConstants.h"
 #include "Utils/SpatialMetrics.h"
 
-#include "GeneralProjectSettings.h"
-#include "EngineMinimal.h"
+#include "Algo/Copy.h"
 #include "Engine/Engine.h"
+#include "EngineMinimal.h"
+#include "EngineUtils.h"
+#include "GeneralProjectSettings.h"
+#include "Interop/SpatialWorkingSetSubsystem.h"
 #include "LatencyTracer.h"
+
+static void ProcessLockingCommand(const TArray<FString>& Args, UWorld* World, FOutputDevice& OutputDevice)
+{
+	if (Args.Num() < 2)
+	{
+		OutputDevice.Log(TEXT("Not enough arguments"));
+		return;
+	}
+
+	if (World->GetNetMode() == ENetMode::NM_Client)
+	{
+		Cast<AGDKPlayerController>(World->GetFirstPlayerController())->CallServerLockingCommand(Args);
+		return;
+	}
+
+	const FString Command = Args[0];
+
+	TArray<AWorkingSetsActor*> Cubes;
+	Algo::Copy(TActorRange<AWorkingSetsActor>(World), Cubes);
+	Cubes.Sort([](const AWorkingSetsActor& Lhs, const AWorkingSetsActor& Rhs) {
+		return Lhs.GetActorLocation().Y < Rhs.GetActorLocation().Y;
+	});
+
+	auto GetActors = [&Args, &Cubes](const int32 IndicesStart) {
+		TArray<int> CubeIndices;
+		Algo::Transform(TArrayView<const FString>(Args.GetData() + IndicesStart, Args.Num() - IndicesStart), CubeIndices,
+						[](const FString& Str) {
+							return FCString::Atoi(*Str);
+						});
+
+		TArray<AActor*> Actors;
+		for (const int CubeIndex : CubeIndices)
+		{
+			Actors.Emplace(Cubes[CubeIndex]);
+		}
+		return Actors;
+	};
+
+	auto* LockingPolicy = Cast<USpatialNetDriver>(World->GetNetDriver())->LockingPolicy;
+	if (Command == TEXT("LOCK"))
+	{
+		auto LockToken = LockingPolicy->AcquireLock(GetActors(1)[0]);
+		OutputDevice.Logf(TEXT("Locked with %lld"), LockToken);
+	}
+	if (Command == TEXT("RELEASE"))
+	{
+		const int64 LockToken = FCString::Atoi64(*Args[1]);
+		static_assert(TAreTypesEqual<TRemoveConst<decltype(LockToken)>::Type(), TRemoveConst<ActorLockToken>::Type()>::Value,
+					  "LockToken should be read successfully");
+		OutputDevice.Logf(TEXT("Unlocking with %lld"), LockToken);
+		const bool bHasUnlocked = LockingPolicy->ReleaseLock(LockToken);
+		if (bHasUnlocked)
+		{
+			OutputDevice.Logf(TEXT("Success!"));
+		}
+		else
+		{
+			OutputDevice.Logf(ELogVerbosity::Warning, TEXT("Failure!"));
+		}
+	}
+}
+
+static void ProcessWorkingSetCommand(const TArray<FString>& Args, UWorld* World, FOutputDevice& OutputDevice)
+{
+	if (Args.Num() < 2)
+	{
+		OutputDevice.Log(TEXT("Not enough arguments"));
+		return;
+	}
+
+	if (World->GetNetMode() == ENetMode::NM_Client)
+	{
+		Cast<AGDKPlayerController>(World->GetFirstPlayerController())->CallServerWorkingSetCommand(Args);
+		return;
+	}
+
+	const FString Command = Args[0];
+
+	USpatialActorSetSubsystem* ActorSetSubsystem = World->GetGameInstance()->GetSubsystem<USpatialActorSetSubsystem>();
+
+	TArray<AWorkingSetsActor*> Cubes;
+	Algo::Copy(TActorRange<AWorkingSetsActor>(World), Cubes);
+	Cubes.Sort([](const AWorkingSetsActor& Lhs, const AWorkingSetsActor& Rhs) {
+		return Lhs.GetActorLocation().Y < Rhs.GetActorLocation().Y;
+	});
+
+	auto GetActors = [&Args, &Cubes](const int32 IndicesStart) {
+		TArray<int> CubeIndices;
+		Algo::Transform(TArrayView<const FString>(Args.GetData() + IndicesStart, Args.Num() - IndicesStart), CubeIndices,
+						[](const FString& Str) {
+							return FCString::Atoi(*Str);
+						});
+
+		TArray<AActor*> Actors;
+		for (const int CubeIndex : CubeIndices)
+		{
+			Actors.Emplace(Cubes[CubeIndex]);
+		}
+		return Actors;
+	};
+
+	if (Command == TEXT("ADD"))
+	{
+		auto Actors = GetActors(1);
+		ActorSetSubsystem->CreateActorSet(Actors[0], Actors, World);
+		return;
+	}
+	if (Command == TEXT("MODIFY"))
+	{
+		const Worker_EntityId_Key WorkingSetEntityId = FCString::Atoi(*Args[1]);
+
+		auto Actors = GetActors(2);
+
+		ActorSetSubsystem->ModifyActorSet({ WorkingSetEntityId }, Actors[0], Actors, World);
+
+		return;
+	}
+	if (Command == TEXT("DESTROY"))
+	{
+		const Worker_EntityId_Key WorkingSetEntityId = FCString::Atoi(*Args[1]);
+
+		ActorSetSubsystem->DisbandActorSet({ WorkingSetEntityId }, World);
+
+		return;
+	}
+}
+
+FAutoConsoleCommandWithWorldArgsAndOutputDevice WorkingSetDebugCommand(
+	TEXT("Spatial.Test.WorkingSets"), TEXT(""),
+	FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&ProcessWorkingSetCommand));
+FAutoConsoleCommandWithWorldArgsAndOutputDevice LockingDebugCommand(
+	TEXT("Spatial.Test.Locking"), TEXT(""), FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&ProcessLockingCommand));
+
+void AGDKPlayerController::CallServerWorkingSetCommand_Implementation(const TArray<FString>& Args)
+{
+	ProcessWorkingSetCommand(Args, GetWorld(), *GLog);
+}
+
+void AGDKPlayerController::CallServerLockingCommand_Implementation(const TArray<FString>& Args)
+{
+	ProcessLockingCommand(Args, GetWorld(), *GLog);
+}
+
+int AGDKPlayerController::GetPieIndex(UObject* Context)
+{
+	return GEngine->GetWorldContextFromWorld(Context->GetWorld())->PIEInstance;
+}
 
 void UGDKTestGymsGameInstance::Init()
 {
