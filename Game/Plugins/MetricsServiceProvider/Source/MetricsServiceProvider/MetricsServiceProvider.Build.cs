@@ -13,7 +13,7 @@ namespace UnrealBuildTool.Rules
 					"Core",
 					"CoreUObject",
 					"Engine",
-#if UE_5_0_OR_NEWER
+#if UE_5_0_OR_LATER
 					"HTTP",
 #else
 					"Http",
