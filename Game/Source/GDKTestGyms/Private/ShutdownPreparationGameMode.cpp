@@ -4,13 +4,17 @@
 #include "ShutdownPreparationGameMode.h"
 #include "EngineClasses/SpatialGameInstance.h"
 
+#include "Misc/EngineVersionComparison.h"
+
 DEFINE_LOG_CATEGORY(LogShutdownPreparationGameMode);
 
 AShutdownPreparationGameMode::AShutdownPreparationGameMode()
 	: Super()
 {
+#if UE_VERSION_NEWER_THAN(4, 27, -1)
 	static ConstructorHelpers::FClassFinder<AActor> PawnClassFinder(TEXT("/Game/Characters/PlayerCharacter_BP"));
 	DefaultPawnClass = PawnClassFinder.Class;
+#endif
 }
 
 void AShutdownPreparationGameMode::BeginPlay()

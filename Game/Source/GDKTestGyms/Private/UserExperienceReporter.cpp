@@ -3,10 +3,11 @@
 
 #include "UserExperienceReporter.h"
 
+#include "EngineClasses/SpatialNetDriver.h"
 #include "GDKTestGyms/GDKTestGymsGameInstance.h"
+#include "Interop/Connection/SpatialWorkerConnection.h"
 #include "NFRConstants.h"
 #include "Net/UnrealNetwork.h"
-#include "EngineClasses/SpatialNetDriver.h"
 #include "UserExperienceComponent.h"
 #include "Utils/SpatialMetrics.h"
 
@@ -96,6 +97,13 @@ void UUserExperienceReporter::ReportMetrics()
 			if (Constants->ClientFPSMetricDelay.HasTimerGoneOff() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
 			{
 				bFrameRateValid = false;
+				PhysicalWorkerName WorkerName = TEXT("Unset");
+				if (const USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GameInstance->GetWorld()->GetNetDriver()))
+				{
+					WorkerName = NetDriver->Connection->GetWorkerId();
+				}
+
+				NFR_LOG(LogTemp, Error, TEXT("Client %s failed with fps %f below min threshold %f"), *WorkerName, GameInstance->GetAveragedFPS(), Constants->GetMinClientFPS());
 			}
 		}
 		ServerReportedMetrics(RoundTripTimeMS, UpdateTimeDeltaMS, bFrameRateValid);
