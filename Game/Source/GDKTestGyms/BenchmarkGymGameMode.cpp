@@ -488,6 +488,7 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
 	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
 	const float RoamRadius = FMath::Sqrt(Pawn->NetCullDistanceSquared) / 2.0f;
+	const float MinDistanceSq = 500.f * 500.f;	// Move To threshold used in behaviour tree
 	{
 		FRandomStream PlayerStream;
 		PlayerStream.Initialize(FCrc::MemCrc32(&ExpectedPlayers, sizeof(ExpectedPlayers))); // Ensure we can do deterministic runs
@@ -496,6 +497,11 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			FVector PointA = PlayerStream.VRand()*RoamRadius;
 			FVector PointB = PlayerStream.VRand()*RoamRadius;
 			PointA.Z = PointB.Z = 0.0f;
+			if (FVector::DistSquared2D(PointA, PointB) < MinDistanceSq)
+			{
+				// If points are too close, invert the VRand vector returned for A to ensure they're far apart.
+				PointA *= -1.f;
+			}
 			PlayerRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
@@ -507,6 +513,11 @@ void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 			FVector PointA = NPCStream.VRand()*RoamRadius;
 			FVector PointB = NPCStream.VRand()*RoamRadius;
 			PointA.Z = PointB.Z = 0.0f;
+			if (FVector::DistSquared2D(PointA, PointB) < MinDistanceSq)
+			{
+				// If points are too close, invert the VRand vector returned for A to ensure they're far apart.
+				PointA *= -1.f;
+			}
 			NPCRunPoints.Emplace(FBlackboardValues{ PointA, PointB });
 		}
 	}
@@ -605,7 +616,8 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 {
 	if (SpawnManager->GetNumSpawnPoints() == 0)
 	{
-		return Super::FindPlayerStart_Implementation(Player, IncomingName);
+		// Don't allow non-auth servers to return a valid player start back to the spawner.
+		return nullptr;
 	}
 
 	if (Player == nullptr) // Work around for load balancing passing nullptr Player
@@ -613,18 +625,9 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 		return SpawnManager->GetSpawnPointActorByIndex(PlayersSpawned);
 	}
 
-	// Use custom spawning with density controls
-	const int32 PlayerUniqueID = Player->GetUniqueID();
-	AActor** SpawnPoint = PlayerIdToSpawnPointMap.Find(PlayerUniqueID);
-	if (SpawnPoint != nullptr)
-	{
-		return *SpawnPoint;
-	}
-
 	AActor* ChosenSpawnPoint = SpawnManager->GetSpawnPointActorByIndex(PlayersSpawned);
-	PlayerIdToSpawnPointMap.Add(PlayerUniqueID, ChosenSpawnPoint);
 
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayerUniqueID, *ChosenSpawnPoint->GetActorLocation().ToString());
+	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayersSpawned, *ChosenSpawnPoint->GetActorLocation().ToString());
 	
 	if (Player->GetIsSimulated())
 	{

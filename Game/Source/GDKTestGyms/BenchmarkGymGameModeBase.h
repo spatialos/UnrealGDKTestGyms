@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "UserExperienceReporter.h"
 #include "NFRConstants.h"
+#include "MetricsBlueprintLibrary.h"
 #include "BenchmarkGymGameModeBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
@@ -18,7 +19,11 @@ struct FActorCount
 {
 	GENERATED_BODY()
 
-	explicit FActorCount() {}
+	explicit FActorCount()
+		: ActorClass()
+		, Count()
+	{}
+
 	explicit FActorCount(const TSubclassOf<AActor>& InActorClass, int32 InCount)
 		: ActorClass(InActorClass)
 		, Count(InCount)
@@ -75,6 +80,9 @@ protected:
 	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = Classes)
 	TSubclassOf<APawn> NPCClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game Mode")
+	bool bLongFormScenario;
+
 	virtual void BuildExpectedActorCounts();
 	void AddExpectedActorCount(const TSubclassOf<AActor>& ActorClass, const int32 MinCount, const int32 MaxCount);
 
@@ -82,10 +90,17 @@ protected:
 	void OnTotalNPCsUpdated(int32 Value);
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) {};
 
+	UFUNCTION(BlueprintCallable)
+	float GetCubeRespawnBaseTime() const { return CubeRespawnBaseTime; }
+
+	UFUNCTION(BlueprintCallable)
+	float GetCubeRespawnRandomRangeTime() const { return CubeRespawnRandomRangeTime; }
+
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
 	virtual void BeginPlay() override;
+	virtual void OnAuthorityLost() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
@@ -98,6 +113,9 @@ protected:
 	// For sim player movement metrics
 	UFUNCTION(CrossServer, Reliable)
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
+
+	UFUNCTION(CrossServer, Reliable)
+	virtual void ReportUserExperience(const FString& WorkerID, float RTTime, float UpdateTime);
 
 	int32 GetNumWorkers() const { return NumWorkers; }
 	int32 GetZoningCols() const { return ZoningCols; }
@@ -116,8 +134,14 @@ private:
 	float ZoneWidth;
 	float ZoneHeight;
 
-	double AveragedClientRTTMS; // The stored average of all the client RTTs
-	double AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
+	struct UX
+	{
+		float RTT;
+		float UpdateTime;
+	};
+	TMap<FString, UX> LatestClientUXMap;	// <worker id, UX>
+	float AveragedClientRTTMS; // The stored average of all the client RTTs
+	float AveragedClientUpdateTimeDeltaMS; // The stored average of the client view delta.
 	int32 MaxClientRoundTripMS; // Maximum allowed roundtrip
 	int32 MaxClientUpdateTimeDeltaMS;
 	bool bHasUxFailed;
@@ -129,7 +153,6 @@ private:
 
 	FMetricTimer PrintMetricsTimer;
 	FMetricTimer TestLifetimeTimer;
-	FMetricTimer TickActorCountTimer;
 
 	UPROPERTY(ReplicatedUsing = OnActorCountReportIdx)
 	int32 ActorCountReportIdx;
@@ -153,6 +176,8 @@ private:
 	TArray<float> AvgVelocityHistory;	// Each check will push cur avg value into this queue, and cal avg value.
 	FMetricTimer RequiredPlayerMovementReportTimer;
 	FMetricTimer RequiredPlayerMovementCheckTimer;
+	float CubeRespawnBaseTime;
+	float CubeRespawnRandomRangeTime;
 
 #if	STATS
 	// For stat profile
@@ -238,8 +263,17 @@ private:
 	void OnTestLiftimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION()
+	void OnCubeRespawnBaseTimeFlagUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
+	void OnCubeRespawnRandomRangeTimeUpdate(const FString& FlagName, const FString& FlagValue);
+
+	UFUNCTION()
 	void OnStatProfileFlagUpdate(const FString& FlagName, const FString& FlagValue);
 
 	UFUNCTION()
 	void OnMemReportFlagUpdate(const FString& FlagName, const FString& FlagValue);
+	// Metrics
+	typedef double (ABenchmarkGymGameModeBase::* FunctionPtrType)(void) const;
+	void GetMetrics(const FString& LeftLabel, const FString& RightLabel, const FString& MetricsName, ABenchmarkGymGameModeBase::FunctionPtrType Func);
 };
