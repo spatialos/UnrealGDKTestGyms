@@ -462,7 +462,7 @@ The late connecing client has validated the local state before sending the "Pass
   * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
   * In the Unreal Editor Toolbar, click Stop when you're done.
   * Shut down the deployment if this doesn't happen automatically.
-* These tests can also be run in the cloud by deploying the `PlayerDisconnectGym` map and launching two clients.
+* These tests can also be run in the cloud by deploying the `SpatialPlayerDisconnectMap` map and launching two clients.
 
 ##### RPCTimeoutTestGym
 * Demonstrate that:
