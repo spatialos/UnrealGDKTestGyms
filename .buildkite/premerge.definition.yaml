@@ -2,6 +2,8 @@ agent_queue_id: trigger-pipelines
 description: TestGyms premerge (calls GDK premerge)
 github:
   default_branch: master
+  branch_configuration: []
+  pull_request_branch_filter_configuration: []
 teams:
 - name: Everyone
   permission: BUILD_AND_READ
