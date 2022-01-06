@@ -19,6 +19,8 @@
 #define NFR_LOG(...) 0
 #endif
 
+class ULatencyTracer;
+
 UCLASS()
 class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
 {
@@ -26,6 +28,7 @@ class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
 
 public:
 	virtual void Init() override;
+	virtual void Shutdown() override;
 
 	bool Tick(float DeltaSeconds);
 	virtual void OnStart() override;
@@ -33,6 +36,10 @@ public:
 	void NetworkFailureEventCallback(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
 	const UNFRConstants* GetNFRConstants() const { return NFRConstants; }
+
+	UFUNCTION(BlueprintCallable, Category = "SpatialOS")
+	ULatencyTracer* GetOrCreateLatencyTracer();
+
 private:
 	using FPSTimePoint = TPair<int64, int64>; // Real, FrameDelta
 	int64 TickWindowTotal;
@@ -46,6 +53,9 @@ private:
 
 	UPROPERTY()
 	UNFRConstants* NFRConstants;
+
+	UPROPERTY()
+	ULatencyTracer* Tracer;
 
 	float AverageFPS = 60.0f;
 	float SecondsSinceFPSLog = 10.0f;
