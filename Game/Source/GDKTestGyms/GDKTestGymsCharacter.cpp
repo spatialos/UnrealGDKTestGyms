@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "TestGymsCharacterMovementComp.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineClasses/SpatialNetDriver.h"
 
@@ -15,7 +16,7 @@
 // AGDKTestGymsCharacter
 
 AGDKTestGymsCharacter::AGDKTestGymsCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UTestGymsCharacterMovementComp>(ACharacter::CharacterMovementComponentName))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -53,6 +54,19 @@ AGDKTestGymsCharacter::AGDKTestGymsCharacter(const FObjectInitializer& ObjectIni
 void AGDKTestGymsCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AGDKTestGymsCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	TestGymsMovementComponent = Cast<UTestGymsCharacterMovementComp>(GetCharacterMovement());
+	TestGymsMovementComponent->bClientAuthMovement = bClientAuthMovement;
+}
+
+void AGDKTestGymsCharacter::ClientAuthServerMove_Implementation(const FVector_NetQuantize100& ClientLocation, const FVector_NetQuantize10& ClientVelocity, const uint32 PackedPitchYaw)
+{
+	TestGymsMovementComponent->ClientAuthServerMove_Implementation(ClientLocation, ClientVelocity, PackedPitchYaw);
 }
 
 //////////////////////////////////////////////////////////////////////////

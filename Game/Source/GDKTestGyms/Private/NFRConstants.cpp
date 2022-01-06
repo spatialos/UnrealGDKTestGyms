@@ -86,6 +86,17 @@ void UNFRConstants::InitWithWorld(const UWorld* World)
 		}
 	}
 	UE_LOG(LogNFRConstants, Log, TEXT("Min client FPS: %.8f."), MinClientFPS);
+
+	// Player Average Velocity
+	{
+		float OverrideMinPlayerAvgVelocity;
+		if (FParse::Value(FCommandLine::Get(), TEXT("MinPlayerAvgVelocity="), OverrideMinPlayerAvgVelocity))
+		{
+			MinPlayerAvgVelocity = OverrideMinPlayerAvgVelocity;
+		}
+	}
+	UE_LOG(LogNFRConstants, Log, TEXT("Min player average velocity: %f."), MinPlayerAvgVelocity);
+	
 	bIsInitialised = true;
 }
 
@@ -109,3 +120,10 @@ float UNFRConstants::GetMinClientFPS() const
 	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
 	return MinClientFPS;
 }
+
+float UNFRConstants::GetMinPlayerAvgVelocity() const
+{
+	checkf(bIsInitialised, TEXT("NFRConstants not initialised"));
+	return MinPlayerAvgVelocity;
+}
+

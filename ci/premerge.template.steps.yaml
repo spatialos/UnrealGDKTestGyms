@@ -1,0 +1,10 @@
+steps:
+  - label: "unreal-gdk-premerge"
+    trigger: "unrealgdk-premerge"
+    build:
+      branch: "GDK_BRANCH_PLACEHOLDER"
+      commit: "${GDK_COMMIT:-HEAD}"
+      message: "TestGyms ${BUILDKITE_BRANCH} ${BUILDKITE_MESSAGE}"
+      env:
+        TEST_REPO_BRANCH: "${BUILDKITE_BRANCH}"
+        ENGINE_NET_TEST: "true"

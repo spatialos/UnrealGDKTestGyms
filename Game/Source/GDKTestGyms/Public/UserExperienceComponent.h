@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #pragma once
 
@@ -38,6 +38,7 @@ public:
 	static constexpr int NumWindowSamples = 100;
 
 	virtual void InitializeComponent() override;
+	virtual void BeginDestroy() override;
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -49,11 +50,12 @@ public:
 
 	TArray<UpdateInfo> UpdateRate; // Frequency at which ClientTime is updated
 	TArray<float> RoundTripTime; // Client -> Server -> Client
+	FTimerHandle RoundTripTimer;
+	FTimerHandle PositionCheckTimer;
 	
 	bool bHadClientTimeRep;
 
-	UPROPERTY()
-	UUserExperienceReporter* Reporter;
+	TWeakObjectPtr<UUserExperienceReporter> Reporter;
 
 	UFUNCTION()
 	void OnRep_ClientTimeTicks(int64 DeltaTime);
@@ -61,9 +63,12 @@ public:
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
 	void OnClientOwnershipGained();
-	void RegisterReporter(UUserExperienceReporter* InReporter) { Reporter = InReporter; }
+	void RegisterReporter(TWeakObjectPtr< UUserExperienceReporter > InReporter) { Reporter = InReporter; }
 
 	float CalculateAverageUpdateTimeDelta() const;
+
+	void CheckPosition();
+	FVector PreviousPos;
 
 	UPROPERTY(replicated, ReplicatedUsing = OnRep_ClientTimeTicks)
 	int64 ClientTimeTicks; // Replicated from server

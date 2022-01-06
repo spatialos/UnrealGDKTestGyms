@@ -22,10 +22,12 @@ public class GDKTestGyms : ModuleRules
 				"Sockets",
 				"OnlineSubsystemUtils",
 				"PhysXVehicles",
+				"Slate",
 				"SpatialGDK",
 				"ReplicationGraph",
 				"AIModule",
-				"NavigationSystem"
+				"NavigationSystem",
+				"MetricsServiceProvider"
 			});
 	}
 }
