@@ -282,6 +282,8 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
   * Otherwise, a red text will be displayed, or other error messages.
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
+* Be sure to revert the setting change that you made:
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. **Enable** this option.
 
 ##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
@@ -375,7 +377,7 @@ Tests that snapshot reloading functions in local deloyments.<br>
 **Note:** This test uses the `HandoverGym` as it saves.<br>
 Manual steps:<br>
   1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Auto-stop local deployment`. Select `Never`.
-  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Play In Editor Settings > Delete dynamically spawned entities`. Uncheck this option.
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Delete dynamically spawned entities`. Uncheck this option.
   1. In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
   1. In the Unreal Editor Toolbar, click Play to launch one client.
   1. Stop the gym and note that the deployment is still running, as indicated by the state of the Stop Deployment button in the GDK Toolbar.
