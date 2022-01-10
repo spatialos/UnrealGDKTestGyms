@@ -7,7 +7,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
 
-#include "EngineClasses/SpatialGameInstance.h"
+//#include "EngineClasses/SpatialGameInstance.h"
 
 UTask_DelaySimulated::UTask_DelaySimulated(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

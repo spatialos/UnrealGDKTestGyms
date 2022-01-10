@@ -123,10 +123,10 @@ protected:
 	virtual void BuildExpectedActorCounts() override;
 
 	virtual void ReadCommandLineArgs(const FString& CommandLine) override;
-	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
-	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	//virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	//virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
 
-	virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics) override;
+	//virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics) override;
 
 	virtual void OnTotalNPCsUpdated_Implementation(int32 Value) override;
 
@@ -178,7 +178,7 @@ private:
 
 	double GetTotalMigrationValid() const { return !bHasActorMigrationCheckFailed ? 1.0 : 0.0; }
 
-	UFUNCTION(CrossServer, Reliable)
+	UFUNCTION()
 	virtual void ReportMigration(const FString& WorkerID, const float Migration);
 
 	// Worker flag update delegate functions

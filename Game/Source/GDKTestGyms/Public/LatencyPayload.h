@@ -21,9 +21,9 @@ struct FLatencyPayload
 	UPROPERTY()
 	TArray<uint8> Data;
 
-	void SetSpan(const FSpatialGDKSpanId& SpanId)
-	{
-		Data.SetNum(sizeof(FSpatialGDKSpanId));
-		memcpy(&Data[0], SpanId.GetConstId(), sizeof(FSpatialGDKSpanId));
-	}
+// 	void SetSpan(const FSpatialGDKSpanId& SpanId)
+// 	{
+// 		Data.SetNum(sizeof(FSpatialGDKSpanId));
+// 		memcpy(&Data[0], SpanId.GetConstId(), sizeof(FSpatialGDKSpanId));
+// 	}
 };

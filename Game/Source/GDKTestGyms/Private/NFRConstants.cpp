@@ -1,9 +1,9 @@
 #include "NFRConstants.h"
 
-#include "EngineClasses/SpatialNetDriver.h"
+//#include "EngineClasses/SpatialNetDriver.h"
 #include "EngineUtils.h"
 #include "GDKTestGyms/GDKTestGymsGameInstance.h"
-#include "Interop/SpatialWorkerFlags.h"
+//#include "Interop/SpatialWorkerFlags.h"
 
 DEFINE_LOG_CATEGORY(LogNFRConstants);
 
@@ -51,7 +51,7 @@ UNFRConstants::UNFRConstants()
 
 void UNFRConstants::InitWithWorld(const UWorld* World)
 {
-	USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
+	//USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
 	// Server fps
 	{
 		float OverrideMinServerFPS;
@@ -59,14 +59,14 @@ void UNFRConstants::InitWithWorld(const UWorld* World)
 		{
 			MinServerFPS = OverrideMinServerFPS;
 		}
-		else
-		{
-			FString MinServerFPSStr;
-			if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_server_fps"), MinServerFPSStr))
-			{
-				MinServerFPS = FCString::Atof(*MinServerFPSStr);
-			}
-		}
+// 		else
+// 		{
+// 			FString MinServerFPSStr;
+// 			if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_server_fps"), MinServerFPSStr))
+// 			{
+// 				MinServerFPS = FCString::Atof(*MinServerFPSStr);
+// 			}
+// 		}
 	}
 	UE_LOG(LogNFRConstants, Log, TEXT("Min server FPS: %.8f."), MinServerFPS);
 	// Client fps
@@ -76,14 +76,14 @@ void UNFRConstants::InitWithWorld(const UWorld* World)
 		{
 			MinClientFPS = OverrideMinClientFPS;
 		}
-		else
-		{
-			FString MinClientFPSStr;
-			if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_client_fps"), MinClientFPSStr))
-			{
-				MinClientFPS = FCString::Atof(*MinClientFPSStr);
-			}
-		}
+// 		else
+// 		{
+// 			FString MinClientFPSStr;
+// 			if (NetDriver != nullptr && NetDriver->SpatialWorkerFlags != nullptr && NetDriver->SpatialWorkerFlags->GetWorkerFlag(TEXT("min_client_fps"), MinClientFPSStr))
+// 			{
+// 				MinClientFPS = FCString::Atof(*MinClientFPSStr);
+// 			}
+// 		}
 	}
 	UE_LOG(LogNFRConstants, Log, TEXT("Min client FPS: %.8f."), MinClientFPS);
 

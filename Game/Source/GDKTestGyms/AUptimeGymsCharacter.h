@@ -6,7 +6,7 @@
 #include "GDKTestGymsCharacter.h"
 #include "AUptimeGymsCharacter.generated.h"
 
-UCLASS(config = Game, SpatialType)
+UCLASS(config = Game)
 class AUptimeGymsCharacter :
     public AGDKTestGymsCharacter
 {

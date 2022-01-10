@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "",
+	"EngineAssociation": "{A78ADE3E-4760-807B-8643-71A5F8380334}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -11,11 +11,6 @@
 			"AdditionalDependencies": [
 				"Engine"
 			]
-		},
-		{
-			"Name": "GDKTestGymsFunctionalTests",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -69,10 +64,6 @@
 		},
 		{
 			"Name": "MetricsServiceProvider",
-			"Enabled": true
-		},
-		{
-			"Name": "SpatialGDK",
 			"Enabled": true
 		}
 	]

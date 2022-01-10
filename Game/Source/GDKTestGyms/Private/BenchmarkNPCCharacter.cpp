@@ -2,14 +2,14 @@
 
 #include "BenchmarkNPCCharacter.h"
 
-void ABenchmarkNPCCharacter::OnAuthorityLost()
-{
-	Super::OnAuthorityLost();
-
-	if (Controller)
-	{
-		Controller->Destroy();
-	}
-}
+// void ABenchmarkNPCCharacter::OnAuthorityLost()
+// {
+// 	Super::OnAuthorityLost();
+// 
+// 	if (Controller)
+// 	{
+// 		Controller->Destroy();
+// 	}
+// }
 
 

@@ -14,7 +14,8 @@ void UDeterministicBlackboardValues::GetLifetimeReplicatedProps(TArray<FLifetime
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(ThisClass, BlackboardValues, COND_ServerOnly);
+	//DOREPLIFETIME_CONDITION(ThisClass, BlackboardValues, COND_ServerOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, BlackboardValues, COND_Never);
 }
 
 

@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 
-#include "EngineClasses/SpatialReplicationGraph.h"
+//#include "EngineClasses/SpatialReplicationGraph.h"
+#include "ReplicationGraph.h"
 
 #include "TestGymsReplicationGraph.generated.h"
 
@@ -34,7 +35,8 @@ enum class EClassRepNodeMapping : uint32
 
 /** TestGyms Replication Graph implementation. Based on UShooterReplicationGraph */
 UCLASS(Transient)
-class UTestGymsReplicationGraph : public USpatialReplicationGraph
+//class UTestGymsReplicationGraph : public USpatialReplicationGraph
+class UTestGymsReplicationGraph : public UReplicationGraph
 {
 	GENERATED_BODY()
 
@@ -109,7 +111,7 @@ public:
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
 
-	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params);
 
 	virtual void LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const override;
 
@@ -147,7 +149,7 @@ class UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter : public UReplic
 	virtual bool NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound=true) override { return false; }
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
-	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params);
 
 	virtual void PrepareForReplication() override;
 
@@ -171,7 +173,7 @@ class UTestGymsReplicationGraphNode_GlobalViewTarget : public UReplicationGraphN
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
 	
-	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params);
 
 	virtual void LogNode(FReplicationGraphDebugInfo& DebugInfo, const FString& NodeName) const override;
 
@@ -196,7 +198,7 @@ public:
 
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
 
-	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params) override;
+	virtual void GatherClientInterestedActors(const FConnectionGatherActorListParameters& Params);
 
 	int32 MaxNearestActors;
 

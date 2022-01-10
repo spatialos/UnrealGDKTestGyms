@@ -62,7 +62,7 @@ public:
 
 	void StartRoundtrip();
 	void EndRoundtrip(int32 Key); 
-	void OnClientOwnershipGained();
+	//void OnClientOwnershipGained();
 	void RegisterReporter(TWeakObjectPtr< UUserExperienceReporter > InReporter) { Reporter = InReporter; }
 
 	float CalculateAverageUpdateTimeDelta() const;

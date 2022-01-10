@@ -11,8 +11,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBenchmarkGymGameModeBase, Log, All);
 
-class USpatialWorkerFlags;
-class USpatialMetrics;
+//class USpatialWorkerFlags;
+//class USpatialMetrics;
 
 USTRUCT()
 struct FActorCount
@@ -96,25 +96,25 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	float GetCubeRespawnRandomRangeTime() const { return CubeRespawnRandomRangeTime; }
 
-	UFUNCTION(CrossServer, Reliable)
+	UFUNCTION()
 	virtual void ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts);
 
 	virtual void BeginPlay() override;
-	virtual void OnAuthorityLost() override;
+	//virtual void OnAuthorityLost() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-	virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics);
+	//virtual void AddSpatialMetrics(USpatialMetrics* SpatialMetrics);
 
 	virtual void ReadCommandLineArgs(const FString& CommandLine);
-	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags);
-	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags);
+	//virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags);
+	//virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags);
 
 	// For sim player movement metrics
-	UFUNCTION(CrossServer, Reliable)
+	UFUNCTION()
 	virtual void ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData);
 
-	UFUNCTION(CrossServer, Reliable)
+	UFUNCTION()
 	virtual void ReportUserExperience(const FString& WorkerID, float RTTime, float UpdateTime);
 
 	int32 GetNumWorkers() const { return NumWorkers; }

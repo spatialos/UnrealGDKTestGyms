@@ -7,19 +7,20 @@
 #include "BenchmarkGymNPCSpawner.h"
 #include "DeterministicBlackboardValues.h"
 #include "Engine/World.h"
-#include "EngineClasses/SpatialNetDriver.h"
+//#include "EngineClasses/SpatialNetDriver.h"
 #include "EngineUtils.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/DefaultPawn.h"
 #include "GameFramework/PlayerStart.h"
 #include "GeneralProjectSettings.h"
-#include "Interop/SpatialWorkerFlags.h"
+//#include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Crc.h"
 #include "NFRConstants.h"
-#include "Utils/SpatialMetrics.h"
-#include "Utils/SpatialStatics.h"
+//#include "Utils/SpatialMetrics.h"
+//#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameMode);
 
@@ -308,14 +309,15 @@ ABenchmarkGymGameMode::ABenchmarkGymGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
+	//const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
+	const APawn* Pawn = GetDefault<APawn>(ADefaultPawn::StaticClass());
 	DistBetweenClusters = FMath::Sqrt(Pawn->NetCullDistanceSquared) * 2.2f;
 }
 
 void ABenchmarkGymGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	bIsUsingZoning = USpatialStatics::IsSpatialNetworkingEnabled() && (GetZoningRows() > 1 || GetZoningCols() > 1);
+	//bIsUsingZoning = USpatialStatics::IsSpatialNetworkingEnabled() && (GetZoningRows() > 1 || GetZoningCols() > 1);
 	SpawnManager = NewObject<USpawnManager>(this);
 }
 
@@ -411,7 +413,7 @@ void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
 			{
 				// Only report AverageMigrationOfCurrentWorkerPerSecond to the worker which has authority
 				float AverageMigrationOfCurrentWorkerPerSecond = MigrationOfCurrentWorker / MigrationSeconds;
-				ReportMigration(GetGameInstance()->GetSpatialWorkerId(), AverageMigrationOfCurrentWorkerPerSecond);
+				//ReportMigration(GetGameInstance()->GetSpatialWorkerId(), AverageMigrationOfCurrentWorkerPerSecond);
 				ActorMigrationReportTimer.SetTimer(1);
 			}
 
@@ -441,27 +443,27 @@ void ABenchmarkGymGameMode::TickActorMigration(float DeltaSeconds)
 	}
 }
 
-void ABenchmarkGymGameMode::AddSpatialMetrics(USpatialMetrics* SpatialMetrics)
-{
-	Super::AddSpatialMetrics(SpatialMetrics);
+// void ABenchmarkGymGameMode::AddSpatialMetrics(USpatialMetrics* SpatialMetrics)
+// {
+// 	Super::AddSpatialMetrics(SpatialMetrics);
+// 
+// 	if (HasAuthority())
+// 	{
+// 		UserSuppliedMetric Delegate;
+// 		Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetTotalMigrationValid);
+// 		SpatialMetrics->SetCustomMetric(ActorMigrationValidMetricName, Delegate);
+// 	}
+// }
 
-	if (HasAuthority())
-	{
-		UserSuppliedMetric Delegate;
-		Delegate.BindUObject(this, &ABenchmarkGymGameMode::GetTotalMigrationValid);
-		SpatialMetrics->SetCustomMetric(ActorMigrationValidMetricName, Delegate);
-	}
-}
-
-void ABenchmarkGymGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
-{
-	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(PlayerDensityWorkerFlag, WorkerFlagDelegate);
-	}
-}
+// void ABenchmarkGymGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
+// {
+// 	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameMode::OnPlayerDensityFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(PlayerDensityWorkerFlag, WorkerFlagDelegate);
+// 	}
+// }
 
 void ABenchmarkGymGameMode::ReadCommandLineArgs(const FString& CommandLine)
 {
@@ -471,22 +473,23 @@ void ABenchmarkGymGameMode::ReadCommandLineArgs(const FString& CommandLine)
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("PlayersDensity %d"), PlayerDensity);
 }
 
-void ABenchmarkGymGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
-{
-	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
-
-	FString PlayerDensityString;
-	if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
-	{
-		PlayerDensity = FCString::Atoi(*PlayerDensityString);
-	}
-
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("PlayersDensity %d"), PlayerDensity);
-}
+// void ABenchmarkGymGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
+// {
+// 	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
+// 
+// 	FString PlayerDensityString;
+// 	if (SpatialWorkerFlags->GetWorkerFlag(PlayerDensityWorkerFlag, PlayerDensityString))
+// 	{
+// 		PlayerDensity = FCString::Atoi(*PlayerDensityString);
+// 	}
+// 
+// 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("PlayersDensity %d"), PlayerDensity);
+// }
 
 void ABenchmarkGymGameMode::GenerateTestScenarioLocations()
 {
-	const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
+	//const APawn* Pawn = GetDefault<APawn>(SimulatedPawnClass);
+	const APawn* Pawn = GetDefault<APawn>(ADefaultPawn::StaticClass());
 	const float RoamRadius = FMath::Sqrt(Pawn->NetCullDistanceSquared) / 2.0f;
 	const float MinDistanceSq = 500.f * 500.f;	// Move To threshold used in behaviour tree
 	{
@@ -594,17 +597,18 @@ bool ABenchmarkGymGameMode::SpawnNPC(const FVector& SpawnLocation, const FBlackb
 		NPCSpawner = Spawner;
 	}
 
-	if (NPCSpawner == nullptr || !NPCSpawner->IsActorReady())
-	{
-		UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Could not spawn NPC. Will retry."));
-		return false;
-	}
+	//if (NPCSpawner == nullptr || !NPCSpawner->IsActorReady())
+	//{
+	//	UE_LOG(LogBenchmarkGymGameMode, Warning, TEXT("Could not spawn NPC. Will retry."));
+	//	return false;
+	//}
 
 	NPCSpawner->CrossServerSpawn(NPCClass, SpawnLocation, BlackboardValues);
 	return true;
 }
 
-void ABenchmarkGymGameMode::ReportMigration_Implementation(const FString& WorkerID, const float Migration)
+//void ABenchmarkGymGameMode::ReportMigration_Implementation(const FString& WorkerID, const float Migration)
+void ABenchmarkGymGameMode::ReportMigration(const FString& WorkerID, const float Migration)
 {
 	if (HasAuthority())
 	{
@@ -629,10 +633,10 @@ AActor* ABenchmarkGymGameMode::FindPlayerStart_Implementation(AController* Playe
 
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("Spawning player %d at %s."), PlayersSpawned, *ChosenSpawnPoint->GetActorLocation().ToString());
 	
-	if (Player->GetIsSimulated())
-	{
-		AIControlledPlayers.Emplace(ControllerIntegerPair{ Player, PlayersSpawned });
-	}
+	//if (Player->GetIsSimulated())
+	//{
+	//	AIControlledPlayers.Emplace(ControllerIntegerPair{ Player, PlayersSpawned });
+	//}
 
 	PlayersSpawned++;
 

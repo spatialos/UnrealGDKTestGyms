@@ -3,7 +3,7 @@
 #pragma once
 
 #include "NFRConstants.h"
-#include "EngineClasses/SpatialGameInstance.h"
+//#include "EngineClasses/SpatialGameInstance.h"
 
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
@@ -22,7 +22,8 @@
 class ULatencyTracer;
 
 UCLASS()
-class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
+//class GDKTESTGYMS_API UGDKTestGymsGameInstance : public USpatialGameInstance
+class GDKTESTGYMS_API UGDKTestGymsGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 

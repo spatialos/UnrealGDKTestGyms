@@ -30,7 +30,7 @@ public:
 
 	void InitializeComponent() override;
 	 
-	void OnClientOwnershipGained() override;
+	//void OnClientOwnershipGained() override;
 	void ReportMetrics();
 
 	UFUNCTION(Server, Reliable)

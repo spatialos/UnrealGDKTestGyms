@@ -27,8 +27,8 @@ protected:
 	virtual void StartCustomNPCSpawning() override;
 
 	virtual void ReadCommandLineArgs(const FString& CommandLine) override;
-	virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
-	virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	//virtual void ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags) override;
+	//virtual void BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags) override;
 
 private:
 

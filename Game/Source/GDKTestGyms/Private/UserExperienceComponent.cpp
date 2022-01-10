@@ -5,8 +5,8 @@
 #include "UserExperienceReporter.h"
 
 #include "Net/UnrealNetwork.h"
-#include "EngineClasses/SpatialNetDriver.h"
-#include "Utils/SpatialMetrics.h"
+//#include "EngineClasses/SpatialNetDriver.h"
+//#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceComponent);
 
@@ -86,15 +86,15 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 	}
 }
 
-void UUserExperienceComponent::OnClientOwnershipGained()
-{
-	Super::OnClientOwnershipGained();
-
-	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-	TimerManager.SetTimer(RoundTripTimer, this, &UUserExperienceComponent::StartRoundtrip, 1.0f, true);
-	TimerManager.SetTimer(PositionCheckTimer, this, &UUserExperienceComponent::CheckPosition, 10.0f, true, 10.0f);
-	PreviousPos = GetOwner()->GetActorLocation();
-}
+// void UUserExperienceComponent::OnClientOwnershipGained()
+// {
+// 	Super::OnClientOwnershipGained();
+// 
+// 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+// 	TimerManager.SetTimer(RoundTripTimer, this, &UUserExperienceComponent::StartRoundtrip, 1.0f, true);
+// 	TimerManager.SetTimer(PositionCheckTimer, this, &UUserExperienceComponent::CheckPosition, 10.0f, true, 10.0f);
+// 	PreviousPos = GetOwner()->GetActorLocation();
+// }
 
 float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
 {

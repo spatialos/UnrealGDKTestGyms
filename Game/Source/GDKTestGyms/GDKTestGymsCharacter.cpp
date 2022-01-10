@@ -10,7 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "TestGymsCharacterMovementComp.h"
 #include "Kismet/GameplayStatics.h"
-#include "EngineClasses/SpatialNetDriver.h"
+//#include "EngineClasses/SpatialNetDriver.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AGDKTestGymsCharacter

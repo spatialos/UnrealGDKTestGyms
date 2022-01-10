@@ -22,7 +22,7 @@ public:
 
 	ABenchmarkGymNPCSpawner();
 
-	UFUNCTION(Reliable, CrossServer)
+	UFUNCTION()
 	void CrossServerSpawn(TSubclassOf<APawn> NPCClass, const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues);
 
 private:

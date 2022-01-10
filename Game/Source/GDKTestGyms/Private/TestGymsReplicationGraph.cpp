@@ -107,10 +107,12 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 {
 	Super::InitGlobalActorClassSettings();
 
-	const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	//const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	const bool bUsingSpatial = false;
 
-	const USpatialGDKSettings* GDKSettings = GetDefault<USpatialGDKSettings>();
-	bCustomPerformanceScenario = GDKSettings->bRunStrategyWorker && GDKSettings->bUseClientEntityInterestQueries && GDKSettings->bUserSpaceServerInterest;
+	//const USpatialGDKSettings* GDKSettings = GetDefault<USpatialGDKSettings>();
+	//bCustomPerformanceScenario = GDKSettings->bRunStrategyWorker && GDKSettings->bUseClientEntityInterestQueries && GDKSettings->bUserSpaceServerInterest;
+	bCustomPerformanceScenario = false;
 	UE_LOG(LogTestGymsReplicationGraph, Log, TEXT("TestGyms bCustomPerformanceScenario is %s"), bCustomPerformanceScenario ? TEXT("enabled") : TEXT("disabled"));
 
 	// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -171,11 +173,11 @@ void UTestGymsReplicationGraph::InitGlobalActorClassSettings()
 			continue;
 		}
 
-		if (bUsingSpatial && !Class->HasAnySpatialClassFlags(SPATIALCLASS_SpatialType))
-		{
+		//if (bUsingSpatial && !Class->HasAnySpatialClassFlags(SPATIALCLASS_SpatialType))
+		//{
 			// Anything not added to ClassRepNodePolicies will default to NotRouted
-			continue;
-		}
+		//	continue;
+		//}
 
 		// --------------------------------------------------------------------
 		// This is a replicated class. Save this off for the second pass below
@@ -346,7 +348,7 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 		GridNode->AddSpatialRebuildBlacklistClass(AActor::StaticClass()); // Disable All spatial rebuilding
 	}
 
-	GridNode->SetProcessOnSpatialConnectionOnly();
+	//GridNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(GridNode);
 
 	if (bCustomPerformanceScenario)
@@ -355,12 +357,12 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 		//	Nearest N replication. This will return the closest N of an actor group.
 		// -----------------------------------------------
 		NearestPlayerNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
-		NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
+		//NearestPlayerNode->SetProcessOnSpatialConnectionOnly();
 		AddGlobalGraphNode(NearestPlayerNode);
 		NearestPlayerNode->MaxNearestActors = 1024;
 
 		NearestPlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_NearestActors>();
-		NearestPlayerStateNode->SetProcessOnSpatialConnectionOnly();
+		//NearestPlayerStateNode->SetProcessOnSpatialConnectionOnly();
 		AddGlobalGraphNode(NearestPlayerStateNode);
 		NearestPlayerStateNode->MaxNearestActors = 1024;
 	}
@@ -370,7 +372,7 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 		//	Player State specialization. This will return a rolling subset of the player states to replicate
 		// -----------------------------------------------
 		UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter* PlayerStateNode = CreateNewNode<UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter>();
-		PlayerStateNode->SetProcessOnSpatialConnectionOnly();
+		//PlayerStateNode->SetProcessOnSpatialConnectionOnly();
 		AddGlobalGraphNode(PlayerStateNode);
 	}
 
@@ -378,29 +380,29 @@ void UTestGymsReplicationGraph::InitGlobalGraphNodes()
 	//	Always Relevant (to everyone) Actors
 	// -----------------------------------------------
 	AlwaysRelevantNode = CreateNewNode<UReplicationGraphNode_ActorList>();
-	AlwaysRelevantNode->SetProcessOnSpatialConnectionOnly();
+	//AlwaysRelevantNode->SetProcessOnSpatialConnectionOnly();
 	AddGlobalGraphNode(AlwaysRelevantNode);
 
-	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-	{
-		// -----------------------------------------------
-		//	Ensure every connections view/target gets replicated each frame. This is handled per connection in native in UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection
-		// -----------------------------------------------
-		UTestGymsReplicationGraphNode_GlobalViewTarget* ViewTargetNode = CreateNewNode<UTestGymsReplicationGraphNode_GlobalViewTarget>();
-		ViewTargetNode->SetProcessOnSpatialConnectionOnly();
-		AddGlobalGraphNode(ViewTargetNode);
-	}
+// 	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+// 	{
+// 		// -----------------------------------------------
+// 		//	Ensure every connections view/target gets replicated each frame. This is handled per connection in native in UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection
+// 		// -----------------------------------------------
+// 		UTestGymsReplicationGraphNode_GlobalViewTarget* ViewTargetNode = CreateNewNode<UTestGymsReplicationGraphNode_GlobalViewTarget>();
+// 		//ViewTargetNode->SetProcessOnSpatialConnectionOnly();
+// 		AddGlobalGraphNode(ViewTargetNode);
+// 	}
 }
 
 void UTestGymsReplicationGraph::InitConnectionGraphNodes(UNetReplicationGraphConnection* RepGraphConnection)
 {
 	Super::InitConnectionGraphNodes(RepGraphConnection);
 
-	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-	{
+	//if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	//{
 		// We don't need a per-connection always relevancy node in spatial
-		return;
-	}
+		//return;
+	//}
 
 	UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection* AlwaysRelevantConnectionNode = CreateNewNode<UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection>();
 
@@ -420,7 +422,8 @@ EClassRepNodeMapping UTestGymsReplicationGraph::GetMappingPolicy(UClass* Class)
 
 void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicatedActorInfo& ActorInfo, FGlobalActorReplicationInfo& GlobalInfo)
 {
-	const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	//const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	const bool bUsingSpatial = false;
 	EClassRepNodeMapping Policy = GetMappingPolicy(ActorInfo.Class);
 	switch (Policy)
 	{
@@ -490,7 +493,8 @@ void UTestGymsReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicated
 
 void UTestGymsReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplicatedActorInfo& ActorInfo)
 {
-	const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	//const bool bUsingSpatial = GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking();
+	const bool bUsingSpatial = false;
 	EClassRepNodeMapping Policy = GetMappingPolicy(ActorInfo.Class);
 	switch (Policy)
 	{
@@ -774,12 +778,12 @@ UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::UTestGymsReplicationG
 {
 	bRequiresPrepareForReplicationCall = true;
 
-	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-	{
-		// Increase number of player states we replicate per frame when running in Spatial as we don't get the benefit of
-		// UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection ensuring that the owning connection's PlayerState is replicated every frame
-		TargetActorsPerFrame = 16;
-	}
+// 	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+// 	{
+// 		// Increase number of player states we replicate per frame when running in Spatial as we don't get the benefit of
+// 		// UTestGymsReplicationGraphNode_AlwaysRelevant_ForConnection ensuring that the owning connection's PlayerState is replicated every frame
+// 		TargetActorsPerFrame = 16;
+// 	}
 }
 
 void UTestGymsReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplication()

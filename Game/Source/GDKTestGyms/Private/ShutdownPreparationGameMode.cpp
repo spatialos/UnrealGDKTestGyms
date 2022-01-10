@@ -2,7 +2,7 @@
 
 
 #include "ShutdownPreparationGameMode.h"
-#include "EngineClasses/SpatialGameInstance.h"
+//#include "EngineClasses/SpatialGameInstance.h"
 
 #include "Misc/EngineVersionComparison.h"
 
@@ -21,8 +21,8 @@ void AShutdownPreparationGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	USpatialGameInstance* GameInstance = GetGameInstance<USpatialGameInstance>();
-	GameInstance->OnPrepareShutdown.AddDynamic(this, &AShutdownPreparationGameMode::HandleOnPrepareShutdown);
+	//USpatialGameInstance* GameInstance = GetGameInstance<USpatialGameInstance>();
+	//GameInstance->OnPrepareShutdown.AddDynamic(this, &AShutdownPreparationGameMode::HandleOnPrepareShutdown);
 }
 
 void AShutdownPreparationGameMode::HandleOnPrepareShutdown()
@@ -48,11 +48,11 @@ void AShutdownPreparationGameMode::PreLogin(const FString& Options, const FStrin
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 	if (ErrorMessage.IsEmpty())
 	{
-		USpatialGameInstance* GameInstance = GetGameInstance<USpatialGameInstance>();
-		if (GameInstance->IsPreparingForShutdown())
-		{
-			ErrorMessage = TEXT("preparing_for_shutdown");
-			return;
-		}
+// 		USpatialGameInstance* GameInstance = GetGameInstance<USpatialGameInstance>();
+// 		if (GameInstance->IsPreparingForShutdown())
+// 		{
+// 			ErrorMessage = TEXT("preparing_for_shutdown");
+// 			return;
+// 		}
 	}
 }

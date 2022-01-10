@@ -3,7 +3,7 @@
 #include "AUptimeGameMode.h"
 
 #include "Engine/World.h"
-#include "Interop/SpatialWorkerFlags.h"
+//#include "Interop/SpatialWorkerFlags.h"
 
 DEFINE_LOG_CATEGORY(LogUptimeGymGameMode);
 
@@ -32,30 +32,30 @@ AUptimeGameMode::AUptimeGameMode()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AUptimeGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
-{
-	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnEgressSizeFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(EgressSizeWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnEgressFrequencyFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(EgressFrequencyWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnCrossServerSizeFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CrossServerSizeWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnCrossServerFrequencyFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CrossServerFrequencyCommandLineKey, WorkerFlagDelegate);
-	}
-}
+// void AUptimeGameMode::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
+// {
+// 	Super::BindWorkerFlagDelegates(SpatialWorkerFlags);
+//  	{
+//  		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+//  		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnEgressSizeFlagUpdate);
+//  		SpatialWorkerFlags->RegisterFlagUpdatedCallback(EgressSizeWorkerFlag, WorkerFlagDelegate);
+//  	}
+//  	{
+//  		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+//  		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnEgressFrequencyFlagUpdate);
+//  		SpatialWorkerFlags->RegisterFlagUpdatedCallback(EgressFrequencyWorkerFlag, WorkerFlagDelegate);
+//  	}
+//  	{
+//  		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+//  		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnCrossServerSizeFlagUpdate);
+//  		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CrossServerSizeWorkerFlag, WorkerFlagDelegate);
+//  	}
+//  	{
+//  		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+//  		WorkerFlagDelegate.BindDynamic(this, &AUptimeGameMode::OnCrossServerFrequencyFlagUpdate);
+//  		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CrossServerFrequencyCommandLineKey, WorkerFlagDelegate);
+//  	}
+// }
 
 void AUptimeGameMode::ReadCommandLineArgs(const FString& CommandLine)
 {
@@ -68,33 +68,33 @@ void AUptimeGameMode::ReadCommandLineArgs(const FString& CommandLine)
 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("EgressSize %d, EgressFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), EgressSize, EgressFrequency, CrossServerSize, CrossServerFrequency);
 }
 
-void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
-{
-	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
-	FString EgressSizeString, EgressFrequencyString, CrossServerSizeString, CrossServerFrequencyString;
-
-	if (SpatialWorkerFlags->GetWorkerFlag(EgressSizeWorkerFlag, EgressSizeString))
-	{
-		EgressSize = FCString::Atoi(*EgressSizeString);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(EgressFrequencyWorkerFlag, EgressFrequencyString))
-	{
-		EgressFrequency = FCString::Atoi(*EgressFrequencyString);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(CrossServerSizeWorkerFlag, CrossServerSizeString))
-	{
-		CrossServerSize = FCString::Atoi(*CrossServerSizeString);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(CrossServerFrequencyCommandLineKey, CrossServerFrequencyString))
-	{
-		CrossServerFrequency = FCString::Atoi(*CrossServerFrequencyString);
-	}
-
-	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("EgressSize %d, EgressFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), EgressSize, EgressFrequency, CrossServerSize, CrossServerFrequency);
-}
+// void AUptimeGameMode::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
+// {
+// 	Super::ReadWorkerFlagValues(SpatialWorkerFlags);
+// 	FString EgressSizeString, EgressFrequencyString, CrossServerSizeString, CrossServerFrequencyString;
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(EgressSizeWorkerFlag, EgressSizeString))
+// 	{
+// 		EgressSize = FCString::Atoi(*EgressSizeString);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(EgressFrequencyWorkerFlag, EgressFrequencyString))
+// 	{
+// 		EgressFrequency = FCString::Atoi(*EgressFrequencyString);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(CrossServerSizeWorkerFlag, CrossServerSizeString))
+// 	{
+// 		CrossServerSize = FCString::Atoi(*CrossServerSizeString);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(CrossServerFrequencyCommandLineKey, CrossServerFrequencyString))
+// 	{
+// 		CrossServerFrequency = FCString::Atoi(*CrossServerFrequencyString);
+// 	}
+// 
+// 	UE_LOG(LogBenchmarkGymGameMode, Log, TEXT("EgressSize %d, EgressFrequency %d, CrossServerSize %d, CrossServerFrequency %d"), EgressSize, EgressFrequency, CrossServerSize, CrossServerFrequency);
+// }
 
 void AUptimeGameMode::StartCustomNPCSpawning()
 {

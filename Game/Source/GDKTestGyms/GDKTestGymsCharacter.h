@@ -8,7 +8,7 @@
 
 class UTestGymsCharacterMovementComp;
 
-UCLASS(config=Game, SpatialType)
+UCLASS(config=Game)
 class AGDKTestGymsCharacter : public ACharacter
 {
 	GENERATED_BODY()

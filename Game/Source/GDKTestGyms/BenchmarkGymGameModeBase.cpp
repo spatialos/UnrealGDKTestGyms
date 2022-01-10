@@ -3,27 +3,28 @@
 #include "BenchmarkGymGameModeBase.h"
 
 #include "Engine/World.h"
-#include "EngineClasses/SpatialActorChannel.h"
-#include "EngineClasses/SpatialNetDriver.h"
-#include "EngineClasses/SpatialPackageMapClient.h"
+//#include "EngineClasses/SpatialActorChannel.h"
+//#include "EngineClasses/SpatialNetDriver.h"
+//#include "EngineClasses/SpatialPackageMapClient.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/MovementComponent.h"
 #include "GDKTestGymsGameInstance.h"
 #include "GeneralProjectSettings.h"
-#include "Interop/Connection/SpatialWorkerConnection.h"
-#include "Interop/SpatialWorkerFlags.h"
+//#include "Interop/Connection/SpatialWorkerConnection.h"
+//#include "Interop/SpatialWorkerFlags.h"
 #include "Kismet/GameplayStatics.h"
-#include "LoadBalancing/SpatialMultiWorkerSettings.h"
-#include "LoadBalancing/GridBasedLBStrategy.h"
+//#include "LoadBalancing/SpatialMultiWorkerSettings.h"
+//#include "LoadBalancing/GridBasedLBStrategy.h"
 #include "Misc/CommandLine.h"
 #include "Net/UnrealNetwork.h"
-#include "SpatialConstants.h"
-#include "SpatialView/EntityView.h"
+//#include "SpatialConstants.h"
+//#include "SpatialView/EntityView.h"
 #include "TimerManager.h"
 #include "UserExperienceComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Utils/SpatialMetrics.h"
-#include "Utils/SpatialStatics.h"
+#include "GameFramework/DefaultPawn.h"
+//#include "Utils/SpatialMetrics.h"
+//#include "Utils/SpatialStatics.h"
 
 DEFINE_LOG_CATEGORY(LogBenchmarkGymGameModeBase);
 
@@ -118,10 +119,10 @@ ABenchmarkGymGameModeBase::ABenchmarkGymGameModeBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	if (USpatialStatics::IsSpatialNetworkingEnabled())
-	{
-		bAlwaysRelevant = true;
-	}
+	//if (USpatialStatics::IsSpatialNetworkingEnabled())
+	//{
+	//	bAlwaysRelevant = true;
+	//}
 }
 
 void ABenchmarkGymGameModeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -143,10 +144,10 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 
 	InitialiseActorCountCheckTimer();
 
-	if (bEnableDensityBucketOutput && GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-	{
-		OutputPlayerDensity();
-	}
+	//if (bEnableDensityBucketOutput && GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	//{
+	//	OutputPlayerDensity();
+	//}
 
 	if (bLongFormScenario)
 	{
@@ -158,12 +159,12 @@ void ABenchmarkGymGameModeBase::BeginPlay()
 	}
 }
 
-void ABenchmarkGymGameModeBase::OnAuthorityLost()
-{
-	Super::OnAuthorityLost();
-
-	ensureMsgf(false, TEXT("ABenchmarkGymGameModeBase doesn't support authority transfer"));
-}
+// void ABenchmarkGymGameModeBase::OnAuthorityLost()
+// {
+// 	Super::OnAuthorityLost();
+// 
+// 	ensureMsgf(false, TEXT("ABenchmarkGymGameModeBase doesn't support authority transfer"));
+// }
 
 void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 {
@@ -201,29 +202,29 @@ void ABenchmarkGymGameModeBase::InitialiseActorCountCheckTimer()
 void ABenchmarkGymGameModeBase::GatherWorkerConfiguration()
 {
 	// No need to fiddle with configuration as the defaults should reflect the single server scenario which is all that's required in native.
-	if (!USpatialStatics::IsSpatialNetworkingEnabled())
+	//if (!USpatialStatics::IsSpatialNetworkingEnabled())
 	{
 		return;
 	}
 
-	const UWorld* World = GetWorld();
-	const UAbstractSpatialMultiWorkerSettings* MultiWorkerSettings =
-		USpatialStatics::GetSpatialMultiWorkerClass(World)->GetDefaultObject<UAbstractSpatialMultiWorkerSettings>();
-
-	if (MultiWorkerSettings != nullptr && MultiWorkerSettings->WorkerLayers.Num() > 0)
-	{
-		NumWorkers = MultiWorkerSettings->GetMinimumRequiredWorkerCount();
-
-		const UAbstractLBStrategy* LBStrategy = GetDefault<UAbstractLBStrategy>(MultiWorkerSettings->WorkerLayers[0].LoadBalanceStrategy);
-		const UGridBasedLBStrategy* GridLBStrategy = Cast<UGridBasedLBStrategy>(LBStrategy);
-		if (GridLBStrategy != nullptr)
-		{
-			ZoningRows = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetRows()));
-			ZoningCols = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetCols()));
-			ZoneWidth = GridLBStrategy->GetWorldWidth() / ZoningCols;
-			ZoneHeight = GridLBStrategy->GetWorldHeight() / ZoningRows;
-		}
-	}
+// 	const UWorld* World = GetWorld();
+// 	const UAbstractSpatialMultiWorkerSettings* MultiWorkerSettings =
+// 		USpatialStatics::GetSpatialMultiWorkerClass(World)->GetDefaultObject<UAbstractSpatialMultiWorkerSettings>();
+// 
+// 	if (MultiWorkerSettings != nullptr && MultiWorkerSettings->WorkerLayers.Num() > 0)
+// 	{
+// 		NumWorkers = MultiWorkerSettings->GetMinimumRequiredWorkerCount();
+// 
+// 		const UAbstractLBStrategy* LBStrategy = GetDefault<UAbstractLBStrategy>(MultiWorkerSettings->WorkerLayers[0].LoadBalanceStrategy);
+// 		const UGridBasedLBStrategy* GridLBStrategy = Cast<UGridBasedLBStrategy>(LBStrategy);
+// 		if (GridLBStrategy != nullptr)
+// 		{
+// 			ZoningRows = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetRows()));
+// 			ZoningCols = FMath::Max(1, static_cast<int32>(GridLBStrategy->GetCols()));
+// 			ZoneWidth = GridLBStrategy->GetWorldWidth() / ZoningCols;
+// 			ZoneHeight = GridLBStrategy->GetWorldHeight() / ZoningRows;
+// 		}
+// 	}
 }
 
 void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
@@ -231,7 +232,7 @@ void ABenchmarkGymGameModeBase::BuildExpectedActorCounts()
 	// Zoning scenarios can report actor count numbers slightly higher than the expected number so add a little slack.
 	// This is due to the fact that server report their auth actor counts out of sync.
 	AddExpectedActorCount(NPCClass, TotalNPCs - 1, FMath::CeilToInt(TotalNPCs * 1.05));
-	AddExpectedActorCount(SimulatedPawnClass, RequiredPlayers, FMath::CeilToInt(ExpectedPlayers * 1.05));
+	AddExpectedActorCount(ADefaultPawn::StaticClass(), RequiredPlayers, FMath::CeilToInt(ExpectedPlayers * 1.05));
 }
 
 void ABenchmarkGymGameModeBase::UpdateActorCountCheck()
@@ -283,145 +284,145 @@ void ABenchmarkGymGameModeBase::AddExpectedActorCount(const TSubclassOf<AActor>&
 
 void ABenchmarkGymGameModeBase::TryBindWorkerFlagsDelegates()
 {
-	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	//if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		return;
 	}
 
-	const FString& CommandLine = FCommandLine::Get();
-	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
-	{
-		return;
-	}
-
-	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-	if (ensure(SpatialDriver != nullptr))
-	{
-		USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
-		if (ensure(SpatialWorkerFlags != nullptr))
-		{
-			BindWorkerFlagDelegates(SpatialWorkerFlags);
-		}
-	}
+// 	const FString& CommandLine = FCommandLine::Get();
+// 	if (FParse::Param(*CommandLine, *ReadFromCommandLineKey))
+// 	{
+// 		return;
+// 	}
+// 
+// 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+// 	if (ensure(SpatialDriver != nullptr))
+// 	{
+// 		USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
+// 		if (ensure(SpatialWorkerFlags != nullptr))
+// 		{
+// 			BindWorkerFlagDelegates(SpatialWorkerFlags);
+// 		}
+// 	}
 }
 
-void ABenchmarkGymGameModeBase::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
-{
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TotalPlayerWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnRequiredPlayersFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(RequiredPlayersWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnTotalNPCsFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TotalNPCsWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnMaxRoundTripFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(MaxRoundTripWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnMaxUpdateTimeDeltaFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(MaxUpdateTimeDeltaWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnTestLiftimeFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TestLiftimeWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnCubeRespawnBaseTimeFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CubeRespawnBaseTimeWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnCubeRespawnRandomRangeTimeUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CubeRespawnRandomRangeTimeWorkerFlag, WorkerFlagDelegate);
-	}
-#if	STATS
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnStatProfileFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(StatProfileWorkerFlag, WorkerFlagDelegate);
-	}
-	{
-		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
-		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnMemReportFlagUpdate);
-		SpatialWorkerFlags->RegisterFlagUpdatedCallback(MemReportFlag, WorkerFlagDelegate);
-	}
-#endif
-}
+// void ABenchmarkGymGameModeBase::BindWorkerFlagDelegates(USpatialWorkerFlags* SpatialWorkerFlags)
+// {
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TotalPlayerWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnRequiredPlayersFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(RequiredPlayersWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnTotalNPCsFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TotalNPCsWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnMaxRoundTripFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(MaxRoundTripWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnMaxUpdateTimeDeltaFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(MaxUpdateTimeDeltaWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnTestLiftimeFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(TestLiftimeWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnCubeRespawnBaseTimeFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CubeRespawnBaseTimeWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnCubeRespawnRandomRangeTimeUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(CubeRespawnRandomRangeTimeWorkerFlag, WorkerFlagDelegate);
+// 	}
+// #if	STATS
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnStatProfileFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(StatProfileWorkerFlag, WorkerFlagDelegate);
+// 	}
+// 	{
+// 		FOnWorkerFlagUpdatedBP WorkerFlagDelegate;
+// 		WorkerFlagDelegate.BindDynamic(this, &ABenchmarkGymGameModeBase::OnMemReportFlagUpdate);
+// 		SpatialWorkerFlags->RegisterFlagUpdatedCallback(MemReportFlag, WorkerFlagDelegate);
+// 	}
+// #endif
+// }
 
 void ABenchmarkGymGameModeBase::TryAddSpatialMetrics()
 {
-	if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+	//if (!GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
 	{
 		return;
 	}
 
-	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-	if (ensure(SpatialDriver != nullptr))
-	{
-		USpatialMetrics* SpatialMetrics = SpatialDriver->SpatialMetrics;
-		if (ensure(SpatialMetrics != nullptr))
-		{
-			AddSpatialMetrics(SpatialMetrics);
-		}
-	}
+// 	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+// 	if (ensure(SpatialDriver != nullptr))
+// 	{
+// 		USpatialMetrics* SpatialMetrics = SpatialDriver->SpatialMetrics;
+// 		if (ensure(SpatialMetrics != nullptr))
+// 		{
+// 			AddSpatialMetrics(SpatialMetrics);
+// 		}
+// 	}
 }
 
-void ABenchmarkGymGameModeBase::AddSpatialMetrics(USpatialMetrics* SpatialMetrics)
-{
-	{
-		// Valid on all workers
-		UserSuppliedMetric Delegate;
-		Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
-		SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
-	}
-	{
-		UserSuppliedMetric Delegate;
-		Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetActorCountValid);
-		SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
-	}
-
-	if (HasAuthority())
-	{
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
-			SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
-		}
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientUpdateTimeDelta);
-			SpatialMetrics->SetCustomMetric(AverageClientUpdateTimeDeltaMetricName, Delegate);
-		}
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetRequiredPlayersValid);
-			SpatialMetrics->SetCustomMetric(ExpectedPlayersValidMetricName, Delegate);
-		}
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
-			SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
-		}
-		{
-			UserSuppliedMetric Delegate;
-			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovement);
-			SpatialMetrics->SetCustomMetric(PlayerMovementMetricName, Delegate);
-		}
-	}
-}
+// void ABenchmarkGymGameModeBase::AddSpatialMetrics(USpatialMetrics* SpatialMetrics)
+// {
+// 	{
+// 		// Valid on all workers
+// 		UserSuppliedMetric Delegate;
+// 		Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetFPSValid);
+// 		SpatialMetrics->SetCustomMetric(AverageFPSValid, Delegate);
+// 	}
+// 	{
+// 		UserSuppliedMetric Delegate;
+// 		Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetActorCountValid);
+// 		SpatialMetrics->SetCustomMetric(ActorCountValidMetricName, Delegate);
+// 	}
+// 
+// 	if (HasAuthority())
+// 	{
+// 		{
+// 			UserSuppliedMetric Delegate;
+// 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientRTT);
+// 			SpatialMetrics->SetCustomMetric(AverageClientRTTMetricName, Delegate);
+// 		}
+// 		{
+// 			UserSuppliedMetric Delegate;
+// 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientUpdateTimeDelta);
+// 			SpatialMetrics->SetCustomMetric(AverageClientUpdateTimeDeltaMetricName, Delegate);
+// 		}
+// 		{
+// 			UserSuppliedMetric Delegate;
+// 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetRequiredPlayersValid);
+// 			SpatialMetrics->SetCustomMetric(ExpectedPlayersValidMetricName, Delegate);
+// 		}
+// 		{
+// 			UserSuppliedMetric Delegate;
+// 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetClientFPSValid);
+// 			SpatialMetrics->SetCustomMetric(AverageClientFPSValid, Delegate);
+// 		}
+// 		{
+// 			UserSuppliedMetric Delegate;
+// 			Delegate.BindUObject(this, &ABenchmarkGymGameModeBase::GetPlayerMovement);
+// 			SpatialMetrics->SetCustomMetric(PlayerMovementMetricName, Delegate);
+// 		}
+// 	}
+// }
 
 void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 {
@@ -439,48 +440,48 @@ void ABenchmarkGymGameModeBase::Tick(float DeltaSeconds)
 	{
 		PrintMetricsTimer.SetTimer(10);
 	}
-#if	STATS
-	if (CPUProfileInterval > 0)
-	{
-		if (StatStartFileTimer.HasTimerGoneOff())
-		{
-			FString Cmd(TEXT("stat startfile"));
-			if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-			{
-				USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-				if (ensure(SpatialDriver != nullptr))
-				{
-					FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
-					const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
-					Cmd.Append(FString::Printf(TEXT(" %s"), *Filename));
-				}
-			}
-			GEngine->Exec(GetWorld(), *Cmd);
-			StatStartFileTimer.SetTimer(CPUProfileInterval);
-		}
-		if (StatStopFileTimer.HasTimerGoneOff())
-		{
-			GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
-			StatStopFileTimer.SetTimer(CPUProfileInterval);
-		}
-	}
-#endif
-#if !UE_BUILD_SHIPPING
-	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
-	{
-		FString Cmd = TEXT("memreport -full");
-		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-		{
-			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-			if (ensure(SpatialDriver != nullptr))
-			{
-				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
-			}
-		}
-		GEngine->Exec(nullptr, *Cmd);
-		MemReportIntervalTimer.SetTimer(MemReportInterval);
-	}
-#endif
+// #if	STATS
+// 	if (CPUProfileInterval > 0)
+// 	{
+// 		if (StatStartFileTimer.HasTimerGoneOff())
+// 		{
+// 			FString Cmd(TEXT("stat startfile"));
+// 			if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+// 			{
+// 				USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+// 				if (ensure(SpatialDriver != nullptr))
+// 				{
+// 					FString InFileName = FString::Printf(TEXT("%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S")));
+// 					const FString Filename = CreateProfileFilename(InFileName, TEXT(".ue4stats"), true);
+// 					Cmd.Append(FString::Printf(TEXT(" %s"), *Filename));
+// 				}
+// 			}
+// 			GEngine->Exec(GetWorld(), *Cmd);
+// 			StatStartFileTimer.SetTimer(CPUProfileInterval);
+// 		}
+// 		if (StatStopFileTimer.HasTimerGoneOff())
+// 		{
+// 			GEngine->Exec(GetWorld(), TEXT("stat stopfile"));
+// 			StatStopFileTimer.SetTimer(CPUProfileInterval);
+// 		}
+// 	}
+// #endif
+// #if !UE_BUILD_SHIPPING
+// 	if (MemReportInterval > 0 && MemReportIntervalTimer.HasTimerGoneOff())
+// 	{
+// 		FString Cmd = TEXT("memreport -full");
+// 		if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+// 		{
+// 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+// 			if (ensure(SpatialDriver != nullptr))
+// 			{
+// 				Cmd.Append(FString::Printf(TEXT(" NAME=%s-%s"), *SpatialDriver->Connection->GetWorkerId(), *FDateTime::Now().ToString(TEXT("%m.%d-%H.%M.%S"))));
+// 			}
+// 		}
+// 		GEngine->Exec(nullptr, *Cmd);
+// 		MemReportIntervalTimer.SetTimer(MemReportInterval);
+// 	}
+// #endif
 }
 
 void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
@@ -498,7 +499,7 @@ void ABenchmarkGymGameModeBase::TickPlayersConnectedCheck(float DeltaSeconds)
 
 	if (RequiredPlayerCheckTimer.HasTimerGoneOff() && !DeploymentValidTimer.HasTimerGoneOff())
 	{
-		const int32* ActorCount = TotalActorCounts.Find(SimulatedPawnClass);
+		const int32* ActorCount = TotalActorCounts.Find(ADefaultPawn::StaticClass());
 
 		if (ActorCount == nullptr)
 		{
@@ -636,7 +637,7 @@ void ABenchmarkGymGameModeBase::TickUXMetricCheck(float DeltaSeconds)
 
 	if (PrintMetricsTimer.HasTimerGoneOff() || HasAuthority())
 	{
-		ReportUserExperience(GetGameInstance()->GetSpatialWorkerId(), ClientRTTMS, ClientUpdateTimeDeltaMS);
+		//ReportUserExperience(GetGameInstance()->GetSpatialWorkerId(), ClientRTTMS, ClientUpdateTimeDeltaMS);
 	}
 
 }
@@ -676,18 +677,18 @@ void ABenchmarkGymGameModeBase::ParsePassedValues()
 	{
 		ReadCommandLineArgs(CommandLine);
 	}
-	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
-	{
-		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
-		if (ensure(SpatialDriver != nullptr))
-		{
-			USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
-			if (ensure(SpatialWorkerFlags != nullptr))
-			{
-				ReadWorkerFlagValues(SpatialWorkerFlags);
-			}
-		}
-	}
+// 	else if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking())
+// 	{
+// 		USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GetNetDriver());
+// 		if (ensure(SpatialDriver != nullptr))
+// 		{
+// 			USpatialWorkerFlags* SpatialWorkerFlags = SpatialDriver->SpatialWorkerFlags;
+// 			if (ensure(SpatialWorkerFlags != nullptr))
+// 			{
+// 				ReadWorkerFlagValues(SpatialWorkerFlags);
+// 			}
+// 		}
+// 	}
 }
 
 void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
@@ -715,68 +716,68 @@ void ABenchmarkGymGameModeBase::ReadCommandLineArgs(const FString& CommandLine)
 		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, CubeRespawnBaseTime, CubeRespawnRandomRangeTime);
 }
 
-void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
-{
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
-	FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, NumWorkersString, CubeRespawnBaseTimeString, CubeRespawnRandomRangeTimeString;
-
-	if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
-	{
-		ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(RequiredPlayersWorkerFlag, RequiredPlayersString))
-	{
-		RequiredPlayers = FCString::Atoi(*RequiredPlayersString);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
-	{
-		SetTotalNPCs(FCString::Atoi(*TotalNPCsString));
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
-	{
-		MaxClientRoundTripMS = FCString::Atoi(*MaxRoundTrip);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(MaxUpdateTimeDeltaWorkerFlag, MaxUpdateTimeDelta))
-	{
-		MaxClientUpdateTimeDeltaMS = FCString::Atoi(*MaxUpdateTimeDelta);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
-	{
-		SetLifetime(FCString::Atoi(*LifetimeString));
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnBaseTimeWorkerFlag, CubeRespawnBaseTimeString))
-	{
-		CubeRespawnBaseTime = FCString::Atof(*CubeRespawnBaseTimeString);
-	}
-
-	if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnRandomRangeTimeWorkerFlag, CubeRespawnRandomRangeTimeString))
-	{
-		CubeRespawnRandomRangeTime = FCString::Atof(*CubeRespawnRandomRangeTimeString);
-	}
-
-#if	STATS
-	FString CPUProfileString;
-	if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
-	{
-		InitStatTimer(CPUProfileString);
-	}
-
-	FString MemReportIntervalString;
-	if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag, MemReportIntervalString))
-	{
-		InitMemReportTimer(MemReportIntervalString);
-	}
-#endif
-
-	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, CubeRespawnBaseTime %f, CubeRespawnRandomRangeTime %f"),
-		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, CubeRespawnBaseTime, CubeRespawnRandomRangeTime);
-}
+// void ABenchmarkGymGameModeBase::ReadWorkerFlagValues(USpatialWorkerFlags* SpatialWorkerFlags)
+// {
+// 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Using worker flags to load custom spawning parameters."));
+// 	FString ExpectedPlayersString, RequiredPlayersString, TotalNPCsString, MaxRoundTrip, MaxUpdateTimeDelta, LifetimeString, NumWorkersString, CubeRespawnBaseTimeString, CubeRespawnRandomRangeTimeString;
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(TotalPlayerWorkerFlag, ExpectedPlayersString))
+// 	{
+// 		ExpectedPlayers = FCString::Atoi(*ExpectedPlayersString);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(RequiredPlayersWorkerFlag, RequiredPlayersString))
+// 	{
+// 		RequiredPlayers = FCString::Atoi(*RequiredPlayersString);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(TotalNPCsWorkerFlag, TotalNPCsString))
+// 	{
+// 		SetTotalNPCs(FCString::Atoi(*TotalNPCsString));
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(MaxRoundTripWorkerFlag, MaxRoundTrip))
+// 	{
+// 		MaxClientRoundTripMS = FCString::Atoi(*MaxRoundTrip);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(MaxUpdateTimeDeltaWorkerFlag, MaxUpdateTimeDelta))
+// 	{
+// 		MaxClientUpdateTimeDeltaMS = FCString::Atoi(*MaxUpdateTimeDelta);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(TestLiftimeWorkerFlag, LifetimeString))
+// 	{
+// 		SetLifetime(FCString::Atoi(*LifetimeString));
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnBaseTimeWorkerFlag, CubeRespawnBaseTimeString))
+// 	{
+// 		CubeRespawnBaseTime = FCString::Atof(*CubeRespawnBaseTimeString);
+// 	}
+// 
+// 	if (SpatialWorkerFlags->GetWorkerFlag(CubeRespawnRandomRangeTimeWorkerFlag, CubeRespawnRandomRangeTimeString))
+// 	{
+// 		CubeRespawnRandomRangeTime = FCString::Atof(*CubeRespawnRandomRangeTimeString);
+// 	}
+// 
+// #if	STATS
+// 	FString CPUProfileString;
+// 	if (SpatialWorkerFlags->GetWorkerFlag(StatProfileWorkerFlag, CPUProfileString))
+// 	{
+// 		InitStatTimer(CPUProfileString);
+// 	}
+// 
+// 	FString MemReportIntervalString;
+// 	if (SpatialWorkerFlags->GetWorkerFlag(MemReportFlag, MemReportIntervalString))
+// 	{
+// 		InitMemReportTimer(MemReportIntervalString);
+// 	}
+// #endif
+// 
+// 	UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Players %d, RequiredPlayers %d, NPCs %d, RoundTrip %d, UpdateTimeDelta %d, CubeRespawnBaseTime %f, CubeRespawnRandomRangeTime %f"),
+// 		ExpectedPlayers, RequiredPlayers, TotalNPCs, MaxClientRoundTripMS, MaxClientUpdateTimeDeltaMS, CubeRespawnBaseTime, CubeRespawnRandomRangeTime);
+// }
 
 void ABenchmarkGymGameModeBase::SetTotalNPCs(int32 Value)
 {
@@ -800,8 +801,8 @@ void ABenchmarkGymGameModeBase::OnActorCountReportIdx()
 void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 {
 	const UWorld* World = GetWorld();
-	bool bSpatialEnabled = USpatialStatics::IsSpatialNetworkingEnabled();
-	const FString WorkerID = bSpatialEnabled ? GetGameInstance()->GetSpatialWorkerId() : TEXT("Worker1");
+	bool bSpatialEnabled = false;//USpatialStatics::IsSpatialNetworkingEnabled();
+	const FString WorkerID = TEXT("Worker1");
 	if (WorkerID.IsEmpty())
 	{
 		NFR_LOG(LogBenchmarkGymGameModeBase, Error, TEXT("%s: Worker ID was empty"), *NFRFailureString);
@@ -836,7 +837,7 @@ void ABenchmarkGymGameModeBase::UpdateAndReportActorCounts()
 void ABenchmarkGymGameModeBase::GetActorCount(const TSubclassOf<AActor>& ActorClass, int32& OutTotalCount, int32& OutAuthCount) const
 {
 	const UWorld* World = GetWorld();
-	USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
+	//USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(World->GetNetDriver());
 
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
@@ -848,18 +849,18 @@ void ABenchmarkGymGameModeBase::GetActorCount(const TSubclassOf<AActor>& ActorCl
 		{
 			OutAuthCount++;
 		}
-		else if (SpatialDriver != nullptr)
-		{
-			// During actor authority handover, there's a period where no server will believe it has authority over
-			// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
-			// the spatial authority as a fallback validation.
-			Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(Actor);
-			const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
-			if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
-			{
-				OutAuthCount++;
-			}
-		}
+// 		else if (SpatialDriver != nullptr)
+// 		{
+// 			// During actor authority handover, there's a period where no server will believe it has authority over
+// 			// the Unreal actor, but will still have authority over the entity. To better minimize this period, use
+// 			// the spatial authority as a fallback validation.
+// 			Worker_EntityId EntityId = SpatialDriver->PackageMap->GetEntityIdFromObject(Actor);
+// 			const SpatialGDK::EntityViewElement* Element = SpatialDriver->Connection->GetView().Find(EntityId);
+// 			if (Element != nullptr && Element->Authority.Contains(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
+// 			{
+// 				OutAuthCount++;
+// 			}
+// 		}
 	}
 
 	OutTotalCount = Actors.Num();
@@ -878,7 +879,7 @@ void ABenchmarkGymGameModeBase::SetLifetime(int32 Lifetime)
 	}
 }
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement_Implementation(const FString& WorkerID, const FVector2D& AverageData)
+void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement(const FString& WorkerID, const FVector2D& AverageData)
 {
 	if (!HasAuthority())
 	{
@@ -898,7 +899,7 @@ void ABenchmarkGymGameModeBase::ReportAuthoritativePlayerMovement_Implementation
 	CurrentPlayerAvgVelocity = TotalVelocity / TotalPlayers;
 }
 
-void ABenchmarkGymGameModeBase::ReportUserExperience_Implementation(const FString& WorkerID, float RTTime, float UpdateTime)
+void ABenchmarkGymGameModeBase::ReportUserExperience(const FString& WorkerID, float RTTime, float UpdateTime)
 {
 	check(HasAuthority());
 
@@ -962,7 +963,7 @@ void ABenchmarkGymGameModeBase::InitMemReportTimer(const FString& MemReportInter
 }
 #endif
 
-void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount_Implementation(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts)
+void ABenchmarkGymGameModeBase::ReportAuthoritativeActorCount(const int32 WorkerActorCountReportIdx, const FString& WorkerID, const TArray<FActorCount>& ActorCounts)
 {
 	ActorCountMap& ActorCountMap = WorkerActorCounts.FindOrAdd(WorkerID);
 	for (const FActorCount& ActorCount : ActorCounts)
@@ -1077,7 +1078,7 @@ void ABenchmarkGymGameModeBase::GetVelocityForMovementReport()
 		AvgVelocity.X /= AvgVelocity.Y;
 
 		// Report
-		ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
+		//ReportAuthoritativePlayerMovement(GetGameInstance()->GetSpatialWorkerId(), AvgVelocity);
 
 		RequiredPlayerMovementReportTimer.SetTimer(29);
 	}
@@ -1144,87 +1145,87 @@ void ABenchmarkGymGameModeBase::OutputPlayerDensity()
 {
 	// Outputs the count that each NPC and Simulated Player falls into each of the QBI-F bucket types. This is not performant but
 	// is only used for debugging purposes currently and isn't enabled by default.
-	FTimerHandle CountTimer;
-	GetWorld()->GetTimerManager().SetTimer(
-		CountTimer,
-		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
-		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
-		{
-			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GameMode->GetNetDriver());
-
-			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
-			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
-			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
-			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->NPCClass, NPCs);
-			AllCharacters = PlayerCharacters;
-			AllCharacters.Append(NPCs);
-
-			const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
-			TArray<float> NCDDistanceRatios;
-			NCDDistanceRatios.Push(SpatialGDKSettings->FullFrequencyNetCullDistanceRatio);
-			
-			for (const auto& Pair : SpatialGDKSettings->InterestRangeFrequencyPairs)
-			{
-				NCDDistanceRatios.Push(Pair.DistanceRatio);
-			}
-			NCDDistanceRatios.Sort();
-
-			FString DistanceRatiosAsString(TEXT("Distance ratios to NCD: "));
-			for (float Ratio : NCDDistanceRatios)
-			{
-				DistanceRatiosAsString += FString::Format(TEXT(" {0}"), { Ratio });
-			}
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s"), *DistanceRatiosAsString);
-
-			TArray<int> TotalCountPerBucket;
-			TArray<int> CountPerBucket;
-			const int NumBuckets = NCDDistanceRatios.Num() + 1; // Add extra bucket for actors outside interest
-			TotalCountPerBucket.Init(0, NumBuckets); 
-
-			for (const AActor* PlayerController : PlayerControllers)
-			{
-				CountPerBucket.Init(0, NumBuckets);
-
-				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
-				for (const AActor* Character : AllCharacters)
-				{
-					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
-					float Dist = FVector::Distance(Pos, OtherPos);
-					float NCD = FMath::Sqrt(Character->NetCullDistanceSquared);
-					int Idx = NCDDistanceRatios.Num();
-					for (int i = 0; i < NCDDistanceRatios.Num(); ++i)
-					{
-						if (Dist < NCDDistanceRatios[i] * NCD)
-						{
-							Idx = i;
-							break;
-						}
-					}
-					CountPerBucket[Idx]++;
-					TotalCountPerBucket[Idx]++;
-				}
-
-				int TotalCount = 0;
-				FString CountsAsString;
-				for (int Count : CountPerBucket)
-				{
-					CountsAsString += FString::Format(TEXT(" {0}"), { Count });
-					TotalCount += Count;
-				}
-
-				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density: %s (%d)"), *CountsAsString, TotalCount);
-			}
-
-			int TotalCount = 0;
-			FString CountsAsString;
-			for (int Count : TotalCountPerBucket)
-			{
-				CountsAsString += FString::Format(TEXT(" {0}"), { Count });
-				TotalCount += Count;
-			}
-			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density for all: %s (%d)"), *CountsAsString, TotalCount);
-		}
-	}, 5.f, true);
+// 	FTimerHandle CountTimer;
+// 	GetWorld()->GetTimerManager().SetTimer(
+// 		CountTimer,
+// 		[WeakThis = TWeakObjectPtr<ABenchmarkGymGameModeBase>(this)]() {
+// 		if (ABenchmarkGymGameModeBase* GameMode = WeakThis.Get())
+// 		{
+// 			USpatialNetDriver* SpatialDriver = Cast<USpatialNetDriver>(GameMode->GetNetDriver());
+// 
+// 			TArray<AActor*> PlayerControllers, PlayerCharacters, NPCs, AllCharacters;
+// 			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPlayerControllerClass, PlayerControllers);
+// 			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->SimulatedPawnClass, PlayerCharacters);
+// 			UGameplayStatics::GetAllActorsOfClass(GameMode->GetWorld(), GameMode->NPCClass, NPCs);
+// 			AllCharacters = PlayerCharacters;
+// 			AllCharacters.Append(NPCs);
+// 
+// 			const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
+// 			TArray<float> NCDDistanceRatios;
+// 			NCDDistanceRatios.Push(SpatialGDKSettings->FullFrequencyNetCullDistanceRatio);
+// 			
+// 			for (const auto& Pair : SpatialGDKSettings->InterestRangeFrequencyPairs)
+// 			{
+// 				NCDDistanceRatios.Push(Pair.DistanceRatio);
+// 			}
+// 			NCDDistanceRatios.Sort();
+// 
+// 			FString DistanceRatiosAsString(TEXT("Distance ratios to NCD: "));
+// 			for (float Ratio : NCDDistanceRatios)
+// 			{
+// 				DistanceRatiosAsString += FString::Format(TEXT(" {0}"), { Ratio });
+// 			}
+// 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("%s"), *DistanceRatiosAsString);
+// 
+// 			TArray<int> TotalCountPerBucket;
+// 			TArray<int> CountPerBucket;
+// 			const int NumBuckets = NCDDistanceRatios.Num() + 1; // Add extra bucket for actors outside interest
+// 			TotalCountPerBucket.Init(0, NumBuckets); 
+// 
+// 			for (const AActor* PlayerController : PlayerControllers)
+// 			{
+// 				CountPerBucket.Init(0, NumBuckets);
+// 
+// 				FVector Pos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*PlayerController))->GetLastUpdatedSpatialPosition();
+// 				for (const AActor* Character : AllCharacters)
+// 				{
+// 					FVector OtherPos = SpatialDriver->GetActorChannelByEntityId(SpatialDriver->GetActorEntityId(*Character))->GetLastUpdatedSpatialPosition();
+// 					float Dist = FVector::Distance(Pos, OtherPos);
+// 					float NCD = FMath::Sqrt(Character->NetCullDistanceSquared);
+// 					int Idx = NCDDistanceRatios.Num();
+// 					for (int i = 0; i < NCDDistanceRatios.Num(); ++i)
+// 					{
+// 						if (Dist < NCDDistanceRatios[i] * NCD)
+// 						{
+// 							Idx = i;
+// 							break;
+// 						}
+// 					}
+// 					CountPerBucket[Idx]++;
+// 					TotalCountPerBucket[Idx]++;
+// 				}
+// 
+// 				int TotalCount = 0;
+// 				FString CountsAsString;
+// 				for (int Count : CountPerBucket)
+// 				{
+// 					CountsAsString += FString::Format(TEXT(" {0}"), { Count });
+// 					TotalCount += Count;
+// 				}
+// 
+// 				UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density: %s (%d)"), *CountsAsString, TotalCount);
+// 			}
+// 
+// 			int TotalCount = 0;
+// 			FString CountsAsString;
+// 			for (int Count : TotalCountPerBucket)
+// 			{
+// 				CountsAsString += FString::Format(TEXT(" {0}"), { Count });
+// 				TotalCount += Count;
+// 			}
+// 			UE_LOG(LogBenchmarkGymGameModeBase, Log, TEXT("Density for all: %s (%d)"), *CountsAsString, TotalCount);
+// 		}
+// 	}, 5.f, true);
 }
 
 void ABenchmarkGymGameModeBase::OnExpectedPlayersFlagUpdate(const FString& FlagName, const FString& FlagValue)

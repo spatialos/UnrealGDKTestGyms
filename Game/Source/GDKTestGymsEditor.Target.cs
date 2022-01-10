@@ -9,7 +9,6 @@ public class GDKTestGymsEditorTarget : TargetRules
 	{
 		Type = TargetType.Editor;
 		ExtraModuleNames.Add("GDKTestGyms");
-		ExtraModuleNames.Add("GDKTestGymsFunctionalTests");
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 	}
 }

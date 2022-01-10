@@ -13,7 +13,8 @@ ABenchmarkGymNPCSpawner::ABenchmarkGymNPCSpawner()
 	bAlwaysRelevant = true;
 }
 
-void ABenchmarkGymNPCSpawner::CrossServerSpawn_Implementation(TSubclassOf<APawn> NPCClass, const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
+//void ABenchmarkGymNPCSpawner::CrossServerSpawn_Implementation(TSubclassOf<APawn> NPCClass, const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
+void ABenchmarkGymNPCSpawner::CrossServerSpawn(TSubclassOf<APawn> NPCClass, const FVector& SpawnLocation, const FBlackboardValues& BlackboardValues)
 {
 	UWorld* const World = GetWorld();
 	if (World == nullptr)

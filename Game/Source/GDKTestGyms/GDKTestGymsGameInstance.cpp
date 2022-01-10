@@ -4,11 +4,11 @@
 
 #include "Analytics.h"
 #include "Interfaces/IAnalyticsProvider.h"
-#include "Interop/Connection/SpatialConnectionManager.h"
+//#include "Interop/Connection/SpatialConnectionManager.h"
 
 #include "NFRConstants.h"
-#include "EngineClasses/SpatialNetDriver.h"
-#include "Utils/SpatialMetrics.h"
+//#include "EngineClasses/SpatialNetDriver.h"
+//#include "Utils/SpatialMetrics.h"
 
 #include "GeneralProjectSettings.h"
 #include "EngineMinimal.h"
@@ -26,7 +26,7 @@ void UGDKTestGymsGameInstance::Init()
 	NFRConstants = NewObject<UNFRConstants>(this);
 	NFRConstants->InitWithWorld(GetWorld());
 
-	OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
+	//OnSpatialConnected.AddUniqueDynamic(this, &UGDKTestGymsGameInstance::SpatialConnected);
 
 	// init metric provider & record start metric
 	TSharedPtr<IAnalyticsProvider> Provider = FAnalytics::Get().GetDefaultConfiguredProvider();
@@ -70,23 +70,23 @@ void UGDKTestGymsGameInstance::Shutdown()
 void UGDKTestGymsGameInstance::SpatialConnected()
 {
 	UNetDriver * NetDriver = GEngine->FindNamedNetDriver(GetWorld(), NAME_PendingNetDriver);
-	USpatialNetDriver* SpatialNetDriver = Cast<USpatialNetDriver>(NetDriver);
-	if (SpatialNetDriver)
-	{
-		SpatialNetDriver->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGaugeMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
-			{
-				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
-				{
-					if (Metric.Key == TEXT("kcp_resends_by_packet") && Metric.Value.Sum > 0.0)
-					{
-						for (const auto& Bucket : Metric.Value.Buckets)
-						{
-							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), Bucket.Key, Bucket.Value);
-						}
-					}
-				}
-			});
-	}	
+	//USpatialNetDriver* SpatialNetDriver = Cast<USpatialNetDriver>(NetDriver);
+// 	if (SpatialNetDriver)
+// 	{
+// 		SpatialNetDriver->SpatialMetrics->WorkerMetricsUpdated.AddLambda([](const USpatialMetrics::WorkerGaugeMetric& GauageMetrics, const USpatialMetrics::WorkerHistogramMetrics& HistogramMetrics)
+// 			{
+// 				for (const TPair<FString, USpatialMetrics::WorkerHistogramValues>& Metric : HistogramMetrics)
+// 				{
+// 					if (Metric.Key == TEXT("kcp_resends_by_packet") && Metric.Value.Sum > 0.0)
+// 					{
+// 						for (const auto& Bucket : Metric.Value.Buckets)
+// 						{
+// 							UE_LOG(LogTemp, Log, TEXT("kcp_resends_by_packet bucket [%.8f] %d"), Bucket.Key, Bucket.Value);
+// 						}
+// 					}
+// 				}
+// 			});
+// 	}	
 }
 
 void UGDKTestGymsGameInstance::OnStart()
@@ -137,19 +137,19 @@ void UGDKTestGymsGameInstance::NetworkFailureEventCallback(UWorld* World, UNetDr
 {
 	UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Network Failure (%s)"), *ErrorString);
 
-	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking() && FailureType == ENetworkFailure::ConnectionTimeout)
-	{
-		if (USpatialConnectionManager* ConnectionManager = GetSpatialConnectionManager())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Retrying connection..."));
-			bool bConnectAsClient = (GetWorld()->GetNetMode() == NM_Client);
-			ConnectionManager->Connect(bConnectAsClient, 0 /*PlayInEditorID*/);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("UGDKTestGymsGameInstance: Connection manager invalid, won't retry connection."));
-		}
-	}
+// 	if (GetDefault<UGeneralProjectSettings>()->UsesSpatialNetworking() && FailureType == ENetworkFailure::ConnectionTimeout)
+// 	{
+// 		if (USpatialConnectionManager* ConnectionManager = GetSpatialConnectionManager())
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("UGDKTestGymsGameInstance: Retrying connection..."));
+// 			bool bConnectAsClient = (GetWorld()->GetNetMode() == NM_Client);
+// 			ConnectionManager->Connect(bConnectAsClient, 0 /*PlayInEditorID*/);
+// 		}
+// 		else
+// 		{
+// 			UE_LOG(LogTemp, Error, TEXT("UGDKTestGymsGameInstance: Connection manager invalid, won't retry connection."));
+// 		}
+// 	}
 }
 
 bool UGDKTestGymsGameInstance::Tick(float DeltaSeconds)

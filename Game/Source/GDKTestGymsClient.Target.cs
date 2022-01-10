@@ -13,7 +13,7 @@ public class GDKTestGymsClientTarget : TargetRules
 
 		if (Environment.GetEnvironmentVariable("ImprobableNFRShipping") != null)
 		{
-			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
+			//bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
 		}
 
 		if (Environment.GetEnvironmentVariable("ImprobableNFRStats") != null)

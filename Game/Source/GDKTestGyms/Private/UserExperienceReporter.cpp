@@ -3,13 +3,13 @@
 
 #include "UserExperienceReporter.h"
 
-#include "EngineClasses/SpatialNetDriver.h"
+//#include "EngineClasses/SpatialNetDriver.h"
 #include "GDKTestGyms/GDKTestGymsGameInstance.h"
-#include "Interop/Connection/SpatialWorkerConnection.h"
+//#include "Interop/Connection/SpatialWorkerConnection.h"
 #include "NFRConstants.h"
 #include "Net/UnrealNetwork.h"
 #include "UserExperienceComponent.h"
-#include "Utils/SpatialMetrics.h"
+//#include "Utils/SpatialMetrics.h"
 
 DEFINE_LOG_CATEGORY(LogUserExperienceReporter);
 
@@ -97,13 +97,13 @@ void UUserExperienceReporter::ReportMetrics()
 			if (Constants->ClientFPSMetricDelay.HasTimerGoneOff() && GameInstance->GetAveragedFPS() < Constants->GetMinClientFPS())
 			{
 				bFrameRateValid = false;
-				PhysicalWorkerName WorkerName = TEXT("Unset");
-				if (const USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GameInstance->GetWorld()->GetNetDriver()))
-				{
-					WorkerName = NetDriver->Connection->GetWorkerId();
-				}
+				//PhysicalWorkerName WorkerName = TEXT("Unset");
+				//if (const USpatialNetDriver* NetDriver = Cast<USpatialNetDriver>(GameInstance->GetWorld()->GetNetDriver()))
+				//{
+				//	WorkerName = NetDriver->Connection->GetWorkerId();
+				//}
 
-				NFR_LOG(LogTemp, Error, TEXT("Client %s failed with fps %f below min threshold %f"), *WorkerName, GameInstance->GetAveragedFPS(), Constants->GetMinClientFPS());
+				//NFR_LOG(LogTemp, Error, TEXT("Client %s failed with fps %f below min threshold %f"), *WorkerName, GameInstance->GetAveragedFPS(), Constants->GetMinClientFPS());
 			}
 		}
 		ServerReportedMetrics(RoundTripTimeMS, UpdateTimeDeltaMS, bFrameRateValid);
@@ -120,11 +120,11 @@ void UUserExperienceReporter::ServerReportedMetrics_Implementation(float RTTMS, 
 	}
 }
 
-void UUserExperienceReporter::OnClientOwnershipGained()
-{
-	Super::OnClientOwnershipGained();
-	FTimerHandle Timer;
-	FTimerDelegate Delegate;
-	Delegate.BindUObject(this, &UUserExperienceReporter::ReportMetrics);
-	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
-}
+// void UUserExperienceReporter::OnClientOwnershipGained()
+// {
+// 	Super::OnClientOwnershipGained();
+// 	FTimerHandle Timer;
+// 	FTimerDelegate Delegate;
+// 	Delegate.BindUObject(this, &UUserExperienceReporter::ReportMetrics);
+// 	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
+// }

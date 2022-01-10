@@ -21,7 +21,7 @@ public:
 	void SetCrossServerSize(int32 Size) { CrossServerSize = Size; bHasReceivedSize = true; }
 	void SetCrossServerFrequency(int32 Frequency) { CrossServerFrequency = Frequency; bHasReceivedFrequency = true; }
 
-	UFUNCTION(CrossServer, Reliable)
+	UFUNCTION()
 	void SendCrossServer(int32 TestData);
 
 	virtual void Tick(float DeltaSeconds) override;

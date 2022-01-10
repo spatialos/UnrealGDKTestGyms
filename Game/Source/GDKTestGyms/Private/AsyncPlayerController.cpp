@@ -5,7 +5,7 @@
 
 #include "EngineUtils.h"
 
-#include "SpatialGDKSettings.h"
+//#include "SpatialGDKSettings.h"
 
 #include "AsyncActorSpawner.h"
 
@@ -30,7 +30,8 @@ void AAsyncPlayerController::CheckTestPassed()
 		// 2. SpatialGDKSettings::bAsyncLoadNewClassesOnEntityCheckout is true
 		// 3. An instance of AsyncActor exists in the world
 	bool bAsyncTestCorrectlySetup = false;
-	bool bAsyncLoad = GetDefault<USpatialGDKSettings>()->bAsyncLoadNewClassesOnEntityCheckout;
+	//bool bAsyncLoad = GetDefault<USpatialGDKSettings>()->bAsyncLoadNewClassesOnEntityCheckout;
+	bool bAsyncLoad = false;
 	bool bAsyncActorExists = false;
 
 	for (TActorIterator<AAsyncActorSpawner> It(GetWorld()); It; ++It)

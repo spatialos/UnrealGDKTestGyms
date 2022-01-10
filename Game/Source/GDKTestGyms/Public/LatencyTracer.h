@@ -4,12 +4,29 @@
 
 #include "CoreMinimal.h"
 
-#include "Interop/Connection/SpatialEventTracer.h"
-#include "Interop/Connection/SpatialGDKSpanId.h"
+//#include "Interop/Connection/SpatialEventTracer.h"
+//#include "Interop/Connection/SpatialGDKSpanId.h"
 
 #include "LatencyTracer.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLatencyTracer, Log, All);
+
+USTRUCT(Blueprintable)
+struct FUserSpanId
+{
+	GENERATED_BODY()
+
+	FUserSpanId() {}
+	explicit FUserSpanId(const TArray<uint8>& InData)
+		: Data(InData)
+	{
+	}
+
+	UPROPERTY(BlueprintReadOnly, Category = "UserSpanId")
+	TArray<uint8> Data;
+
+	bool IsValid() const { return Data.Num() == 16; }
+};
 
 UCLASS(BlueprintType)
 class ULatencyTracer : public UObject
@@ -30,9 +47,9 @@ public:
 	void EndLatencyTrace(const FString& Type, const FUserSpanId& Span);
 
 private:
-	FSpatialGDKSpanId EmitTrace(const FString& EventType, FSpatialGDKSpanId* Causes, uint32 NumCauses);
+	//FSpatialGDKSpanId EmitTrace(const FString& EventType, FSpatialGDKSpanId* Causes, uint32 NumCauses);
 
-	TUniquePtr<SpatialGDK::SpatialEventTracer> LocalTracer;
-	SpatialGDK::SpatialEventTracer* InternalTracer = nullptr;
+	//TUniquePtr<SpatialGDK::SpatialEventTracer> LocalTracer;
+	//SpatialGDK::SpatialEventTracer* InternalTracer = nullptr;
 	FString WorkerId;
 };

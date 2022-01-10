@@ -67,7 +67,7 @@ void AUptimeCrossServerBeacon::CrossServerRPC()
 	}
 }
 
-void AUptimeCrossServerBeacon::SendCrossServer_Implementation(int32 TestData)
+void AUptimeCrossServerBeacon::SendCrossServer(int32 TestData)
 {
 	auto TempTestData = TestData;
 	UE_LOG(LogUptimeCrossServerBeacon, Log, TEXT("Send CrossServer Data:%d"), TempTestData);
