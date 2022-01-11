@@ -39,20 +39,16 @@ Actors used in gyms are in `Content\Actors`: add any new Actors to this director
 
 ### Current tests
 
-#### Automated test gyms
-
-Some test gyms can be run as automated tests. To discover and run these tests:
-  1. In the Unreal Editor, on the GDK Toolbar, select Schema.
-  1. Select Snapshot to generate a snapshot.
-  1. Open the Session Frontend: Window -> Developer Tools -> Session Frontend.
-  1. On the Automation tab, the tests are categorized by source with Project and SpatialGDK being the most important ones
-  1. Tick the boxes corresponding to the tests you want to run and hit Start Tests.
-  1. The Session Frontend will then prompt you with the results of the tests.
+#### Known issues
 
 Some tests are currently failing and will have a "KNOWN_ISSUE" before their name.
-The ReplicatedStartupActorTest is failing, pending https://improbableio.atlassian.net/browse/UNR-4305.
+The ReplicatedStartupActorTest is failing, pending [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305).
 
-#### Manual test gyms
+#### How to run the automated test gyms
+
+Some test gyms can be run as automated tests. To discover and run these tests, follow [these steps](https://improbableio.atlassian.net/wiki/spaces/GBU/pages/1782644741/How+to+write+a+spatial+functional+test#How-to-run-the-test).
+
+#### How to run the manual test gyms
 
 ##### Empty gym
 * The template for creating new gyms. Copy this to use as a starting point for your own gym.
@@ -75,7 +71,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Handover gym
 * Demonstrates that:
   * Entities correctly migrate between area of authority.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * The manual version of the gym contains:
   * Four server workers arranged in a 2x2 grid.
   * Four cubes that moves back and forth across a floor, crossing server boundaries.
@@ -140,19 +136,9 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   1. Depending on how the operations are scheduled, some clients/server workers will receive null references (red log message).
   1. Eventually, after one or more RepNotify, all workers should receive all the valid references (green log message).
 
-##### Net reference test gym
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
-* This gym tests that references to replicated actors are stable when actors go in and out of relevance.
-* Properties referencing replicated actors are tracked. They are nulled when actors go out of relevance, and they should be restored when the referenced actor comes back into relevance.
-* Manual steps:
-  1. Cubes in a grid pattern hold references to their neighbours on replicated properties.
-  1. A pawn is walking around with a custom checkout radius in order to have cubes go in and out of relevance
-  1. The cube's color matches the number of valid references they have (red:0, yellow:1, green:2)
-  1. If a cube does not have the expected amount of references to its neighbours, a red error message will appear above.
-
 ##### ReplicatedStartupActor gym
 * KNOWN ISSUE: The automated version of this test does not function: [UNR-4305](https://improbableio.atlassian.net/browse/UNR-4305)
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * This test gym verifies QA test case "C1944 Replicated startup actors are correctly spawned on all clients".
 * Also verifies that startup actors correctly replicate arbitrary properties.
 * Manual steps:
@@ -188,7 +174,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Server to server RPC gym
 * This gym demonstrates that:
   * Actors owned by different servers correctly send server-to-server RPCs.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * The manual gym contains:
   * A set of cubes placed in four quadrants of the level which:
     * Randomly send RPCs from each worker to the other cubes in the level.
@@ -200,7 +186,7 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
     * If the gym is working correctly, the normally white cubes will start flashing the colours of the other workers in the level, and the counters above the cubes will turn the corresponding worker colours and    increment for each RPC received. If not, the cubes will timeout waiting for RPCs to be received and this will be indicated above the cubes.
 
 ##### World composition gym
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms).
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
 * Tests level loading and unloading.
 * The gym contains a world with a set of marked areas on the floor with, denoting a level, containing a single actor, that an be loaded. Each area has a label in front describing the actor in the level.
 * On starting the gym, move towards the any marked area text to load the associated level on the client. When it has been loaded it a cube will appear with the properties described by the level label.
@@ -227,7 +213,8 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 ##### Client Net Ownership gym
 * This gym demonstrates that:
   * In a zoned environment, setting client net-ownership of an Actor correctly updates the `ComponentPresence` and `EntityACL` components, and allows server RPCs to be sent correctly.
-* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#automated-test-gyms). Note: If the automated test is successfull, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
+* NOTE: This gym can be run both as an automated test and a manual one. To run it automatically, use [these steps](#how-to-run-the-automated-test-gyms).
+* NOTE: If the automated test is successful, you will see a warning sign, instead of the usual green tick. This is the expected behaviour, and the log should start with: 'No owning connection for'...
 * The manual gym contains:
   * A character with a `PlayerController` with key bindings for:
     * (Q) Making the client net-owner for the cube,
@@ -247,34 +234,42 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
       * in the inspector, the `owner` and `UnrealClientEndpoint` component authority assignments are both unset.
 
 ##### Server to server Take Damage RPC gym
-* Tests AActor::TakeDamage.
-* Contains a set of cubes placed in four quadrants of the level. AActor::TakeDamage is called twice on random cubes, once with a FPointDamageEvent input and once with a FRadialDamageEvent input. If the cube is not authoritative on the server a cross server RPCs will be called from AActor::TakeDamage. Upon receiving the RPCs the cube will display the HitLocation member of FPointDamageEvent and Origin member of FRadialDamageEvent.
-* Adjust the setting "SpatialOS Settings -> Debug -> Spatial Debugger Class Path" to `BP_VerboseSpatialDebugger`.
-* If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently. This represents the HitLocation data being sent using a cross server RPC inside a PointDamageEvent object and the Origin of RadialPointDamage event. 
+* This gym demonstrates that:
+  * `AActor::TakeDamage` functions.
+* The manual gym contains:
+  * A set of four cubes placed in the quadrants of the level.
+* Steps to run the gym manually:
+  * Adjust the setting `Project Settings -> SpatialOS GDK for Unreal - Runtime Settings -> Debug -> Spatial Debugger` to `BP_VerboseSpatialDebugger`.
+  * Open `/Content/Maps/ServerToServerTakeDamageRPCGymCrossServer.umap`
+  * Press Play.
+  * If it is working correctly, you will see "10 10 10" and "20 20 20" appear over the top of each cube intermittently.
+* If you'd like to know more: 
+  * `AActor::TakeDamage` is called twice on random cubes, once with a `FPointDamageEvent` input and once with a `FRadialDamageEvent` input.
+  * If the cube is not authoritative on the server a cross server RPCs will be called from `AActor::TakeDamage`. Upon receiving the RPCs the cube will display the `HitLocation` member of `FPointDamageEvent` and the `Origin` member of the `FRadialDamageEvent`.
+  * "10 10 10" and "20 20 20" appearing over the top of each cube intermittently represents the `HitLocation` data being sent using a cross server RPC inside a `PointDamageEvent` object and the `Origin` of the `RadialPointDamage` event.
 
 ##### Multiple Ownership gym
 * Map name: `Content/Maps/MultipleOwnershipGym.umap`
 * Demonstrates sending RPCs on multiple actors that have their owner set to a player controller.
 * To test the scenario follow these steps:
-	1. Select `Play` on the Unreal toolbar.
-	2. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
+ 1. Select `Play` on the Unreal toolbar.
+ 1. When your client had loaded, press `Enter` and check for logs printed in the client viewport. They should say the following:
 	   "MultipleOwnershipCube has no owner"
 	   "MultipleOwnershipCube2 has no owner"
 	   At this point in the test the player controller doesn't posses a pawn. This is why hitting `Enter` results in no server logs, and in client logs suggesting that no pawn is owned by the player controller.
-	3. Press `Space` once to possess one of the pawns.
-	4. Press `Enter` and check the logs printed. They should say the following:
+1. Press `Space` once to possess one of the pawns.
+1. Press `Enter` and check the logs printed. They should say the following:
 	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
 	   "RPC successfully called on MultipleOwnershipCube"
 	   "MultipleOwnershipCube2 has no owner"
 	   Pressing `Space` switched the possession between the two cubes in the gym.
-	5. Press `Space` a second time to possess the second pawn.
-	6. Press enter and check the logs printed. They should say the following:
+1. Press `Space` a second time to possess the second pawn.
+1. Press enter and check the logs printed. They should say the following:
 	   "MultipleOwnershipCube2 is owned by MultipleOwnershipController"
 	   "MultipleOwnershipCube is owned by MultipleOwnershipController"
 	   "RPC successfully called on MultipleOwnershipCube2"
 	   "RPC successfully called on MultipleOwnershipCube"
-
-	Note: the order of the logs should not matter.
+<br>Note: the order of the logs should not matter.
 
 ##### FASAsyncGym
 * Checks an edge case of the GDK handling of FastSerialized Arrays.
@@ -282,12 +277,13 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
 * This test creates a situation where pointers to an asset will be replicated before the asset has been loaded on the client.
 * When async loading completes the FAS callbacks will be called with valid pointers.
 * How to test : 
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
   * Play the level.
   * If a green text saying "Replication happened, no null references" appears on the cube, the test passes.
   * Otherwise, a red text will be displayed, or other error messages.
-* NOTE : This test should be ran with "Single Process" disabled in play settings to be valid.
-  * "Edit -> Editor Preferences -> Level Editor -> Play - > Multiplayer Options -> Use Single Process" = false
 * NOTE : Since this is using asynchronous asset loading, the editor should be restarted in between executions of this test.
+* Be sure to revert the setting change that you made:
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. **Enable** this option.
 
 ##### Teleporting gym
 * Tests actor migration when load balancing is enabled.
@@ -325,50 +321,254 @@ Deprecated, see [UNR-4809](https://improbableio.atlassian.net/browse/UNR-4809)
   * Press `F9` again to close the config UI. The game should capture the mouse again, and mouse movement should control the character camera like normal.
 
 #### SpatialEventTracingTests
-* These test whether key trace events have the appropriate cause events.
-* They ensure that the following settings are added to DefaultSpatialGDKSettings.ini:
-  * bEventTracingEnabled=True
-  * MaxEventTracingFileSizeBytes=104857600
-
-These tests can only be run automatically. To run them:
-   * In the Unreal Editor, navigate to Project Settings > SpatialOS GDK for Unreal - Editor Settings > Launch > Command line flags for local launch.
-   * Click the + button.
-   * Paste "--event-tracing-enabled=true" in the field that appears. Do not include the quote marks.
-   * Navigate to Project Settings > SpatialOS GDK for Unreal - Runtime Settings > Event Tracing.
-   * Check the box labeled "Event Tracing Enabled".
-   * Follow [these steps](#automated-test-gyms) to actually execute the tests.
-   * When you're finished running the tests, turn Event Tracing off and remove the command line flag that you addedby clicking the ▽ icon next to it, and selecting Delete.
-   * If you don't disable Event Tracing and remove the command line flag, some other tests will fail.
+These test whether key trace events have the appropriate cause events. They can **only** be run automatically. To run them:
+* Follow [these steps](#how-to-run-the-automated-test-gyms) to actually execute the tests.
 
 ##### Gameplay Cues gym
 * Tests that gameplay cues get correctly activated on all clients.
 * It includes a **non-instanced** gameplay cue that is triggered by pressing `Q` and visualised as **sparks** emitted from the controlled character.
-* It also includes an **instanced** gameplay cue that is triggered by pressing `T` and visualised as a **cone** floating above the controlled character.
+* It also includes an **instanced** gameplay cue that is triggered by pressing `E` and visualised as a **cone** floating above the controlled character.
 * Manual steps:
   * In the Unreal Editor's Content Browser, locate `Content/Maps/GameplayCuesMap` and double click to open it.
   * In the Unreal Editor Toolbar, click Play to launch two clients.
   * Position one client's character in view of the other client and in the same virtual worker boundary.
   * Press `Q` to trigger the non-instanced gameplay cue. A burst of sparks should be emitted from the controlled character, which should also be visible on the other client.
   * Both clients should print "Executed Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
-  * Press `T` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
+  * Press `E` to trigger the instanced gameplay cue. A cone should spawn above the controlled character and disappear after 2 seconds. The cone should be visible to both clients. Both clients should print "Added Gameplay Cue" to their client viewports. This will also be visible in the Output Log.
   * Now position the client in different virtual worker boundaries and re-test. The steps and outcomes should be identical. If they are, this test has passed.
 
 ##### Client Travel gym
-* Tests the client travel from one cloud deployment to itself.
+* Tests that clients can travel from one cloud deployment to the same cloud deployment.
 * How to test:
-  * Set the Server Default Map to ClientTravel_Gym (Edit > Project Settings > Maps & Modes > Default Maps) 
-  * Create a Cloud deployment in `unreal_gdk_starter_project` named `client_travel_gym`.
-  * Launch the game in PIE mode, connecting to the corresponding Cloud Deployment.
-  * Press K to trigger a ClientTravel for the PlayerController to the same deployment. It should be visible in PIE as your position in the map will be reset.
+  * Navigate to `Edit > Project Settings > Project > Maps & Modes > Default Maps`.
+  * If you can't see the `Server Default Map`, click `▽` to reveal more options.
+  * Set `Server Default Map` to `ClientTravel_Gym`.
+  * Select Cloud on the GDK toolbar.
+  	* Enter your project name, and make up and enter an assembly name and a deployment name.
+  	* Ensure that Automatically Generate Launch Configuration is checked.
+  	* Ensure that Add simulated players is not checked.
+  	* Ensure that the following options in the Assembly Configuration section are checked.
+  	  * Build and Upload Assembly
+  	  * Generate Schema
+  	  * Generate Snapshot
+  	  * Build Client Worker
+  	  * Force Overwrite on Upload
+  * From the GDK toolbar, select the dropdown next to the Start deployment button and ensure that `Connect to cloud deployment` is selected.
+  * Click the Start deployment button.
+  * When your deployment has started running, click Play in the Unreal Editor to connect a PIE client to your Cloud Deployment.
+  * In the client, use the mouse and WASD to move the camera.
+  * Press `K` to trigger a ClientTravel for the PlayerController to the same deployment. If you've moved your camera, pressing `K` should visibly snap the camera back to the position that the camera spawned in (indeed, it is spawning again). If this happens, the test has passed.
 
 ##### Multiworker World Composition gym
-* Tests server's without authoritive player controllers still replicate relevant actors
-* Validation
-  * Enable the replication graph
-    * Before booting the editor, navigate to DefaultEngine.ini and uncomment the `ReplicationDriverClassName` option
-  * Play with 1 client connect.
-  * The client should seem a sublevel actor spawned in each server worker, moving back and forth across the worker boundary. On each cross, the authority of the cube should switch to the appropriate server.
+* Tests that servers without authoritive player controllers are still able to replicate relevant actors.
+* Please note that when you run this test gym, you may notice the cubes moving discontinuously (that is, juddering or stuttering rather than moving smoothly). This is expected and should not be considered a defect. This is a visual artefact likely caused by a framerate mismatch; the Gyms have a server tick rate of 30 FPS and the editor plays at 60 FPS by default. This juddering effect can be fixed by capping the client FPS by running the console command `t.MaxFPS 30`.
+* Do also note that you may run into the location of where the cubes were located before crossing servers, and experience glitchy movement. This is expected, as the cubes are bNetLoadOnClient and the servers have 0 interest.
+* Manual steps:
+  * Before booting the Unreal Editor, open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and uncomment the `ReplicationDriverClassName` option by deleing the `;`.
+  * Boot the Unreal Editor.
+  * Open `Content/Maps/MultiworkerWorldComposition/MultiworkerWorldComposition.umap`.
+  * Generate schema.
+  * Play with 1 client.
+  * In the client you should see two cubes moving back and forth over a worker boundary.
+    * On each cross, the authority of the cube should switch to the appropriate server. If this happens, the test has passed.
+  * Don't forget to open `UnrealGDKTestGyms\Game\Config\DefaultEngine.ini` and re-comment the `ReplicationDriverClassName` line.
+  
+##### Snapshot reloading test
+Tests that snapshot reloading functions in local deloyments.<br>
+**Note:** This test uses the `HandoverGym` as it saves.<br>
+Manual steps:<br>
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Auto-stop local deployment`. Select `Never`.
+  1. `Edit > Project Settings > SpatialOS GDK for Unreal > Editor Settings > Launch > Delete dynamically spawned entities`. Uncheck this option.
+  1. In the Unreal Editor's Content Browser, locate `Content/Maps/HandoverGym` and double click to open it.
+  1. In the Unreal Editor Toolbar, click Play to launch one client.
+  1. Stop the gym and note that the deployment is still running, as indicated by the state of the Stop Deployment button in the GDK Toolbar.
+  1. Start the gym again and note that the level actors should be at their previous shutdown positions, not their original positions. You can do this repeatedly.
+  1. The test has now passed.
+  1. Don’t forget to revert the two settings changes you made before you run another test.
 
+##### Ability Giving Gym
+Tests that ability specs given to an `AbilitySystemComponent` on two different servers can be activated correctly via their handles.
+* How to test:
+  * Go to `Edit > Editor Preferences > Level Editor - Play > Multiplayer Options > Run Under One Process`. Disable this option.
+  * Play with one client.
+  * In the client, with your character still on the server that it spawned on, press `Q` on your keyboard.
+    In the Command Prompt window that contains the server log output of the server that your player charachter is currently on, you should see the following two lines:
+    > Giving and running ability with level 1
+    > 
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 1
+    
+    Importantly, the level number stated in the two lines should match. 
+  * Move the character to the other server and then press `E` on your keyboard.
+    In the Command Prompt window that contains the server log output of the server that your player charachter is currently on, you should see the following two lines:
+    > Giving and running ability with level 2
+    >
+    > Ability activated on AbilityGivingGymCharacter_BP with Level 2
+    
+    Again, the two level numbers should match. If they do, the test has passed.
+
+##### Async Package Loading Gym
+Tests that async package loading works when activated.
+
+Manual steps:
+  1. Open `UnrealGDKTestGyms\Game\Config\DefaultSpatialGDKSettings.ini`.
+  1. Modify `bAsyncLoadNewClassesOnEntityCheckout` to `True`.
+  1. Save and close `DefaultSpatialGDKSettings.ini`.
+  1. Open the Unreal Editor.
+  1. Open `Content/Maps/AsyncPackageLoadingGym.umap`.
+  1. Play with one client and note that the in-world message saysL "Test waiting for success..."
+  1. Launch an additional client by running the `UnrealGDKTestGyms\LaunchClient.bat` script.
+  1. Note that the in-world message now says "Test passed!"
+  1. The test has now passed. Don't forget to revert the settings change you made before you run another test.
+
+What did I just validate?<br>
+The late connecing client has validated the local state before sending the "Passed" message to the server. This check was done on `AAsyncPlayerController` and validated:
+  1. Async loading config is enabled.
+  1. That the client doesn't have loaded into memory the class we intend to async load.
+  1. That the client eventually loads an actor instance of said class.
+
+
+##### Soft references Test Gym
+* Demonstrates that:
+  * Soft references are correctly replicated.
+  * Soft references that are serialized to an asset, and which reference assets that have not yet loaded on the client are correctly resolved using the CVar `net.AllowAsyncLoading`.
+* Steps to run the manual version of the gym:
+ 1. Open `SoftReferenceTestGym.umap`
+ 1. Generate schema & snapshot.
+ 1. Navigate to: Editor Preferences->Level Editor->Play->Multiplayer Options.
+ Ensure `Run Under One Process` is not checked.
+ 1. Select `Play` on the Unreal toolbar.
+ 1. Watch as the cubes turn green in under 8 seconds.
+
+##### Player disconnect gym
+* Demonstrates that:
+  * Players are cleaned up correctly when they disconnect.
+* Pre-test steps:
+  * In the Unreal Editor's Content Browser, locate `Content/Maps/SpatialPlayerDisconnectMap` and double click to open it.
+* How to test for a client disconnecting by returning to its main menu:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 2.
+  * Select Play.
+  * From the UnrealGDK toolbar, open the Inspector.
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Press `M` in one of the clients, to make that client leave the deployment by traveling to the empty map.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* How to test for a player disconnecting by exiting the client window:
+  * From the Unreal toolbar, open the Play drop-down menu and enter the number of players as 1.
+  * Select Play.
+  * Use `UnrealGDKTestGyms\LaunchClient.bat` script to launch a second client.
+  * From the UnrealGDK toolbar, open the Inspector
+  * Verify in Inspector that the following exist: Two client workers, two player controller entities (these are called `PlayerDisconnectController`) and two player character entities.
+  * Close the window of the second client.
+  * Verify in the Inspector that only one client worker entity, one player controller entity and one player character entity exist.
+  * In the Unreal Editor Toolbar, click Stop when you're done.
+  * Shut down the deployment if this doesn't happen automatically.
+* These tests can also be run in the cloud by deploying the `SpatialPlayerDisconnectMap` map and launching two clients.
+
+##### RPCTimeoutTestGym
+* Demonstrate that:
+  * RPC parameters holding references to loadable assets are able to be resolved without timing out.
+* NOTE: This gym can only be run manually (It requires tweaking settings and running in separate processes).
+* Pre-test steps:
+  * In the Unreal Editor's SpatialGDK runtime settings, set Replication->"Wait Time Before Processing Received RPC With Unresolved Refs" to 0
+  * In Unreal's advanced play settings, set "Run Under One Process" to false
+  * Set the number of players to 2
+* Testing : 
+  * Press play.
+  * Two clients should connect, at least one outside of the editor process.
+  * Controlled character should turn yellow after 2 sec.
+  * If characters turn red, the test has failed.
+  * If there is a red text reading : "ERROR : Material already loaded on client, test is invalid", check that this only happens on the client launched from within the editor
+  * Clients connected from a separate process, or running the test from a fresh editor instance should not display this error message.
+
+  ##### Visual Logger gym
+* Tests that:
+  * The Visual Logger displays multi worker logs accurately.
+  * The Visual Logger correctly colour codes spatial and non-spatial logging objects.
+  * The Visual Logger re-bases log times when loading multiple log files simultaneously.
+  * TODO: The Visual Logger correctly loads and displays native Unreal log files.
+* How to test:
+  * Open `Content\Maps\VisualLogger\VisualLoggerManualTest.umap`
+  * Open the Visual Logger window via menu `Window -> Developer Tools -> Visual Logger`
+  * Click the `Play` button in the Unreal toolbar to start PIE session, with one client.
+  * Click the `Start` button in the Visual Logger toolbar to start recording.
+  * Run game for 60 seconds, and then stop game and Visual Logger.
+  * Observe the following in the Visual Logger UI:
+    * Two `StationaryGymCubes` will log continously, one log per tick.
+    * Two `GymCubes` will log continously on the single client worker, one log per tick.
+    * Two `GymCubes` will split their logs (one log per tick), across the two server workers, alternating as the cubes cross the zero-interest worker boundary.
+    * The names of the `StationaryGymCubes` will be displayed in a different colour (default is `Blue`, see `Edit -> Editor Preferences -> Visual Logger -> Object Name Display Colors -> Other Objects`)
+    * The names of the `GymCubes` will be displayed in a different colour (default is `Green`, see `Edit -> Editor Preferences -> Visual Logger -> Object Name Display Colors ->Replicated Actors`)
+  * Save the log as `first.vlog`.
+  * Clear the Visual Logger using the `Clear` button.
+  * Repeat the process and save the log as `second.vlog`.
+  * Clear the Visual Logger using the `Clear` button.
+  * Set `Sync Log Timings Across Files` to false in `Edit -> Editor Preferences -> Visual Logger -> Sync Log Timings Across Files`.
+  * In the Visual Logger click `Load` and load in `first.vlog`.
+  * The file should successfully load and display expected logs.
+  * In the Visual Logger click `Load` and load in `second.vlog`.
+  * The file should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
+  * The files should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * Set `Sync Log Timings Across Files` to true in `Edit -> Editor Preferences -> Visual Logger -> Sync Log Timings Across Files`.
+  * In the Visual Logger click `Load` and load in `first.vlog`.
+  * The file should successfully load and display expected logs.
+  * In the Visual Logger click `Load` and load in `second.vlog`.
+  * The file should successfully load and display expected logs. The contents of two log files should be displayed as if they were recorded at the same time.
+  * Clear the Visual Logger using the `Clear` button.
+  * In the Visual Logger click `Load` and load in `first.vlog` and `second.vlog` simultaneously, using the shift key to select both files.
+  * The files should successfully load and display expected logs. The contents of two log files should be offset by the time delta between the two recordings.
+
+##### Gameplay Debugger gym
+* Tests that:
+  * The Gameplay Debugger works like native Unreal with spatial networking disabled.
+  * The Gameplay Debugger can be toggled between player and manual server tracking modes.
+  * The Gameplay Debugger can be cycled through servers in manual server tracking mode.
+  * The Gameplay Debugger hides server cycling key prompts whilst in player tracking mode.
+  * The Gameplay Debugger tracks player movements across worker boundaries in player tracking mode.
+  * The Gameplay Debugger does not track player movements across worker boundaries in manual tracking mode.
+  * The Gameplay Debugger displays debug information accurately.
+  * The Gameplay Debugger tracks actors across interest boundaries.
+* How to test:
+  * You will need a numpad on your keyboard to test this. If you don't have one, you can use the windows onscreen keyboard.
+  * Open `Content\Maps\GameplayDebugger\GameplayDebuggerManualTest.umap`
+  * Click the `Play` button in the Unreal toolbar to start PIE session, uncheck the option for `SpatialOS networking`, and set `Number of players` to 1.
+  * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards.
+  * While the camera is looking directly at the cube, press `'`(Apostrophe) to enable the gameplay debugger on the cube.
+  * Observe in the gameplay debugger status panel that `Debug Actor` is set to `GameplayDebuggerGymCube`. If it is not, toggle the gameplay debugger off by pressing `'` and try again.
+  * Observe there is no mention of the spatial multi worker specific additions for `server tracking modes` or `selecting servers` in the gameplay debugger status panel.
+  * Press `numpad4` to enable the gameplay debugger EQS output.
+  * Observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path.
+  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
+  * Click the `Play` button in the Unreal toolbar to start PIE session, check the option for `SpatialOS networking`, and set `Number of players` to 1.
+  * Observe that the `GameplayDebuggerGymCube` moves forwards and backwards between two servers.
+  * While the camera is looking directly at the cube, press `'`(Apostrophe) to enable the gameplay debugger on the cube.
+  * Observe `Server tracking mode` is shown in the top left of the gameplay debugger status panel, with the default value of `Player`
+  * Press `ctrl+numpad*` to cycle through server tracking modes `Player` and `Manual`.
+  * Select the `Manual` server tracking mode.
+  * Observe `Server: <workerid>` is shown top right of the gameplay debugger status panel, plus key prompts to cycle the server.
+  * Press `ctrl+numpad+` or `ctrl+numpad-` to cycle forwards and backwards through available servers.
+  * Select the `Player` server tracking mode.
+  * Observe `Server: <workerid>` is shown top right of the gameplay debugger status panel, with no key prompts to cycle the server.
+  * Move the player between the two servers, and observe that the tracked server shown in the top right of the gameplay debugger panel changes when you cross the boundary.
+  * Select the `Manual` server tracking mode.
+  * Move the player between the two servers, and observe that the tracked server shown in the top right of the gameplay debugger panel does not change when you cross the boundary.
+  * Select the `Player` server tracking mode.
+  * Press `numpad4` to enable the gameplay debugger EQS output.
+  * Observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path, within the server boundary in which the player is positioned.
+  * Observe that as the player moves between servers, the "eqs debug spheres" are drawn and updated only within the server in which the player is positioned. When the cube crosses the boundary into the server not containing the player, the "EQS debug spheres" will remain on the boundary until the cube returns to that server.
+  * Select the `Manual` server tracking mode.
+  * Observe that the "eqs debug spheres" are drawn and updated only within the tracked server.
+  * Press `ctrl+numpad+` or `ctrl+numpad-` to cycle to the next server.
+  * Observe that the "eqs debug spheres" are drawn and updated only within the newly selected server.
+  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
+  * Click the `Play` button in the Unreal toolbar to start PIE session, check the option for `SpatialOS networking`, and set `Number of players` to 1.
+  * Keeping the player within the server in which it started, before the `GameplayDebuggerGymCube` reaches the server boundary for the first time press `'`(Apostrophe) to enable the gameplay debugger whilst looking directly at the cube.
+  * Still keeping the player within the server in which it started, observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path, within the server boundary in which the player is positioned.
+  * Click the `Stop` button in the Unreal toolbar to stop the PIE session
+  
 ##### Replay gym
 * Tests that the replay system works by recording gameplay from a client or server perspective.
 * How to test:
@@ -377,6 +577,5 @@ These tests can only be run automatically. To run them:
   * L to switch between recording on a client and on a server (does not work when a recording is already being captured).
   * The test is fairly free-form, start a recording, run around a bit, and see if the captured recording accurately records what you did.
   * Check that the server-side recording contains the server-only cube pointed out in the map.
-
 -----
 2019-11-15: Page added with editorial review

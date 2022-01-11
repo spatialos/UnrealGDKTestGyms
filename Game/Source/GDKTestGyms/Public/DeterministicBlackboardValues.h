@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 #pragma once
 
@@ -14,11 +14,23 @@ class GDKTESTGYMS_API UDeterministicBlackboardValues : public UActorComponent
 {
 	GENERATED_BODY()
 public:
-	void ApplyValues();
+
+	void InitialApplyBlackboardValues();
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyBlackboardValues();
+
+	UFUNCTION(BlueprintCallable)
+	void SwapTarget();
 
 	UFUNCTION(Client, Reliable)
 	void ClientSetBlackboardAILocations(const FBlackboardValues& InBlackboardValues);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	FTimerHandle TimerHandle;
+
+	UPROPERTY(Replicated)
 	FBlackboardValues BlackboardValues;
 };

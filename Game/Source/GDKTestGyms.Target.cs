@@ -17,5 +17,10 @@ public class GDKTestGymsTarget : TargetRules
 		{
 			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
 		}
+
+		if (Environment.GetEnvironmentVariable("ImprobableNFRStats") != null)
+		{
+			GlobalDefinitions.Add("FORCE_USE_STATS=1");
+		}
 	}
 }

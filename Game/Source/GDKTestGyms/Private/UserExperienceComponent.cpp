@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 
 #include "UserExperienceComponent.h"
@@ -28,14 +28,27 @@ void UUserExperienceComponent::InitializeComponent()
 	SetIsReplicated(true);
 }
 
+void UUserExperienceComponent::BeginDestroy()
+{
+	if (UWorld* World = GetWorld())
+	{
+		FTimerManager& TimerManager = World->GetTimerManager();
+		TimerManager.ClearTimer(RoundTripTimer);
+		TimerManager.ClearTimer(PositionCheckTimer);
+	}
+
+	Super::BeginDestroy();
+}
+
 void UUserExperienceComponent::StartRoundtrip()
 {
 	if (OpenRPCs.Contains(RequestKey))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("UserExperience failure: Previous round trip didn't complete in time (%d)."), RequestKey);
 		EndRoundtrip(RequestKey);
 	}
 	int32 NewRPC = ++RequestKey;
-	OpenRPCs.Add(NewRPC, FDateTime::Now().GetTicks() );
+	OpenRPCs.Add(NewRPC, FDateTime::Now().GetTicks());
 	ServerRTT(NewRPC);
 }
 
@@ -61,7 +74,7 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 		return;
 	}
 
-	if (Reporter != nullptr && !Reporter->IsPendingKill())
+	if (Reporter.IsValid())
 	{
 		float DeltaTime = FTimespan(ClientTimeTicks - OldTicks).GetTotalMilliseconds();
 		float DistanceSq = Reporter->GetOwner()->GetSquaredDistanceTo(GetOwner());
@@ -76,10 +89,11 @@ void UUserExperienceComponent::OnRep_ClientTimeTicks(int64 OldTicks)
 void UUserExperienceComponent::OnClientOwnershipGained()
 {
 	Super::OnClientOwnershipGained();
-	FTimerHandle Timer;
-	FTimerDelegate Delegate;
-	Delegate.BindUObject(this, &UUserExperienceComponent::StartRoundtrip);
-	GetWorld()->GetTimerManager().SetTimer(Timer, Delegate, 1.0f, true);
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.SetTimer(RoundTripTimer, this, &UUserExperienceComponent::StartRoundtrip, 1.0f, true);
+	TimerManager.SetTimer(PositionCheckTimer, this, &UUserExperienceComponent::CheckPosition, 10.0f, true, 10.0f);
+	PreviousPos = GetOwner()->GetActorLocation();
 }
 
 float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
@@ -94,6 +108,16 @@ float UUserExperienceComponent::CalculateAverageUpdateTimeDelta() const
 	}
 	Avg /= static_cast<float>(UpdateRate.Num()) + 0.00001f;
 	return Avg;
+}
+
+void UUserExperienceComponent::CheckPosition()
+{
+	FVector CurrPos = GetOwner()->GetActorLocation();
+	if (PreviousPos == CurrPos)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UserExperience failure: Client position not updating (%s). Vel %s"), *PreviousPos.ToString(), *GetOwner()->GetVelocity().ToString());
+	}
+	PreviousPos = CurrPos;
 }
 
 // Called every frame
