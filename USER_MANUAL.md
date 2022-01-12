@@ -569,5 +569,13 @@ The late connecing client has validated the local state before sending the "Pass
   * Still keeping the player within the server in which it started, observe there are "EQS debug spheres" drawn at regular intervals around the cube as it moves along its path, within the server boundary in which the player is positioned.
   * Click the `Stop` button in the Unreal toolbar to stop the PIE session
   
+##### Replay gym
+* Tests that the replay system works by recording gameplay from a client or server perspective.
+* How to test:
+  * J to start a recording
+  * K to stop a recording
+  * L to switch between recording on a client and on a server (does not work when a recording is already being captured).
+  * The test is fairly free-form, start a recording, run around a bit, and see if the captured recording accurately records what you did.
+  * Check that the server-side recording contains the server-only cube pointed out in the map.
 -----
 2019-11-15: Page added with editorial review

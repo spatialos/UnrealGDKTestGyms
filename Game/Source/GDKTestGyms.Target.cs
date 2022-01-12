@@ -11,6 +11,8 @@ public class GDKTestGymsTarget : TargetRules
 		Type = TargetType.Game;
 		ExtraModuleNames.Add("GDKTestGyms");
 
+		DefaultBuildSettings = BuildSettingsVersion.V2;
+
 		if (Environment.GetEnvironmentVariable("ImprobableNFRShipping") != null)
 		{
 			bUseLoggingInShipping = bEnableSpatialCmdlineInShipping = true;
